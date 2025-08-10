@@ -1,8 +1,6 @@
 import { CATEGORIES, COLORS, ALL_PARTS } from './data.js';
 
 // --- DATA ---
-// Data is now imported from data.js
-
 const COLOR_MAP = COLORS.reduce((acc, color) => {
   acc[color.id] = color;
   return acc;
@@ -22,30 +20,24 @@ const MinusIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class=
 const XIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 const MenuIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>`;
 
-// --- TYPES ---
-type Collection = {
-    [partId: string]: {
-        [colorId: string]: number;
-    };
-};
+// --- STATE MANAGEMENT ---
+type Collection = { [partId: string]: { [colorId: string]: number } };
 
 interface State {
-    currentView: 'catalog' | 'collection';
-    selectedCategory: string;
-    searchQuery: string;
-    selectedPartId: string | null;
-    isSidebarOpen: boolean;
-    modal: {
-        selectedColorId: string | null;
-        quantity: number;
-    };
-    collection: Collection;
+  currentView: 'catalog' | 'collection';
+  selectedCategory: string;
+  searchQuery: string;
+  selectedPartId: string | null;
+  isSidebarOpen: boolean;
+  modal: {
+    selectedColorId: string | null;
+    quantity: number;
+  };
+  collection: Collection;
 }
 
-
-// --- STATE MANAGEMENT ---
 let state: State = {
-  currentView: 'catalog', // 'catalog' or 'collection'
+  currentView: 'catalog',
   selectedCategory: 'all',
   searchQuery: '',
   selectedPartId: null,
@@ -54,7 +46,7 @@ let state: State = {
       selectedColorId: null,
       quantity: 1,
   },
-  collection: {}, // { 'partId': { 'colorId': quantity } }
+  collection: {},
 };
 
 function loadState() {
@@ -63,7 +55,7 @@ function loadState() {
     try {
       const parsed = JSON.parse(savedCollection);
       if (typeof parsed === 'object' && parsed !== null) {
-        state.collection = parsed as Collection;
+        state.collection = parsed;
       } else {
         state.collection = {};
       }
@@ -86,9 +78,9 @@ const mainContent = document.getElementById('main-content');
 const modalContainer = document.getElementById('modal-container');
 
 // --- RENDER FUNCTIONS ---
-function getPartImageUrl(partId: string, colorId: string) {
+function getPartImageUrl(partId, colorId) {
     const color = COLOR_MAP[colorId];
-    const displayColorId = color?.isTransparent ? '13' : '6';
+    const displayColorId = color && color.isTransparent ? '13' : '6';
     const url1 = `https://img.bricklink.com/ItemImage/PN/${displayColorId}/${partId}.png`;
     const url2 = `https://img.bricklink.com/P/${displayColorId}/${partId}.gif`;
     return `src="${url1}" onerror="this.onerror=null; this.src='${url2}';"`;
@@ -101,7 +93,7 @@ function renderSidebar() {
     return acc;
   }, { uniqueModelsCount: 0, totalPartsCount: 0 });
 
-  const viewButtonStyle = (view: 'catalog' | 'collection') => `w-1/2 flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
+  const viewButtonStyle = (view) => `w-1/2 flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
 
   sidebarContainer.innerHTML = `
     <div class="flex items-center justify-between mb-4 flex-shrink-0">
@@ -243,7 +235,7 @@ function renderModal() {
 
     const { selectedColorId, quantity } = state.modal;
     const selectedColor = selectedColorId ? COLOR_MAP[selectedColorId] : null;
-    const currentInCollection = (selectedColorId && state.collection[part.id]?.[selectedColorId]) || 0;
+    const currentInCollection = (state.selectedPartId && selectedColorId && state.collection[state.selectedPartId]?.[selectedColorId]) || 0;
     
     document.body.classList.add('overflow-hidden');
     modalContainer.innerHTML = `
@@ -301,6 +293,10 @@ function renderModal() {
 
 function updateUI() {
     // Core render functions
+    if (!sidebarContainer || !headerContainer || !mainContent || !modalContainer) {
+        console.error("One or more main containers are missing from the DOM!");
+        return;
+    }
     renderSidebar();
     renderHeader();
     renderGrid();
@@ -327,7 +323,7 @@ function updateUI() {
 }
 
 // --- EVENT HANDLING ---
-function handleUpdateCollection(partId, colorId, quantity) {
+function handleUpdateCollection(partId: string, colorId: string, quantity: number) {
     if (!state.collection[partId]) {
         state.collection[partId] = {};
     }
@@ -347,7 +343,7 @@ document.addEventListener('click', (e) => {
     if (!(e.target instanceof Element)) {
         return;
     }
-    const target = e.target as HTMLElement;
+    const target = e.target;
     const isMobile = window.innerWidth < 1024;
 
     // --- Sidebar Toggles ---
@@ -363,30 +359,32 @@ document.addEventListener('click', (e) => {
     }
 
     // --- Sidebar Nav Clicks ---
-    const viewButton = target.closest<HTMLElement>('[data-view]');
-    if (viewButton) {
+    const viewButton = target.closest('[data-view]');
+    if (viewButton instanceof HTMLElement) {
         state.currentView = viewButton.dataset.view as 'catalog' | 'collection';
         if (isMobile) { state.isSidebarOpen = false; }
         updateUI();
         return;
     }
-    const categoryButton = target.closest<HTMLElement>('[data-category-id]');
-    if (categoryButton) {
-        state.selectedCategory = categoryButton.dataset.categoryId;
+    const categoryButton = target.closest('[data-category-id]');
+    if (categoryButton instanceof HTMLElement) {
+        state.selectedCategory = categoryButton.dataset.categoryId ?? 'all';
         if (isMobile) { state.isSidebarOpen = false; }
         updateUI();
         return;
     }
 
     // --- Grid Card Click ---
-    const partCard = target.closest<HTMLElement>('.part-card');
-    if (partCard && mainContent.contains(partCard)) {
-        state.selectedPartId = partCard.dataset.partId;
-        const part = PART_MAP[state.selectedPartId];
-        if (part) {
-            state.modal.selectedColorId = part.availableColorIds[0] || null;
-            const currentQuantity = state.collection[part.id]?.[state.modal.selectedColorId] || 0;
-            state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+    const partCard = target.closest('.part-card');
+    if (partCard instanceof HTMLElement && mainContent.contains(partCard)) {
+        state.selectedPartId = partCard.dataset.partId ?? null;
+        if (state.selectedPartId) {
+            const part = PART_MAP[state.selectedPartId];
+            if (part) {
+                state.modal.selectedColorId = part.availableColorIds[0] || null;
+                const currentQuantity = (state.modal.selectedColorId && state.collection[part.id]?.[state.modal.selectedColorId]) || 0;
+                state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+            }
         }
         updateUI();
         return;
@@ -401,23 +399,26 @@ document.addEventListener('click', (e) => {
 
     const modalContent = document.getElementById('modal-content');
     if (modalContent && modalContent.contains(target)) {
-         const colorButton = target.closest<HTMLElement>('[data-color-id]');
-        if (colorButton) {
-            state.modal.selectedColorId = colorButton.dataset.colorId;
-            const currentQuantity = (state.collection[state.selectedPartId]?.[state.modal.selectedColorId]) || 0;
+         const colorButton = target.closest('[data-color-id]');
+        if (colorButton instanceof HTMLElement) {
+            state.modal.selectedColorId = colorButton.dataset.colorId ?? null;
+            let currentQuantity = 0;
+            if (state.selectedPartId && state.modal.selectedColorId) {
+                currentQuantity = state.collection[state.selectedPartId]?.[state.modal.selectedColorId] || 0;
+            }
             state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
             renderModal(); // Just re-render the modal, not the whole UI
             return;
         }
 
-        const actionButton = target.closest<HTMLElement>('[data-action]');
-        if (actionButton) {
+        const actionButton = target.closest('[data-action]');
+        if (actionButton instanceof HTMLElement) {
             const action = actionButton.dataset.action;
             if (action === 'increase-qty') {
                 state.modal.quantity++;
             } else if (action === 'decrease-qty') {
                 state.modal.quantity = Math.max(0, state.modal.quantity - 1);
-            } else if (action === 'update-collection' && state.modal.selectedColorId) {
+            } else if (action === 'update-collection' && state.modal.selectedColorId && state.selectedPartId) {
                 handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
                 return; // handleUpdateCollection calls updateUI, so we exit
             }
@@ -434,7 +435,7 @@ document.addEventListener('input', (e) => {
     }
 });
 
-document.addEventListener('keyup', (e: KeyboardEvent) => {
+document.addEventListener('keyup', (e) => {
     if (e.target instanceof HTMLInputElement && e.target.id === 'search-input' && e.key === 'Enter') {
         e.target.blur();
     }
