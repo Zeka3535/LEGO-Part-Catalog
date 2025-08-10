@@ -9,11 +9,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     body { font-family: sans-serif; }
-    /* Hide scrollbar for Chrome, Safari and Opera */
     .no-scrollbar::-webkit-scrollbar { display: none; }
-    /* Hide scrollbar for IE, Edge and Firefox */
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    /* Checkerboard pattern for transparent parts */
     .checkerboard {
       background-image:
         linear-gradient(45deg, #374151 25%, transparent 25%),
@@ -24,14 +21,24 @@
       background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
     }
     .modal-hidden { display: none !important; }
+    .loader {
+      border: 4px solid #4A5568; /* gray-700 */
+      border-top: 4px solid #4299E1; /* blue-400 */
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
 
   <!-- Sidebar -->
-  <aside id="sidebar-container" class="w-72 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full">
-    <!-- Sidebar content is rendered by JS -->
-  </aside>
+  <aside id="sidebar-container" class="w-72 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full"></aside>
 
   <!-- Backdrop for mobile sidebar -->
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden lg:hidden"></div>
@@ -48,720 +55,19 @@
   <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
 
   <script>
-    // --- DATA (from data.js) ---
-    const CATEGORIES = [
-        { id: 'all', name: 'Все детали' },
-        { 
-            id: 'standard', name: 'Стандартные', subcategories: [
-                { id: 'standard_brick', name: 'Кирпичи' },
-                { id: 'standard_brick_modified', name: 'Мод. кирпичи' },
-                { id: 'standard_brick_slope', name: 'Скосы' },
-                { id: 'standard_brick_arch', name: 'Арки' },
-                { id: 'standard_plate', name: 'Пластины' },
-                { id: 'standard_plate_modified', name: 'Мод. пластины' },
-                { id: 'standard_plate_wedge', name: 'Клинья' },
-                { id: 'standard_tile', name: 'Плитки' },
-            ]
-        },
-        { 
-            id: 'technic', name: 'Техник', subcategories: [
-                { id: 'technic_beam', name: 'Балки' },
-                { id: 'technic_brick', name: 'Кирпичи Technic' },
-                { id: 'technic_axle', name: 'Оси' },
-                { id: 'technic_connector', name: 'Коннекторы' },
-                { id: 'technic_gear', name: 'Шестерни' },
-                { id: 'technic_panel', name: 'Панели' },
-                { id: 'technic_special', name: 'Специальные' },
-            ]
-        },
-        { 
-            id: 'structure', name: 'Конструкции', subcategories: [
-                { id: 'structure_window_door', name: 'Окна и двери' },
-                { id: 'structure_panel_wall', name: 'Стены и панели' },
-                { id: 'structure_support', name: 'Опоры и решётки' },
-            ]
-        },
-        {
-            id: 'functional', name: 'Функциональные', subcategories: [
-                { id: 'functional_hinge', name: 'Шарниры' },
-                { id: 'functional_clip_handle', name: 'Зажимы и ручки' },
-                { id: 'functional_towball', name: 'Шаровые' },
-            ]
-        },
-        {
-            id: 'transport', name: 'Транспорт', subcategories: [
-                { id: 'transport_wheel_rim', name: 'Колёса и диски' },
-                { id: 'transport_tyre', name: 'Шины' },
-                { id: 'transport_vehicle', name: 'Детали ТС' },
-                { id: 'transport_train', name: 'Детали поездов' },
-            ]
-        },
-        {
-            id: 'minifig', name: 'Минифигурки', subcategories: [
-                { id: 'minifig_body', name: 'Части тела' },
-                { id: 'minifig_accessory', name: 'Аксессуары' },
-                { id: 'minifig_weapon', name: 'Оружие' },
-            ]
-        },
-        {
-            id: 'scenery', name: 'Окружение', subcategories: [
-                { id: 'scenery_plant_flower', name: 'Растения' },
-                { id: 'scenery_animal', name: 'Животные' },
-                { id: 'scenery_rock_landscape', name: 'Скалы и ландшафт' },
-            ]
-        },
-    ];
-
-    const COLORS = [
-      { id: '1', name: 'Синий', hex: '#0055BF' },
-      { id: '2', name: 'Зелёный', hex: '#237841' },
-      { id: '4', name: 'Красный', hex: '#DA291C' },
-      { id: '5', name: 'Тёмно-серый', hex: '#6C6E68' },
-      { id: '6', name: 'Светло-серый', hex: '#A0A5A9' },
-      { id: '7', name: 'Коричневый', hex: '#583927' },
-      { id: '8', name: 'Бежевый', hex: '#E4CD9E' },
-      { id: '10', name: 'Белый', hex: '#FFFFFF' },
-      { id: '11', name: 'Чёрный', hex: '#05131D' },
-      { id: '12', name: 'Жёлтый', hex: '#F2CD37' },
-      { id: '13', name: 'Прозрачный', hex: '#FCFCFC', isTransparent: true },
-      { id: '14', name: 'Дымчатый', hex: '#635F52', isTransparent: true },
-      { id: '15', name: 'Прозрачно-красный', hex: '#C91A09', isTransparent: true },
-      { id: '16', name: 'Прозрачно-неоновый зелёный', hex: '#C0F500', isTransparent: true },
-      { id: '17', name: 'Прозрачно-голубой', hex: '#AEEFEC', isTransparent: true },
-      { id: '18', name: 'Прозрачно-зелёный', hex: '#84B68D', isTransparent: true },
-      { id: '19', name: 'Прозрачно-жёлтый', hex: '#F5CD2F', isTransparent: true },
-      { id: '20', 'name': 'Прозрачно-тёмно-синий', hex: '#0020A0', isTransparent: true },
-      { id: '21', name: 'Лайм', hex: '#97d41e' },
-      { id: '34', name: 'Оранжевый', hex: '#FE8A18' },
-    ];
-
-     const ALL_PARTS = [
-      { "id": "3005", "name": "Brick 1 x 1", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12", "21", "34"] },
-      { "id": "3004", "name": "Brick 1 x 2", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21", "34"] },
-      { "id": "3622", "name": "Brick 1 x 3", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "3010", "name": "Brick 1 x 4", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21"] },
-      { "id": "3009", "name": "Brick 1 x 6", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3008", "name": "Brick 1 x 8", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "3001", "name": "Brick 2 x 4", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21", "34"] },
-      { "id": "3002", "name": "Brick 2 x 3", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "3003", "name": "Brick 2 x 2", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21", "34"] },
-      { "id": "3024", "name": "Plate 1 x 1", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "13", "14", "15", "17", "19", "20"] },
-      { "id": "3023", "name": "Plate 1 x 2", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "13", "14", "15", "17", "19", "20", "21", "34"] },
-      { "id": "3623", "name": "Plate 1 x 3", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3710", "name": "Plate 1 x 4", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21", "34"] },
-      { "id": "3666", "name": "Plate 1 x 6", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12"] },
-      { "id": "3020", "name": "Plate 2 x 4", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21"] },
-      { "id": "3022", "name": "Plate 2 x 2", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21"] },
-      { "id": "3795", "name": "Plate 2 x 6", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3034", "name": "Plate 2 x 8", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "3031", "name": "Plate 4 x 4", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "3811", "name": "Plate 32 x 32 Baseplate", "categoryId": "standard_plate", "availableColorIds": ["2", "6", "8"] },
-      { "id": "3070b", "name": "Tile 1 x 1", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12", "21"] },
-      { "id": "3069b", "name": "Tile 1 x 2", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12"] },
-      { "id": "63864", "name": "Tile 1 x 3", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "2431", "name": "Tile 1 x 4", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3068b", "name": "Tile 2 x 2", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3245c", "name": "Technic Brick 1 x 2 with Hole", "categoryId": "technic_brick", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "2780", "name": "Technic Pin with Friction", "categoryId": "technic_connector", "availableColorIds": ["1", "11"] },
-      { "id": "32062", "name": "Technic Axle 2 Notched", "categoryId": "technic_axle", "availableColorIds": ["4", "6", "12"] },
-      { "id": "3713", "name": "Technic Bush", "categoryId": "technic_connector", "availableColorIds": ["4", "6", "12"] },
-      { "id": "32523", "name": "Technic Beam 1 x 3 Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "60483", "name": "Technic Beam 1 x 2 Thick with Pin Hole", "categoryId": "technic_beam", "availableColorIds": ["5", "6", "11"] },
-      { "id": "6541", "name": "Technic Beam 1 x 1 Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "5", "6", "10", "11", "12"] },
-      { "id": "64782", "name": "Window 1 x 2 x 2", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "8", "10", "11"] },
-      { "id": "60594", "name": "Window 1 x 4 x 3", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10", "11"] },
-      { "id": "60616", "name": "Door 1 x 4 x 6 with 3 Panes", "categoryId": "structure_window_door", "availableColorIds": ["7", "10", "11"] },
-      { "id": "60621", "name": "Door 1 x 4 x 6 with 4 Panes", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10", "11"] },
-      { "id": "4070", "name": "Headlight Brick", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12", "13", "14", "15", "17", "19", "20"] },
-      { "id": "54200", "name": "Slope 30 1 x 1 x 2/3", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12", "21"] },
-      { "id": "3040", "name": "Slope 45 2 x 1", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3037", "name": "Slope 45 2 x 4", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "30249", "name": "Wheel Skateboard / Trolley", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "30155", "name": "Wheel 30.4mm D. x 20mm", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "56145", "name": "Wheel 30.4mm D. x 20mm with No Pin Holes", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11", "12"] },
-      { "id": "55982", "name": "Wheel 18mm D. x 14mm with Pin Hole", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11", "12"] },
-      { "id": "2496", "name": "Wheel Wagon", "categoryId": "transport_wheel_rim", "availableColorIds": ["7", "11"] },
-      { "id": "4624", "name": "Wheel 8mm D. x 9mm", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "50254", "name": "Tyre 8mm D. x 9mm - Train", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "32002", "name": "Tyre 30.4mm D. x 14mm", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "3659", "name": "Arch 1 x 4", "categoryId": "standard_brick_arch", "availableColorIds": ["1", "4", "6", "7", "8", "10", "11"] },
-      { "id": "3062b", "name": "Brick, Round 1 x 1", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12", "13", "15", "17", "19", "21"] },
-      { "id": "4287", "name": "Slope, Inverted 33 3 x 1", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "30136", "name": "Brick, Modified 1 x 2 with Log Profile", "categoryId": "standard_brick_modified", "availableColorIds": ["7", "5"] },
-      { "id": "3660", "name": "Slope, Inverted 45 2 x 2", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "98283", "name": "Brick, Modified 1 x 2 with Masonry Profile", "categoryId": "standard_brick_modified", "availableColorIds": ["6", "8"] },
-      { "id": "4032", "name": "Plate, Round 2 x 2 with Axle Hole", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "4", "6", "8", "10", "11", "12"] },
-      { "id": "15573", "name": "Plate, Modified 1 x 2 with 1 Stud (Jumper)", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21", "34"] },
-      { "id": "41770", "name": "Wedge, Plate 4 x 2 Left", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "41769", "name": "Wedge, Plate 4 x 2 Right", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "30350", "name": "Plate, Modified 2 x 3 with Hole", "categoryId": "standard_plate_modified", "availableColorIds": ["6", "11"] },
-      { "id": "98138", "name": "Tile, Round 1 x 1", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12", "13", "15", "19", "21", "34"] },
-      { "id": "87079", "name": "Tile 2 x 4", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "5", "6", "8", "10", "11", "12"] },
-      { "id": "6636", "name": "Tile 1 x 6", "categoryId": "standard_tile", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3648", "name": "Technic, Gear 24 Tooth", "categoryId": "technic_gear", "availableColorIds": ["5", "6", "8", "11", "12"] },
-      { "id": "3707", "name": "Technic, Axle 8", "categoryId": "technic_axle", "availableColorIds": ["5", "11"] },
-      { "id": "4865b", "name": "Technic, Panel 1 x 2 x 1", "categoryId": "technic_panel", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "6536", "name": "Technic, Axle and Pin Connector Perpendicular", "categoryId": "technic_connector", "availableColorIds": ["1", "6", "8", "11"] },
-      { "id": "40490", "name": "Technic, Liftarm 1 x 9 Thick", "categoryId": "technic_beam", "availableColorIds": ["4", "5", "11", "12"] },
-      { "id": "44301", "name": "Hinge Plate 1 x 2 Locking with 1 Finger", "categoryId": "functional_hinge", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "44302", "name": "Hinge Plate 1 x 2 Locking with 2 Fingers", "categoryId": "functional_hinge", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "30386", "name": "Hinge Brick 1 x 2 Base", "categoryId": "functional_hinge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "30383", "name": "Hinge Brick 1 x 2 Top Plate", "categoryId": "functional_hinge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "4276", "name": "Hinge Plate 1 x 2 with 2 Fingers", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "4275", "name": "Hinge Plate 1 x 2 with 3 Fingers", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "3626c", "name": "Minifigure, Head", "categoryId": "minifig_body", "availableColorIds": ["12"] },
-      { "id": "73200", "name": "Minifigure, Legs Assembly", "categoryId": "minifig_body", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "973c00", "name": "Minifigure, Torso", "categoryId": "minifig_body", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3899", "name": "Minifigure, Utensil Cup", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "6", "7", "10", "11", "12"] },
-      { "id": "30170", "name": "Minifigure, Goggles", "categoryId": "minifig_accessory", "availableColorIds": ["10", "11", "14"] },
-      { "id": "4477", "name": "Minifigure, Weapon Pike / Spear", "categoryId": "minifig_weapon", "availableColorIds": ["7", "11"] },
-      { "id": "37695", "name": "Plant, Flower Stem 1x1", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "3471", "name": "Plant, Tree, Pine Large", "categoryId": "scenery_plant_flower", "availableColorIds": ["2", "7"] },
-      { "id": "33320", "name": "Animal, Frog", "categoryId": "scenery_animal", "availableColorIds": ["2", "21"] },
-      { "id": "2417", "name": "Plant, Leaves 6 x 5", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "2423", "name": "Plant, Leaves 4 x 3", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "6064", "name": "Plant, Prickly Bush", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "24855", "name": "Plant, Flower, 1x1", "categoryId": "scenery_plant_flower", "availableColorIds": ["1", "4", "10", "12", "21", "34"] },
-      { "id": "32607", "name": "Plate, Modified 1 x 1 with Flower", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "6255", "name": "Animal, Shark", "categoryId": "scenery_animal", "availableColorIds": ["5"] },
-      { "id": "3007", "name": "Brick 2 x 8", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "3006", "name": "Brick 2 x 10", "categoryId": "standard_brick", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "2456", "name": "Brick 2 x 6", "categoryId": "standard_brick", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "2357", "name": "Brick 2 x 2 Corner", "categoryId": "standard_brick", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "87087", "name": "Brick, Modified 1 x 1 with Stud on 1 Side", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21", "34"] },
-      { "id": "6091", "name": "Brick, Modified 1 x 2 x 1 1/3 with Curved Top", "categoryId": "standard_brick_arch", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3021", "name": "Plate 2 x 3", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12"] },
-      { "id": "3460", "name": "Plate 1 x 8", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3832", "name": "Plate 2 x 10", "categoryId": "standard_plate", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "2445", "name": "Plate 2 x 12", "categoryId": "standard_plate", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3027", "name": "Plate 6 x 16", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "6", "10", "11"] },
-      { "id": "92438", "name": "Plate 8 x 16", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "6", "8"] },
-      { "id": "2420", "name": "Plate 2 x 2 Corner", "categoryId": "standard_plate", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3035", "name": "Plate 4 x 8", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "6", "10", "11"] },
-      { "id": "88646", "name": "Tile, Modified 3 x 4 with 4 Studs in Center", "categoryId": "standard_tile", "availableColorIds": ["6", "8", "10", "11"] },
-      { "id": "26603", "name": "Tile 2 x 3", "categoryId": "standard_tile", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "69729", "name": "Tile 2 x 6", "categoryId": "standard_tile", "availableColorIds": ["6", "10", "11"] },
-      { "id": "14769", "name": "Tile, Round 2 x 2 with Bottom Stud Holder", "categoryId": "standard_tile", "availableColorIds": ["1", "6", "10", "11", "13", "15", "19"] },
-      { "id": "27925", "name": "Tile, Modified 2 x 2 with Pin", "categoryId": "standard_tile", "availableColorIds": ["6", "8", "11"] },
-      { "id": "3700", "name": "Technic, Brick 1 x 2 with Hole", "categoryId": "technic_brick", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12"] },
-      { "id": "3701", "name": "Technic, Brick 1 x 4 with Holes", "categoryId": "technic_brick", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3702", "name": "Technic, Brick 1 x 8 with Holes", "categoryId": "technic_brick", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "32271", "name": "Technic, Liftarm 1 x 9 Bent (6 - 4)", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "6", "11", "12"] },
-      { "id": "32140", "name": "Technic, Liftarm 2 x 4 L-Shape Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "43857", "name": "Technic, Liftarm 1 x 2 Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12", "21"] },
-      { "id": "62462", "name": "Technic, Pin Connector Round 2L with Slot", "categoryId": "technic_connector", "availableColorIds": ["6", "8", "11"] },
-      { "id": "32054", "name": "Technic, Pin Long with Friction Ridges", "categoryId": "technic_connector", "availableColorIds": ["1", "5", "6", "8", "11", "12"] },
-      { "id": "4519", "name": "Technic, Axle 3", "categoryId": "technic_axle", "availableColorIds": ["6", "11", "12"] },
-      { "id": "32063", "name": "Technic, Liftarm 1 x 6 Thin", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "87552", "name": "Panel 1 x 2 x 2 with Side Supports", "categoryId": "structure_panel_wall", "availableColorIds": ["1", "10", "11", "13", "14", "17"] },
-      { "id": "87544", "name": "Panel 1 x 2 x 3 with Side Supports", "categoryId": "structure_panel_wall", "availableColorIds": ["1", "10", "11", "13", "14", "17"] },
-      { "id": "3581", "name": "Door 1 x 2 x 3 with Bar Handle", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10"] },
-      { "id": "60593", "name": "Window 1 x 2 x 3", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10", "11"] },
-      { "id": "4132", "name": "Window 2 x 2 x 2 with Grille", "categoryId": "structure_window_door", "availableColorIds": ["1", "10", "11"] },
-      { "id": "2927", "name": "Wheel 30 x 10.5", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "10", "11"] },
-      { "id": "30285", "name": "Wheel 11 x 12", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "10", "11", "12"] },
-      { "id": "6015", "name": "Tyre 31mm D. x 10mm", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "6248", "name": "Tyre 24 x 8", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "87697", "name": "Tyre 21mm D. x 12mm", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "3837", "name": "Minifigure, Utensil Shovel", "categoryId": "minifig_accessory", "availableColorIds": ["4", "5", "11", "12"] },
-      { "id": "3901", "name": "Minifigure, Hair Male", "categoryId": "minifig_body", "availableColorIds": ["7", "8", "11", "12", "34"] },
-      { "id": "3957", "name": "Antenna 1 x 4", "categoryId": "minifig_accessory", "availableColorIds": ["4", "6", "11"] },
-      { "id": "4349", "name": "Minifigure, Utensil Loudhailer", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "6", "11"] },
-      { "id": "30377", "name": "Minifigure, Arm Mechanical", "categoryId": "minifig_body", "availableColorIds": ["5", "6", "11"] },
-      { "id": "3741", "name": "Plant, Flower Stem", "categoryId": "scenery_plant_flower", "availableColorIds": ["2", "21"] },
-      { "id": "30176", "name": "Plant, Brick 1 x 1 with 3 Leaves", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "19119", "name": "Plant, Sea Grass", "categoryId": "scenery_plant_flower", "availableColorIds": ["2", "21"] },
-      { "id": "92252", "name": "Animal, Bat", "categoryId": "scenery_animal", "availableColorIds": ["11"] },
-      { "id": "40645", "name": "Animal, Parrot", "categoryId": "scenery_animal", "availableColorIds": ["1", "2", "4", "12"] },
-      { "id": "3937", "name": "Hinge Brick 1 x 2 Base", "categoryId": "functional_hinge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3938", "name": "Hinge Brick 1 x 2 Top", "categoryId": "functional_hinge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "2429c01", "name": "Hinge Plate 1 x 4 Swivel Top / Base Complete Assembly", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "4733", "name": "Brick, Modified 1 x 1 with Studs on 4 Sides", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "5", "6", "7", "8", "10", "11", "12"] },
-      { "id": "22885", "name": "Brick, Modified 1x2x1 2/3 w/ Studs on 1 Side", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "6", "8", "10", "11", "12"] },
-      { "id": "11211", "name": "Brick, Modified 1x2 with 2 Studs on 1 Side", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "6141", "name": "Plate, Round 1 x 1", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "13", "14", "15", "17", "19", "20", "21", "34"] },
-      { "id": "3032", "name": "Plate 4 x 6", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3029", "name": "Plate 4 x 12", "categoryId": "standard_plate", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3028", "name": "Plate 6 x 12", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "6", "10", "11"] },
-      { "id": "41539", "name": "Plate 8 x 8", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "6", "10", "11"] },
-      { "id": "3036", "name": "Plate 6 x 8", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3794", "name": "Plate, Modified 1x2 with 1 Stud (Jumper)", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12"] },
-      { "id": "2412b", "name": "Tile, Modified 1x2 with Grille", "categoryId": "standard_tile", "availableColorIds": ["1", "5", "6", "7", "8", "10", "11"] },
-      { "id": "4162", "name": "Tile 1 x 8", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "15712", "name": "Tile, Modified 1x1 with Clip", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "22385", "name": "Tile, Modified 2x3 Pentagonal", "categoryId": "standard_tile", "availableColorIds": ["1", "6", "10", "11", "12"] },
-      { "id": "11203", "name": "Tile, Modified 2x2 Inverted", "categoryId": "standard_tile", "availableColorIds": ["6", "11"] },
-      { "id": "27263", "name": "Tile, Modified 2x2 with Studs on Edge", "categoryId": "standard_tile", "availableColorIds": ["6", "8", "10", "11"] },
-      { "id": "35480", "name": "Plate, Round 1x2 with Open Studs", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "8", "10", "11", "12", "21"] },
-      { "id": "33909", "name": "Plate, Modified 2x2 with 1 Stud", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "99207", "name": "Bracket 1x2 - 1x2 Inverted", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "99780", "name": "Bracket 1x2 - 1x2", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "5", "6", "8", "10", "11", "12"] },
-      { "id": "36841", "name": "Bracket 1x1 - 1x1", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "6", "8", "10", "11", "12"] },
-      { "id": "44728", "name": "Bracket 1x2 - 2x2", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "26047", "name": "Plate 1x1 Rounded with Handle", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "20482", "name": "Tile, Round 1x1 with Bar and Pin Holder", "categoryId": "functional_clip_handle", "availableColorIds": ["5", "6", "10", "11", "12"] },
-      { "id": "3045", "name": "Slope 45 2x2 Double", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3048", "name": "Slope 45 2x1 Triple", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "15068", "name": "Slope, Curved 2x2x2/3", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "11477", "name": "Slope, Curved 2x1 No Studs", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12", "21"] },
-      { "id": "24201", "name": "Slope, Curved 2x1 Inverted", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "32278", "name": "Technic, Liftarm 1x15 Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "32525", "name": "Technic, Liftarm 1x11 Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "32524", "name": "Technic, Liftarm 1x7 Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12", "21"] },
-      { "id": "32316", "name": "Technic, Liftarm 1x5 Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "41239", "name": "Technic, Liftarm 1x13 Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "11", "12"] },
-      { "id": "32065", "name": "Technic, Liftarm 1x7 Thin", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "32073", "name": "Technic, Axle 5", "categoryId": "technic_axle", "availableColorIds": ["4", "5", "6", "11"] },
-      { "id": "3706", "name": "Technic, Axle 6", "categoryId": "technic_axle", "availableColorIds": ["5", "11", "12"] },
-      { "id": "3708", "name": "Technic, Axle 12", "categoryId": "technic_axle", "availableColorIds": ["5", "11"] },
-      { "id": "42003", "name": "Technic, Axle and Pin Connector Perpendicular 3L", "categoryId": "technic_connector", "availableColorIds": ["1", "6", "8", "11"] },
-      { "id": "6558", "name": "Technic, Pin Long with Friction", "categoryId": "technic_connector", "availableColorIds": ["1", "11"] },
-      { "id": "3673", "name": "Technic, Pin without Friction", "categoryId": "technic_connector", "availableColorIds": ["1", "8"] },
-      { "id": "43093", "name": "Technic, Axle Pin with Friction", "categoryId": "technic_connector", "availableColorIds": ["1", "6"] },
-      { "id": "32000", "name": "Technic, Brick 1x2 with 2 Holes", "categoryId": "technic_brick", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3894", "name": "Technic, Brick 1x6 with Holes", "categoryId": "technic_brick", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "32269", "name": "Technic, Gear 20 Tooth Double Bevel", "categoryId": "technic_gear", "availableColorIds": ["5", "6", "8"] },
-      { "id": "32270", "name": "Technic, Gear 12 Tooth Double Bevel", "categoryId": "technic_gear", "availableColorIds": ["5", "6", "8", "11", "12"] },
-      { "id": "6542", "name": "Technic, Gear 16 Tooth", "categoryId": "technic_gear", "availableColorIds": ["5", "6", "8", "11"] },
-      { "id": "3649", "name": "Technic, Gear 40 Tooth", "categoryId": "technic_gear", "availableColorIds": ["5", "6", "11"] },
-      { "id": "4274", "name": "Technic, Pin 1/2", "categoryId": "technic_connector", "availableColorIds": ["1", "6"] },
-      { "id": "32028", "name": "Technic, Plate 1x2 with Door Rail", "categoryId": "technic_special", "availableColorIds": ["5", "6", "11"] },
-      { "id": "3821", "name": "Door 1x3x1 Left", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "6", "7", "10", "11", "12"] },
-      { "id": "3822", "name": "Door 1x3x1 Right", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "6", "7", "10", "11", "12"] },
-      { "id": "3823", "name": "Windscreen 2x4x2", "categoryId": "transport_vehicle", "availableColorIds": ["13", "14", "17", "20"] },
-      { "id": "94638", "name": "Window 1x2x2 2/3 with Rounded Top", "categoryId": "structure_window_door", "availableColorIds": ["1", "7", "10", "11"] },
-      { "id": "60601", "name": "Glass for Frame 1x2x2", "categoryId": "structure_window_door", "availableColorIds": ["13", "14", "17"] },
-      { "id": "44567", "name": "Hinge Plate 1x2 Locking with 1 Finger on Side", "categoryId": "functional_hinge", "availableColorIds": ["5", "6", "10", "11"] },
-      { "id": "30552", "name": "Hinge Cylinder 1x2 Locking with 2 Fingers", "categoryId": "functional_hinge", "availableColorIds": ["5", "6", "11"] },
-      { "id": "30553", "name": "Hinge Cylinder 1x2 Locking with 1 Finger", "categoryId": "functional_hinge", "availableColorIds": ["5", "6", "11"] },
-      { "id": "30364", "name": "Hinge Brick 1x2 Locking with 1 Finger Vertical", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "50745", "name": "Car Mudguard 4x2 1/2x1 2/3", "categoryId": "transport_vehicle", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "92409", "name": "Tyre 56mm D. x 28mm", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "44771", "name": "Tyre 68.8 x 36", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "44309", "name": "Tyre 43.2 x 14", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "89201", "name": "Tyre 37 x 22", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "3838", "name": "Minifigure, Air Tanks", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "6", "11", "12"] },
-      { "id": "57899", "name": "Minifigure, Weapon Blaster Long", "categoryId": "minifig_weapon", "availableColorIds": ["11"] },
-      { "id": "58247", "name": "Minifigure, Weapon Blaster Short", "categoryId": "minifig_weapon", "availableColorIds": ["11"] },
-      { "id": "4522", "name": "Minifigure, Utensil Hammer", "categoryId": "minifig_accessory", "availableColorIds": ["5", "6", "7"] },
-      { "id": "64644", "name": "Minifigure, Utensil Telescope", "categoryId": "minifig_accessory", "availableColorIds": ["5", "7", "11"] },
-      { "id": "61190", "name": "Minifigure, Weapon Lightsaber Hilt", "categoryId": "minifig_weapon", "availableColorIds": ["6", "5"] },
-      { "id": "30374", "name": "Minifigure, Weapon Lightsaber Blade", "categoryId": "minifig_weapon", "availableColorIds": ["15", "16", "17"] },
-      { "id": "3815", "name": "Minifigure, Helmet Standard", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3846", "name": "Minifigure, Shield Triangular", "categoryId": "minifig_weapon", "availableColorIds": ["1", "4", "6", "11"] },
-      { "id": "2587", "name": "Minifigure, Armor Breastplate", "categoryId": "minifig_accessory", "availableColorIds": ["5", "6"] },
-      { "id": "33078", "name": "Food, Hot Dog / Sausage", "categoryId": "minifig_accessory", "availableColorIds": ["4", "7"] },
-      { "id": "30150", "name": "Crate 3x4x1 2/3", "categoryId": "minifig_accessory", "availableColorIds": ["7", "4"] },
-      { "id": "24866", "name": "Plant, Flower Plate (1x1)", "categoryId": "scenery_plant_flower", "availableColorIds": ["1", "2", "4", "10", "12", "21", "34"] },
-      { "id": "40232", "name": "Animal, Owl", "categoryId": "scenery_animal", "availableColorIds": ["7", "10", "11"] },
-      { "id": "11602", "name": "Animal, Cat, Standing", "categoryId": "scenery_animal", "availableColorIds": ["11", "10", "34"] },
-      { "id": "10830", "name": "Animal, Spider with Round Abdomen", "categoryId": "scenery_animal", "availableColorIds": ["11"] },
-      { "id": "30238", "name": "Animal, Spider", "categoryId": "scenery_animal", "availableColorIds": ["11", "13"] },
-      { "id": "11090", "name": "Bar Holder with Clip", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "2540", "name": "Plate, Modified 1x2 with Handle on Side", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3176", "name": "Plate, Modified 3x2 with Hole", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "6215", "name": "Brick, Modified 2x3 with Curved Top", "categoryId": "standard_brick_arch", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "2877", "name": "Brick, Modified 1x2 with Grille", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "5", "6", "7", "8", "10", "11", "12"] },
-      { "id": "50950", "name": "Slope, Curved 3x1", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12", "21"] },
-      { "id": "29119", "name": "Wedge 2x1 with Stud Notch Right", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "29120", "name": "Wedge 2x1 with Stud Notch Left", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "51739", "name": "Wedge, Plate 2x4", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "2419", "name": "Wedge, Plate 3x6", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "41677", "name": "Technic, Liftarm 1x2 Thin", "categoryId": "technic_beam", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12", "21"] },
-      { "id": "32449", "name": "Technic, Liftarm 1x4 Thin", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "32192", "name": "Technic, Axle and Pin Connector Angled #4", "categoryId": "technic_connector", "availableColorIds": ["5", "6", "8"] },
-      { "id": "32039", "name": "Technic, Axle Connector with Axle Hole", "categoryId": "technic_connector", "availableColorIds": ["1", "4", "11"] },
-      { "id": "4265c", "name": "Technic, Bush 1/2 Smooth", "categoryId": "technic_connector", "availableColorIds": ["6", "12"] },
-      { "id": "2854", "name": "Technic, Engine Crankshaft", "categoryId": "technic_special", "availableColorIds": ["5", "6"] },
-      { "id": "2997", "name": "Wheel 8mm D.x7mm Spoked", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "15413", "name": "Tyre 24mm D.x7mm", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "3298", "name": "Slope 33 3x2", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "3297", "name": "Slope 33 3x4", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "4286", "name": "Slope 33 3x3", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12"] },
-      { "id": "4460", "name": "Slope 75 2x1x3", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3039", "name": "Slope 45 2x2", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "7", "8", "10", "11", "12"] },
-      { "id": "32013", "name": "Technic, Axle and Pin Connector Angled #1", "categoryId": "technic_connector", "availableColorIds": ["6", "8", "11"] },
-      { "id": "32016", "name": "Technic, Axle and Pin Connector Angled #2", "categoryId": "technic_connector", "availableColorIds": ["1", "4", "6", "8", "11"] },
-      { "id": "44", "name": "Turntable 4x4", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "48169", "name": "Hinge Plate 1x2 Swivel Top", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "6134", "name": "Hinge Brick 2x2 Top Plate", "categoryId": "functional_hinge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "4073", "name": "Plate, Round 1x1", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12", "13", "15", "17", "19", "21"] },
-      { "id": "4081b", "name": "Plate, Modified 1x1 with Clip Light", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "4085c", "name": "Plate, Modified 1x1 with Clip Vertical", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "61252", "name": "Plate, Modified 1x1 with Clip Horizontal", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "92593", "name": "Plate, Modified 1x4 with 2 Studs", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "2", "4", "5", "6", "8", "10", "11", "12"] },
-      { "id": "30357", "name": "Plate, Round 3x3", "categoryId": "standard_plate", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "18674", "name": "Plate, Round 2x2 with Open Studs", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "65803", "name": "Brick, Modified 1x2 with Studs on Side", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "85861", "name": "Plate, Round 1x1 with Open Stud", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "48729", "name": "Bar 1L with Clip", "categoryId": "functional_clip_handle", "availableColorIds": ["5", "6", "10", "11", "12", "13"] },
-      { "id": "30384", "name": "Hinge Brick 2x2 Base", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "3900", "name": "Minifigure, Utensil Magnifying Glass", "categoryId": "minifig_accessory", "availableColorIds": ["11", "13"] },
-      { "id": "30132", "name": "Minifigure, Weapon Pistol", "categoryId": "minifig_weapon", "availableColorIds": ["11", "7"] },
-      { "id": "3814", "name": "Minifigure, Utensil Wrench", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "5", "6", "11"] },
-      { "id": "3849", "name": "Minifigure, Weapon Lance", "categoryId": "minifig_weapon", "availableColorIds": ["5", "6", "11"] },
-      { "id": "6019", "name": "Plate, Modified 1x1 with Clip", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "30157", "name": "Plate, Modified 2x4 with Pins", "categoryId": "technic_brick", "availableColorIds": ["1", "4", "6", "11"] },
-      { "id": "32001", "name": "Technic, Liftarm 2x2 L-Shape", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "6", "11", "12"] },
-      { "id": "32007", "name": "Technic, Knob Wheel", "categoryId": "technic_gear", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32015", "name": "Technic, Axle and Pin Connector Angled #5", "categoryId": "technic_connector", "availableColorIds": ["6", "8", "11"] },
-      { "id": "32034", "name": "Technic, Axle and Pin Connector Angled #6", "categoryId": "technic_connector", "availableColorIds": ["1", "6", "8", "11"] },
-      { "id": "32068", "name": "Technic, Axle and Pin Connector Perpendicular 3L", "categoryId": "technic_connector", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32123b", "name": "Technic, Liftarm 1x3 with 2 Axle Holes and Pin", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "12"] },
-      { "id": "32184", "name": "Technic, Axle and Pin Connector Perpendicular 3L with 2 Pin Holes", "categoryId": "technic_connector", "availableColorIds": ["6", "8"] },
-      { "id": "32198", "name": "Technic, Gear 20 Tooth Bevel with Pin Hole", "categoryId": "technic_gear", "availableColorIds": ["6", "8", "11"] },
-      { "id": "32200", "name": "Technic, Liftarm 1x2 Thick with Pin Hole and Axle Hole", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32291", "name": "Technic, Axle and Pin Connector Perpendicular Double", "categoryId": "technic_connector", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32348", "name": "Technic, Liftarm 1x7 Bent (4-4) Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "11", "12"] },
-      { "id": "32526", "name": "Technic, Liftarm 3x5 L-Shape Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "11", "12"] },
-      { "id": "32555", "name": "Technic, Brick 5x5 Right Angle (1x4 - 1x4)", "categoryId": "technic_brick", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32556", "name": "Technic, Pin 3L with Friction Ridges and Stop Bush", "categoryId": "technic_connector", "availableColorIds": ["1", "4", "11"] },
-      { "id": "3705", "name": "Technic, Axle 4", "categoryId": "technic_axle", "availableColorIds": ["5", "11", "12"] },
-      { "id": "3737", "name": "Technic, Axle 10", "categoryId": "technic_axle", "availableColorIds": ["5", "11"] },
-      { "id": "4019", "name": "Technic, Gear 16 Tooth (Old style)", "categoryId": "technic_gear", "availableColorIds": ["5", "6"] },
-      { "id": "41678", "name": "Technic, Axle and Pin Connector Perpendicular", "categoryId": "technic_connector", "availableColorIds": ["6", "8"] },
-      { "id": "4261", "name": "Technic, Gear 14 Tooth Bevel", "categoryId": "technic_gear", "availableColorIds": ["5", "6"] },
-      { "id": "44294", "name": "Technic, Liftarm 1x7 with 3 Axle Holes", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "48989", "name": "Technic, Pin Connector Block 3x3x1", "categoryId": "technic_connector", "availableColorIds": ["1", "6", "11"] },
-      { "id": "55615", "name": "Technic, Pin Connector Round with 4 Clips", "categoryId": "technic_connector", "availableColorIds": ["6", "8"] },
-      { "id": "6538c", "name": "Technic, Axle Connector (Ridged)", "categoryId": "technic_connector", "availableColorIds": ["8", "11"] },
-      { "id": "6589", "name": "Technic, Gear 12 Tooth Bevel", "categoryId": "technic_gear", "availableColorIds": ["5", "6", "8"] },
-      { "id": "6628", "name": "Technic, Pin with Friction Ridges and Towball", "categoryId": "functional_towball", "availableColorIds": ["11"] },
-      { "id": "6632", "name": "Technic, Liftarm 1x3 Thin", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "5", "6", "10", "11", "12"] },
-      { "id": "75535", "name": "Technic, Pin Connector with Axle Hole", "categoryId": "technic_connector", "availableColorIds": ["1", "6", "8", "11"] },
-      { "id": "3046", "name": "Slope 45 2x2 Double Convex", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3678b", "name": "Slope 65 2x2x2", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "61678", "name": "Slope, Curved 4x1", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "93273", "name": "Slope, Curved 4x1 No Studs", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "88930", "name": "Slope, Curved 2x4x2/3 No Studs", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "32803", "name": "Slope, Inverted 45 2x2", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "11291", "name": "Plate, Modified 2x2 with Towball", "categoryId": "functional_towball", "availableColorIds": ["6", "11"] },
-      { "id": "14417", "name": "Plate, Modified 1x2 with Towball", "categoryId": "functional_towball", "availableColorIds": ["1", "6", "11"] },
-      { "id": "14418", "name": "Plate, Modified 1x2 with Towball Socket", "categoryId": "functional_towball", "availableColorIds": ["5", "6", "11"] },
-      { "id": "14419", "name": "Plate, Modified 1x2 with Small Towball Socket", "categoryId": "functional_towball", "availableColorIds": ["5", "6", "11"] },
-      { "id": "14704", "name": "Plate, Modified 1x2 with Small Towball", "categoryId": "functional_towball", "availableColorIds": ["6", "11"] },
-      { "id": "22890", "name": "Plate, Modified 1x2 with Towball", "categoryId": "functional_towball", "availableColorIds": ["6", "11"] },
-      { "id": "60849", "name": "Minifigure, Weapon Uzi", "categoryId": "minifig_weapon", "availableColorIds": ["11"] },
-      { "id": "61727", "name": "Minifigure, Utensil Paint Roller", "categoryId": "minifig_accessory", "availableColorIds": ["7", "6"] },
-      { "id": "87994", "name": "Bar 3L", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "5", "6", "8", "10", "11", "12"] },
-      { "id": "92690", "name": "Bar 1L with Angled Hollow Stud", "categoryId": "minifig_accessory", "availableColorIds": ["11", "10", "6"] },
-      { "id": "98313", "name": "Minifigure, Arm, Mechanical", "categoryId": "minifig_body", "availableColorIds": ["5", "6"] },
-      { "id": "x149", "name": "Minifigure, Hair Female Ponytail with Bangs", "categoryId": "minifig_body", "availableColorIds": ["7", "11", "12", "34"] },
-      { "id": "x81", "name": "Minifigure, Epaulette", "categoryId": "minifig_accessory", "availableColorIds": ["10", "11", "4", "1"] },
-      { "id": "2524", "name": "Minifigure, Backpack", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "7", "11"] },
-      { "id": "30115", "name": "Animal, Snake", "categoryId": "scenery_animal", "availableColorIds": ["2", "11"] },
-      { "id": "49668", "name": "Plate, Modified 1x1 with Tooth", "categoryId": "standard_plate_modified", "availableColorIds": ["10", "11", "12"] },
-      { "id": "6003", "name": "Plate, Modified 2x2 with Towball Receiver", "categoryId": "functional_towball", "availableColorIds": ["1", "6", "11"] },
-      { "id": "60583", "name": "Brick, Modified 1x1x2 with Shutter Holder", "categoryId": "structure_window_door", "availableColorIds": ["7", "10"] },
-      { "id": "60602", "name": "Glass for Frame 1x2x3", "categoryId": "structure_window_door", "availableColorIds": ["13", "14", "17"] },
-      { "id": "60800", "name": "Window 1x2x2 Shutter", "categoryId": "structure_window_door", "availableColorIds": ["4", "2", "1"] },
-      { "id": "6157", "name": "Wheel 43.2mm D.x26mm", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "87421", "name": "Panel 3x3x2 Corner", "categoryId": "structure_panel_wall", "availableColorIds": ["1", "10", "11"] },
-      { "id": "90195", "name": "Window 1x2x2 Castle", "categoryId": "structure_window_door", "availableColorIds": ["7", "5"] },
-      { "id": "47905", "name": "Brick, Modified 1x1 with Studs on 2 Sides", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "6", "10", "11", "12"] },
-      { "id": "13547", "name": "Slope, Curved 4x1 Double", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "30414", "name": "Brick, Modified 1x4 with 4 Studs on 1 Side", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "22886", "name": "Slope 33 3x3 Double Convex", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "92946", "name": "Slope 45 2x1 with 2/3 Cutout", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "24309", "name": "Slope, Curved 3x2", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "15672", "name": "Slope, Curved 2x2 Inverted", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "60477", "name": "Slope 45 4x4 Triple", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3049c", "name": "Slope 45 2x1 Double / Inverted", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3044b", "name": "Slope 45 2x1 with Pin Hole", "categoryId": "standard_brick_slope", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "22391", "name": "Brick, Arch 1x2 J-Arch", "categoryId": "standard_brick_arch", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "18654", "name": "Brick, Arch 1x3x2 Curved Top", "categoryId": "standard_brick_arch", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "30935", "name": "Brick, Arch 1x5x4", "categoryId": "standard_brick_arch", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "6081", "name": "Brick, Modified 1x4x1 1/3 No Studs", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "87618", "name": "Brick, Modified 1x5 with 2 Studs", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "2453", "name": "Brick 1x1x5", "categoryId": "standard_brick", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "4216", "name": "Brick, Modified 1x2 with Groove", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "6", "7", "10", "11"] },
-      { "id": "30145", "name": "Brick 2x2x3", "categoryId": "standard_brick", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "4079b", "name": "Minifigure, Utensil Seat 2x2", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "6", "7", "10", "11"] },
-      { "id": "3030", "name": "Plate 4x10", "categoryId": "standard_plate", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3033", "name": "Plate 6x10", "categoryId": "standard_plate", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "3958", "name": "Plate 6x6", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "4", "6", "10", "11"] },
-      { "id": "3026", "name": "Plate 6x24", "categoryId": "standard_plate", "availableColorIds": ["1", "6", "11"] },
-      { "id": "3867", "name": "Baseplate 16x16", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "6", "8", "11"] },
-      { "id": "3857", "name": "Baseplate 16x32", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "6"] },
-      { "id": "48x48", "name": "Baseplate 48x48", "categoryId": "standard_plate", "availableColorIds": ["2", "6"] },
-      { "id": "4201", "name": "Plate 8x16", "categoryId": "standard_plate", "availableColorIds": ["1", "6", "11"] },
-      { "id": "91405", "name": "Plate 16x16", "categoryId": "standard_plate", "availableColorIds": ["1", "2", "6", "8"] },
-      { "id": "18677", "name": "Plate, Modified 2x2 with Pin Hole", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "99206", "name": "Plate, Modified 2x2x2/3 with 2 Studs on Side", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "30355", "name": "Wedge, Plate 6x12", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "2450", "name": "Wedge, Plate 3x3 Cut Corner", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "30503", "name": "Wedge, Plate 4x4 Cut Corner", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "6106", "name": "Wedge, Plate 6x6 Cut Corner", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "48092", "name": "Plate, Modified 4x4 with 2x2 Cutout", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "6", "11"] },
-      { "id": "30033", "name": "Plate, Modified 2x2 with Grille", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "6", "11"] },
-      { "id": "4592c02", "name": "Tap 1x1", "categoryId": "minifig_accessory", "availableColorIds": ["6", "11"] },
-      { "id": "3941", "name": "Brick, Round 2x2", "categoryId": "standard_brick", "availableColorIds": ["1", "4", "6", "10", "11", "12", "13", "15", "17"] },
-      { "id": "6222", "name": "Brick, Round 4x4", "categoryId": "standard_brick", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "87081", "name": "Brick, Round 4x4 with 2x2 Hole", "categoryId": "standard_brick", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "6143", "name": "Brick, Round 2x2 with Axle Hole", "categoryId": "technic_brick", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "25269", "name": "Tile, Round 1x1 Quarter", "categoryId": "standard_tile", "availableColorIds": ["1", "2", "4", "6", "10", "11", "12", "21", "34"] },
-      { "id": "35787", "name": "Tile, Modified 2x2 with Studs on Corner", "categoryId": "standard_tile", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "10201", "name": "Tile, Modified 4x4 with Studs on Edge", "categoryId": "standard_tile", "availableColorIds": ["6", "8", "11"] },
-      { "id": "6881", "name": "Tile, Modified 6x6 with Corner Cut", "categoryId": "standard_tile", "availableColorIds": ["6", "11"] },
-      { "id": "35344", "name": "Tile 1x1 Half Circle", "categoryId": "standard_tile", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "24246", "name": "Tile 1x1 with Groove", "categoryId": "standard_tile", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "2432", "name": "Tile, Modified 1x2 with Handle", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "93095", "name": "Panel 1x2x1 with Rounded Corners", "categoryId": "structure_panel_wall", "availableColorIds": ["1", "10", "11", "13", "14", "17"] },
-      { "id": "2362a", "name": "Panel 1x2x3", "categoryId": "structure_panel_wall", "availableColorIds": ["1", "4", "6", "10", "11", "12", "13", "14", "17"] },
-      { "id": "4864b", "name": "Panel 1x2x2 with Solid Studs", "categoryId": "structure_panel_wall", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "2555", "name": "Tile, Modified 1x1 with Clip", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "30242", "name": "Plate 1x1 with Vertical Clip", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "6", "11"] },
-      { "id": "63868", "name": "Plate, Modified 1x2 with Clip on End", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "11476", "name": "Plate, Modified 1x2 with Clip on Top", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "60470b", "name": "Plate, Modified 1x2 with 2 Clips", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "60471", "name": "Hinge Plate 1x2 with 2 Fingers on Side", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "30541", "name": "Hinge Plate 1x2 Locking with 1 Finger on End", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "92582", "name": "Hinge Plate 2x2 Locking with 1 Finger", "categoryId": "functional_hinge", "availableColorIds": ["6", "11"] },
-      { "id": "47455", "name": "Hinge Brick 2x2 Top Plate Thin", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "2433", "name": "Hinge Bar 2L with 1 Finger", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "44822", "name": "Hinge Plate 1x2 Locking with 3 Fingers on Side", "categoryId": "functional_hinge", "availableColorIds": ["6", "11"] },
-      { "id": "44570", "name": "Hinge Plate 3x4 Locking", "categoryId": "functional_hinge", "availableColorIds": ["6", "11"] },
-      { "id": "2452", "name": "Hinge Plate 1x2 with 3 Fingers", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "60474", "name": "Plate, Round 4x4 with Hole", "categoryId": "standard_plate_modified", "availableColorIds": ["1", "6", "10", "11"] },
-      { "id": "48183", "name": "Wedge, Plate 3x4 with Stud Notches", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "43723", "name": "Wedge, Plate 3x2 Left", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "43722", "name": "Wedge, Plate 3x2 Right", "categoryId": "standard_plate_wedge", "availableColorIds": ["1", "2", "4", "5", "6", "10", "11", "12"] },
-      { "id": "32018", "name": "Technic, Brick 1x14 with Holes", "categoryId": "technic_brick", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32006", "name": "Technic, Liftarm 1x4 Thin with Stud Connector", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "11478", "name": "Technic, Liftarm 1x5 Thin with Axle Holes", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11", "12"] },
-      { "id": "18651", "name": "Technic, Axle 2L with Pin", "categoryId": "technic_axle", "availableColorIds": ["1", "6", "8"] },
-      { "id": "99008", "name": "Technic, Axle 4 with Center Stop", "categoryId": "technic_axle", "availableColorIds": ["4", "5", "11"] },
-      { "id": "32199", "name": "Technic, Axle 11", "categoryId": "technic_axle", "availableColorIds": ["5", "11"] },
-      { "id": "32072", "name": "Technic, Knob", "categoryId": "technic_gear", "availableColorIds": ["6", "11"] },
-      { "id": "4185", "name": "Technic, Wedge Belt Wheel (Pulley)", "categoryId": "technic_gear", "availableColorIds": ["1", "6", "11", "12"] },
-      { "id": "15100", "name": "Technic, Pin Connector with Axle Hole and 2 Pins", "categoryId": "technic_connector", "availableColorIds": ["6", "8"] },
-      { "id": "32557", "name": "Technic, Pin Connector Perpendicular 3L with 4 Pins", "categoryId": "technic_connector", "availableColorIds": ["1", "4", "6", "11"] },
-      { "id": "10197", "name": "Technic, Axle and Pin Connector Hub with 3 Axles", "categoryId": "technic_connector", "availableColorIds": ["5", "6"] },
-      { "id": "2736", "name": "Technic, Axle 1L with Towball", "categoryId": "functional_towball", "availableColorIds": ["5", "11"] },
-      { "id": "6629", "name": "Technic, Liftarm 1x9 Bent (5-3)", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32249", "name": "Technic, Liftarm 3x5 Thin", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32141", "name": "Technic, Liftarm 1x5 Thick with Axle Holes", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "55013", "name": "Technic, Axle 8 with Stop", "categoryId": "technic_axle", "availableColorIds": ["5", "11"] },
-      { "id": "60484", "name": "Technic, Liftarm 3x3 T-Shape Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "6", "11", "12"] },
-      { "id": "32009", "name": "Technic, Liftarm 1x11.5 Double Bent", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "6", "11"] },
-      { "id": "6575", "name": "Technic, Cam", "categoryId": "technic_gear", "availableColorIds": ["12", "11", "6"] },
-      { "id": "4716", "name": "Technic, Gear Worm Screw", "categoryId": "technic_gear", "availableColorIds": ["5", "6"] },
-      { "id": "6587", "name": "Technic, Axle 3 with Stud", "categoryId": "technic_axle", "availableColorIds": ["6", "8"] },
-      { "id": "32126", "name": "Technic, Liftarm 1x5 Thin with Studs", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "65413", "name": "Technic, Gear 12 Tooth Bevel, Half", "categoryId": "technic_gear", "availableColorIds": ["8"] },
-      { "id": "18947", "name": "Technic, Gear 16 Tooth with Clutch", "categoryId": "technic_gear", "availableColorIds": ["8"] },
-      { "id": "18575", "name": "Technic, Pin Connector Hub with 2 Pins", "categoryId": "technic_connector", "availableColorIds": ["6", "8"] },
-      { "id": "2819", "name": "Technic, Steering Wheel Small", "categoryId": "technic_special", "availableColorIds": ["10", "11", "6"] },
-      { "id": "32069", "name": "Technic, Steering Arm 6.5x2 with Towball Socket", "categoryId": "technic_special", "availableColorIds": ["6", "11"] },
-      { "id": "4273b", "name": "Technic, Universal Joint 3L", "categoryId": "technic_gear", "availableColorIds": ["5", "6"] },
-      { "id": "18948", "name": "Technic, Universal Joint 4L", "categoryId": "technic_gear", "availableColorIds": ["5", "6"] },
-      { "id": "92911", "name": "Technic, Suspension Shock Absorber", "categoryId": "technic_special", "availableColorIds": ["6", "12"] },
-      { "id": "60596", "name": "Frame 1x4x6", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10", "11"] },
-      { "id": "3853", "name": "Window 1x4x3", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10", "11"] },
-      { "id": "3854", "name": "Glass for Window 1x4x3", "categoryId": "structure_window_door", "availableColorIds": ["13", "14", "17", "20"] },
-      { "id": "3856", "name": "Glass for Window 1x2x3 Pane", "categoryId": "structure_window_door", "availableColorIds": ["13", "14", "17"] },
-      { "id": "60608", "name": "Pane for Window 1x2x3", "categoryId": "structure_window_door", "availableColorIds": ["13", "14", "17"] },
-      { "id": "20309", "name": "Window 1x4x1 2/3 Arched Top", "categoryId": "structure_window_door", "availableColorIds": ["7", "10"] },
-      { "id": "30044", "name": "Window 1x2x2 2/3", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10", "11"] },
-      { "id": "30046", "name": "Window 1x2x2 2/3 Pane", "categoryId": "structure_window_door", "availableColorIds": ["13", "14", "17"] },
-      { "id": "57895", "name": "Glass for Window 1x4x6", "categoryId": "structure_window_door", "availableColorIds": ["13", "14", "17", "20"] },
-      { "id": "35315", "name": "Glass for Frame 1x4x3", "categoryId": "structure_window_door", "availableColorIds": ["13", "14"] },
-      { "id": "3533", "name": "Door 1x3x4 Left", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10"] },
-      { "id": "3534", "name": "Door 1x3x4 Right", "categoryId": "structure_window_door", "availableColorIds": ["1", "4", "7", "10"] },
-      { "id": "3788", "name": "Car Mudguard 2x4", "categoryId": "transport_vehicle", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "18974", "name": "Mudguard 2x4 with Arch", "categoryId": "transport_vehicle", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "98282", "name": "Mudguard 1 1/2x6x1", "categoryId": "transport_vehicle", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "2695", "name": "Wheel 30mm D. x 13mm", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "10", "11", "12"] },
-      { "id": "2696", "name": "Tyre 30mm D. x 13mm", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "13971", "name": "Wheel 18x8 with Fake Bolts", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "15038", "name": "Tyre 56x26 Balloon", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "42610", "name": "Wheel 11mm D. x 8mm", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "30028", "name": "Tyre 14mm D. x 4mm", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "56891", "name": "Wheel 30.4x14", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11", "12"] },
-      { "id": "56890", "name": "Tyre 30.4x14", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "56902", "name": "Wheel 18x8", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11", "12"] },
-      { "id": "87414", "name": "Tyre 18x8", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "2902", "name": "Wheel 24x15 with Technic Pin", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "2903", "name": "Tyre 24x15", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "11209", "name": "Wheel 15x6 Motorcycle", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "11208", "name": "Tyre 15x6 Motorcycle", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "3641", "name": "Tyre 49.5x20", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "32019", "name": "Tyre 62.4x20", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "6578", "name": "Tyre 37x22", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "6594", "name": "Wheel 43.2x28", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11", "12"] },
-      { "id": "6595", "name": "Tyre 43.2x28", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "3482", "name": "Wheel 16x12", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "3483", "name": "Tyre 16x12", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "x1815", "name": "Boat Hull 16x10x3", "categoryId": "transport_vehicle", "availableColorIds": ["1", "4", "11"] },
-      { "id": "2551", "name": "Boat Hull 12x10x3", "categoryId": "transport_vehicle", "availableColorIds": ["1", "4", "11"] },
-      { "id": "792c01", "name": "Train, Track 12v Straight", "categoryId": "transport_train", "availableColorIds": ["5"] },
-      { "id": "793c01", "name": "Train, Track 12v Curve", "categoryId": "transport_train", "availableColorIds": ["5"] },
-      { "id": "53401", "name": "Train, Track Plastic (RC) Straight", "categoryId": "transport_train", "availableColorIds": ["5"] },
-      { "id": "53400", "name": "Train, Track Plastic (RC) Curve", "categoryId": "transport_train", "availableColorIds": ["5"] },
-      { "id": "88646c01", "name": "Train, Track Flex-Track", "categoryId": "transport_train", "availableColorIds": ["5"] },
-      { "id": "4488", "name": "Plate, Modified 2x2 with Wheel Holder", "categoryId": "transport_vehicle", "availableColorIds": ["1", "6", "11"] },
-      { "id": "2655", "name": "Plate, Modified 2x2 with Towball Socket", "categoryId": "functional_towball", "availableColorIds": ["1", "6", "11"] },
-      { "id": "2508", "name": "Plate, Modified 2x2 with Towball", "categoryId": "functional_towball", "availableColorIds": ["1", "6", "11"] },
-      { "id": "87990", "name": "Minifigure, Hair Short Tousled", "categoryId": "minifig_body", "availableColorIds": ["7", "8", "11", "12", "34"] },
-      { "id": "98133", "name": "Minifigure, Utensil Binoculars", "categoryId": "minifig_accessory", "availableColorIds": ["11", "6", "7"] },
-      { "id": "62576", "name": "Minifigure, Utensil Ice Skates", "categoryId": "minifig_accessory", "availableColorIds": ["6", "10"] },
-      { "id": "3819", "name": "Minifigure, Visor Standard", "categoryId": "minifig_accessory", "availableColorIds": ["1", "4", "10", "11", "13", "14", "15", "17"] },
-      { "id": "2449", "name": "Minifigure, Helmet with Chin Guard", "categoryId": "minifig_accessory", "availableColorIds": ["5", "6", "11"] },
-      { "id": "95228", "name": "Minifigure, Weapon Trident", "categoryId": "minifig_weapon", "availableColorIds": ["12", "34"] },
-      { "id": "37776", "name": "Lantern", "categoryId": "minifig_accessory", "availableColorIds": ["11", "7"] },
-      { "id": "4088", "name": "Minifigure, Utensil Goblet", "categoryId": "minifig_accessory", "availableColorIds": ["12", "6"] },
-      { "id": "30268", "name": "Minifigure, Utensil Book", "categoryId": "minifig_accessory", "availableColorIds": ["7", "11"] },
-      { "id": "30124", "name": "Minifigure, Utensil Radio", "categoryId": "minifig_accessory", "availableColorIds": ["11", "6"] },
-      { "id": "3841", "name": "Minifigure, Weapon Axe", "categoryId": "minifig_weapon", "availableColorIds": ["7", "5", "6"] },
-      { "id": "3844", "name": "Minifigure, Helmet Knight", "categoryId": "minifig_accessory", "availableColorIds": ["5", "6"] },
-      { "id": "3848", "name": "Minifigure, Weapon Halberd", "categoryId": "minifig_weapon", "availableColorIds": ["5", "6"] },
-      { "id": "2446", "name": "Minifigure, Helmet with Side Plumes", "categoryId": "minifig_accessory", "availableColorIds": ["5", "6"] },
-      { "id": "4502a", "name": "Minifigure, Plume Feathers", "categoryId": "minifig_accessory", "availableColorIds": ["10", "4", "1"] },
-      { "id": "4497", "name": "Minifigure, Weapon Crossbow", "categoryId": "minifig_weapon", "availableColorIds": ["7", "11"] },
-      { "id": "30141", "name": "Minifigure, Weapon Musket", "categoryId": "minifig_weapon", "availableColorIds": ["7", "11"] },
-      { "id": "30134", "name": "Minifigure, Weapon Revolver", "categoryId": "minifig_weapon", "availableColorIds": ["7", "11"] },
-      { "id": "62743", "name": "Minifigure, Weapon Sword, Scimitar", "categoryId": "minifig_weapon", "availableColorIds": ["6", "5"] },
-      { "id": "44658", "name": "Minifigure, Weapon Sword, Katana", "categoryId": "minifig_weapon", "availableColorIds": ["6", "5", "12"] },
-      { "id": "30173", "name": "Minifigure, Weapon Nunchucks", "categoryId": "minifig_weapon", "availableColorIds": ["11"] },
-      { "id": "30088", "name": "Minifigure, Life Preserver", "categoryId": "minifig_accessory", "availableColorIds": ["10", "4", "34"] },
-      { "id": "30169", "name": "Minifigure, Goggles Modern", "categoryId": "minifig_accessory", "availableColorIds": ["11", "10"] },
-      { "id": "30137", "name": "Minifigure, Utensil Tool Box", "categoryId": "minifig_accessory", "availableColorIds": ["4", "1"] },
-      { "id": "30231", "name": "Minifigure, Utensil Surfboard", "categoryId": "minifig_accessory", "availableColorIds": ["10", "21"] },
-      { "id": "62575", "name": "Minifigure, Utensil Skis", "categoryId": "minifig_accessory", "availableColorIds": ["4", "1", "11"] },
-      { "id": "3959", "name": "Minifigure, Utensil Torch", "categoryId": "minifig_accessory", "availableColorIds": ["11"] },
-      { "id": "30104", "name": "Minifigure, Weapon Chain", "categoryId": "minifig_weapon", "availableColorIds": ["11", "5"] },
-      { "id": "x169", "name": "Minifigure, Hair Female Pigtails", "categoryId": "minifig_body", "availableColorIds": ["7", "11", "12", "34"] },
-      { "id": "88295", "name": "Minifigure, Hair Female Long with Braid", "categoryId": "minifig_body", "availableColorIds": ["7", "8", "11", "12", "34"] },
-      { "id": "90396", "name": "Minifigure, Hair Short Wavy", "categoryId": "minifig_body", "availableColorIds": ["7", "8", "11", "12", "34"] },
-      { "id": "13660", "name": "Plant, Tree, Small Trunk", "categoryId": "scenery_plant_flower", "availableColorIds": ["7", "2"] },
-      { "id": "6124", "name": "Animal, Skeleton Horse", "categoryId": "scenery_animal", "availableColorIds": ["10"] },
-      { "id": "11567", "name": "Animal, Crab", "categoryId": "scenery_animal", "availableColorIds": ["4", "34"] },
-      { "id": "30114", "name": "Animal, Scorpion", "categoryId": "scenery_animal", "availableColorIds": ["11", "8"] },
-      { "id": "99258", "name": "Animal, Dog, Great Dane", "categoryId": "scenery_animal", "availableColorIds": ["11", "7"] },
-      { "id": "49097", "name": "Animal, Horse", "categoryId": "scenery_animal", "availableColorIds": ["10", "7", "11"] },
-      { "id": "4493c01", "name": "Animal, Horse with Saddle", "categoryId": "scenery_animal", "availableColorIds": ["10", "7", "11"] },
-      { "id": "6178", "name": "Tile, Modified 6x12 with Studs on Edges", "categoryId": "standard_tile", "availableColorIds": ["6", "11"] },
-      { "id": "41530", "name": "Technic, Propeller 8 Blade 5 Diameter", "categoryId": "technic_special", "availableColorIds": ["6", "11", "12"] },
-      { "id": "41531", "name": "Technic, Cylinder 4x4x1 2/3 with Holes", "categoryId": "technic_special", "availableColorIds": ["6", "11"] },
-      { "id": "30373", "name": "Wedge, Plate 6x8", "categoryId": "standard_plate_wedge", "availableColorIds": ["6", "11"] },
-      { "id": "90498", "name": "Tile 8x16", "categoryId": "standard_tile", "availableColorIds": ["6", "11"] },
-      { "id": "90398", "name": "Minifigure, Statuette / Trophy", "categoryId": "minifig_accessory", "availableColorIds": ["12", "6"] },
-      { "id": "2552", "name": "Flag 3x2 with clips", "categoryId": "minifig_accessory", "availableColorIds": ["10", "11", "4", "1"] },
-      { "id": "30293", "name": "Rock Boulder, Top", "categoryId": "scenery_rock_landscape", "availableColorIds": ["5"] },
-      { "id": "30294", "name": "Rock Boulder, Bottom", "categoryId": "scenery_rock_landscape", "availableColorIds": ["5"] },
-      { "id": "6082", "name": "Rock Panel 2x4x6", "categoryId": "scenery_rock_landscape", "availableColorIds": ["5", "7"] },
-      { "id": "6083", "name": "Rock Panel 3x8x7", "categoryId": "scenery_rock_landscape", "availableColorIds": ["5", "7"] },
-      { "id": "30271", "name": "Animal, Alligator / Crocodile", "categoryId": "scenery_animal", "availableColorIds": ["2"] },
-      { "id": "6187", "name": "Bar 1x4x3 Window", "categoryId": "structure_support", "availableColorIds": ["11", "6", "10"] },
-      { "id": "30192", "name": "Minifigure, Utensil Pitchfork", "categoryId": "minifig_accessory", "availableColorIds": ["7", "11"] },
-      { "id": "30090", "name": "Plate, Modified 2x3 with 4 Studs", "categoryId": "standard_plate_modified", "availableColorIds": ["6", "11"] },
-      { "id": "4697b", "name": "Technic, Pneumatic T-Piece", "categoryId": "technic_special", "availableColorIds": ["1", "6"] },
-      { "id": "47224", "name": "Technic, Brick 4x4 with 4 Pin Holes", "categoryId": "technic_brick", "availableColorIds": ["6", "11"] },
-      { "id": "42022", "name": "Technic, Suspension Arm", "categoryId": "technic_special", "availableColorIds": ["6", "11"] },
-      { "id": "32187", "name": "Technic, Driving Ring Extension", "categoryId": "technic_gear", "availableColorIds": ["5", "6"] },
-      { "id": "32185", "name": "Technic, Axle and Pin Connector Perpendicular Double Split", "categoryId": "technic_connector", "availableColorIds": ["6", "8"] },
-      { "id": "41669", "name": "Technic, Liftarm 1x3 with 2 Axle Holes", "categoryId": "technic_beam", "availableColorIds": ["6", "12"] },
-      { "id": "40244", "name": "Technic, Liftarm 1x7 with Bent Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "32056", "name": "Technic, Liftarm 3x3 Bent", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "33299", "name": "Technic, Liftarm 3x3 with Quarter Ellipse Thin", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "6", "11", "12"] },
-      { "id": "32250", "name": "Technic, Liftarm 3x5 Thin", "categoryId": "technic_beam", "availableColorIds": ["1", "6", "11"] },
-      { "id": "64179", "name": "Technic, Liftarm 5x7 Open Center Frame", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "6", "11"] },
-      { "id": "64178", "name": "Technic, Liftarm 5x11 Open Center Frame", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "6", "11"] },
-      { "id": "99773", "name": "Technic, Liftarm 3x5 H-Shape Thick", "categoryId": "technic_beam", "availableColorIds": ["1", "4", "6", "11"] },
-      { "id": "49137", "name": "Technic, Shock Absorber 10L", "categoryId": "technic_special", "availableColorIds": ["6", "12"] },
-      { "id": "2909c02", "name": "Technic, Shock Absorber 6.5L", "categoryId": "technic_special", "availableColorIds": ["6", "12"] },
-      { "id": "18946", "name": "Technic, Gear 16 Tooth with Clutch on Both Sides", "categoryId": "technic_gear", "availableColorIds": ["8"] },
-      { "id": "18945", "name": "Technic, Gear 24 Tooth Clutch", "categoryId": "technic_gear", "availableColorIds": ["8"] },
-      { "id": "6588", "name": "Technic, Gear 40 Tooth (Old Style)", "categoryId": "technic_gear", "availableColorIds": ["5", "6"] },
-      { "id": "3647", "name": "Technic, Gear 8 Tooth", "categoryId": "technic_gear", "availableColorIds": ["5", "6", "11"] },
-      { "id": "32498", "name": "Technic, Gear 36 Tooth Double Bevel", "categoryId": "technic_gear", "availableColorIds": ["5", "6", "11"] },
-      { "id": "18576", "name": "Technic, Turntable Large Type 2, Bottom", "categoryId": "functional_hinge", "availableColorIds": ["11"] },
-      { "id": "18577", "name": "Technic, Turntable Large Type 2, Top", "categoryId": "functional_hinge", "availableColorIds": ["6"] },
-      { "id": "99010", "name": "Technic, Turntable Large Type 3, Bottom", "categoryId": "functional_hinge", "availableColorIds": ["11"] },
-      { "id": "99009", "name": "Technic, Turntable Large Type 3, Top", "categoryId": "functional_hinge", "availableColorIds": ["6"] },
-      { "id": "4623b", "name": "Hinge Plate 1x2 Locking with 1 Finger on Top", "categoryId": "functional_hinge", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "4315", "name": "Hinge Plate 1x4 with Pin Hole", "categoryId": "functional_hinge", "availableColorIds": ["11", "1", "6"] },
-      { "id": "73983", "name": "Hinge Plate 1x2 Locking with 2 Fingers on Side and Hole", "categoryId": "functional_hinge", "availableColorIds": ["6", "11"] },
-      { "id": "2440", "name": "Hinge Panel 6x3", "categoryId": "functional_hinge", "availableColorIds": ["1", "6", "11"] },
-      { "id": "48171", "name": "Hinge Plate 1x2 with 2 Fingers and Angled Side", "categoryId": "functional_hinge", "availableColorIds": ["6", "11"] },
-      { "id": "44842", "name": "Tire 17.5mm D. x 6mm", "categoryId": "transport_tyre", "availableColorIds": ["11"] },
-      { "id": "41896", "name": "Wheel 17.5mm D. x 6mm", "categoryId": "transport_wheel_rim", "availableColorIds": ["6", "11"] },
-      { "id": "bb0124", "name": "String, Cord Thin 50cm", "categoryId": "minifig_accessory", "availableColorIds": ["11", "10"] },
-      { "id": "bb0070", "name": "String with End Studs 21L", "categoryId": "minifig_accessory", "availableColorIds": ["11", "10"] },
-      { "id": "x77ac50", "name": "Hose, Ribbed 7mm D. 50L", "categoryId": "technic_special", "availableColorIds": ["6", "11"] },
-      { "id": "x1687", "name": "Rubber Band Large", "categoryId": "technic_special", "availableColorIds": ["4", "10", "12"] },
-      { "id": "x90", "name": "Rubber Belt Large", "categoryId": "technic_special", "availableColorIds": ["11"] },
-      { "id": "3962b", "name": "Minifigure, Utensil Walkie Talkie", "categoryId": "minifig_accessory", "availableColorIds": ["11", "6"] },
-      { "id": "4006", "name": "Minifigure, Utensil Spanner / Screwdriver", "categoryId": "minifig_accessory", "availableColorIds": ["11", "6", "5"] },
-      { "id": "30259", "name": "Minifigure, Utensil Briefcase", "categoryId": "minifig_accessory", "availableColorIds": ["7", "11"] },
-      { "id": "30222", "name": "Minifigure, Utensil Ice Cream Cone", "categoryId": "minifig_accessory", "availableColorIds": ["8", "21"] },
-      { "id": "33121b", "name": "Minifigure, Food Banana", "categoryId": "minifig_accessory", "availableColorIds": ["12"] },
-      { "id": "33051", "name": "Minifigure, Food Apple", "categoryId": "minifig_accessory", "availableColorIds": ["4"] },
-      { "id": "33085", "name": "Minifigure, Food Carrot", "categoryId": "minifig_accessory", "availableColorIds": ["34"] },
-      { "id": "6254", "name": "Minifigure, Food Croissant", "categoryId": "minifig_accessory", "availableColorIds": ["8", "34"] },
-      { "id": "98138pb007", "name": "Tile, Round 1x1 with Cookie pattern", "categoryId": "standard_tile", "availableColorIds": ["8"] },
-      { "id": "3070bpb09", "name": "Tile 1x1 with Letter pattern", "categoryId": "standard_tile", "availableColorIds": ["10"] },
-      { "id": "3069bpb013", "name": "Tile 1x2 with Keyboard pattern", "categoryId": "standard_tile", "availableColorIds": ["6"] },
-      { "id": "3069bpb423", "name": "Tile 1x2 with Gauge pattern", "categoryId": "standard_tile", "availableColorIds": ["10"] },
-      { "id": "3068bpb027", "name": "Tile 2x2 with Computer Screen pattern", "categoryId": "standard_tile", "availableColorIds": ["6"] },
-      { "id": "87079pb071", "name": "Tile 2x4 with 'Keep Out' Sign pattern", "categoryId": "standard_tile", "availableColorIds": ["12"] },
-      { "id": "3068bpb1011", "name": "Tile 2x2 with Map pattern", "categoryId": "standard_tile", "availableColorIds": ["8"] },
-      { "id": "3069bpb0810", "name": "Tile 1x2 with Smartphone pattern", "categoryId": "standard_tile", "availableColorIds": ["11"] },
-      { "id": "98138pb015", "name": "Tile, Round 1x1 with Pizza Slice pattern", "categoryId": "standard_tile", "availableColorIds": ["12"] },
-      { "id": "98138pb024", "name": "Tile, Round 1x1 with Donut pattern", "categoryId": "standard_tile", "availableColorIds": ["10"] },
-      { "id": "3068bpb0945", "name": "Tile 2x2 with 'Wanted Poster' pattern", "categoryId": "standard_tile", "availableColorIds": ["8"] },
-      { "id": "3865", "name": "Tree, Palm Trunk", "categoryId": "scenery_plant_flower", "availableColorIds": ["7"] },
-      { "id": "2518", "name": "Tree, Palm Leaf Small 6x5", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "2519", "name": "Tree, Palm Leaf Large 10x5", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "3742c01", "name": "Plant, Flower Small", "categoryId": "scenery_plant_flower", "availableColorIds": ["4", "10", "12"] },
-      { "id": "x8", "name": "Plant, Tree, Cypress", "categoryId": "scenery_plant_flower", "availableColorIds": ["2"] },
-      { "id": "6289", "name": "Minifigure, Weapon Cutlass", "categoryId": "minifig_weapon", "availableColorIds": ["5", "6", "7"] },
-      { "id": "2561", "name": "Minifigure, Weapon Musket, Blunderbuss", "categoryId": "minifig_weapon", "availableColorIds": ["7", "11"] },
-      { "id": "30140", "name": "Minifigure, Utensil Fence 1x4x2", "categoryId": "structure_support", "availableColorIds": ["10", "7", "11"] },
-      { "id": "4449", "name": "Minifigure, Utensil Briefcase with Handle", "categoryId": "minifig_accessory", "availableColorIds": ["7", "11"] },
-      { "id": "3839b", "name": "Plate, Modified 1x2 with Handles", "categoryId": "functional_clip_handle", "availableColorIds": ["1", "4", "6", "10", "11", "12"] },
-      { "id": "3836", "name": "Minifigure, Utensil Push Broom", "categoryId": "minifig_accessory", "availableColorIds": ["7", "4"] },
-      { "id": "x148", "name": "Minifigure, Bandana", "categoryId": "minifig_accessory", "availableColorIds": ["4", "1", "11"] },
-      { "id": "3957b", "name": "Antenna 1x4 with Rounded Top", "categoryId": "minifig_accessory", "availableColorIds": ["4", "6", "11"] },
-      { "id": "3963", "name": "Minifigure, Utensil Power Blast", "categoryId": "minifig_weapon", "availableColorIds": ["17", "19", "34"] },
-      { "id": "30236", "name": "Brick, Modified 1x2 with Handle", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "2921", "name": "Brick, Modified 1x1 with Handle", "categoryId": "standard_brick_modified", "availableColorIds": ["1", "4", "6", "10", "11"] },
-      { "id": "44809", "name": "Technic, Pin Connector Toggle Joint Smooth", "categoryId": "technic_connector", "availableColorIds": ["6"] },
-      { "id": "47994", "name": "Technic, Axle and Pin Connector Toggle Joint Toothed", "categoryId": "technic_connector", "availableColorIds": ["6"] },
-      { "id": "4696", "name": "Technic, Flex-System Hose 16L", "categoryId": "technic_special", "availableColorIds": ["6", "11"] },
-      { "id": "32209", "name": "Technic, Axle 5.5", "categoryId": "technic_axle", "availableColorIds": ["5"] },
-      { "id": "32195", "name": "Technic, Steering Arm 6x2 with Towball Socket", "categoryId": "technic_special", "availableColorIds": ["6", "11"] },
-      { "id": "6572", "name": "Technic, Differential Gear 24-16", "categoryId": "technic_gear", "availableColorIds": ["5", "6"] }
-    ];
+    // --- APP LOGIC ---
     
-    // --- APP LOGIC (from index.tsx) ---
-    
-    // --- DATA MAPS ---
-    const COLOR_MAP = COLORS.reduce((acc, color) => {
-      acc[color.id] = color;
-      return acc;
-    }, {});
+    // --- API CONFIG ---
+    const REBRICKABLE_API_URL = 'https://rebrickable.com/api/v3/lego';
+    const REBRICKABLE_API_KEY = '20c78cc607d6059c8d2a61338d851590';
 
-    const PART_MAP = ALL_PARTS.reduce((acc, part) => {
-      acc[part.id] = part;
-      return acc;
-    }, {});
-    
-    const ALL_CATEGORIES_MAP = {};
-    function populateCategoryMap(categories) {
-        categories.forEach(cat => {
-            ALL_CATEGORIES_MAP[cat.id] = cat;
-            if (cat.subcategories) {
-                populateCategoryMap(cat.subcategories);
-            }
-        });
-    }
-    populateCategoryMap(CATEGORIES);
+    // --- DATA MAPS (populated dynamically) ---
+    let COLOR_MAP = {};
+    let PART_MAP = {};
 
     // --- ICONS ---
     const CatalogIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`;
     const CollectionIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polygon points="2 17 12 22 22 17"></polygon><polygon points="2 12 12 17 22 12"></polygon></svg>`;
-    const FolderIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2z"></path></svg>`;
     const PlusIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
     const MinusIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
     const XIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
@@ -770,23 +76,29 @@
     const DownloadIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
     const ImageIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
     const TrashIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-    const ChevronRightIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
-    const ChevronDownIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+    const SearchIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`;
 
     // --- STATE MANAGEMENT ---
     let state = {
       currentView: 'catalog',
-      selectedCategory: 'all',
-      expandedCategories: new Set(),
+      categories: [],
+      selectedCategoryId: null,
+      currentParts: [],
       searchQuery: '',
+      searchResults: null,
+      isLoading: true, // Start in loading state for initialization
+      apiError: null,
       selectedPartId: null,
       isSidebarOpen: window.innerWidth >= 1024,
       modal: {
           selectedColorId: null,
           quantity: 1,
+          isLoadingColors: false,
+          isImageLoading: false,
+          partImageUrl: null,
       },
       collection: {},
-      importExportStatus: { message: '', type: '' }, // 'success' or 'error'
+      importExportStatus: { message: '', type: '' },
     };
 
     function loadState() {
@@ -796,18 +108,12 @@
           const parsed = JSON.parse(savedCollection);
           if (typeof parsed === 'object' && parsed !== null) {
             state.collection = parsed;
-          } else {
-            state.collection = {};
           }
         } catch (e) {
           console.error("Failed to parse lego collection from localStorage", e);
           state.collection = {};
         }
       }
-      // Expand top-level categories by default
-      CATEGORIES.forEach(cat => {
-        if (cat.subcategories) state.expandedCategories.add(cat.id);
-      });
     }
 
     function saveState() {
@@ -820,34 +126,204 @@
     const headerContainer = document.getElementById('header-container');
     const mainContent = document.getElementById('main-content');
     const modalContainer = document.getElementById('modal-container');
+    
+    // --- API & DATA HANDLING ---
+    
+    // For requests that return a paginated list of results
+    async function apiFetchPaginated(baseEndpoint) {
+        let allResults = [];
+        let page = 1;
+        const PAGE_SIZE = 1000;
+
+        while (true) {
+            const separator = baseEndpoint.includes('?') ? '&' : '?';
+            const fullUrl = `${REBRICKABLE_API_URL}${baseEndpoint}${separator}page=${page}&page_size=${PAGE_SIZE}`;
+            
+            const response = await fetch(fullUrl, {
+                headers: { 'Authorization': `key ${REBRICKABLE_API_KEY}` }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: 'Не удалось получить детали ошибки.' }));
+                throw new Error(`Ошибка API Rebrickable: ${response.status} - ${errorData.detail}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.results && data.results.length > 0) {
+                allResults = allResults.concat(data.results);
+            }
+            
+            if (!data.next) {
+                break; // Exit the loop when there's no 'next' page URL
+            }
+            page++;
+        }
+        return allResults;
+    }
+
+    function processPartData(apiPart) {
+      const partData = {
+          id: apiPart.part_num,
+          name: apiPart.name,
+          rebrickable_img_url: apiPart.part_img_url,
+          categoryId: apiPart.part_cat_id,
+      };
+      PART_MAP[partData.id] = { ...PART_MAP[partData.id], ...partData };
+      return partData;
+    }
+
+    async function fetchCategories() {
+        try {
+            const categories = await apiFetchPaginated('/part_categories/');
+            state.categories = categories.sort((a, b) => a.name.localeCompare(b.name));
+        } catch (error) {
+            console.error("Ошибка загрузки категорий:", error);
+            state.apiError = `Не удалось загрузить категории: ${error.message}`;
+            state.categories = [];
+        }
+    }
+
+    async function fetchAllColors() {
+        try {
+            const colors = await apiFetchPaginated('/colors/');
+            colors.forEach(colorInfo => {
+                const colorIdStr = String(colorInfo.id);
+                COLOR_MAP[colorIdStr] = {
+                    id: colorIdStr,
+                    name: colorInfo.name,
+                    hex: `#${colorInfo.rgb}`,
+                    isTransparent: colorInfo.is_trans,
+                };
+            });
+        } catch (error) {
+            console.error("Ошибка загрузки цветов:", error);
+            state.apiError = (state.apiError ? state.apiError + '\n' : '') + 'Не удалось загрузить палитру цветов.';
+        }
+    }
+
+    async function loadPartsForCategory(categoryId) {
+        state.selectedCategoryId = categoryId;
+        state.isLoading = true;
+        state.apiError = null;
+        state.searchResults = null;
+        state.searchQuery = '';
+        state.currentParts = [];
+        updateUI();
+
+        try {
+            const parts = await apiFetchPaginated(`/parts/?part_cat_id=${categoryId}`);
+            state.currentParts = parts.map(processPartData);
+        } catch (error) {
+            console.error("Rebrickable parts fetch failed:", error);
+            state.apiError = error.message;
+        } finally {
+            state.isLoading = false;
+            updateUI();
+        }
+    }
+    
+    async function searchRebrickableParts(query) {
+        if (!query || query.trim().length === 0) {
+            state.searchResults = null;
+            state.isLoading = false;
+            state.selectedCategoryId = null; // Exit category view on search
+            updateUI();
+            return;
+        }
+        state.isLoading = true;
+        state.apiError = null;
+        state.selectedCategoryId = null; // Exit category view on search
+        updateUI();
+
+        try {
+            const parts = await apiFetchPaginated(`/parts/?search=${encodeURIComponent(query)}`);
+            state.searchResults = parts.map(processPartData);
+        } catch (error) {
+            console.error("Rebrickable search failed:", error);
+            state.apiError = error.message;
+            state.searchResults = [];
+        } finally {
+            state.isLoading = false;
+            updateUI();
+        }
+    }
+    
+    async function fetchPartColors(partId) {
+        state.modal.isLoadingColors = true;
+        renderModal();
+        
+        try {
+            const colorAvailability = await apiFetchPaginated(`/parts/${partId}/colors/`);
+            const colorIds = colorAvailability.map(c => String(c.color_id));
+
+            PART_MAP[partId].availableColorIds = colorIds;
+            if (colorIds.length > 0 && !state.modal.selectedColorId) {
+                state.modal.selectedColorId = colorIds[0];
+                fetchPartColorSpecifics(partId, colorIds[0]); // Fetch image for default selected color
+            }
+        } catch (error) {
+            console.error(`Failed to fetch colors for ${partId}:`, error);
+            PART_MAP[partId].availableColorIds = PART_MAP[partId].availableColorIds || [];
+        } finally {
+            state.modal.isLoadingColors = false;
+            renderModal();
+        }
+    }
+    
+    async function fetchPartColorSpecifics(partId, colorId) {
+        state.modal.isImageLoading = true;
+        renderModal();
+
+        try {
+            const url = `${REBRICKABLE_API_URL}/parts/${partId}/colors/${colorId}/`;
+            const response = await fetch(url, { headers: { 'Authorization': `key ${REBRICKABLE_API_KEY}` } });
+            if (!response.ok) throw new Error('Image not found for this color.');
+            const data = await response.json();
+            
+            if (data.part_img_url) {
+                state.modal.partImageUrl = data.part_img_url;
+            } else {
+                state.modal.partImageUrl = PART_MAP[partId]?.rebrickable_img_url;
+            }
+        } catch (error) {
+            console.warn(`Could not fetch color-specific image:`, error);
+            state.modal.partImageUrl = PART_MAP[partId]?.rebrickable_img_url;
+        } finally {
+            state.modal.isImageLoading = false;
+            renderModal();
+        }
+    }
+
+
+    async function fetchMissingCollectionPartDetails() {
+      const collectionPartIds = Object.keys(state.collection);
+      const missingPartIds = collectionPartIds.filter(id => !PART_MAP[id] || !PART_MAP[id].name);
+      if (missingPartIds.length === 0) return;
+
+      console.log(`Fetching details for ${missingPartIds.length} parts from collection...`);
+      
+      const BATCH_SIZE = 100; // Efficient batch size per Rebrickable docs
+      for (let i = 0; i < missingPartIds.length; i += BATCH_SIZE) {
+          const batch = missingPartIds.slice(i, i + BATCH_SIZE);
+          try {
+            const parts = await apiFetchPaginated(`/parts/?part_nums=${batch.join(',')}`);
+            parts.forEach(processPartData);
+          } catch(err) {
+            console.error(`Could not fetch details for batch starting with part ${batch[0]}:`, err);
+            state.apiError = (state.apiError ? state.apiError + '\n' : '') + 'Не удалось загрузить данные для некоторых деталей коллекции.';
+          }
+      }
+    }
+
 
     // --- RENDER FUNCTIONS ---
-    function getPartImageUrl(part, colorId) {
-      // This function now attempts to load images based on the new, more descriptive
-      // filename format 'ID-Name.extension', while providing fallbacks to the old format.
-      // It assumes a flat file structure inside the 'lego_parts' folder, as searching 
-      // subdirectories is not possible in a static client-side application.
-
-      const sanitizeForFilename = (name) => {
-        // Replaces characters that are invalid in file names on most OSes.
-        // We replace them with an underscore to avoid breaking paths.
-        return name.replace(/[<>:"/\\|?*]/g, '_');
-      };
-
-      const newFilenameBase = `${part.id}-${sanitizeForFilename(part.name)}`;
-      const newUrlPng = `lego_parts/${newFilenameBase}.png`;
-      const newUrlGif = `lego_parts/${newFilenameBase}.gif`;
-
-      // Fallback to the simpler, ID-only filename
-      const oldUrlPng = `lego_parts/${part.id}.png`;
-      const oldUrlGif = `lego_parts/${part.id}.gif`;
-      
-      const placeholderSvg = `data:image/svg+xml,${encodeURIComponent(ImageIcon('w-full h-full text-gray-500'))}`;
-      
-      // A fallback chain using onerror to try multiple image sources.
-      const onErrorChain = `this.onerror=null; this.src='${newUrlGif}'; this.onerror=function() { this.onerror=null; this.src='${oldUrlPng}'; this.onerror=function() { this.onerror=null; this.src='${oldUrlGif}'; this.onerror=function() { this.onerror=null; this.src='${placeholderSvg}'; }; }; };`;
-
-      return `src="${newUrlPng}" onerror="${onErrorChain.replace(/\s+/g, ' ')}"`;
+    function getPartImageUrl(url) {
+        const placeholderSvg = `data:image/svg+xml,${encodeURIComponent(ImageIcon('w-full h-full text-gray-500'))}`;
+        if (url) {
+            return `src="${url}" onerror="this.onerror=null; this.src='${placeholderSvg}';"`;
+        }
+        return `src="${placeholderSvg}"`;
     }
 
     function renderSidebar() {
@@ -863,26 +339,20 @@
 
       const viewButtonStyle = (view) => `w-1/2 flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
       
-      const renderCategoryList = (categories, level = 0) => {
-        return categories.map(cat => {
-            const isParent = cat.subcategories && cat.subcategories.length > 0;
-            const isExpanded = state.expandedCategories.has(cat.id);
-            const isSelected = state.selectedCategory === cat.id;
-            
+      let categoryListContent = '';
+      if (state.isLoading && state.categories.length === 0) {
+        categoryListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
+      } else {
+        categoryListContent = state.categories.map(cat => {
+            const isSelected = state.selectedCategoryId === cat.id;
             const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
-            const indentStyle = `padding-left: ${0.75 + level * 1.25}rem;`;
-
-            const categoryHtml = `
+            return `
                 <li class="mb-1">
-                  <button data-category-id="${cat.id}" class="w-full text-left flex items-center py-2 rounded-md transition-colors duration-150 ${buttonStyle}" style="${indentStyle}">
-                    ${isParent ? (isExpanded ? ChevronDownIcon('w-4 h-4 mr-2 flex-shrink-0') : ChevronRightIcon('w-4 h-4 mr-2 flex-shrink-0')) : '<div class="w-4 mr-2 flex-shrink-0"></div>'}
+                  <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
                     <span class="truncate">${cat.name}</span>
                   </button>
                 </li>
             `;
-            const subcategoriesHtml = isParent && isExpanded ? `<ul>${renderCategoryList(cat.subcategories, level + 1)}</ul>` : '';
-            
-            return categoryHtml + subcategoriesHtml;
         }).join('');
       }
 
@@ -902,9 +372,7 @@
         <div class="flex-grow overflow-y-auto no-scrollbar">
           <h2 class="text-lg font-semibold text-white mb-2">Категории</h2>
           <nav>
-            <ul id="category-list">
-              ${renderCategoryList(CATEGORIES)}
-            </ul>
+            <ul id="category-list">${categoryListContent}</ul>
           </nav>
         </div>
         
@@ -940,15 +408,21 @@
 
     function renderHeader() {
         headerContainer.innerHTML = `
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center gap-4">
                 <div class="flex items-center">
                     <button id="sidebar-toggle" class="lg:hidden text-gray-300 hover:text-white mr-4 -ml-1 p-1">
                         ${MenuIcon('w-6 h-6')}
                     </button>
                     <h1 class="text-xl font-bold text-white hidden sm:block">LEGO® Part Catalog</h1>
                 </div>
-                <div class="relative w-full max-w-[150px] sm:max-w-xs">
-                    <input id="search-input" type="text" placeholder="Поиск..." value="${state.searchQuery}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-4 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                <div class="flex items-center space-x-2 w-full max-w-sm">
+                    <div class="relative flex-grow">
+                        <input id="search-input" type="search" placeholder="Поиск по ID или названию..." value="${state.searchQuery}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-4 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                        ${state.searchQuery ? `<button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white">${XIcon('w-5 h-5')}</button>` : ''}
+                    </div>
+                     <button id="search-button" class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск">
+                        ${SearchIcon('w-5 h-5')}
+                    </button>
                 </div>
             </div>
         `;
@@ -962,7 +436,7 @@
             const positionClass = inCollection ? 'left-2' : 'right-2';
             quantityIndicator = `<div class="absolute top-2 ${positionClass} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${quantity}</div>`;
         }
-
+        
         return `
             <div data-part-id="${part.id}" ${inCollection ? `data-color-id="${color.id}"` : ''} class="part-card relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
                 ${inCollection ? `
@@ -972,7 +446,7 @@
                 ` : ''}
                 ${quantityIndicator}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-4">
-                    <img ${getPartImageUrl(part, color.id)} alt="${part.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                    <img ${getPartImageUrl(part.rebrickable_img_url)} alt="${part.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
                 </div>
                 <div class="p-4">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${part.name}</h3>
@@ -988,45 +462,14 @@
         `;
     }
 
-    function getChildCategoryIds(parentId) {
-        const parent = ALL_CATEGORIES_MAP[parentId];
-        if (!parent || !parent.subcategories) return [];
-        let ids = [];
-        parent.subcategories.forEach(sub => {
-            ids.push(sub.id);
-            if (sub.subcategories) {
-                 ids = ids.concat(getChildCategoryIds(sub.id));
-            }
-        });
-        return ids;
-    }
-
     function renderGrid() {
         let content = '';
-        if (state.currentView === 'catalog') {
-            const childIds = getChildCategoryIds(state.selectedCategory);
-            const parts = ALL_PARTS.filter(part => {
-                const catMatch = state.selectedCategory === 'all' || 
-                                 part.categoryId === state.selectedCategory ||
-                                 childIds.includes(part.categoryId);
-                const searchMatch = state.searchQuery.trim() === '' || 
-                    part.name.toLowerCase().includes(state.searchQuery.toLowerCase()) || 
-                    part.id.toLowerCase().includes(state.searchQuery.toLowerCase());
-                return catMatch && searchMatch;
-            });
 
-            if (parts.length === 0) {
-                content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">Детали не найдены в каталоге. Попробуйте другой поиск или категорию.</p></div>`;
-            } else {
-                const defaultColor = COLOR_MAP['6'] || COLOR_MAP['11'];
-                content = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
-                    ${parts.map(p => {
-                        const totalQuantity = Object.values(state.collection[p.id] || {}).reduce((sum, q) => sum + q, 0);
-                        return renderPartCard(p, defaultColor, totalQuantity);
-                    }).join('')}
-                </div>`;
-            }
-        } else { // Collection view
+        if (state.isLoading) {
+            content = `<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>`;
+        } else if (state.apiError) {
+            content = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${state.apiError}</p></div>`;
+        } else if (state.currentView === 'collection') {
             const items = [];
             for (const partId in state.collection) {
               for (const colorId in state.collection[partId]) {
@@ -1038,23 +481,39 @@
                 }
               }
             }
-            
-            const childIds = getChildCategoryIds(state.selectedCategory);
             const filteredItems = items.filter(({ part }) => {
-                const catMatch = state.selectedCategory === 'all' ||
-                                 part.categoryId === state.selectedCategory ||
-                                 childIds.includes(part.categoryId);
-                const searchMatch = state.searchQuery.trim() === '' ||
-                    part.name.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
-                    part.id.toLowerCase().includes(state.searchQuery.toLowerCase());
-                return catMatch && searchMatch;
+                const query = state.searchQuery.trim().toLowerCase();
+                if (query === '') return true;
+                return part.name.toLowerCase().includes(query) || part.id.toLowerCase().includes(query);
             }).sort((a,b) => a.part.name.localeCompare(b.part.name));
 
             if (filteredItems.length === 0) {
-                content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">В вашей коллекции нет деталей, соответствующих фильтру.<br/>Попробуйте изменить поиск или категорию.</p></div>`;
+                content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">В вашей коллекции нет деталей${state.searchQuery ? ', соответствующих поиску' : ''}.</p></div>`;
             } else {
                 content = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
                     ${filteredItems.map(item => renderPartCard(item.part, item.color, item.quantity)).join('')}
+                </div>`;
+            }
+        } else { // Catalog view
+            let partsToShow = [];
+            let emptyMessage = 'Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском.';
+
+            if (state.searchResults !== null) {
+                partsToShow = state.searchResults;
+                emptyMessage = 'По вашему запросу ничего не найдено.';
+            } else if (state.selectedCategoryId !== null) {
+                partsToShow = state.currentParts;
+                emptyMessage = 'В этой категории нет деталей.';
+            }
+
+            if (partsToShow.length === 0) {
+                content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMessage}</p></div>`;
+            } else {
+                content = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
+                    ${partsToShow.map(p => {
+                        const totalQuantity = Object.values(state.collection[p.id] || {}).reduce((sum, q) => sum + q, 0);
+                        return renderPartCard(p, null, totalQuantity);
+                    }).join('')}
                 </div>`;
             }
         }
@@ -1071,23 +530,47 @@
 
         const part = PART_MAP[state.selectedPartId];
         if (!part) {
-            state.selectedPartId = null; // Reset if part not found
+            state.selectedPartId = null;
             updateUI();
             return;
         }
 
         const isEditing = state.currentView === 'collection';
-        const { selectedColorId, quantity } = state.modal;
+        const { selectedColorId, quantity, isLoadingColors, isImageLoading, partImageUrl } = state.modal;
         const selectedColor = selectedColorId ? COLOR_MAP[selectedColorId] : null;
         const currentInCollection = (state.selectedPartId && selectedColorId && state.collection[state.selectedPartId] && state.collection[state.selectedPartId][selectedColorId]) || 0;
+        
+        const availableColorIds = part.availableColorIds || [];
+
+        let colorSelectorContent = '';
+        if (isLoadingColors) {
+            colorSelectorContent = `<div class="flex items-center justify-center h-24"><div class="loader !w-8 !h-8"></div></div>`;
+        } else if (availableColorIds.length > 0) {
+            colorSelectorContent = `
+                <div id="color-selector" class="grid grid-cols-6 sm:grid-cols-8 gap-2 mb-4">
+                    ${availableColorIds.map(cid => {
+                        const color = COLOR_MAP[cid];
+                        if (!color) return '';
+                        const isInCollection = state.collection[part.id] && state.collection[part.id][cid] > 0;
+                        return `
+                            <button data-color-id="${cid}" title="${color.name}" class="w-10 h-10 rounded-full border-2 transition-transform duration-150 overflow-hidden ${color.isTransparent ? 'checkerboard' : ''} ${selectedColorId === cid ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};">
+                                ${isInCollection ? '<div class="w-2 h-2 bg-white rounded-full m-auto"></div>' : ''}
+                            </button>
+                        `;
+                    }).join('')}
+                </div>`;
+        } else {
+             colorSelectorContent = `<p class="text-sm text-gray-400 text-center py-4">Нет информации о доступных цветах.</p>`;
+        }
         
         document.body.classList.add('overflow-hidden');
         modalContainer.innerHTML = `
         <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl m-4 flex flex-col md:flex-row relative">
             <button id="modal-close" class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors z-10">${XIcon('w-6 h-6')}</button>
             
-            <div class="md:w-1/2 p-6 bg-gray-700/50 rounded-l-lg flex items-center justify-center">
-                <img ${getPartImageUrl(part, selectedColorId || part.availableColorIds[0])} alt="${part.name}" class="max-w-full max-h-64 object-contain">
+            <div class="md:w-1/2 p-6 bg-gray-700/50 rounded-l-lg flex items-center justify-center relative">
+                 ${isImageLoading ? `<div class="absolute inset-0 bg-gray-800/60 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
+                <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-64 object-contain">
             </div>
             
             <div class="md:w-1/2 p-6 flex flex-col">
@@ -1105,18 +588,7 @@
                 ` : `
                     <div class="flex-grow">
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Доступные цвета</h3>
-                        <div id="color-selector" class="grid grid-cols-6 gap-2 mb-4">
-                            ${part.availableColorIds.map(cid => {
-                                const color = COLOR_MAP[cid];
-                                if (!color) return '';
-                                const isInCollection = state.collection[part.id] && state.collection[part.id][cid] > 0;
-                                return `
-                                    <button data-color-id="${cid}" title="${color.name}" class="w-10 h-10 rounded-full border-2 transition-transform duration-150 overflow-hidden ${color.isTransparent ? 'checkerboard' : ''} ${selectedColorId === cid ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};">
-                                        ${isInCollection ? '<div class="w-2 h-2 bg-white rounded-full m-auto"></div>' : ''}
-                                    </button>
-                                `;
-                            }).join('')}
-                        </div>
+                        ${colorSelectorContent}
                     </div>
                 `}
                 
@@ -1124,7 +596,7 @@
                     <div class="bg-gray-700/50 rounded-lg p-4 mt-auto">
                         <div class="space-y-3">
                             <div class="grid grid-cols-2 gap-x-4 items-center">
-                                <p class="text-white font-semibold">${selectedColor.name}</p>
+                                <p class="text-white font-semibold truncate" title="${selectedColor.name}">${selectedColor.name}</p>
                                 <p class="text-sm text-gray-400 text-right">В коллекции: <span class="font-bold text-white">${currentInCollection}</span></p>
                             </div>
                             
@@ -1153,10 +625,6 @@
     }
 
     function updateUI() {
-        if (!sidebarContainer || !headerContainer || !mainContent || !modalContainer) {
-            console.error("One or more main containers are missing from the DOM!");
-            return;
-        }
         renderSidebar();
         renderHeader();
         renderGrid();
@@ -1193,19 +661,14 @@
             const zip = await jszip.loadAsync(file);
             const collectionFile = zip.file('collection.json');
 
-            if (!collectionFile) {
-                throw new Error("Файл 'collection.json' не найден в архиве.");
-            }
-
+            if (!collectionFile) throw new Error("Файл 'collection.json' не найден.");
+            
             const content = await collectionFile.async('string');
             const importedCollection = JSON.parse(content);
 
             let mergedCount = 0;
-            // Merge logic: add quantities from imported collection
             for (const partId in importedCollection) {
-                if (!state.collection[partId]) {
-                    state.collection[partId] = {};
-                }
+                if (!state.collection[partId]) state.collection[partId] = {};
                 for (const colorId in importedCollection[partId]) {
                     const quantity = importedCollection[partId][colorId];
                     if (typeof quantity === 'number' && quantity > 0) {
@@ -1217,11 +680,12 @@
             
             saveState();
             state.importExportStatus = { message: `Импорт успешен! Добавлено ${mergedCount} записей.`, type: 'success' };
+            await fetchMissingCollectionPartDetails(); // Fetch any new parts
         } catch (error) {
             console.error("Import failed:", error);
             state.importExportStatus = { message: `Ошибка импорта: ${error.message}`, type: 'error' };
         } finally {
-            event.target.value = ''; // Reset file input
+            event.target.value = '';
             updateUI();
         }
     }
@@ -1236,11 +700,8 @@
 
         try {
             const jszip = new JSZip();
-            const jsonString = JSON.stringify(state.collection, null, 2);
-            jszip.file("collection.json", jsonString);
-            
+            jszip.file("collection.json", JSON.stringify(state.collection, null, 2));
             const blob = await jszip.generateAsync({ type: "blob" });
-            
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = `lego-collection-${new Date().toISOString().slice(0,10)}.zip`;
@@ -1258,9 +719,8 @@
 
     // --- EVENT HANDLING ---
     function handleUpdateCollection(partId, colorId, quantity) {
-        if (!state.collection[partId]) {
-            state.collection[partId] = {};
-        }
+        if (!state.collection[partId]) state.collection[partId] = {};
+        
         if (quantity > 0) {
             state.collection[partId][colorId] = quantity;
         } else {
@@ -1277,17 +737,29 @@
     function clearStatusOnClick() {
         if(state.importExportStatus.message) {
             state.importExportStatus = { message: '', type: '' };
-            renderSidebar(); // Just re-render sidebar to clear message
+            renderSidebar();
         }
     }
 
-    document.addEventListener('click', (e) => {
-        if (!(e.target instanceof Element)) {
-            return;
+    function triggerSearch() {
+        clearStatusOnClick();
+        const query = state.searchQuery.trim();
+
+        if (state.currentView === 'collection') {
+            // For collection, filtering is done during render, so just re-render.
+            updateUI();
+        } else {
+            // For catalog, trigger the API search
+            searchRebrickableParts(query);
         }
+    }
+    
+    document.addEventListener('click', (e) => {
+        if (!(e.target instanceof Element)) return;
         const target = e.target;
         const isMobile = window.innerWidth < 1024;
 
+        // Sidebar Toggles
         if (target.closest('#sidebar-toggle')) {
             clearStatusOnClick();
             state.isSidebarOpen = true;
@@ -1300,112 +772,118 @@
             return;
         }
 
+        // View Switcher
         const viewButton = target.closest('[data-view]');
-        if (viewButton instanceof HTMLElement && viewButton.dataset.view) {
+        if (viewButton?.dataset.view) {
             clearStatusOnClick();
             state.currentView = viewButton.dataset.view;
-            if (isMobile) { state.isSidebarOpen = false; }
+            state.searchQuery = '';
+            state.searchResults = null;
+            if (isMobile) state.isSidebarOpen = false;
             updateUI();
             return;
         }
 
+        // Category selection
         const categoryButton = target.closest('[data-category-id]');
-        if (categoryButton instanceof HTMLElement && categoryButton.dataset.categoryId) {
-            const catId = categoryButton.dataset.categoryId;
-            const category = ALL_CATEGORIES_MAP[catId];
-            
+        if (categoryButton?.dataset.categoryId) {
+            const catId = parseInt(categoryButton.dataset.categoryId, 10);
             clearStatusOnClick();
-            state.selectedCategory = catId;
-            
-            if (category && category.subcategories) {
-                if (state.expandedCategories.has(catId)) {
-                    state.expandedCategories.delete(catId);
-                } else {
-                    state.expandedCategories.add(catId);
-                }
-            }
-            
-            if (isMobile) { state.isSidebarOpen = false; }
-            updateUI();
-            return;
+            state.currentView = 'catalog';
+            loadPartsForCategory(catId);
+            if (isMobile) state.isSidebarOpen = false;
+            return; // UI is updated inside loadPartsForCategory
         }
         
+        // Delete from collection (grid view)
         const deleteButton = target.closest('[data-action="delete-from-collection"]');
-        if (deleteButton instanceof HTMLElement && deleteButton.dataset.partId && deleteButton.dataset.colorId) {
+        if (deleteButton?.dataset.partId && deleteButton.dataset.colorId) {
             handleUpdateCollection(deleteButton.dataset.partId, deleteButton.dataset.colorId, 0);
             return;
         }
         
+        // Open Part Modal
         const partCard = target.closest('.part-card');
-        if (partCard instanceof HTMLElement && mainContent.contains(partCard) && partCard.dataset.partId) {
+        if (partCard?.dataset.partId) {
             clearStatusOnClick();
             state.selectedPartId = partCard.dataset.partId;
             const part = PART_MAP[state.selectedPartId];
-            if (!part) { 
-                state.selectedPartId = null;
-                return; 
-            }
-
-            if (state.currentView === 'catalog') {
-                state.modal.selectedColorId = part.availableColorIds[0] || null;
-                const currentQuantity = (state.modal.selectedColorId && state.collection[part.id] && state.collection[part.id][state.modal.selectedColorId]) || 0;
-                state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
-            } else if (state.currentView === 'collection' && partCard.dataset.colorId) {
+            if (!part) { state.selectedPartId = null; return; }
+            
+            state.modal = { 
+                selectedColorId: null, 
+                quantity: 1, 
+                isLoadingColors: false,
+                isImageLoading: false,
+                partImageUrl: part.rebrickable_img_url,
+            };
+            
+            if (state.currentView === 'collection' && partCard.dataset.colorId) {
                 state.modal.selectedColorId = partCard.dataset.colorId;
                 state.modal.quantity = (state.collection[state.selectedPartId]?.[state.modal.selectedColorId]) || 1;
-            } else {
-                state.selectedPartId = null;
-                return;
+                fetchPartColorSpecifics(state.selectedPartId, state.modal.selectedColorId);
+            }
+            
+            if (!part.availableColorIds) {
+                fetchPartColors(part.id);
+            } else if (part.availableColorIds.length > 0 && !state.modal.selectedColorId) {
+                state.modal.selectedColorId = part.availableColorIds[0];
+                fetchPartColorSpecifics(part.id, part.availableColorIds[0]);
             }
             
             updateUI();
             return;
         }
         
+        // Close Modal
         if (target.id === 'modal-container' || target.closest('#modal-close')) {
             state.selectedPartId = null;
             updateUI();
             return;
         }
 
-        if (target.closest('#import-button')) {
-            document.getElementById('import-zip-input')?.click();
+        // Search button click
+        if (target.closest('#search-button')) {
+            triggerSearch();
+            return;
+        }
+        
+        // Clear Search
+        if (target.closest('#clear-search')) {
+            state.searchQuery = '';
+            document.getElementById('search-input')?.focus();
+            triggerSearch(); // Re-run empty search to reset view
             return;
         }
 
-        if (target.closest('#export-button')) {
-            handleExportCollection();
-            return;
-        }
+        // Import/Export
+        if (target.closest('#import-button')) { document.getElementById('import-zip-input')?.click(); return; }
+        if (target.closest('#export-button')) { handleExportCollection(); return; }
 
+        // Modal interactions
         const modalContent = document.getElementById('modal-content');
-        if (modalContent && modalContent.contains(target)) {
-             const colorButton = target.closest('[data-color-id]');
-            if (colorButton instanceof HTMLElement && colorButton.dataset.colorId) {
-                state.modal.selectedColorId = colorButton.dataset.colorId;
-                let currentQuantity = 0;
-                if (state.selectedPartId && state.modal.selectedColorId) {
-                    currentQuantity = (state.collection[state.selectedPartId] && state.collection[state.selectedPartId][state.modal.selectedColorId]) || 0;
+        if (modalContent?.contains(target)) {
+            const colorButton = target.closest('[data-color-id]');
+            if (colorButton?.dataset.colorId) {
+                const newColorId = colorButton.dataset.colorId;
+                if(state.modal.selectedColorId !== newColorId) {
+                    state.modal.selectedColorId = newColorId;
+                    const currentQuantity = (state.collection[state.selectedPartId]?.[state.modal.selectedColorId]) || 0;
+                    state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+                    fetchPartColorSpecifics(state.selectedPartId, newColorId);
                 }
-                state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
-                renderModal();
                 return;
             }
 
             const actionButton = target.closest('[data-action]');
-            if (actionButton instanceof HTMLElement && actionButton.dataset.action) {
-                const action = actionButton.dataset.action;
-                if (action === 'increase-qty') {
-                    state.modal.quantity++;
-                } else if (action === 'decrease-qty') {
-                    state.modal.quantity = Math.max(0, state.modal.quantity - 1);
-                } else if (action === 'update-collection' && state.modal.selectedColorId && state.selectedPartId) {
+            if (actionButton?.dataset.action) {
+                const { action } = actionButton.dataset;
+                if (action === 'increase-qty') state.modal.quantity++;
+                else if (action === 'decrease-qty') state.modal.quantity = Math.max(0, state.modal.quantity - 1);
+                else if (action === 'update-collection' && state.modal.selectedColorId && state.selectedPartId) {
                     handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
-                    // Keep modal open for further edits if editing, close if adding
-                    if (state.currentView !== 'collection') {
-                       state.selectedPartId = null;
-                       updateUI();
-                    }
+                    if (state.currentView !== 'collection') state.selectedPartId = null;
+                    updateUI();
                     return;
                 } else if (action === 'delete-from-collection-modal' && state.modal.selectedColorId && state.selectedPartId) {
                     handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
@@ -1419,40 +897,55 @@
     });
 
     document.addEventListener('input', (e) => {
-        if (e.target instanceof HTMLInputElement && e.target.id === 'search-input') {
-            clearStatusOnClick();
+        if (e.target.id === 'search-input') {
             state.searchQuery = e.target.value;
-            renderGrid();
+            renderHeader(); // Show/hide clear button
         }
     });
+    
+    document.addEventListener('keydown', (e) => {
+        if (e.target.id === 'search-input' && e.key === 'Enter') {
+            e.preventDefault();
+            triggerSearch();
+        }
+    });
+
 
     document.addEventListener('change', (e) => {
-        if (e.target instanceof HTMLInputElement && e.target.id === 'import-zip-input') {
-            handleZipImport(e);
-        }
+        if (e.target.id === 'import-zip-input') handleZipImport(e);
     });
 
-    document.addEventListener('keyup', (e) => {
-        if (e.target instanceof HTMLInputElement && e.target.id === 'search-input' && e.key === 'Enter') {
-            e.target.blur();
-        }
-    });
-
-    let resizeTimeout;
     window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            const isDesktop = window.innerWidth >= 1024;
-            if (isDesktop) {
-                state.isSidebarOpen = true;
-            }
-            updateUI();
-        }, 100);
+        const isDesktop = window.innerWidth >= 1024;
+        if (isDesktop && !state.isSidebarOpen) {
+          state.isSidebarOpen = true;
+        }
+        updateUI();
     });
 
     // --- INITIALIZATION ---
-    loadState();
-    updateUI();
+    async function initializeApp() {
+        loadState();
+        updateUI(); // Initial render with loading state
+        
+        try {
+            await Promise.all([
+                fetchCategories(),
+                fetchAllColors()
+            ]);
+            
+            updateUI(); 
+            await fetchMissingCollectionPartDetails();
+        } catch (error) {
+            console.error("Initialization failed:", error);
+            state.apiError = error.message;
+        } finally {
+            state.isLoading = false;
+            updateUI();
+        }
+    }
+
+    initializeApp();
   </script>
 </body>
 </html>
