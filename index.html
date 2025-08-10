@@ -823,15 +823,31 @@
 
     // --- RENDER FUNCTIONS ---
     function getPartImageUrl(part, colorId) {
-      // Images are now sourced from a local 'lego_parts' folder.
-      // This assumes a flat file structure inside 'lego_parts', e.g., 'lego_parts/3005.png',
-      // as searching through arbitrary subdirectories isn't feasible on a static frontend.
-      const url1 = `lego_parts/${part.id}.png`;
-      const url2 = `lego_parts/${part.id}.gif`;
+      // This function now attempts to load images based on the new, more descriptive
+      // filename format 'ID-Name.extension', while providing fallbacks to the old format.
+      // It assumes a flat file structure inside the 'lego_parts' folder, as searching 
+      // subdirectories is not possible in a static client-side application.
+
+      const sanitizeForFilename = (name) => {
+        // Replaces characters that are invalid in file names on most OSes.
+        // We replace them with an underscore to avoid breaking paths.
+        return name.replace(/[<>:"/\\|?*]/g, '_');
+      };
+
+      const newFilenameBase = `${part.id}-${sanitizeForFilename(part.name)}`;
+      const newUrlPng = `lego_parts/${newFilenameBase}.png`;
+      const newUrlGif = `lego_parts/${newFilenameBase}.gif`;
+
+      // Fallback to the simpler, ID-only filename
+      const oldUrlPng = `lego_parts/${part.id}.png`;
+      const oldUrlGif = `lego_parts/${part.id}.gif`;
+      
       const placeholderSvg = `data:image/svg+xml,${encodeURIComponent(ImageIcon('w-full h-full text-gray-500'))}`;
       
-      // Fallback chain: .png -> .gif -> placeholder SVG icon
-      return `src="${url1}" onerror="this.src='${url2}'; this.onerror=function(){this.onerror=null; this.src='${placeholderSvg}';};"`;
+      // A fallback chain using onerror to try multiple image sources.
+      const onErrorChain = `this.onerror=null; this.src='${newUrlGif}'; this.onerror=function() { this.onerror=null; this.src='${oldUrlPng}'; this.onerror=function() { this.onerror=null; this.src='${oldUrlGif}'; this.onerror=function() { this.onerror=null; this.src='${placeholderSvg}'; }; }; };`;
+
+      return `src="${newUrlPng}" onerror="${onErrorChain.replace(/\s+/g, ' ')}"`;
     }
 
     function renderSidebar() {
