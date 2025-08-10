@@ -823,11 +823,15 @@
 
     // --- RENDER FUNCTIONS ---
     function getPartImageUrl(part, colorId) {
-        const fallbackColor = COLOR_MAP[colorId] || COLOR_MAP['6'];
-        const displayColorId = fallbackColor && fallbackColor.isTransparent ? '13' : '6';
-        const url1 = `https://img.bricklink.com/ItemImage/PN/${displayColorId}/${part.id}.png`;
-        const url2 = `https://img.bricklink.com/P/${displayColorId}/${part.id}.gif`;
-        return `src="${url1}" onerror="this.onerror=null; this.src='${url2}';"`;
+      // Images are now sourced from a local 'lego_parts' folder.
+      // This assumes a flat file structure inside 'lego_parts', e.g., 'lego_parts/3005.png',
+      // as searching through arbitrary subdirectories isn't feasible on a static frontend.
+      const url1 = `lego_parts/${part.id}.png`;
+      const url2 = `lego_parts/${part.id}.gif`;
+      const placeholderSvg = `data:image/svg+xml,${encodeURIComponent(ImageIcon('w-full h-full text-gray-500'))}`;
+      
+      // Fallback chain: .png -> .gif -> placeholder SVG icon
+      return `src="${url1}" onerror="this.src='${url2}'; this.onerror=function(){this.onerror=null; this.src='${placeholderSvg}';};"`;
     }
 
     function renderSidebar() {
