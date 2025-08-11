@@ -738,6 +738,9 @@
     }
 
     function renderModal() {
+        const scrollableModalBody = document.querySelector('#modal-content .overflow-y-auto');
+        const scrollTop = scrollableModalBody ? scrollableModalBody.scrollTop : 0;
+
         if (!state.selectedPartId) {
             modalContainer.classList.add('modal-hidden');
             document.body.classList.remove('overflow-hidden');
@@ -800,7 +803,7 @@
         <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg lg:max-w-4xl m-4 flex flex-col max-h-[calc(100vh-2rem)]">
             
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
-                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-8">${part.name}</h2>
+                 <h2 class="text-xl lg:text-2xl font-bold text-white lg:truncate pr-8">${part.name}</h2>
                  <button id="modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
             </div>
             
@@ -856,6 +859,11 @@
         </div>
         `;
         modalContainer.classList.remove('modal-hidden');
+
+        const newScrollableModalBody = document.querySelector('#modal-content .overflow-y-auto');
+        if (newScrollableModalBody) {
+            newScrollableModalBody.scrollTop = scrollTop;
+        }
     }
 
     function updateUI() {
@@ -996,7 +1004,6 @@
     document.addEventListener('click', (e) => {
         if (!(e.target instanceof Element)) return;
         const target = e.target;
-        const isMobile = window.innerWidth < 1024;
 
         if (target.closest('#sidebar-toggle')) {
             clearStatusOnClick();
@@ -1023,7 +1030,6 @@
             state.selectedCategoryId = null;
             state.selectedCollectionCategoryId = null;
             state.itemsToDisplay = state.itemsIncrement;
-            if (isMobile) state.isSidebarOpen = false;
             updateUI();
             return;
         }
@@ -1032,7 +1038,6 @@
         if (showAllCollectionButton) {
             clearStatusOnClick();
             state.selectedCollectionCategoryId = null;
-            if (isMobile) state.isSidebarOpen = false;
             updateUI();
             return;
         }
@@ -1045,7 +1050,6 @@
 
             if (state.currentView === 'collection') {
                 state.selectedCollectionCategoryId = state.selectedCollectionCategoryId === catId ? null : catId;
-                if (isMobile) state.isSidebarOpen = false;
                 updateUI();
             } else {
                 state.selectedCategoryId = state.selectedCategoryId === catId ? null : catId;
@@ -1057,7 +1061,6 @@
                     state.searchResultGroups = null;
                     updateUI();
                 }
-                if (isMobile) state.isSidebarOpen = false;
             }
             return;
         }
