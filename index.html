@@ -83,6 +83,7 @@
       currentView: 'catalog',
       categories: [],
       selectedCategoryId: null,
+      selectedCollectionCategoryId: null,
       currentParts: [],
       searchQuery: '',
       searchResults: null,
@@ -96,6 +97,10 @@
           isLoadingColors: false,
           isImageLoading: false,
           partImageUrl: null,
+      },
+      pagination: {
+        currentPage: 1,
+        itemsPerPage: 25,
       },
       collection: {},
       importExportStatus: { message: '', type: '' },
@@ -209,6 +214,7 @@
         state.searchResults = null;
         state.searchQuery = '';
         state.currentParts = [];
+        state.pagination.currentPage = 1;
         updateUI();
 
         try {
@@ -222,6 +228,21 @@
             updateUI();
         }
     }
+
+    function getRelevanceScore(part, query) {
+        const lowerQuery = query.toLowerCase();
+        // The part object from the API has `part_num` and `name`.
+        const lowerName = part.name.toLowerCase();
+        const partNum = part.part_num.toLowerCase();
+
+        if (partNum === lowerQuery) return 100;
+        if (lowerName === lowerQuery) return 90;
+        if (partNum.startsWith(lowerQuery)) return 80;
+        if (lowerName.startsWith(lowerQuery)) return 70;
+        if (partNum.includes(lowerQuery)) return 60;
+        if (lowerName.includes(lowerQuery)) return 50;
+        return 0;
+    }
     
     async function searchRebrickableParts(query) {
         if (!query || query.trim().length === 0) {
@@ -234,12 +255,15 @@
         state.isLoading = true;
         state.apiError = null;
         state.selectedCategoryId = null; // Exit category view on search
+        state.pagination.currentPage = 1;
         updateUI();
 
         try {
             const parts = await apiFetchPaginated(`/parts/?search=${encodeURIComponent(query)}`);
-            state.searchResults = parts.map(processPartData);
-        } catch (error) {
+            const sortedParts = parts.sort((a, b) => getRelevanceScore(b, query) - getRelevanceScore(a, query));
+            state.searchResults = sortedParts.map(processPartData);
+        } catch (error)
+        {
             console.error("Rebrickable search failed:", error);
             state.apiError = error.message;
             state.searchResults = [];
@@ -295,6 +319,36 @@
         }
     }
 
+    async function fetchColorDetailsForPart(partId) {
+        if (PART_MAP[partId]?.colorImages) return; // Already fetched
+    
+        try {
+            const colorAvailability = await apiFetchPaginated(`/parts/${partId}/colors/`);
+            if (!PART_MAP[partId]) PART_MAP[partId] = { id: partId };
+            
+            const colorImages = {};
+            colorAvailability.forEach(colorInfo => {
+                if (colorInfo.part_img_url) {
+                    colorImages[String(colorInfo.color_id)] = colorInfo.part_img_url;
+                }
+            });
+            PART_MAP[partId].colorImages = colorImages;
+    
+        } catch (error) {
+            console.warn(`Could not fetch color details for part ${partId}:`, error);
+        }
+    }
+    
+    async function fetchColorDetailsForCollectionParts() {
+        const collectionPartIds = Object.keys(state.collection);
+        const partsToFetch = collectionPartIds.filter(id => !PART_MAP[id]?.colorImages);
+        
+        if (partsToFetch.length === 0) return;
+        console.log(`Fetching color-specific images for ${partsToFetch.length} parts from collection...`);
+    
+        const promises = partsToFetch.map(partId => fetchColorDetailsForPart(partId));
+        await Promise.all(promises);
+    }
 
     async function fetchMissingCollectionPartDetails() {
       const collectionPartIds = Object.keys(state.collection);
@@ -339,21 +393,37 @@
 
       const viewButtonStyle = (view) => `w-1/2 flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
       
+      let categoriesToRender = state.categories;
+      if (state.currentView === 'collection') {
+          const collectionCategoryIds = new Set(
+              Object.keys(state.collection)
+                  .map(partId => PART_MAP[partId]?.categoryId)
+                  .filter(id => id !== undefined && id !== null)
+          );
+          categoriesToRender = state.categories.filter(cat => collectionCategoryIds.has(cat.id));
+      }
+      
       let categoryListContent = '';
       if (state.isLoading && state.categories.length === 0) {
-        categoryListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
+          categoryListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
+      } else if (categoriesToRender.length === 0) {
+          if (state.currentView === 'collection' && Object.keys(state.collection).length > 0) {
+              categoryListContent = `<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>`;
+          }
       } else {
-        categoryListContent = state.categories.map(cat => {
-            const isSelected = state.selectedCategoryId === cat.id;
-            const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
-            return `
-                <li class="mb-1">
-                  <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
-                    <span class="truncate">${cat.name}</span>
-                  </button>
-                </li>
-            `;
-        }).join('');
+          categoryListContent = categoriesToRender.map(cat => {
+              const isSelected = state.currentView === 'catalog' 
+                  ? state.selectedCategoryId === cat.id
+                  : state.selectedCollectionCategoryId === cat.id;
+              const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
+              return `
+                  <li class="mb-1">
+                    <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
+                      <span class="truncate">${cat.name}</span>
+                    </button>
+                  </li>
+              `;
+          }).join('');
       }
 
       sidebarContainer.innerHTML = `
@@ -418,11 +488,41 @@
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
                         <input id="search-input" type="search" placeholder="Поиск по ID или названию..." value="${state.searchQuery}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-4 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                        ${state.searchQuery ? `<button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white">${XIcon('w-5 h-5')}</button>` : ''}
+                        <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white ${!state.searchQuery ? 'hidden' : ''}">${XIcon('w-5 h-5')}</button>
                     </div>
                      <button id="search-button" class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск">
                         ${SearchIcon('w-5 h-5')}
                     </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderPaginationControls(totalItems) {
+        const { currentPage, itemsPerPage } = state.pagination;
+        if (totalItems <= itemsPerPage) return '';
+
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        const options = [10, 25, 50, 100];
+
+        return `
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-700 bg-gray-800/60 backdrop-blur-sm">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm text-gray-400">Деталей на странице:</span>
+                    <select id="items-per-page-select" class="bg-gray-800 border border-gray-600 rounded-md py-1 px-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        ${options.map(opt => `<option value="${opt}" ${itemsPerPage === opt ? 'selected' : ''}>${opt}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-gray-400">Стр. ${currentPage} из ${totalPages}</span>
+                    <div class="flex items-center gap-2">
+                        <button data-action="prev-page" class="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${currentPage === 1 ? 'disabled' : ''}>
+                            Назад
+                        </button>
+                        <button data-action="next-page" class="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${currentPage === totalPages ? 'disabled' : ''}>
+                            Вперед
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -437,16 +537,24 @@
             quantityIndicator = `<div class="absolute top-2 ${positionClass} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${quantity}</div>`;
         }
         
+        let imageUrl = part.rebrickable_img_url;
+        if (inCollection && color) {
+            const colorSpecificUrl = PART_MAP[part.id]?.colorImages?.[color.id];
+            if (colorSpecificUrl) {
+                imageUrl = colorSpecificUrl;
+            }
+        }
+
         return `
             <div data-part-id="${part.id}" ${inCollection ? `data-color-id="${color.id}"` : ''} class="part-card relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
                 ${inCollection ? `
-                    <button aria-label="Удалить ${part.name} (${color.name})" data-action="delete-from-collection" data-part-id="${part.id}" data-color-id="${color.id}" class="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md transition-colors hover:bg-red-700 opacity-0 group-hover:opacity-100 focus:opacity-100">
+                    <button aria-label="Удалить ${part.name} (${color.name})" data-action="delete-from-collection" data-part-id="${part.id}" data-color-id="${color.id}" class="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md transition-colors hover:bg-red-700 opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         ${TrashIcon('w-4 h-4')}
                     </button>
                 ` : ''}
                 ${quantityIndicator}
-                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-4">
-                    <img ${getPartImageUrl(part.rebrickable_img_url)} alt="${part.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-4 rounded-t-lg">
+                    <img ${getPartImageUrl(imageUrl)} alt="${part.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
                 </div>
                 <div class="p-4">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${part.name}</h3>
@@ -481,14 +589,48 @@
                 }
               }
             }
-            const filteredItems = items.filter(({ part }) => {
-                const query = state.searchQuery.trim().toLowerCase();
-                if (query === '') return true;
-                return part.name.toLowerCase().includes(query) || part.id.toLowerCase().includes(query);
-            }).sort((a,b) => a.part.name.localeCompare(b.part.name));
+
+            let filteredItems = items;
+            
+            // Apply category filter first
+            if (state.selectedCollectionCategoryId) {
+                filteredItems = filteredItems.filter(({ part }) => {
+                    return PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId;
+                });
+            }
+
+            // Apply search filter and sort
+            const query = state.searchQuery.trim().toLowerCase();
+            if (query) {
+                const getClientRelevanceScore = (item, q) => {
+                    const lowerName = item.part.name.toLowerCase();
+                    const partId = item.part.id.toLowerCase();
+                    if (partId === q) return 100;
+                    if (lowerName === q) return 90;
+                    if (partId.startsWith(q)) return 80;
+                    if (lowerName.startsWith(q)) return 70;
+                    if (partId.includes(q)) return 60;
+                    if (lowerName.includes(q)) return 50;
+                    return 0;
+                };
+
+                filteredItems = filteredItems
+                    .map(item => ({ item, score: getClientRelevanceScore(item, query) }))
+                    .filter(i => i.score > 0)
+                    .sort((a, b) => b.score - a.score)
+                    .map(i => i.item);
+
+            } else {
+                 filteredItems.sort((a,b) => a.part.name.localeCompare(b.part.name));
+            }
+
 
             if (filteredItems.length === 0) {
-                content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">В вашей коллекции нет деталей${state.searchQuery ? ', соответствующих поиску' : ''}.</p></div>`;
+                let emptyMsg = 'В вашей коллекции нет деталей';
+                if (state.searchQuery) emptyMsg += ', соответствующих поиску';
+                else if (state.selectedCollectionCategoryId) emptyMsg += ' в выбранной категории';
+                emptyMsg += '.';
+                content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
             } else {
                 content = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
                     ${filteredItems.map(item => renderPartCard(item.part, item.color, item.quantity)).join('')}
@@ -509,12 +651,20 @@
             if (partsToShow.length === 0) {
                 content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMessage}</p></div>`;
             } else {
-                content = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
-                    ${partsToShow.map(p => {
+                const { currentPage, itemsPerPage } = state.pagination;
+                const totalItems = partsToShow.length;
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedParts = partsToShow.slice(startIndex, endIndex);
+
+                const gridContent = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
+                    ${paginatedParts.map(p => {
                         const totalQuantity = Object.values(state.collection[p.id] || {}).reduce((sum, q) => sum + q, 0);
                         return renderPartCard(p, null, totalQuantity);
                     }).join('')}
                 </div>`;
+                const paginationContent = renderPaginationControls(totalItems);
+                content = gridContent + paginationContent;
             }
         }
         mainContent.innerHTML = content;
@@ -568,7 +718,7 @@
         <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl m-4 flex flex-col md:flex-row relative">
             <button id="modal-close" class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors z-10">${XIcon('w-6 h-6')}</button>
             
-            <div class="md:w-1/2 p-6 bg-gray-700/50 rounded-l-lg flex items-center justify-center relative">
+            <div class="md:w-1/2 p-6 bg-gray-700/50 rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex items-center justify-center relative overflow-hidden">
                  ${isImageLoading ? `<div class="absolute inset-0 bg-gray-800/60 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
                 <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-64 object-contain">
             </div>
@@ -681,6 +831,7 @@
             saveState();
             state.importExportStatus = { message: `Импорт успешен! Добавлено ${mergedCount} записей.`, type: 'success' };
             await fetchMissingCollectionPartDetails(); // Fetch any new parts
+            await fetchColorDetailsForCollectionParts(); // Fetch images for new parts
         } catch (error) {
             console.error("Import failed:", error);
             state.importExportStatus = { message: `Ошибка импорта: ${error.message}`, type: 'error' };
@@ -718,7 +869,7 @@
     }
 
     // --- EVENT HANDLING ---
-    function handleUpdateCollection(partId, colorId, quantity) {
+    async function handleUpdateCollection(partId, colorId, quantity) {
         if (!state.collection[partId]) state.collection[partId] = {};
         
         if (quantity > 0) {
@@ -729,6 +880,12 @@
                 delete state.collection[partId];
             }
         }
+
+        // If we added a part, ensure its color-specific images are fetched.
+        if (quantity > 0 && !PART_MAP[partId]?.colorImages) {
+            await fetchColorDetailsForPart(partId);
+        }
+        
         state.importExportStatus = { message: '', type: '' };
         saveState();
         updateUI();
@@ -746,7 +903,9 @@
         const query = state.searchQuery.trim();
 
         if (state.currentView === 'collection') {
-            // For collection, filtering is done during render, so just re-render.
+            // For collection, filtering is done during render.
+            // Clear category to avoid confusion when searching.
+            state.selectedCollectionCategoryId = null; 
             updateUI();
         } else {
             // For catalog, trigger the API search
@@ -776,9 +935,14 @@
         const viewButton = target.closest('[data-view]');
         if (viewButton?.dataset.view) {
             clearStatusOnClick();
-            state.currentView = viewButton.dataset.view;
+            const newView = viewButton.dataset.view;
+            if (state.currentView === newView) return;
+
+            state.currentView = newView;
             state.searchQuery = '';
             state.searchResults = null;
+            state.selectedCategoryId = null;
+            state.selectedCollectionCategoryId = null;
             if (isMobile) state.isSidebarOpen = false;
             updateUI();
             return;
@@ -789,10 +953,46 @@
         if (categoryButton?.dataset.categoryId) {
             const catId = parseInt(categoryButton.dataset.categoryId, 10);
             clearStatusOnClick();
-            state.currentView = 'catalog';
-            loadPartsForCategory(catId);
-            if (isMobile) state.isSidebarOpen = false;
-            return; // UI is updated inside loadPartsForCategory
+            state.searchQuery = ''; // Clear search on category change
+
+            if (state.currentView === 'collection') {
+                state.selectedCollectionCategoryId = state.selectedCollectionCategoryId === catId ? null : catId;
+                if (isMobile) state.isSidebarOpen = false;
+                updateUI();
+            } else {
+                state.selectedCategoryId = state.selectedCategoryId === catId ? null : catId;
+                state.selectedCollectionCategoryId = null;
+                if (state.selectedCategoryId) {
+                    loadPartsForCategory(catId);
+                } else {
+                    state.currentParts = []; // Clear parts if category is deselected
+                    state.searchResults = null;
+                    updateUI();
+                }
+                if (isMobile) state.isSidebarOpen = false;
+            }
+            return;
+        }
+
+        // Pagination Actions
+        const paginationAction = target.closest('[data-action="prev-page"], [data-action="next-page"]');
+        if (paginationAction) {
+            const action = paginationAction.dataset.action;
+            if (action === 'prev-page') {
+                if (state.pagination.currentPage > 1) {
+                    state.pagination.currentPage--;
+                    updateUI();
+                }
+            } else if (action === 'next-page') {
+                const { currentPage, itemsPerPage } = state.pagination;
+                const partsToShow = state.searchResults !== null ? state.searchResults : state.currentParts;
+                const totalPages = Math.ceil(partsToShow.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    state.pagination.currentPage++;
+                    updateUI();
+                }
+            }
+            return;
         }
         
         // Delete from collection (grid view)
@@ -878,20 +1078,18 @@
             const actionButton = target.closest('[data-action]');
             if (actionButton?.dataset.action) {
                 const { action } = actionButton.dataset;
-                if (action === 'increase-qty') state.modal.quantity++;
-                else if (action === 'decrease-qty') state.modal.quantity = Math.max(0, state.modal.quantity - 1);
-                else if (action === 'update-collection' && state.modal.selectedColorId && state.selectedPartId) {
+                if (action === 'increase-qty') {
+                    state.modal.quantity++;
+                } else if (action === 'decrease-qty') {
+                    state.modal.quantity = Math.max(0, state.modal.quantity - 1);
+                } else if (action === 'update-collection' && state.modal.selectedColorId && state.selectedPartId) {
                     handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
-                    if (state.currentView !== 'collection') state.selectedPartId = null;
-                    updateUI();
-                    return;
+                    return; // Return to prevent re-rendering modal for qty change
                 } else if (action === 'delete-from-collection-modal' && state.modal.selectedColorId && state.selectedPartId) {
                     handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
-                    state.selectedPartId = null;
-                    updateUI();
-                    return;
+                    return; // Return to prevent re-rendering modal for qty change
                 }
-                renderModal();
+                renderModal(); // Only re-render for quantity changes
             }
         }
     });
@@ -899,20 +1097,34 @@
     document.addEventListener('input', (e) => {
         if (e.target.id === 'search-input') {
             state.searchQuery = e.target.value;
-            renderHeader(); // Show/hide clear button
+            // Toggle clear button visibility without full re-render
+            const clearButton = document.getElementById('clear-search');
+            if (clearButton) {
+                clearButton.classList.toggle('hidden', !state.searchQuery);
+            }
+            // Live search for collection view for better UX
+            if (state.currentView === 'collection') {
+                updateUI();
+            }
         }
     });
     
     document.addEventListener('keydown', (e) => {
         if (e.target.id === 'search-input' && e.key === 'Enter') {
-            e.preventDefault();
+            e.preventDefault(); // Prevent form submission
             triggerSearch();
         }
     });
 
 
     document.addEventListener('change', (e) => {
-        if (e.target.id === 'import-zip-input') handleZipImport(e);
+        if (e.target.id === 'import-zip-input') {
+            handleZipImport(e);
+        } else if (e.target.id === 'items-per-page-select') {
+            state.pagination.itemsPerPage = parseInt(e.target.value, 10);
+            state.pagination.currentPage = 1;
+            updateUI();
+        }
     });
 
     window.addEventListener('resize', () => {
@@ -934,8 +1146,8 @@
                 fetchAllColors()
             ]);
             
-            updateUI(); 
             await fetchMissingCollectionPartDetails();
+            await fetchColorDetailsForCollectionParts();
         } catch (error) {
             console.error("Initialization failed:", error);
             state.apiError = error.message;
