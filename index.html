@@ -110,6 +110,7 @@
           isLoadingColors: false,
           isImageLoading: false,
           partImageUrl: null,
+          areColorsExpanded: false,
       },
       itemsToDisplay: 48,
       itemsIncrement: 48,
@@ -413,8 +414,9 @@
 
             PART_MAP[partId].availableColorIds = colorIds;
             if (colorIds.length > 0 && (!state.modal.selectedColorId || !colorIds.includes(state.modal.selectedColorId))) {
-                state.modal.selectedColorId = colorIds[0];
-                fetchPartColorSpecifics(partId, colorIds[0]);
+                const sortedColorIds = sortColorIds(colorIds, partId);
+                state.modal.selectedColorId = sortedColorIds[0];
+                fetchPartColorSpecifics(partId, sortedColorIds[0]);
             } else if (state.modal.selectedColorId) {
                 fetchPartColorSpecifics(partId, state.modal.selectedColorId);
             }
@@ -537,7 +539,7 @@
       }
     }
 
-    // --- RENDER FUNCTIONS ---
+    // --- UTILITY FUNCTIONS ---
     function getPartImageUrl(url) {
         const placeholderSvg = `data:image/svg+xml,${encodeURIComponent(ImageIcon('w-full h-full text-gray-500'))}`;
         if (url) {
@@ -546,6 +548,33 @@
         return `src="${placeholderSvg}"`;
     }
 
+    function sortColorIds(colorIds, partId) {
+        const BASIC_COLOR_IDS = ['0', '15', '4', '1', '14', '2', '71', '72', '88', '19', '5', '34']; // Black, White, Red, Blue, Yellow, Green, LBG, DBG, Reddish Brown, Tan, Orange, Lime
+        
+        const partCollectionColors = Object.keys(state.collection[partId] || {});
+
+        return [...colorIds].sort((a, b) => {
+            const aIsBasic = BASIC_COLOR_IDS.includes(a);
+            const bIsBasic = BASIC_COLOR_IDS.includes(b);
+            if (aIsBasic && !bIsBasic) return -1;
+            if (!aIsBasic && bIsBasic) return 1;
+
+            const aInCollection = partCollectionColors.includes(a);
+            const bInCollection = partCollectionColors.includes(b);
+            if (aInCollection && !bInCollection) return -1;
+            if (!aInCollection && bInCollection) return 1;
+            
+            const colorA = COLOR_MAP[a];
+            const colorB = COLOR_MAP[b];
+            if (colorA && colorB) {
+                return colorA.name.localeCompare(colorB.name);
+            }
+
+            return 0;
+        });
+    }
+
+    // --- RENDER FUNCTIONS ---
     function renderSidebar() {
       const { uniqueModelsCount, totalPartsCount } = Object.keys(state.collection).reduce((acc, partId) => {
         const colors = state.collection[partId] || {};
@@ -869,11 +898,12 @@
         }
         
         const categoryName = flatCategories.find(c => c.id === part.categoryId)?.name;
-        const { partVariations, selectedColorId, quantity, isLoadingColors, isImageLoading, partImageUrl } = state.modal;
+        const { partVariations, selectedColorId, quantity, isLoadingColors, isImageLoading, partImageUrl, areColorsExpanded } = state.modal;
         const selectedColor = selectedColorId ? COLOR_MAP[selectedColorId] : null;
         const currentInCollection = (state.selectedPartId && selectedColorId && state.collection[state.selectedPartId] && state.collection[state.selectedPartId][selectedColorId]) || 0;
         
         const availableColorIds = part.availableColorIds || [];
+        const COLOR_COLLAPSE_THRESHOLD = 18;
 
         let variationSelector = '';
         if (partVariations && partVariations.length > 1) {
@@ -895,26 +925,40 @@
         if (isLoadingColors) {
             colorSelectorContent = `<div class="flex items-center justify-center h-24"><div class="loader !w-8 !h-8"></div></div>`;
         } else if (availableColorIds.length > 0) {
+            const sortedColorIds = sortColorIds(availableColorIds, part.id);
+            const shouldCollapse = sortedColorIds.length > COLOR_COLLAPSE_THRESHOLD && !areColorsExpanded;
+            const colorsToRender = shouldCollapse ? sortedColorIds.slice(0, COLOR_COLLAPSE_THRESHOLD) : sortedColorIds;
+
+            const colorButtonsHtml = colorsToRender.map(cid => {
+                const color = COLOR_MAP[cid];
+                if (!color) return '';
+                const isInCollection = state.collection[part.id] && state.collection[part.id][cid] > 0;
+                return `
+                    <button data-color-id="${cid}" title="${color.name}" class="w-10 h-10 rounded-full border-2 transition-transform duration-150 overflow-hidden ${color.isTransparent ? 'checkerboard' : ''} ${selectedColorId === cid ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};">
+                        ${isInCollection ? '<div class="w-2 h-2 bg-white rounded-full m-auto"></div>' : ''}
+                    </button>
+                `;
+            }).join('');
+            
             colorSelectorContent = `
                 <div id="color-selector" class="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-3">
-                    ${availableColorIds.map(cid => {
-                        const color = COLOR_MAP[cid];
-                        if (!color) return '';
-                        const isInCollection = state.collection[part.id] && state.collection[part.id][cid] > 0;
-                        return `
-                            <button data-color-id="${cid}" title="${color.name}" class="w-10 h-10 rounded-full border-2 transition-transform duration-150 overflow-hidden ${color.isTransparent ? 'checkerboard' : ''} ${selectedColorId === cid ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};">
-                                ${isInCollection ? '<div class="w-2 h-2 bg-white rounded-full m-auto"></div>' : ''}
-                            </button>
-                        `;
-                    }).join('')}
-                </div>`;
+                    ${colorButtonsHtml}
+                </div>
+                ${shouldCollapse ? `
+                    <div class="text-center mt-4">
+                        <button data-action="expand-colors" class="text-blue-400 hover:text-blue-300 hover:underline text-sm font-semibold">
+                            Показать ещё ${sortedColorIds.length - COLOR_COLLAPSE_THRESHOLD} цветов
+                        </button>
+                    </div>
+                ` : ''}
+            `;
         } else {
              colorSelectorContent = `<p class="text-sm text-gray-400 text-center py-4">Нет информации о доступных цветах.</p>`;
         }
         
         document.body.classList.add('overflow-hidden');
         modalContainer.innerHTML = `
-        <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-full mx-4 max-w-lg lg:max-w-4xl flex flex-col max-h-[calc(100vh-2rem)]">
+        <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-lg lg:max-w-4xl flex flex-col max-h-[calc(100vh-2rem)]">
             
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                  <h2 class="text-xl lg:text-2xl font-bold text-white lg:truncate pr-8">${part.name}</h2>
@@ -1140,13 +1184,15 @@
             isLoadingColors: false,
             isImageLoading: false,
             partImageUrl: representativePart.rebrickable_img_url,
+            areColorsExpanded: false,
         };
         
         if (!representativePart.availableColorIds) {
             fetchPartColors(representativePart.id);
         } else if (representativePart.availableColorIds.length > 0) {
-            state.modal.selectedColorId = representativePart.availableColorIds[0];
-            fetchPartColorSpecifics(representativePart.id, representativePart.availableColorIds[0]);
+            const sortedColorIds = sortColorIds(representativePart.availableColorIds, representativePart.id);
+            state.modal.selectedColorId = sortedColorIds[0];
+            fetchPartColorSpecifics(representativePart.id, sortedColorIds[0]);
         }
         
         updateUI();
@@ -1310,12 +1356,18 @@
             if (goToCategoryButton?.dataset.categoryId) {
                 const catId = parseInt(goToCategoryButton.dataset.categoryId, 10);
                 
-                // Set all state changes before initiating the load
-                state.selectedPartId = null; // Close modal on next render
+                // Find the parent group of the category and expand it in the sidebar
+                const parentGroup = state.categoryTree.find(group => group.children.some(child => child.id === catId));
+                if (parentGroup) {
+                    state.expandedCategories.add(parentGroup.name);
+                }
+
+                // Set state for view switch
+                state.selectedPartId = null; // Close modal
                 state.currentView = 'catalog';
-                state.selectedCollectionCategoryId = null;
+                state.selectedCollectionCategoryId = null; // Clear collection filter
                 
-                // Let loadPartsForCategory handle the UI update and data fetching
+                // loadPartsForCategory will set selectedCategoryId and update UI
                 loadPartsForCategory(catId);
                 return;
             }
@@ -1335,7 +1387,11 @@
             const actionButton = target.closest('[data-action]');
             if (actionButton?.dataset.action) {
                 const { action } = actionButton.dataset;
-                if (action === 'increase-qty') {
+                if (action === 'expand-colors') {
+                    state.modal.areColorsExpanded = true;
+                    renderModal();
+                    return;
+                } else if (action === 'increase-qty') {
                     state.modal.quantity++;
                 } else if (action === 'decrease-qty') {
                     state.modal.quantity = Math.max(1, state.modal.quantity - 1);
@@ -1394,6 +1450,7 @@
             state.modal.quantity = 1;
             state.modal.partImageUrl = newPart.rebrickable_img_url;
             state.modal.isLoadingColors = true;
+            state.modal.areColorsExpanded = false;
 
             fetchPartColors(newPart.id);
         }
