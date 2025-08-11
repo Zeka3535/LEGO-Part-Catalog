@@ -11,6 +11,12 @@
     body { font-family: sans-serif; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Hide native search input clear button */
+    #search-input::-webkit-search-cancel-button {
+      -webkit-appearance: none;
+      appearance: none;
+      display: none;
+    }
     .checkerboard {
       background-image:
         linear-gradient(45deg, #374151 25%, transparent 25%),
@@ -43,12 +49,13 @@
   <!-- Backdrop for mobile sidebar -->
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden lg:hidden"></div>
 
-  <div class="lg:ml-72 flex flex-col min-h-screen">
+  <div class="lg:ml-72 flex flex-col h-screen">
     <!-- Header -->
     <header id="header-container" class="bg-gray-800/50 backdrop-blur-sm sticky top-0 z-20 p-4 border-b border-gray-700"></header>
     
     <!-- Main Content -->
     <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar"></main>
+
   </div>
 
   <!-- Modal -->
@@ -84,24 +91,24 @@
       categories: [],
       selectedCategoryId: null,
       selectedCollectionCategoryId: null,
-      currentParts: [],
+      catalogGroups: null,
       searchQuery: '',
-      searchResults: null,
+      searchResultGroups: null,
       isLoading: true, // Start in loading state for initialization
       apiError: null,
-      selectedPartId: null,
+      selectedPartId: null, // This is the ID of the selected *variation*
       isSidebarOpen: window.innerWidth >= 1024,
       modal: {
+          partGroupId: null,
+          partVariations: [],
           selectedColorId: null,
           quantity: 1,
           isLoadingColors: false,
           isImageLoading: false,
           partImageUrl: null,
       },
-      pagination: {
-        currentPage: 1,
-        itemsPerPage: 25,
-      },
+      itemsToDisplay: 48,
+      itemsIncrement: 48,
       collection: {},
       importExportStatus: { message: '', type: '' },
     };
@@ -134,7 +141,6 @@
     
     // --- API & DATA HANDLING ---
     
-    // For requests that return a paginated list of results
     async function apiFetchPaginated(baseEndpoint) {
         let allResults = [];
         let page = 1;
@@ -160,7 +166,7 @@
             }
             
             if (!data.next) {
-                break; // Exit the loop when there's no 'next' page URL
+                break;
             }
             page++;
         }
@@ -168,14 +174,45 @@
     }
 
     function processPartData(apiPart) {
+      if (!apiPart || !apiPart.part_num) {
+        console.warn("Пропуск некорректных данных о детали из API:", apiPart);
+        return null;
+      }
       const partData = {
           id: apiPart.part_num,
           name: apiPart.name,
           rebrickable_img_url: apiPart.part_img_url,
           categoryId: apiPart.part_cat_id,
+          num_sets: apiPart.num_sets,
+          part_num: apiPart.part_num,
       };
       PART_MAP[partData.id] = { ...PART_MAP[partData.id], ...partData };
       return partData;
+    }
+
+    function getGroupId(partNum) {
+        if (!partNum || typeof partNum !== 'string') return partNum || 'unknown_group';
+        const match = partNum.match(/^([0-9]+)/);
+        return match ? match[1] : partNum.split('p')[0];
+    }
+    
+    function groupParts(parts) {
+        const groups = {};
+        parts.forEach(part => {
+            if (!part || !part.part_num) {
+                console.warn('Пропуск детали без номера:', part);
+                return;
+            }
+            const groupId = getGroupId(part.part_num);
+            if (!groups[groupId]) {
+                groups[groupId] = [];
+            }
+            groups[groupId].push(part);
+        });
+        for (const groupId in groups) {
+            groups[groupId].sort(partRelevanceComparator);
+        }
+        return groups;
     }
 
     async function fetchCategories() {
@@ -211,15 +248,16 @@
         state.selectedCategoryId = categoryId;
         state.isLoading = true;
         state.apiError = null;
-        state.searchResults = null;
+        state.searchResultGroups = null;
         state.searchQuery = '';
-        state.currentParts = [];
-        state.pagination.currentPage = 1;
+        state.catalogGroups = null;
+        state.itemsToDisplay = state.itemsIncrement;
         updateUI();
 
         try {
-            const parts = await apiFetchPaginated(`/parts/?part_cat_id=${categoryId}`);
-            state.currentParts = parts.map(processPartData);
+            const rawParts = await apiFetchPaginated(`/parts/?part_cat_id=${categoryId}`);
+            const parts = rawParts.map(processPartData).filter(Boolean);
+            state.catalogGroups = groupParts(parts);
         } catch (error) {
             console.error("Rebrickable parts fetch failed:", error);
             state.apiError = error.message;
@@ -231,7 +269,6 @@
 
     function getRelevanceScore(part, query) {
         const lowerQuery = query.toLowerCase();
-        // The part object from the API has `part_num` and `name`.
         const lowerName = part.name.toLowerCase();
         const partNum = part.part_num.toLowerCase();
 
@@ -243,30 +280,74 @@
         if (lowerName.includes(lowerQuery)) return 50;
         return 0;
     }
+
+    function partRelevanceComparator(a, b) {
+        if (!b || !b.part_num || !b.name) return -1;
+        if (!a || !a.part_num || !a.name) return 1;
+
+        const isPrintA = a.name.toLowerCase().includes('print') || a.name.toLowerCase().includes('sticker') || a.name.toLowerCase().includes('pattern');
+        const isPrintB = b.name.toLowerCase().includes('print') || b.name.toLowerCase().includes('sticker') || b.name.toLowerCase().includes('pattern');
+
+        if (isPrintA && !isPrintB) return 1;
+        if (!isPrintA && isPrintB) return -1;
+
+        const isAltA = a.part_num.match(/[a-zA-Z]/);
+        const isAltB = b.part_num.match(/[a-zA-Z]/);
+
+        if (isAltA && !isAltB) return 1;
+        if (!isAltA && isAltB) return -1;
+        
+        const popularityDiff = b.num_sets - a.num_sets;
+        if (popularityDiff !== 0) return popularityDiff;
+
+        const lengthDiff = a.name.length - b.name.length;
+        if (lengthDiff !== 0) return lengthDiff;
+
+        return a.part_num.localeCompare(b.part_num);
+    }
     
     async function searchRebrickableParts(query) {
         if (!query || query.trim().length === 0) {
-            state.searchResults = null;
+            state.searchResultGroups = null;
             state.isLoading = false;
-            state.selectedCategoryId = null; // Exit category view on search
+            state.selectedCategoryId = null;
             updateUI();
             return;
         }
         state.isLoading = true;
         state.apiError = null;
-        state.selectedCategoryId = null; // Exit category view on search
-        state.pagination.currentPage = 1;
+        state.selectedCategoryId = null;
+        state.catalogGroups = null;
+        state.itemsToDisplay = state.itemsIncrement;
         updateUI();
 
         try {
-            const parts = await apiFetchPaginated(`/parts/?search=${encodeURIComponent(query)}`);
-            const sortedParts = parts.sort((a, b) => getRelevanceScore(b, query) - getRelevanceScore(a, query));
-            state.searchResults = sortedParts.map(processPartData);
-        } catch (error)
-        {
+            const rawParts = await apiFetchPaginated(`/parts/?search=${encodeURIComponent(query)}`);
+            const parts = rawParts.map(processPartData).filter(Boolean);
+            const groups = groupParts(parts);
+            
+            const scoredGroups = Object.entries(groups).map(([groupId, partList]) => {
+                const bestScore = Math.max(...partList.map(p => getRelevanceScore(p, query)));
+                return { groupId, partList, bestScore };
+            });
+
+            scoredGroups.sort((a, b) => {
+                if (b.bestScore !== a.bestScore) return b.bestScore - a.bestScore;
+                return partRelevanceComparator(a.partList[0], b.partList[0]);
+            });
+
+            const sortedGroups = {};
+            scoredGroups.forEach(g => {
+                if (g.bestScore > 0) { // Only include groups that match the search
+                    sortedGroups[g.groupId] = g.partList;
+                }
+            });
+            state.searchResultGroups = sortedGroups;
+
+        } catch (error) {
             console.error("Rebrickable search failed:", error);
             state.apiError = error.message;
-            state.searchResults = [];
+            state.searchResultGroups = {};
         } finally {
             state.isLoading = false;
             updateUI();
@@ -282,9 +363,11 @@
             const colorIds = colorAvailability.map(c => String(c.color_id));
 
             PART_MAP[partId].availableColorIds = colorIds;
-            if (colorIds.length > 0 && !state.modal.selectedColorId) {
+            if (colorIds.length > 0 && (!state.modal.selectedColorId || !colorIds.includes(state.modal.selectedColorId))) {
                 state.modal.selectedColorId = colorIds[0];
-                fetchPartColorSpecifics(partId, colorIds[0]); // Fetch image for default selected color
+                fetchPartColorSpecifics(partId, colorIds[0]);
+            } else if (state.modal.selectedColorId) {
+                fetchPartColorSpecifics(partId, state.modal.selectedColorId);
             }
         } catch (error) {
             console.error(`Failed to fetch colors for ${partId}:`, error);
@@ -305,11 +388,7 @@
             if (!response.ok) throw new Error('Image not found for this color.');
             const data = await response.json();
             
-            if (data.part_img_url) {
-                state.modal.partImageUrl = data.part_img_url;
-            } else {
-                state.modal.partImageUrl = PART_MAP[partId]?.rebrickable_img_url;
-            }
+            state.modal.partImageUrl = data.part_img_url || PART_MAP[partId]?.rebrickable_img_url;
         } catch (error) {
             console.warn(`Could not fetch color-specific image:`, error);
             state.modal.partImageUrl = PART_MAP[partId]?.rebrickable_img_url;
@@ -320,7 +399,7 @@
     }
 
     async function fetchColorDetailsForPart(partId) {
-        if (PART_MAP[partId]?.colorImages) return; // Already fetched
+        if (PART_MAP[partId]?.colorImages) return;
     
         try {
             const colorAvailability = await apiFetchPaginated(`/parts/${partId}/colors/`);
@@ -357,12 +436,12 @@
 
       console.log(`Fetching details for ${missingPartIds.length} parts from collection...`);
       
-      const BATCH_SIZE = 100; // Efficient batch size per Rebrickable docs
+      const BATCH_SIZE = 100;
       for (let i = 0; i < missingPartIds.length; i += BATCH_SIZE) {
           const batch = missingPartIds.slice(i, i + BATCH_SIZE);
           try {
-            const parts = await apiFetchPaginated(`/parts/?part_nums=${batch.join(',')}`);
-            parts.forEach(processPartData);
+            const rawParts = await apiFetchPaginated(`/parts/?part_nums=${batch.join(',')}`);
+            rawParts.forEach(processPartData);
           } catch(err) {
             console.error(`Could not fetch details for batch starting with part ${batch[0]}:`, err);
             state.apiError = (state.apiError ? state.apiError + '\n' : '') + 'Не удалось загрузить данные для некоторых деталей коллекции.';
@@ -498,38 +577,9 @@
         `;
     }
 
-    function renderPaginationControls(totalItems) {
-        const { currentPage, itemsPerPage } = state.pagination;
-        if (totalItems <= itemsPerPage) return '';
-
-        const totalPages = Math.ceil(totalItems / itemsPerPage);
-        const options = [10, 25, 50, 100];
-
-        return `
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-t border-gray-700 bg-gray-800/60 backdrop-blur-sm">
-                <div class="flex items-center gap-2">
-                    <span class="text-sm text-gray-400">Деталей на странице:</span>
-                    <select id="items-per-page-select" class="bg-gray-800 border border-gray-600 rounded-md py-1 px-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        ${options.map(opt => `<option value="${opt}" ${itemsPerPage === opt ? 'selected' : ''}>${opt}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="flex items-center gap-4">
-                    <span class="text-sm text-gray-400">Стр. ${currentPage} из ${totalPages}</span>
-                    <div class="flex items-center gap-2">
-                        <button data-action="prev-page" class="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${currentPage === 1 ? 'disabled' : ''}>
-                            Назад
-                        </button>
-                        <button data-action="next-page" class="px-3 py-1 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" ${currentPage === totalPages ? 'disabled' : ''}>
-                            Вперед
-                        </button>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
     function renderPartCard(part, color, quantity) {
         const inCollection = state.currentView === 'collection';
+        const groupId = getGroupId(part.id);
         
         let quantityIndicator = '';
         if (quantity > 0) {
@@ -546,15 +596,17 @@
         }
 
         return `
-            <div data-part-id="${part.id}" ${inCollection ? `data-color-id="${color.id}"` : ''} class="part-card relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
+            <div data-group-id="${groupId}" data-part-id="${part.id}" ${inCollection ? `data-color-id="${color.id}"` : ''} class="part-card relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
                 ${inCollection ? `
                     <button aria-label="Удалить ${part.name} (${color.name})" data-action="delete-from-collection" data-part-id="${part.id}" data-color-id="${color.id}" class="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md transition-colors hover:bg-red-700 opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         ${TrashIcon('w-4 h-4')}
                     </button>
                 ` : ''}
                 ${quantityIndicator}
-                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-4 rounded-t-lg">
-                    <img ${getPartImageUrl(imageUrl)} alt="${part.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
+                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
+                        <img ${getPartImageUrl(imageUrl)} alt="${part.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                    </div>
                 </div>
                 <div class="p-4">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${part.name}</h3>
@@ -572,7 +624,7 @@
 
     function renderGrid() {
         let content = '';
-
+        
         if (state.isLoading) {
             content = `<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>`;
         } else if (state.apiError) {
@@ -592,14 +644,10 @@
 
             let filteredItems = items;
             
-            // Apply category filter first
             if (state.selectedCollectionCategoryId) {
-                filteredItems = filteredItems.filter(({ part }) => {
-                    return PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId;
-                });
+                filteredItems = filteredItems.filter(({ part }) => PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId);
             }
 
-            // Apply search filter and sort
             const query = state.searchQuery.trim().toLowerCase();
             if (query) {
                 const getClientRelevanceScore = (item, q) => {
@@ -632,39 +680,46 @@
                 emptyMsg += '.';
                 content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
             } else {
-                content = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
+                content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-4">
                     ${filteredItems.map(item => renderPartCard(item.part, item.color, item.quantity)).join('')}
                 </div>`;
             }
         } else { // Catalog view
-            let partsToShow = [];
+            let groupsToShow = {};
             let emptyMessage = 'Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском.';
 
-            if (state.searchResults !== null) {
-                partsToShow = state.searchResults;
+            if (state.searchResultGroups !== null) {
+                groupsToShow = state.searchResultGroups;
                 emptyMessage = 'По вашему запросу ничего не найдено.';
             } else if (state.selectedCategoryId !== null) {
-                partsToShow = state.currentParts;
+                groupsToShow = state.catalogGroups;
                 emptyMessage = 'В этой категории нет деталей.';
             }
 
-            if (partsToShow.length === 0) {
+            const groupKeys = groupsToShow ? Object.keys(groupsToShow) : [];
+
+            if (groupKeys.length === 0) {
                 content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMessage}</p></div>`;
             } else {
-                const { currentPage, itemsPerPage } = state.pagination;
-                const totalItems = partsToShow.length;
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                const paginatedParts = partsToShow.slice(startIndex, endIndex);
+                const groupsToRender = groupKeys.slice(0, state.itemsToDisplay);
 
-                const gridContent = `<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-4">
-                    ${paginatedParts.map(p => {
-                        const totalQuantity = Object.values(state.collection[p.id] || {}).reduce((sum, q) => sum + q, 0);
-                        return renderPartCard(p, null, totalQuantity);
+                content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-4">
+                    ${groupsToRender.map(key => {
+                        const representativePart = groupsToShow[key][0];
+                        const totalQuantity = Object.values(state.collection[representativePart.id] || {}).reduce((sum, q) => sum + q, 0);
+                        return renderPartCard(representativePart, null, totalQuantity);
                     }).join('')}
                 </div>`;
-                const paginationContent = renderPaginationControls(totalItems);
-                content = gridContent + paginationContent;
+                
+                if (groupKeys.length > state.itemsToDisplay) {
+                    content += `
+                        <div class="p-4 text-center">
+                            <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                                Загрузить ещё
+                            </button>
+                        </div>
+                    `;
+                }
             }
         }
         mainContent.innerHTML = content;
@@ -685,12 +740,27 @@
             return;
         }
 
-        const isEditing = state.currentView === 'collection';
-        const { selectedColorId, quantity, isLoadingColors, isImageLoading, partImageUrl } = state.modal;
+        const { partVariations, selectedColorId, quantity, isLoadingColors, isImageLoading, partImageUrl } = state.modal;
         const selectedColor = selectedColorId ? COLOR_MAP[selectedColorId] : null;
         const currentInCollection = (state.selectedPartId && selectedColorId && state.collection[state.selectedPartId] && state.collection[state.selectedPartId][selectedColorId]) || 0;
         
         const availableColorIds = part.availableColorIds || [];
+
+        let variationSelector = '';
+        if (partVariations && partVariations.length > 1) {
+            variationSelector = `
+                <div class="mb-4">
+                    <label for="variation-select" class="block text-sm font-medium text-gray-400 mb-1">Вариация</label>
+                    <select id="variation-select" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        ${partVariations.map(variation => `
+                            <option value="${variation.id}" ${variation.id === state.selectedPartId ? 'selected' : ''}>
+                                ${variation.name}
+                            </option>
+                        `).join('')}
+                    </select>
+                </div>
+            `;
+        }
 
         let colorSelectorContent = '';
         if (isLoadingColors) {
@@ -718,29 +788,23 @@
         <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl m-4 flex flex-col md:flex-row relative">
             <button id="modal-close" class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors z-10">${XIcon('w-6 h-6')}</button>
             
-            <div class="md:w-1/2 p-6 bg-gray-700/50 rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex items-center justify-center relative overflow-hidden">
-                 ${isImageLoading ? `<div class="absolute inset-0 bg-gray-800/60 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
-                <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-64 object-contain">
+            <div class="md:w-1/2 p-6 bg-gray-700/50 rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex items-center justify-center relative">
+                 <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
+                    ${isImageLoading ? `<div class="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
+                    <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-full object-contain">
+                 </div>
             </div>
             
             <div class="md:w-1/2 p-6 flex flex-col">
                 <h2 class="text-2xl font-bold text-white">${part.name}</h2>
                 <p class="text-sm text-gray-400 mb-4">ID: ${part.id}</p>
                 
-                ${isEditing && selectedColor ? `
-                    <div class="flex-grow flex flex-col justify-center">
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Выбранный цвет</h3>
-                        <div class="flex items-center p-3 rounded-lg bg-gray-900/50">
-                             <span class="w-8 h-8 rounded-full border border-gray-500 ${selectedColor.isTransparent ? 'checkerboard' : ''}" style="background-color: ${selectedColor.hex};"></span>
-                             <span class="ml-4 text-lg font-semibold text-white">${selectedColor.name}</span>
-                        </div>
-                    </div>
-                ` : `
-                    <div class="flex-grow">
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Доступные цвета</h3>
-                        ${colorSelectorContent}
-                    </div>
-                `}
+                ${variationSelector}
+                
+                <div class="flex-grow">
+                    <h3 class="text-md font-semibold text-gray-300 mb-2">Доступные цвета</h3>
+                    ${colorSelectorContent}
+                </div>
                 
                 ${selectedColor ? `
                     <div class="bg-gray-700/50 rounded-lg p-4 mt-auto">
@@ -830,8 +894,8 @@
             
             saveState();
             state.importExportStatus = { message: `Импорт успешен! Добавлено ${mergedCount} записей.`, type: 'success' };
-            await fetchMissingCollectionPartDetails(); // Fetch any new parts
-            await fetchColorDetailsForCollectionParts(); // Fetch images for new parts
+            await fetchMissingCollectionPartDetails();
+            await fetchColorDetailsForCollectionParts();
         } catch (error) {
             console.error("Import failed:", error);
             state.importExportStatus = { message: `Ошибка импорта: ${error.message}`, type: 'error' };
@@ -881,7 +945,6 @@
             }
         }
 
-        // If we added a part, ensure its color-specific images are fetched.
         if (quantity > 0 && !PART_MAP[partId]?.colorImages) {
             await fetchColorDetailsForPart(partId);
         }
@@ -903,12 +966,9 @@
         const query = state.searchQuery.trim();
 
         if (state.currentView === 'collection') {
-            // For collection, filtering is done during render.
-            // Clear category to avoid confusion when searching.
             state.selectedCollectionCategoryId = null; 
             updateUI();
         } else {
-            // For catalog, trigger the API search
             searchRebrickableParts(query);
         }
     }
@@ -918,7 +978,6 @@
         const target = e.target;
         const isMobile = window.innerWidth < 1024;
 
-        // Sidebar Toggles
         if (target.closest('#sidebar-toggle')) {
             clearStatusOnClick();
             state.isSidebarOpen = true;
@@ -931,7 +990,6 @@
             return;
         }
 
-        // View Switcher
         const viewButton = target.closest('[data-view]');
         if (viewButton?.dataset.view) {
             clearStatusOnClick();
@@ -940,20 +998,21 @@
 
             state.currentView = newView;
             state.searchQuery = '';
-            state.searchResults = null;
+            state.searchResultGroups = null;
+            state.catalogGroups = null;
             state.selectedCategoryId = null;
             state.selectedCollectionCategoryId = null;
+            state.itemsToDisplay = state.itemsIncrement;
             if (isMobile) state.isSidebarOpen = false;
             updateUI();
             return;
         }
 
-        // Category selection
         const categoryButton = target.closest('[data-category-id]');
         if (categoryButton?.dataset.categoryId) {
             const catId = parseInt(categoryButton.dataset.categoryId, 10);
             clearStatusOnClick();
-            state.searchQuery = ''; // Clear search on category change
+            state.searchQuery = '';
 
             if (state.currentView === 'collection') {
                 state.selectedCollectionCategoryId = state.selectedCollectionCategoryId === catId ? null : catId;
@@ -965,8 +1024,8 @@
                 if (state.selectedCategoryId) {
                     loadPartsForCategory(catId);
                 } else {
-                    state.currentParts = []; // Clear parts if category is deselected
-                    state.searchResults = null;
+                    state.catalogGroups = null;
+                    state.searchResultGroups = null;
                     updateUI();
                 }
                 if (isMobile) state.isSidebarOpen = false;
@@ -974,93 +1033,77 @@
             return;
         }
 
-        // Pagination Actions
-        const paginationAction = target.closest('[data-action="prev-page"], [data-action="next-page"]');
-        if (paginationAction) {
-            const action = paginationAction.dataset.action;
-            if (action === 'prev-page') {
-                if (state.pagination.currentPage > 1) {
-                    state.pagination.currentPage--;
-                    updateUI();
-                }
-            } else if (action === 'next-page') {
-                const { currentPage, itemsPerPage } = state.pagination;
-                const partsToShow = state.searchResults !== null ? state.searchResults : state.currentParts;
-                const totalPages = Math.ceil(partsToShow.length / itemsPerPage);
-                if (currentPage < totalPages) {
-                    state.pagination.currentPage++;
-                    updateUI();
-                }
-            }
+        if(target.closest('#load-more-button')) {
+            state.itemsToDisplay += state.itemsIncrement;
+            updateUI();
             return;
         }
         
-        // Delete from collection (grid view)
         const deleteButton = target.closest('[data-action="delete-from-collection"]');
         if (deleteButton?.dataset.partId && deleteButton.dataset.colorId) {
             handleUpdateCollection(deleteButton.dataset.partId, deleteButton.dataset.colorId, 0);
             return;
         }
         
-        // Open Part Modal
         const partCard = target.closest('.part-card');
-        if (partCard?.dataset.partId) {
+        if (partCard?.dataset.groupId && partCard.dataset.partId) {
             clearStatusOnClick();
             state.selectedPartId = partCard.dataset.partId;
-            const part = PART_MAP[state.selectedPartId];
-            if (!part) { state.selectedPartId = null; return; }
+            const groupId = partCard.dataset.groupId;
+            const representativePart = PART_MAP[state.selectedPartId];
+            if (!representativePart) { state.selectedPartId = null; return; }
+
+            const groupsSource = state.searchResultGroups || state.catalogGroups;
+            const variations = (groupsSource && groupsSource[groupId]) ? groupsSource[groupId] : [representativePart];
             
             state.modal = { 
+                partGroupId: groupId,
+                partVariations: variations,
                 selectedColorId: null, 
                 quantity: 1, 
                 isLoadingColors: false,
                 isImageLoading: false,
-                partImageUrl: part.rebrickable_img_url,
+                partImageUrl: representativePart.rebrickable_img_url,
             };
             
             if (state.currentView === 'collection' && partCard.dataset.colorId) {
-                state.modal.selectedColorId = partCard.dataset.colorId;
-                state.modal.quantity = (state.collection[state.selectedPartId]?.[state.modal.selectedColorId]) || 1;
-                fetchPartColorSpecifics(state.selectedPartId, state.modal.selectedColorId);
+                // This logic needs adjustment for grouping, as collection view is flat.
+                // For now, opening from collection will behave like catalog.
+                // Future improvement: group collection items too.
             }
             
-            if (!part.availableColorIds) {
-                fetchPartColors(part.id);
-            } else if (part.availableColorIds.length > 0 && !state.modal.selectedColorId) {
-                state.modal.selectedColorId = part.availableColorIds[0];
-                fetchPartColorSpecifics(part.id, part.availableColorIds[0]);
+            if (!representativePart.availableColorIds) {
+                fetchPartColors(representativePart.id);
+            } else if (representativePart.availableColorIds.length > 0) {
+                state.modal.selectedColorId = representativePart.availableColorIds[0];
+                fetchPartColorSpecifics(representativePart.id, representativePart.availableColorIds[0]);
             }
             
             updateUI();
             return;
         }
         
-        // Close Modal
         if (target.id === 'modal-container' || target.closest('#modal-close')) {
             state.selectedPartId = null;
             updateUI();
             return;
         }
 
-        // Search button click
         if (target.closest('#search-button')) {
             triggerSearch();
             return;
         }
         
-        // Clear Search
         if (target.closest('#clear-search')) {
             state.searchQuery = '';
             document.getElementById('search-input')?.focus();
-            triggerSearch(); // Re-run empty search to reset view
+            triggerSearch();
             return;
         }
 
-        // Import/Export
         if (target.closest('#import-button')) { document.getElementById('import-zip-input')?.click(); return; }
         if (target.closest('#export-button')) { handleExportCollection(); return; }
 
-        // Modal interactions
         const modalContent = document.getElementById('modal-content');
         if (modalContent?.contains(target)) {
             const colorButton = target.closest('[data-color-id]');
@@ -1081,15 +1124,14 @@
                 if (action === 'increase-qty') {
                     state.modal.quantity++;
                 } else if (action === 'decrease-qty') {
-                    state.modal.quantity = Math.max(0, state.modal.quantity - 1);
+                    state.modal.quantity = Math.max(1, state.modal.quantity - 1);
                 } else if (action === 'update-collection' && state.modal.selectedColorId && state.selectedPartId) {
                     handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
-                    return; // Return to prevent re-rendering modal for qty change
                 } else if (action === 'delete-from-collection-modal' && state.modal.selectedColorId && state.selectedPartId) {
                     handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
-                    return; // Return to prevent re-rendering modal for qty change
+                    state.selectedPartId = null;
                 }
-                renderModal(); // Only re-render for quantity changes
+                updateUI();
             }
         }
     });
@@ -1097,33 +1139,44 @@
     document.addEventListener('input', (e) => {
         if (e.target.id === 'search-input') {
             state.searchQuery = e.target.value;
-            // Toggle clear button visibility without full re-render
             const clearButton = document.getElementById('clear-search');
             if (clearButton) {
                 clearButton.classList.toggle('hidden', !state.searchQuery);
             }
-            // Live search for collection view for better UX
             if (state.currentView === 'collection') {
-                updateUI();
+                if (state.selectedCollectionCategoryId !== null) {
+                    state.selectedCollectionCategoryId = null;
+                    renderSidebar();
+                }
+                renderGrid();
             }
         }
     });
     
     document.addEventListener('keydown', (e) => {
         if (e.target.id === 'search-input' && e.key === 'Enter') {
-            e.preventDefault(); // Prevent form submission
+            e.preventDefault();
             triggerSearch();
         }
     });
 
-
     document.addEventListener('change', (e) => {
         if (e.target.id === 'import-zip-input') {
             handleZipImport(e);
-        } else if (e.target.id === 'items-per-page-select') {
-            state.pagination.itemsPerPage = parseInt(e.target.value, 10);
-            state.pagination.currentPage = 1;
-            updateUI();
+        }
+        if (e.target.id === 'variation-select') {
+            const newPartId = e.target.value;
+            if (state.selectedPartId === newPartId) return;
+
+            state.selectedPartId = newPartId;
+            const newPart = PART_MAP[newPartId];
+            
+            state.modal.selectedColorId = null;
+            state.modal.quantity = 1;
+            state.modal.partImageUrl = newPart.rebrickable_img_url;
+            state.modal.isLoadingColors = true;
+
+            fetchPartColors(newPart.id);
         }
     });
 
@@ -1138,7 +1191,7 @@
     // --- INITIALIZATION ---
     async function initializeApp() {
         loadState();
-        updateUI(); // Initial render with loading state
+        updateUI();
         
         try {
             await Promise.all([
