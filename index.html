@@ -1229,12 +1229,18 @@
         }
     });
 
+    let lastWindowWidth = window.innerWidth;
     window.addEventListener('resize', () => {
-        const isDesktop = window.innerWidth >= 1024;
-        if (isDesktop && !state.isSidebarOpen) {
-          state.isSidebarOpen = true;
+        // Только запускать полное обновление пользовательского интерфейса при изменении ширины,
+        // чтобы предотвратить повторный рендеринг при появлении виртуальной клавиатуры на мобильных устройствах.
+        if (window.innerWidth !== lastWindowWidth) {
+            lastWindowWidth = window.innerWidth;
+            const isDesktop = window.innerWidth >= 1024;
+            if (isDesktop && !state.isSidebarOpen) {
+              state.isSidebarOpen = true;
+            }
+            updateUI();
         }
-        updateUI();
     });
 
     // --- INITIALIZATION ---
