@@ -11,7 +11,6 @@
     body { font-family: sans-serif; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    /* Hide native search input clear button */
     #search-input::-webkit-search-cancel-button {
       -webkit-appearance: none;
       appearance: none;
@@ -28,8 +27,8 @@
     }
     .modal-hidden { display: none !important; }
     .loader {
-      border: 4px solid #4A5568; /* gray-700 */
-      border-top: 4px solid #4299E1; /* blue-400 */
+      border: 4px solid #4A5568;
+      border-top: 4px solid #4299E1;
       border-radius: 50%;
       width: 48px;
       height: 48px;
@@ -38,6 +37,52 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+
+    /* Animation Keyframes */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes scaleOut {
+      from { opacity: 1; transform: scale(1); }
+      to { opacity: 0; transform: scale(0.95); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(1rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Animation Classes */
+    #modal-container {
+        opacity: 0;
+        transition: opacity 0.2s ease-out;
+    }
+    #modal-container.visible {
+        opacity: 1;
+    }
+    .modal-content-enter {
+      animation: scaleIn 0.2s ease-out forwards;
+    }
+    .modal-content-leave {
+      animation: scaleOut 0.2s ease-out forwards;
+    }
+    .part-card.animate-in {
+      opacity: 0;
+      animation: fadeInUp 0.4s ease-out forwards;
+    }
+    
+    #color-selector-wrapper {
+        transition: max-height 0.35s ease-in-out;
+        overflow: hidden;
     }
   </style>
 </head>
@@ -87,7 +132,18 @@
     const SearchIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`;
     const ChevronDownIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
     const DiceIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M16 8h.01"></path><path d="M12 12h.01"></path><path d="M8 16h.01"></path><path d="M8 8h.01"></path><path d="M16 16h.01"></path></svg>`;
-    
+    const BrickIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><path d="M7 11V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"></path><path d="M12 11V7"></path></svg>`;
+    const PlateIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="15" width="18" height="6" rx="1"></rect><circle cx="8" cy="18" r="1"></circle><circle cx="16" cy="18" r="1"></circle></svg>`;
+    const TechnicIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.85-.93 3.53-2.28a3.99 3.99 0 0 0-7.06 0c.68 1.35 2.03 2.28 3.53 2.28z"></path><path d="M12 3.06c-1.5 0-2.85.93-3.53 2.28a3.99 3.99 0 0 0 7.06 0C14.85 3.99 13.5 3.06 12 3.06z"></path><path d="M3.06 12c0-1.5.93-2.85 2.28-3.53a3.99 3.99 0 0 0 0 7.06C3.99 14.85 3.06 13.5 3.06 12z"></path><path d="M20.94 12c0 1.5-.93 2.85-2.28 3.53a3.99 3.99 0 0 0 0-7.06c1.35.68 2.28 2.03 2.28 3.53z"></path><circle cx="12" cy="12" r="1"></circle></svg>`;
+    const SlopeIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18L3 4v16z"></path></svg>`;
+    const TileIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>`;
+    const WindowIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 12h18"></path><path d="M12 3v18"></path></svg>`;
+    const WheelIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`;
+    const MinifigIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3"></circle><path d="M12 11v5"></path><path d="M9 22v-5h6v5"></path><path d="M9 11H5a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h4"></path><path d="M15 11h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4"></path></svg>`;
+    const BarIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"></path><path d="M4 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0z"></path><path d="M20 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0z"></path></svg>`;
+    const ArchIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V11c0-3.87 3.13-7 7-7s7 3.13 7 7v10"></path><path d="M5 21h14"></path></svg>`;
+    const OtherIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
+
     // --- STATE MANAGEMENT ---
     let state = {
       currentView: 'catalog',
@@ -102,6 +158,7 @@
       apiError: null,
       selectedPartId: null, // This is the ID of the selected *variation*
       isSidebarOpen: window.innerWidth >= 1024,
+      isGridStale: true, // Flag to trigger grid animations
       modal: {
           partGroupId: null,
           partVariations: [],
@@ -303,6 +360,7 @@
         state.searchQuery = '';
         state.catalogGroups = null;
         state.itemsToDisplay = state.itemsIncrement;
+        state.isGridStale = true;
         updateUI();
 
         try {
@@ -361,6 +419,7 @@
             state.searchResultGroups = null;
             state.isLoading = false;
             state.selectedCategoryId = null;
+            state.isGridStale = true;
             updateUI();
             return;
         }
@@ -369,6 +428,7 @@
         state.selectedCategoryId = null;
         state.catalogGroups = null;
         state.itemsToDisplay = state.itemsIncrement;
+        state.isGridStale = true;
         updateUI();
 
         try {
@@ -406,7 +466,7 @@
     
     async function fetchPartColors(partId) {
         state.modal.isLoadingColors = true;
-        renderModal();
+        updateModalPartially({ colors: true });
         
         try {
             const colorAvailability = await apiFetchPaginated(`/parts/${partId}/colors/`);
@@ -416,9 +476,6 @@
             if (colorIds.length > 0 && (!state.modal.selectedColorId || !colorIds.includes(state.modal.selectedColorId))) {
                 const sortedColorIds = sortColorIds(colorIds, partId);
                 state.modal.selectedColorId = sortedColorIds[0];
-                fetchPartColorSpecifics(partId, sortedColorIds[0]);
-            } else if (state.modal.selectedColorId) {
-                fetchPartColorSpecifics(partId, state.modal.selectedColorId);
             }
         } catch (error) {
             console.error(`Failed to fetch colors for ${partId}:`, error);
@@ -426,13 +483,17 @@
             PART_MAP[partId].availableColorIds = PART_MAP[partId].availableColorIds || [];
         } finally {
             state.modal.isLoadingColors = false;
-            renderModal();
+            updateModalPartially({ colors: true, controls: true });
+
+            if (state.modal.selectedColorId) {
+                fetchPartColorSpecifics(partId, state.modal.selectedColorId);
+            }
         }
     }
     
     async function fetchPartColorSpecifics(partId, colorId) {
         state.modal.isImageLoading = true;
-        renderModal();
+        updateModalPartially({ image: true });
 
         try {
             const url = `${REBRICKABLE_API_URL}/parts/${partId}/colors/${colorId}/`;
@@ -446,7 +507,7 @@
             state.modal.partImageUrl = PART_MAP[partId]?.rebrickable_img_url;
         } finally {
             state.modal.isImageLoading = false;
-            renderModal();
+            updateModalPartially({ image: true });
         }
     }
 
@@ -477,8 +538,12 @@
         if (partsToFetch.length === 0) return;
         console.log(`Fetching color-specific images for ${partsToFetch.length} parts from collection...`);
     
-        const promises = partsToFetch.map(partId => fetchColorDetailsForPart(partId));
-        await Promise.all(promises);
+        const BATCH_SIZE = 20;
+        for (let i = 0; i < partsToFetch.length; i += BATCH_SIZE) {
+            const batch = partsToFetch.slice(i, i + BATCH_SIZE);
+            const promises = batch.map(partId => fetchColorDetailsForPart(partId));
+            await Promise.all(promises);
+        }
     }
 
     async function fetchMissingCollectionPartDetails() {
@@ -504,6 +569,7 @@
     async function handleFeelingLucky() {
       state.isLoading = true;
       state.apiError = null;
+      state.isGridStale = true;
       updateUI();
       try {
         if (flatCategories.length === 0) {
@@ -574,7 +640,38 @@
         });
     }
 
+    function getPluralizedColorString(count) {
+        const n = Math.abs(count);
+        const lastDigit = n % 10;
+        const lastTwoDigits = n % 100;
+
+        if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+            return 'цветов';
+        }
+        if (lastDigit === 1) {
+            return 'цвет';
+        }
+        if ([2, 3, 4].includes(lastDigit)) {
+            return 'цвета';
+        }
+        return 'цветов';
+    }
+
     // --- RENDER FUNCTIONS ---
+    const CATEGORY_ICONS = {
+        'Bricks': BrickIcon,
+        'Plates': PlateIcon,
+        'Technic': TechnicIcon,
+        'Slopes & Wedges': SlopeIcon,
+        'Tiles': TileIcon,
+        'Panels, Doors & Windows': WindowIcon,
+        'Wheels & Tyres': WheelIcon,
+        'Minifig': MinifigIcon,
+        'Bars, Hinges & Connectors': BarIcon,
+        'Arches & Curves': ArchIcon,
+        'Other': OtherIcon,
+    };
+
     function renderSidebar() {
       const { uniqueModelsCount, totalPartsCount } = Object.keys(state.collection).reduce((acc, partId) => {
         const colors = state.collection[partId] || {};
@@ -632,17 +729,23 @@
                  const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
                  return `
                     <li>
-                        <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 pl-8 rounded-md transition-colors duration-150 ${buttonStyle}">
+                        <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 pl-11 rounded-md transition-colors duration-150 ${buttonStyle}">
                           <span class="truncate">${cat.name}</span>
                         </button>
                     </li>
                  `;
             }).join('');
             
+            const IconComponent = CATEGORY_ICONS[group.name] || OtherIcon;
+            const iconHtml = IconComponent('w-5 h-5 mr-3 text-gray-400 flex-shrink-0');
+
             return `
                 <li class="space-y-1">
                     <button data-parent-category="${group.name}" class="w-full text-left flex items-center justify-between p-2 rounded-md hover:bg-gray-700 transition-colors duration-150">
-                        <span class="font-semibold text-gray-200">${group.name}</span>
+                        <div class="flex items-center truncate">
+                          ${iconHtml}
+                          <span class="font-semibold text-gray-200 truncate">${group.name}</span>
+                        </div>
                         ${ChevronDownIcon(`w-5 h-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`)}
                     </button>
                     <ul class="space-y-1 ${isExpanded ? '' : 'hidden'}">
@@ -725,9 +828,11 @@
         `;
     }
 
-    function renderPartCard(part, color, quantity) {
+    function renderPartCard(part, color, quantity, shouldAnimate, index = 0) {
         const inCollection = state.currentView === 'collection';
         const groupId = getGroupId(part.id);
+        const animationClass = shouldAnimate ? 'animate-in' : '';
+        const animationDelay = shouldAnimate ? `animation-delay: ${Math.min(index * 40, 1500)}ms;` : '';
         
         let quantityIndicator = '';
         if (quantity > 0) {
@@ -744,7 +849,7 @@
         }
 
         return `
-            <div data-group-id="${groupId}" data-part-id="${part.id}" ${inCollection ? `data-color-id="${color.id}"` : ''} class="part-card relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
+            <div data-group-id="${groupId}" data-part-id="${part.id}" ${inCollection ? `data-color-id="${color.id}"` : ''} style="${animationDelay}" class="part-card ${animationClass} relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
                 ${inCollection ? `
                     <button aria-label="Удалить ${part.name} (${color.name})" data-action="delete-from-collection" data-part-id="${part.id}" data-color-id="${color.id}" class="absolute top-3 right-3 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md transition-colors hover:bg-red-700 opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         ${TrashIcon('w-4 h-4')}
@@ -829,7 +934,7 @@
                 content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
             } else {
                 content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
-                    ${filteredItems.map(item => renderPartCard(item.part, item.color, item.quantity)).join('')}
+                    ${filteredItems.map((item, index) => renderPartCard(item.part, item.color, item.quantity, state.isGridStale, index)).join('')}
                 </div>`;
             }
         } else { // Catalog view
@@ -858,10 +963,10 @@
                 const groupsToRender = groupKeys.slice(0, state.itemsToDisplay);
 
                 content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
-                    ${groupsToRender.map(key => {
+                    ${groupsToRender.map((key, index) => {
                         const representativePart = groupsToShow[key][0];
                         const totalQuantity = Object.values(state.collection[representativePart.id] || {}).reduce((sum, q) => sum + q, 0);
-                        return renderPartCard(representativePart, null, totalQuantity);
+                        return renderPartCard(representativePart, null, totalQuantity, state.isGridStale, index);
                     }).join('')}
                 </div>`;
                 
@@ -877,34 +982,27 @@
             }
         }
         mainContent.innerHTML = content;
+        state.isGridStale = false; // Animation flag is reset after render
     }
 
     function renderModal() {
-        const scrollableModalBody = document.querySelector('#modal-content .overflow-y-auto');
-        const scrollTop = scrollableModalBody ? scrollableModalBody.scrollTop : 0;
-
         if (!state.selectedPartId) {
-            modalContainer.classList.add('modal-hidden');
-            document.body.classList.remove('overflow-hidden');
-            modalContainer.innerHTML = '';
+            if (!modalContainer.classList.contains('modal-hidden')) {
+                closeModal();
+            }
             return;
         }
 
         const part = PART_MAP[state.selectedPartId];
         if (!part) {
-            state.selectedPartId = null;
-            updateUI();
+            closeModal();
             return;
         }
         
+        const animationClass = 'modal-content-enter';
         const categoryName = flatCategories.find(c => c.id === part.categoryId)?.name;
-        const { partVariations, selectedColorId, quantity, isLoadingColors, isImageLoading, partImageUrl, areColorsExpanded } = state.modal;
-        const selectedColor = selectedColorId ? COLOR_MAP[selectedColorId] : null;
-        const currentInCollection = (state.selectedPartId && selectedColorId && state.collection[state.selectedPartId] && state.collection[state.selectedPartId][selectedColorId]) || 0;
+        const { partVariations, partImageUrl } = state.modal;
         
-        const availableColorIds = part.availableColorIds || [];
-        const COLOR_COLLAPSE_THRESHOLD = 18;
-
         let variationSelector = '';
         if (partVariations && partVariations.length > 1) {
             variationSelector = `
@@ -921,54 +1019,23 @@
             `;
         }
 
-        let colorSelectorContent = '';
-        if (isLoadingColors) {
-            colorSelectorContent = `<div class="flex items-center justify-center h-24"><div class="loader !w-8 !h-8"></div></div>`;
-        } else if (availableColorIds.length > 0) {
-            const sortedColorIds = sortColorIds(availableColorIds, part.id);
-            const shouldCollapse = sortedColorIds.length > COLOR_COLLAPSE_THRESHOLD && !areColorsExpanded;
-            const colorsToRender = shouldCollapse ? sortedColorIds.slice(0, COLOR_COLLAPSE_THRESHOLD) : sortedColorIds;
-
-            const colorButtonsHtml = colorsToRender.map(cid => {
-                const color = COLOR_MAP[cid];
-                if (!color) return '';
-                const isInCollection = state.collection[part.id] && state.collection[part.id][cid] > 0;
-                return `
-                    <button data-color-id="${cid}" title="${color.name}" class="w-10 h-10 rounded-full border-2 transition-transform duration-150 overflow-hidden ${color.isTransparent ? 'checkerboard' : ''} ${selectedColorId === cid ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};">
-                        ${isInCollection ? '<div class="w-2 h-2 bg-white rounded-full m-auto"></div>' : ''}
-                    </button>
-                `;
-            }).join('');
-            
-            colorSelectorContent = `
-                <div id="color-selector" class="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-3">
-                    ${colorButtonsHtml}
-                </div>
-                ${shouldCollapse ? `
-                    <div class="text-center mt-4">
-                        <button data-action="expand-colors" class="text-blue-400 hover:text-blue-300 hover:underline text-sm font-semibold">
-                            Показать ещё ${sortedColorIds.length - COLOR_COLLAPSE_THRESHOLD} цветов
-                        </button>
-                    </div>
-                ` : ''}
-            `;
-        } else {
-             colorSelectorContent = `<p class="text-sm text-gray-400 text-center py-4">Нет информации о доступных цветах.</p>`;
-        }
-        
         document.body.classList.add('overflow-hidden');
+        modalContainer.classList.remove('modal-hidden');
+        requestAnimationFrame(() => {
+            modalContainer.classList.add('visible');
+        });
+        
         modalContainer.innerHTML = `
-        <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-lg lg:max-w-4xl flex flex-col max-h-[calc(100vh-2rem)]">
+        <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-lg lg:max-w-4xl flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
             
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                  <h2 class="text-xl lg:text-2xl font-bold text-white lg:truncate pr-8">${part.name}</h2>
                  <button id="modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
             </div>
             
-            <div class="flex-grow flex flex-col lg:flex-row overflow-y-auto no-scrollbar">
+            <div id="modal-scroll-area" class="flex-grow flex flex-col lg:flex-row overflow-y-auto no-scrollbar">
                 <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
-                     <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
-                        ${isImageLoading ? `<div class="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
+                     <div id="modal-image-container" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
                         <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-full object-contain">
                      </div>
                 </div>
@@ -990,54 +1057,178 @@
                         
                         <div>
                           <h3 class="text-md font-semibold text-gray-300 mb-3">Доступные цвета</h3>
-                           ${colorSelectorContent}
+                           <div id="color-selector-container">${renderColorSelector()}</div>
                         </div>
                         
-                        ${selectedColor ? `
-                            <div class="bg-gray-700/50 rounded-lg p-4">
-                                <div class="space-y-4">
-                                    <div class="flex justify-between items-center">
-                                        <p class="text-white font-semibold truncate" title="${selectedColor.name}">${selectedColor.name}</p>
-                                        <p class="text-sm text-gray-400 text-right">В коллекции: <span class="font-bold text-white">${currentInCollection}</span></p>
-                                    </div>
-                                    
-                                    <div class="flex justify-between items-center gap-4">
-                                        <div class="flex items-center gap-2">
-                                            <button data-action="decrease-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${MinusIcon('w-5 h-5')}</button>
-                                            <input type="number" value="${quantity}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                                            <button data-action="increase-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${PlusIcon('w-5 h-5')}</button>
-                                        </div>
-                                        <button data-action="update-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                                            ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
-                                        </button>
-                                    </div>
-                                    ${currentInCollection > 0 ? `
-                                        <div>
-                                            <button data-action="delete-from-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции</button>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        ` : ''}
+                        <div id="modal-controls-container">${renderModalControls()}</div>
                     </div>
                 </div>
             </div>
         </div>
         `;
-        modalContainer.classList.remove('modal-hidden');
 
-        const newScrollableModalBody = document.querySelector('#modal-content .overflow-y-auto');
-        if (newScrollableModalBody) {
-            newScrollableModalBody.scrollTop = scrollTop;
+        updateModalPartially({ image: true });
+    }
+    
+    function renderColorSelector() {
+        if (!state.selectedPartId) return '';
+
+        const part = PART_MAP[state.selectedPartId];
+        if (!part) return '';
+
+        const { areColorsExpanded, selectedColorId, isLoadingColors } = state.modal;
+        const availableColorIds = part.availableColorIds || [];
+
+        if (isLoadingColors) {
+            return `<div class="flex items-center justify-center h-24"><div class="loader !w-8 !h-8"></div></div>`;
+        }
+        if (availableColorIds.length === 0) {
+            return `<p class="text-sm text-gray-400 text-center py-4">Нет информации о доступных цветах.</p>`;
+        }
+        
+        const COLOR_COLLAPSE_THRESHOLD = 18;
+        const isExpandable = availableColorIds.length > COLOR_COLLAPSE_THRESHOLD;
+        const sortedColorIds = sortColorIds(availableColorIds, part.id);
+        
+        const allColorButtonsHtml = sortedColorIds.map(cid => {
+            const color = COLOR_MAP[cid];
+            if (!color) return '';
+            const isInCollection = state.collection[part.id] && state.collection[part.id][cid] > 0;
+            return `
+                <button data-color-id="${cid}" title="${color.name}" class="w-10 h-10 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center ${color.isTransparent ? 'checkerboard' : ''} ${selectedColorId === cid ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};">
+                    ${isInCollection ? '<div class="w-2 h-2 bg-white rounded-full"></div>' : ''}
+                </button>
+            `;
+        }).join('');
+        
+        let expandCollapseButton = '';
+        if (isExpandable) {
+            if (!areColorsExpanded) {
+                const remainingCount = sortedColorIds.length - COLOR_COLLAPSE_THRESHOLD;
+                const pluralizedString = getPluralizedColorString(remainingCount);
+                expandCollapseButton = `
+                    <button data-action="expand-colors" class="text-blue-400 hover:text-blue-300 hover:underline text-sm font-semibold">
+                        Показать ещё ${remainingCount} ${pluralizedString}
+                    </button>
+                `;
+            } else {
+                expandCollapseButton = `
+                    <button data-action="collapse-colors" class="text-blue-400 hover:text-blue-300 hover:underline text-sm font-semibold">
+                        Свернуть
+                    </button>
+                `;
+            }
+        }
+        
+        const collapsedHeight = '220px'; 
+        const wrapperStyle = isExpandable && !areColorsExpanded ? `max-height: ${collapsedHeight};` : '';
+
+        return `
+            <div id="color-selector-wrapper" style="${wrapperStyle}">
+                <div class="grid grid-cols-[repeat(auto-fill,minmax(48px,1fr))] gap-x-2 gap-y-4 p-2">
+                    ${allColorButtonsHtml}
+                </div>
+            </div>
+            <div id="expand-collapse-container" class="text-center mt-2">
+                ${expandCollapseButton}
+            </div>
+        `;
+    }
+
+    function renderModalControls() {
+        const { selectedColorId, quantity } = state.modal;
+        const selectedColor = selectedColorId ? COLOR_MAP[selectedColorId] : null;
+
+        if (!selectedColor || !state.selectedPartId) return '';
+
+        const currentInCollection = (state.collection[state.selectedPartId]?.[selectedColorId]) || 0;
+
+        return `
+            <div class="bg-gray-700/50 rounded-lg p-4">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <p class="text-white font-semibold truncate" title="${selectedColor.name}">${selectedColor.name}</p>
+                        <p class="text-sm text-gray-400 text-right">В коллекции: <span id="modal-in-collection-qty" class="font-bold text-white">${currentInCollection}</span></p>
+                    </div>
+                    
+                    <div class="flex justify-between items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <button data-action="decrease-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${MinusIcon('w-5 h-5')}</button>
+                            <input id="modal-quantity-input" type="number" value="${quantity}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
+                            <button data-action="increase-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${PlusIcon('w-5 h-5')}</button>
+                        </div>
+                        <button id="modal-update-collection-btn" data-action="update-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                            ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
+                        </button>
+                    </div>
+                    ${currentInCollection > 0 ? `
+                        <div id="modal-delete-container">
+                            <button data-action="delete-from-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции</button>
+                        </div>
+                    ` : '<div id="modal-delete-container"></div>'}
+                </div>
+            </div>
+        `;
+    }
+
+    function updateModalPartially(updates) {
+        if (!state.selectedPartId) return;
+
+        if (updates.image) {
+            const imageContainer = document.getElementById('modal-image-container');
+            if (imageContainer) {
+                const { partImageUrl, isImageLoading } = state.modal;
+                const part = PART_MAP[state.selectedPartId];
+                imageContainer.innerHTML = `
+                    ${isImageLoading ? `<div class="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
+                    <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-full object-contain">
+                `;
+            }
+        }
+        if (updates.colors) {
+            const colorContainer = document.getElementById('color-selector-container');
+            if (colorContainer) {
+                colorContainer.innerHTML = renderColorSelector();
+            }
+        }
+        if (updates.controls) {
+            const controlsContainer = document.getElementById('modal-controls-container');
+            if (controlsContainer) {
+                controlsContainer.innerHTML = renderModalControls();
+            }
         }
     }
+    
+    function updateModalControlsState() {
+        if (!state.selectedPartId || !state.modal.selectedColorId) return;
+
+        const currentInCollection = (state.collection[state.selectedPartId]?.[state.modal.selectedColorId]) || 0;
+        
+        const inCollectionQtySpan = document.getElementById('modal-in-collection-qty');
+        if (inCollectionQtySpan) inCollectionQtySpan.textContent = currentInCollection;
+        
+        const updateBtn = document.getElementById('modal-update-collection-btn');
+        if (updateBtn) updateBtn.textContent = currentInCollection > 0 ? 'Обновить' : 'Добавить';
+        
+        const deleteContainer = document.getElementById('modal-delete-container');
+        if (deleteContainer) {
+            if (currentInCollection > 0 && !deleteContainer.innerHTML.trim()) {
+                deleteContainer.innerHTML = `<button data-action="delete-from-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции</button>`;
+            } else if (currentInCollection === 0) {
+                deleteContainer.innerHTML = '';
+            }
+        }
+
+        const qtyInput = document.getElementById('modal-quantity-input');
+        if(qtyInput) qtyInput.value = state.modal.quantity;
+    }
+
 
     function updateUI() {
         renderSidebar();
         renderHeader();
         renderGrid();
-        renderModal();
-
+        
         const isMobile = window.innerWidth < 1024;
         if (isMobile) {
             if (state.isSidebarOpen) {
@@ -1095,6 +1286,7 @@
             state.importExportStatus = { message: `Ошибка импорта: ${error.message}`, type: 'error' };
         } finally {
             event.target.value = '';
+            state.isGridStale = true;
             updateUI();
         }
     }
@@ -1145,7 +1337,45 @@
         
         state.importExportStatus = { message: '', type: '' };
         saveState();
-        updateUI();
+        
+        state.isGridStale = false;
+        
+        if(state.currentView === 'collection') {
+            updateUI(); // In collection view, a full but non-animated re-render is cleanest
+        } else {
+            // In catalog view, perform targeted updates for performance
+            renderSidebar();
+            const card = mainContent.querySelector(`.part-card[data-part-id="${partId}"]`);
+            if(card) {
+                const totalQuantity = Object.values(state.collection[partId] || {}).reduce((sum, q) => sum + q, 0);
+                let indicator = card.querySelector('.absolute.top-3.right-3');
+                if(totalQuantity > 0) {
+                    if(!indicator) {
+                        indicator = document.createElement('div');
+                        indicator.className = `absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md`;
+                        card.prepend(indicator);
+                    }
+                    indicator.textContent = totalQuantity;
+                } else {
+                    indicator?.remove();
+                }
+            }
+        }
+        
+        if (state.selectedPartId === partId) {
+            updateModalControlsState();
+            const colorButton = modalContainer.querySelector(`button[data-color-id="${colorId}"]`);
+            if (colorButton) {
+                const dot = colorButton.querySelector('.w-2.h-2');
+                if (quantity > 0 && !dot) {
+                    const newDot = document.createElement('div');
+                    newDot.className = 'w-2 h-2 bg-white rounded-full';
+                    colorButton.appendChild(newDot);
+                } else if (quantity === 0 && dot) {
+                    dot.remove();
+                }
+            }
+        }
     }
     
     function clearStatusOnClick() {
@@ -1160,22 +1390,46 @@
         const query = state.searchQuery.trim();
 
         if (state.currentView === 'collection') {
-            state.selectedCollectionCategoryId = null; 
+            state.selectedCollectionCategoryId = null;
+            state.isGridStale = true;
             updateUI();
         } else {
             searchRebrickableParts(query);
         }
     }
+    
+    function closeModal() {
+        const modalContent = document.getElementById('modal-content');
+        if (!modalContent || modalContainer.classList.contains('modal-hidden')) {
+            return; 
+        }
+        
+        modalContainer.classList.remove('visible');
+        modalContent.classList.add('modal-content-leave');
+        document.body.classList.remove('overflow-hidden');
+        
+        modalContent.addEventListener('animationend', () => {
+            if (modalContent.classList.contains('modal-content-leave')) {
+                state.selectedPartId = null;
+                state.modal = {
+                    partGroupId: null, partVariations: [], selectedColorId: null,
+                    quantity: 1, isLoadingColors: false, isImageLoading: false,
+                    partImageUrl: null, areColorsExpanded: false,
+                };
+                modalContainer.classList.add('modal-hidden');
+                modalContainer.innerHTML = '';
+            }
+        }, { once: true });
+    }
 
     function openModalForPart(partId, groupId, variations) {
-        state.selectedPartId = partId;
         const representativePart = PART_MAP[partId];
         if (!representativePart) { 
             console.error(`Part ${partId} not found in PART_MAP.`);
-            state.selectedPartId = null; 
             return; 
         }
-
+        
+        state.selectedPartId = partId;
         state.modal = { 
             partGroupId: groupId,
             partVariations: variations,
@@ -1187,15 +1441,18 @@
             areColorsExpanded: false,
         };
         
+        renderModal();
+        
         if (!representativePart.availableColorIds) {
             fetchPartColors(representativePart.id);
         } else if (representativePart.availableColorIds.length > 0) {
             const sortedColorIds = sortColorIds(representativePart.availableColorIds, representativePart.id);
             state.modal.selectedColorId = sortedColorIds[0];
+            const currentQuantity = state.collection[partId]?.[state.modal.selectedColorId] || 0;
+            state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+            updateModalPartially({ controls: true });
             fetchPartColorSpecifics(representativePart.id, sortedColorIds[0]);
         }
-        
-        updateUI();
     }
     
     document.addEventListener('click', (e) => {
@@ -1227,6 +1484,7 @@
             state.selectedCategoryId = null;
             state.selectedCollectionCategoryId = null;
             state.itemsToDisplay = state.itemsIncrement;
+            state.isGridStale = true;
             updateUI();
             return;
         }
@@ -1235,6 +1493,7 @@
         if (showAllCollectionButton) {
             clearStatusOnClick();
             state.selectedCollectionCategoryId = null;
+            state.isGridStale = true;
             updateUI();
             return;
         }
@@ -1259,6 +1518,7 @@
 
             if (state.currentView === 'collection') {
                 state.selectedCollectionCategoryId = state.selectedCollectionCategoryId === catId ? null : catId;
+                state.isGridStale = true;
                 updateUI();
             } else {
                 state.selectedCategoryId = state.selectedCategoryId === catId ? null : catId;
@@ -1268,6 +1528,7 @@
                 } else {
                     state.catalogGroups = null;
                     state.searchResultGroups = null;
+                    state.isGridStale = true;
                     updateUI();
                 }
             }
@@ -1276,7 +1537,7 @@
 
         if(target.closest('#load-more-button')) {
             state.itemsToDisplay += state.itemsIncrement;
-            updateUI();
+            renderGrid();
             return;
         }
 
@@ -1315,15 +1576,16 @@
             openModalForPart(partId, groupId, variations);
             if (state.currentView === 'collection' && partCard.dataset.colorId) {
                 state.modal.selectedColorId = partCard.dataset.colorId;
+                const currentQuantity = state.collection[partId]?.[state.modal.selectedColorId] || 0;
+                state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+                updateModalPartially({ controls: true });
                 fetchPartColorSpecifics(partId, state.modal.selectedColorId);
-                renderModal();
             }
             return;
         }
         
         if (target.id === 'modal-container' || target.closest('#modal-close')) {
-            state.selectedPartId = null;
-            updateUI();
+            closeModal();
             return;
         }
 
@@ -1342,33 +1604,22 @@
         if (target.closest('#import-button')) { document.getElementById('import-zip-input')?.click(); return; }
         if (target.closest('#export-button')) { handleExportCollection(); return; }
 
-        const modalContent = document.getElementById('modal-content');
-        if (modalContent && !modalContent.contains(target)) {
-          // This case handles clicks on the backdrop (modal-container) but not on the modal content itself.
-          // The check `target.id === 'modal-container'` earlier handles this, but this is a fallback.
-          state.selectedPartId = null;
-          updateUI();
-          return;
-        }
-        
-        if (modalContent?.contains(target)) {
+        if (modalContainer?.contains(target)) {
             const goToCategoryButton = target.closest('[data-action="go-to-category"]');
             if (goToCategoryButton?.dataset.categoryId) {
                 const catId = parseInt(goToCategoryButton.dataset.categoryId, 10);
                 
-                // Find the parent group of the category and expand it in the sidebar
                 const parentGroup = state.categoryTree.find(group => group.children.some(child => child.id === catId));
                 if (parentGroup) {
                     state.expandedCategories.add(parentGroup.name);
                 }
 
-                // Set state for view switch
-                state.selectedPartId = null; // Close modal
-                state.currentView = 'catalog';
-                state.selectedCollectionCategoryId = null; // Clear collection filter
-                
-                // loadPartsForCategory will set selectedCategoryId and update UI
-                loadPartsForCategory(catId);
+                closeModal();
+                setTimeout(() => {
+                    state.currentView = 'catalog';
+                    state.selectedCollectionCategoryId = null; 
+                    loadPartsForCategory(catId);
+                }, 200);
                 return;
             }
 
@@ -1376,9 +1627,18 @@
             if (colorButton?.dataset.colorId) {
                 const newColorId = colorButton.dataset.colorId;
                 if(state.modal.selectedColorId !== newColorId) {
+                    // Update selection style
+                    const oldSelected = modalContainer.querySelector('.border-blue-500');
+                    oldSelected?.classList.remove('border-blue-500', 'scale-110');
+                    oldSelected?.classList.add('border-gray-600');
+                    colorButton.classList.remove('border-gray-600');
+                    colorButton.classList.add('border-blue-500', 'scale-110');
+                    
                     state.modal.selectedColorId = newColorId;
                     const currentQuantity = (state.collection[state.selectedPartId]?.[state.modal.selectedColorId]) || 0;
                     state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+                    
+                    updateModalControlsState();
                     fetchPartColorSpecifics(state.selectedPartId, newColorId);
                 }
                 return;
@@ -1387,21 +1647,36 @@
             const actionButton = target.closest('[data-action]');
             if (actionButton?.dataset.action) {
                 const { action } = actionButton.dataset;
-                if (action === 'expand-colors') {
-                    state.modal.areColorsExpanded = true;
-                    renderModal();
-                    return;
+                
+                if (action === 'expand-colors' || action === 'collapse-colors') {
+                    const wrapper = document.getElementById('color-selector-wrapper');
+                    if (!wrapper) return;
+                    
+                    state.modal.areColorsExpanded = (action === 'expand-colors');
+                    actionButton.disabled = true;
+
+                    if (state.modal.areColorsExpanded) {
+                        wrapper.style.maxHeight = wrapper.scrollHeight + 'px';
+                        actionButton.parentElement.innerHTML = `<button data-action="collapse-colors" class="text-blue-400 hover:text-blue-300 hover:underline text-sm font-semibold">Свернуть</button>`;
+                    } else {
+                        const remainingCount = (PART_MAP[state.selectedPartId]?.availableColorIds || []).length - 18;
+                        const pluralizedString = getPluralizedColorString(remainingCount);
+                        wrapper.style.maxHeight = '220px';
+                        actionButton.parentElement.innerHTML = `<button data-action="expand-colors" class="text-blue-400 hover:text-blue-300 hover:underline text-sm font-semibold">Показать ещё ${remainingCount} ${pluralizedString}</button>`;
+                    }
                 } else if (action === 'increase-qty') {
                     state.modal.quantity++;
+                    updateModalControlsState();
                 } else if (action === 'decrease-qty') {
                     state.modal.quantity = Math.max(1, state.modal.quantity - 1);
+                    updateModalControlsState();
                 } else if (action === 'update-collection' && state.modal.selectedColorId && state.selectedPartId) {
                     handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
                 } else if (action === 'delete-from-collection-modal' && state.modal.selectedColorId && state.selectedPartId) {
                     handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
-                    state.selectedPartId = null;
+                    closeModal();
+                    return;
                 }
-                updateUI();
             }
         }
     });
@@ -1418,6 +1693,7 @@
                     state.selectedCollectionCategoryId = null;
                     renderSidebar();
                 }
+                state.isGridStale = false; // No animation for client-side filtering
                 renderGrid();
             }
         }
@@ -1429,8 +1705,7 @@
             triggerSearch();
         }
         if (e.key === 'Escape' && state.selectedPartId) {
-            state.selectedPartId = null;
-            updateUI();
+            closeModal();
         }
     });
 
@@ -1442,17 +1717,17 @@
             const newPartId = e.target.value;
             if (state.selectedPartId === newPartId) return;
 
-            state.selectedPartId = newPartId;
-            const newPart = PART_MAP[newPartId];
-            if (!newPart) return;
+            const scrollable = document.getElementById('modal-scroll-area');
+            const savedScrollTop = scrollable ? scrollable.scrollTop : 0;
             
-            state.modal.selectedColorId = null;
-            state.modal.quantity = 1;
-            state.modal.partImageUrl = newPart.rebrickable_img_url;
-            state.modal.isLoadingColors = true;
-            state.modal.areColorsExpanded = false;
+            openModalForPart(newPartId, state.modal.partGroupId, state.modal.partVariations);
 
-            fetchPartColors(newPart.id);
+            requestAnimationFrame(() => {
+                const newScrollable = document.getElementById('modal-scroll-area');
+                if(newScrollable) {
+                    newScrollable.scrollTop = savedScrollTop;
+                }
+            });
         }
     });
 
@@ -1486,6 +1761,7 @@
             state.apiError = error.message;
         } finally {
             state.isLoading = false;
+            state.isGridStale = true;
             updateUI();
         }
     }
