@@ -62,11 +62,11 @@
     }
 
     /* Animation Classes */
-    #modal-container {
+    #modal-container, #filter-modal-container {
         opacity: 0;
         transition: opacity 0.2s ease-out;
     }
-    #modal-container.visible {
+    #modal-container.visible, #filter-modal-container.visible {
         opacity: 1;
     }
     .modal-content-enter {
@@ -105,6 +105,10 @@
 
   <!-- Modal -->
   <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
+  
+  <!-- Filter Modal -->
+  <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
+
 
   <script>
     // --- APP LOGIC ---
@@ -146,6 +150,7 @@
     const BarIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"></path><path d="M4 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0z"></path><path d="M20 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0z"></path></svg>`;
     const ArchIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V11c0-3.87 3.13-7 7-7s7 3.13 7 7v10"></path><path d="M5 21h14"></path></svg>`;
     const OtherIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
+    const FilterIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>`;
 
     // --- STATE MANAGEMENT ---
     let state = {
@@ -176,7 +181,15 @@
       itemsIncrement: 48,
       collection: {},
       importExportStatus: { message: '', type: '' },
+      isFilterModalOpen: false,
+      filters: {
+          colorId: null,
+          inCollectionOnly: false,
+      },
+      sortBy: 'relevance', // 'relevance', 'alpha_asc', 'alpha_desc', 'popularity'
     };
+    
+    let tempFilters = {};
 
     function loadState() {
       const savedCollection = localStorage.getItem('legoCollection');
@@ -203,6 +216,7 @@
     const headerContainer = document.getElementById('header-container');
     const mainContent = document.getElementById('main-content');
     const modalContainer = document.getElementById('modal-container');
+    const filterModalContainer = document.getElementById('filter-modal-container');
     
     // --- API & DATA HANDLING ---
     
@@ -367,10 +381,19 @@
         updateUI();
 
         try {
-            const rawParts = await apiFetchPaginated(`/parts/?part_cat_id=${categoryId}`);
+            let endpoint = `/parts/?part_cat_id=${categoryId}`;
+            if (state.filters.colorId) {
+                endpoint += `&color_id=${state.filters.colorId}`;
+            }
+            const rawParts = await apiFetchPaginated(endpoint);
             const parts = rawParts.map(processPartData).filter(Boolean);
-            parts.sort(partRelevanceComparator);
-            state.catalogGroups = groupParts(parts);
+            
+            let filteredParts = parts;
+            if (state.filters.inCollectionOnly) {
+                 filteredParts = parts.filter(p => state.collection[p.id] && Object.keys(state.collection[p.id]).length > 0);
+            }
+
+            state.catalogGroups = groupParts(filteredParts);
         } catch (error) {
             console.error("Rebrickable parts fetch failed:", error);
             state.apiError = error.message;
@@ -435,8 +458,17 @@
         updateUI();
 
         try {
-            const rawParts = await apiFetchPaginated(`/parts/?search=${encodeURIComponent(query)}`);
-            const parts = rawParts.map(processPartData).filter(Boolean);
+            let endpoint = `/parts/?search=${encodeURIComponent(query)}`;
+             if (state.filters.colorId) {
+                endpoint += `&color_id=${state.filters.colorId}`;
+            }
+            const rawParts = await apiFetchPaginated(endpoint);
+            let parts = rawParts.map(processPartData).filter(Boolean);
+            
+            if (state.filters.inCollectionOnly) {
+                 parts = parts.filter(p => state.collection[p.id] && Object.keys(state.collection[p.id]).length > 0);
+            }
+
             const groups = groupParts(parts);
             
             const scoredGroups = Object.entries(groups).map(([groupId, partList]) => {
@@ -826,6 +858,9 @@
                      <button id="search-button" class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск">
                         ${SearchIcon('w-5 h-5')}
                     </button>
+                    <button id="filter-button" class="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors flex-shrink-0" aria-label="Фильтры">
+                        ${FilterIcon('w-5 h-5')}
+                    </button>
                 </div>
             </div>
         `;
@@ -878,15 +913,66 @@
         `;
     }
 
-    function renderGrid() {
-        let content = '';
+    function renderAppliedFilters() {
+        const { colorId, inCollectionOnly } = state.filters;
+        const { sortBy } = state;
+
+        const isDefaultSort = state.searchQuery ? sortBy === 'relevance' : sortBy === 'popularity';
+        if (!colorId && !inCollectionOnly && isDefaultSort) {
+            return '';
+        }
+
+        const colorTag = colorId && COLOR_MAP[colorId] ? `
+            <div class="flex items-center bg-blue-900/50 text-blue-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                <span class="mr-2">Цвет: ${COLOR_MAP[colorId].name}</span>
+                <button data-action="remove-filter" data-filter-type="color" class="text-blue-200 hover:bg-blue-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
+            </div>
+        ` : '';
+
+        const collectionTag = inCollectionOnly && state.currentView === 'catalog' ? `
+            <div class="flex items-center bg-green-900/50 text-green-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                <span class="mr-2">В коллекции</span>
+                <button data-action="remove-filter" data-filter-type="inCollectionOnly" class="text-green-200 hover:bg-green-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
+            </div>
+        ` : '';
+
+        const sortMap = {
+            'relevance': 'Релевантность',
+            'alpha_asc': 'Алфавит (А-Я)',
+            'alpha_desc': 'Алфавит (Я-А)',
+            'popularity': 'Популярность'
+        };
+
+        const sortTag = !isDefaultSort ? `
+            <div class="flex items-center bg-gray-600 text-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                <span class="mr-2">Сортировка: ${sortMap[sortBy]}</span>
+                <button data-action="remove-filter" data-filter-type="sortBy" class="text-gray-200 hover:bg-gray-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
+            </div>
+        ` : '';
+        
+        const tags = [sortTag, colorTag, collectionTag].filter(Boolean).join('');
+
+        if (!tags) return '';
+
+        return `
+            <div class="px-4 pt-2 pb-0">
+                <div class="flex items-center flex-wrap gap-2">
+                    ${tags}
+                    <button data-action="remove-all-filters" class="text-sm text-blue-400 hover:underline">Очистить все</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderMainContent() {
+        let gridContent = '';
         
         if (state.isLoading) {
-            content = `<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>`;
+            gridContent = `<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>`;
         } else if (state.apiError) {
-            content = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${state.apiError}</p></div>`;
+            gridContent = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${state.apiError}</p></div>`;
         } else if (state.currentView === 'collection') {
-            const items = [];
+            let items = [];
             for (const partId in state.collection) {
               for (const colorId in state.collection[partId]) {
                 const part = PART_MAP[partId];
@@ -897,11 +983,13 @@
                 }
               }
             }
-
-            let filteredItems = items;
             
+            // Apply client-side filters for collection view
             if (state.selectedCollectionCategoryId) {
-                filteredItems = filteredItems.filter(({ part }) => PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId);
+                items = items.filter(({ part }) => PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId);
+            }
+            if (state.filters.colorId) {
+                items = items.filter(item => item.color.id === state.filters.colorId);
             }
 
             const query = state.searchQuery.trim().toLowerCase();
@@ -918,28 +1006,31 @@
                     return 0;
                 };
 
-                filteredItems = filteredItems
+                items = items
                     .map(item => ({ item, score: getClientRelevanceScore(item, query) }))
                     .filter(i => i.score > 0)
                     .sort((a, b) => b.score - a.score)
                     .map(i => i.item);
-
-            } else {
-                 filteredItems.sort((a,b) => a.part.name.localeCompare(b.part.name));
             }
 
+            // Apply sorting for collection view
+            switch(state.sortBy) {
+                case 'alpha_asc': items.sort((a, b) => a.part.name.localeCompare(b.part.name)); break;
+                case 'alpha_desc': items.sort((a, b) => b.part.name.localeCompare(a.part.name)); break;
+                case 'popularity': items.sort((a, b) => (PART_MAP[b.part.id]?.num_sets || 0) - (PART_MAP[a.part.id]?.num_sets || 0)); break;
+            }
 
-            if (filteredItems.length === 0) {
+            if (items.length === 0) {
                 let emptyMsg = 'В вашей коллекции нет деталей';
-                if (state.searchQuery) emptyMsg += ', соответствующих поиску';
-                else if (state.selectedCollectionCategoryId) emptyMsg += ' в выбранной категории';
+                if (state.searchQuery || state.filters.colorId || state.selectedCollectionCategoryId) emptyMsg += ', соответствующих фильтрам';
                 emptyMsg += '.';
-                content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
+                gridContent = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
             } else {
-                content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
-                    ${filteredItems.map((item, index) => renderPartCard(item.part, item.color, item.quantity, state.isGridStale, index)).join('')}
+                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
+                    ${items.map((item, index) => renderPartCard(item.part, item.color, item.quantity, state.isGridStale, index)).join('')}
                 </div>`;
             }
+
         } else { // Catalog view
             let groupsToShow = {};
             let emptyMessage = 'Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском.';
@@ -951,11 +1042,21 @@
                 groupsToShow = state.catalogGroups;
                 emptyMessage = 'В этой категории нет деталей.';
             }
+            
+            let allItems = Object.values(groupsToShow).flat();
+            
+            // Apply sorting for catalog view
+            switch(state.sortBy) {
+                case 'alpha_asc': allItems.sort((a, b) => a.name.localeCompare(b.name)); break;
+                case 'alpha_desc': allItems.sort((a, b) => b.name.localeCompare(a.name)); break;
+                case 'popularity': allItems.sort((a, b) => b.num_sets - a.num_sets); break;
+            }
+            groupsToShow = groupParts(allItems);
 
             const groupKeys = groupsToShow ? Object.keys(groupsToShow) : [];
 
             if (groupKeys.length === 0) {
-                content = `
+                gridContent = `
                     <div class="flex flex-col items-center justify-center h-full p-4 text-center">
                         <p class="text-gray-400 max-w-sm mb-6">${emptyMessage}</p>
                         <button id="feeling-lucky-button" class="flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
@@ -965,7 +1066,7 @@
             } else {
                 const groupsToRender = groupKeys.slice(0, state.itemsToDisplay);
 
-                content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
+                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
                     ${groupsToRender.map((key, index) => {
                         const representativePart = groupsToShow[key][0];
                         const totalQuantity = Object.values(state.collection[representativePart.id] || {}).reduce((sum, q) => sum + q, 0);
@@ -974,7 +1075,7 @@
                 </div>`;
                 
                 if (groupKeys.length > state.itemsToDisplay) {
-                    content += `
+                    gridContent += `
                         <div class="p-4 text-center">
                             <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
                                 Загрузить ещё
@@ -984,7 +1085,7 @@
                 }
             }
         }
-        mainContent.innerHTML = content;
+        mainContent.innerHTML = renderAppliedFilters() + gridContent;
         state.isGridStale = false; // Animation flag is reset after render
     }
 
@@ -1173,6 +1274,95 @@
         `;
     }
 
+    function renderFilterModal() {
+        if (!state.isFilterModalOpen) {
+            closeFilterModal();
+            return;
+        }
+        
+        // Sort options
+        const sortOptions = [
+            { id: 'relevance', name: 'Релевантность', desc: 'Поиск' },
+            { id: 'popularity', name: 'Популярность', desc: 'Каталог' },
+            { id: 'alpha_asc', name: 'Алфавит (А-Я)', desc: '' },
+            { id: 'alpha_desc', name: 'Алфавит (Я-А)', desc: '' },
+        ];
+        const sortRadios = sortOptions.map(opt => {
+            const isChecked = tempFilters.sortBy === opt.id;
+            const isDisabled = (opt.id === 'relevance' && !state.searchQuery) || (opt.id === 'popularity' && state.searchQuery);
+            const defaultBadge = (state.searchQuery && opt.id === 'relevance') || (!state.searchQuery && opt.id === 'popularity') ? '<span class="ml-2 text-xs bg-blue-600/50 text-blue-300 px-1.5 py-0.5 rounded-full">По умолч.</span>' : '';
+            return `
+                <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}">
+                    <input type="radio" name="sort" value="${opt.id}" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-500 focus:ring-blue-500" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} data-action="modal-set-sort">
+                    <span class="ml-3 text-white">${opt.name}</span>
+                    ${defaultBadge}
+                </label>
+            `;
+        }).join('');
+
+        // Collection toggle
+        const collectionToggle = state.currentView === 'catalog' ? `
+            <div>
+                <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтры</h3>
+                <div class="bg-gray-900/50 rounded-lg p-2">
+                    <label class="flex justify-between items-center p-2 cursor-pointer">
+                        <span class="text-white">Только детали в коллекции</span>
+                        <div class="relative">
+                            <input type="checkbox" class="sr-only peer" ${tempFilters.filters.inCollectionOnly ? 'checked' : ''} data-action="modal-toggle-collection">
+                            <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        ` : '';
+
+        // Color palette
+        const sortedColorIds = Object.keys(COLOR_MAP).sort((a,b) => COLOR_MAP[a].name.localeCompare(COLOR_MAP[b].name));
+        const colorButtons = sortedColorIds.map(cid => {
+            const color = COLOR_MAP[cid];
+            const isSelected = tempFilters.filters.colorId === cid;
+            return `
+                <button data-action="modal-set-color" data-color-id="${cid}" title="${color.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${color.isTransparent ? 'checkerboard' : ''} ${isSelected ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};"></button>
+            `;
+        }).join('');
+
+        const animationClass = 'modal-content-enter';
+        document.body.classList.add('overflow-hidden');
+        filterModalContainer.classList.remove('modal-hidden');
+        requestAnimationFrame(() => {
+            filterModalContainer.classList.add('visible');
+        });
+        
+        filterModalContainer.innerHTML = `
+            <div id="filter-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
+                <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                     <h2 class="text-xl font-bold text-white">Фильтры и сортировка</h2>
+                     <button id="filter-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
+                </div>
+                <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">Сортировать по</h3>
+                        <div class="bg-gray-900/50 rounded-lg space-y-1 p-2">${sortRadios}</div>
+                    </div>
+                    ${collectionToggle}
+                    <div>
+                         <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтр по цвету</h3>
+                         <div class="bg-gray-900/50 rounded-lg p-3">
+                            <button data-action="modal-set-color" data-color-id="null" class="w-full mb-3 py-2 text-sm rounded-md transition-colors ${!tempFilters.filters.colorId ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}">Все цвета</button>
+                            <div class="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-3">
+                                ${colorButtons}
+                            </div>
+                         </div>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 p-4 border-t border-gray-700 flex justify-between items-center gap-4">
+                    <button data-action="modal-reset-filters" class="px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-gray-600 hover:bg-gray-500 text-white">Сбросить</button>
+                    <button data-action="modal-apply-filters" class="flex-grow px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-blue-600 hover:bg-blue-700 text-white">Применить</button>
+                </div>
+            </div>
+        `;
+    }
+
     function updateModalPartially(updates) {
         if (!state.selectedPartId) return;
 
@@ -1229,7 +1419,7 @@
     function updateUI() {
         renderSidebar();
         renderHeader();
-        renderGrid();
+        renderMainContent();
         
         const isMobile = window.innerWidth < 1024;
         if (isMobile) {
@@ -1387,8 +1577,13 @@
         }
     }
 
-    function triggerSearch() {
+    function triggerSearch(useCurrentFilters = false) {
         clearStatusOnClick();
+        if (!useCurrentFilters) {
+             state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+             state.filters.colorId = null;
+             state.filters.inCollectionOnly = false;
+        }
         const query = state.searchQuery.trim();
 
         if (state.currentView === 'collection') {
@@ -1420,6 +1615,27 @@
                 };
                 modalContainer.classList.add('modal-hidden');
                 modalContainer.innerHTML = '';
+            }
+        }, { once: true });
+    }
+    
+    function closeFilterModal() {
+        const modalContent = document.getElementById('filter-modal-content');
+        if (!modalContent || filterModalContainer.classList.contains('modal-hidden')) {
+            return; 
+        }
+        
+        state.isFilterModalOpen = false;
+        filterModalContainer.classList.remove('visible');
+        modalContent.classList.add('modal-content-leave');
+        if (!state.selectedPartId) {
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        modalContent.addEventListener('animationend', () => {
+            if (modalContent.classList.contains('modal-content-leave')) {
+                filterModalContainer.classList.add('modal-hidden');
+                filterModalContainer.innerHTML = '';
             }
         }, { once: true });
     }
@@ -1457,6 +1673,20 @@
         }
     }
     
+    function refreshWithNewFilters() {
+        state.itemsToDisplay = state.itemsIncrement;
+        state.isGridStale = true;
+        if (state.currentView === 'collection') {
+            updateUI();
+        } else if (state.searchQuery) {
+            searchRebrickableParts(state.searchQuery.trim());
+        } else if (state.selectedCategoryId) {
+            loadPartsForCategory(state.selectedCategoryId);
+        } else {
+             updateUI();
+        }
+    }
+    
     document.addEventListener('click', (e) => {
         if (!(e.target instanceof Element)) return;
         const target = e.target;
@@ -1487,7 +1717,7 @@
             state.selectedCollectionCategoryId = null;
             state.itemsToDisplay = state.itemsIncrement;
             state.isGridStale = true;
-            updateUI();
+            refreshWithNewFilters();
             return;
         }
 
@@ -1517,6 +1747,8 @@
             const catId = parseInt(categoryButton.dataset.categoryId, 10);
             clearStatusOnClick();
             state.searchQuery = '';
+            state.filters = { colorId: null, inCollectionOnly: false };
+            state.sortBy = 'popularity';
 
             if (state.currentView === 'collection') {
                 state.selectedCollectionCategoryId = state.selectedCollectionCategoryId === catId ? null : catId;
@@ -1539,7 +1771,7 @@
 
         if(target.closest('#load-more-button')) {
             state.itemsToDisplay += state.itemsIncrement;
-            renderGrid();
+            renderMainContent();
             return;
         }
 
@@ -1590,6 +1822,11 @@
             closeModal();
             return;
         }
+        
+        if (target.id === 'filter-modal-container' || target.closest('#filter-modal-close')) {
+            closeFilterModal();
+            return;
+        }
 
         if (target.closest('#search-button')) {
             triggerSearch();
@@ -1602,9 +1839,70 @@
             triggerSearch();
             return;
         }
+        
+        if (target.closest('#filter-button')) {
+            state.isFilterModalOpen = true;
+            tempFilters = {
+                filters: JSON.parse(JSON.stringify(state.filters)),
+                sortBy: state.sortBy
+            };
+            renderFilterModal();
+            return;
+        }
+
+        const filterAction = target.closest('[data-action="remove-filter"]');
+        if (filterAction) {
+            const type = filterAction.dataset.filterType;
+            if (type === 'color') state.filters.colorId = null;
+            if (type === 'inCollectionOnly') state.filters.inCollectionOnly = false;
+            if (type === 'sortBy') state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+            refreshWithNewFilters();
+            return;
+        }
+
+        if (target.closest('[data-action="remove-all-filters"]')) {
+            state.filters.colorId = null;
+            state.filters.inCollectionOnly = false;
+            state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+            refreshWithNewFilters();
+            return;
+        }
 
         if (target.closest('#import-button')) { document.getElementById('import-zip-input')?.click(); return; }
         if (target.closest('#export-button')) { handleExportCollection(); return; }
+
+        if (filterModalContainer?.contains(target)) {
+            const actionTarget = target.closest('[data-action]');
+            if(!actionTarget) return;
+
+            const { action } = actionTarget.dataset;
+
+            switch(action) {
+                case 'modal-set-sort':
+                    tempFilters.sortBy = actionTarget.value;
+                    break;
+                case 'modal-toggle-collection':
+                    tempFilters.filters.inCollectionOnly = actionTarget.checked;
+                    break;
+                case 'modal-set-color':
+                    const colorId = actionTarget.dataset.colorId;
+                    tempFilters.filters.colorId = colorId === 'null' ? null : colorId;
+                    break;
+                case 'modal-apply-filters':
+                    state.filters = JSON.parse(JSON.stringify(tempFilters.filters));
+                    state.sortBy = tempFilters.sortBy;
+                    closeFilterModal();
+                    refreshWithNewFilters();
+                    return;
+                case 'modal-reset-filters':
+                    tempFilters.filters.colorId = null;
+                    tempFilters.filters.inCollectionOnly = false;
+                    tempFilters.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+                    break;
+            }
+            // Re-render modal to reflect temporary state change
+            renderFilterModal();
+        }
 
         if (modalContainer?.contains(target)) {
             const goToCategoryButton = target.closest('[data-action="go-to-category"]');
@@ -1696,7 +1994,7 @@
                     renderSidebar();
                 }
                 state.isGridStale = false; // No animation for client-side filtering
-                renderGrid();
+                renderMainContent();
             }
         }
     });
@@ -1706,8 +2004,12 @@
             e.preventDefault();
             triggerSearch();
         }
-        if (e.key === 'Escape' && state.selectedPartId) {
-            closeModal();
+        if (e.key === 'Escape') {
+             if (state.isFilterModalOpen) {
+                closeFilterModal();
+             } else if (state.selectedPartId) {
+                closeModal();
+             }
         }
     });
 
@@ -1748,6 +2050,9 @@
     // --- INITIALIZATION ---
     async function initializeApp() {
         loadState();
+        if (!state.searchQuery) {
+            state.sortBy = 'popularity';
+        }
         updateUI();
         
         try {
