@@ -113,6 +113,9 @@
     const REBRICKABLE_API_URL = 'https://rebrickable.com/api/v3/lego';
     const REBRICKABLE_API_KEY = '20c78cc607d6059c8d2a61338d851590';
 
+    // --- UI CONFIG ---
+    const COLOR_COLLAPSE_THRESHOLD = 18;
+
     // --- DATA MAPS (populated dynamically) ---
     let COLOR_MAP = {};
     let PART_MAP = {};
@@ -1086,7 +1089,6 @@
             return `<p class="text-sm text-gray-400 text-center py-4">Нет информации о доступных цветах.</p>`;
         }
         
-        const COLOR_COLLAPSE_THRESHOLD = 18;
         const isExpandable = availableColorIds.length > COLOR_COLLAPSE_THRESHOLD;
         const sortedColorIds = sortColorIds(availableColorIds, part.id);
         
@@ -1120,7 +1122,7 @@
             }
         }
         
-        const collapsedHeight = '220px'; 
+        const collapsedHeight = '150px'; 
         const wrapperStyle = isExpandable && !areColorsExpanded ? `max-height: ${collapsedHeight};` : '';
 
         return `
@@ -1638,7 +1640,7 @@
                     const currentQuantity = (state.collection[state.selectedPartId]?.[state.modal.selectedColorId]) || 0;
                     state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
                     
-                    updateModalControlsState();
+                    updateModalPartially({ controls: true });
                     fetchPartColorSpecifics(state.selectedPartId, newColorId);
                 }
                 return;
@@ -1659,9 +1661,9 @@
                         wrapper.style.maxHeight = wrapper.scrollHeight + 'px';
                         actionButton.parentElement.innerHTML = `<button data-action="collapse-colors" class="text-blue-400 hover:text-blue-300 hover:underline text-sm font-semibold">Свернуть</button>`;
                     } else {
-                        const remainingCount = (PART_MAP[state.selectedPartId]?.availableColorIds || []).length - 18;
+                        const remainingCount = (PART_MAP[state.selectedPartId]?.availableColorIds || []).length - COLOR_COLLAPSE_THRESHOLD;
                         const pluralizedString = getPluralizedColorString(remainingCount);
-                        wrapper.style.maxHeight = '220px';
+                        wrapper.style.maxHeight = '150px';
                         actionButton.parentElement.innerHTML = `<button data-action="expand-colors" class="text-blue-400 hover:text-blue-300 hover:underline text-sm font-semibold">Показать ещё ${remainingCount} ${pluralizedString}</button>`;
                     }
                 } else if (action === 'increase-qty') {
