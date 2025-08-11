@@ -257,6 +257,7 @@
         try {
             const rawParts = await apiFetchPaginated(`/parts/?part_cat_id=${categoryId}`);
             const parts = rawParts.map(processPartData).filter(Boolean);
+            parts.sort(partRelevanceComparator);
             state.catalogGroups = groupParts(parts);
         } catch (error) {
             console.error("Rebrickable parts fetch failed:", error);
@@ -287,13 +288,11 @@
 
         const isPrintA = a.name.toLowerCase().includes('print') || a.name.toLowerCase().includes('sticker') || a.name.toLowerCase().includes('pattern');
         const isPrintB = b.name.toLowerCase().includes('print') || b.name.toLowerCase().includes('sticker') || b.name.toLowerCase().includes('pattern');
-
         if (isPrintA && !isPrintB) return 1;
         if (!isPrintA && isPrintB) return -1;
 
         const isAltA = a.part_num.match(/[a-zA-Z]/);
         const isAltB = b.part_num.match(/[a-zA-Z]/);
-
         if (isAltA && !isAltB) return 1;
         if (!isAltA && isAltB) return -1;
         
@@ -371,6 +370,7 @@
             }
         } catch (error) {
             console.error(`Failed to fetch colors for ${partId}:`, error);
+            if(!PART_MAP[partId]) PART_MAP[partId] = {};
             PART_MAP[partId].availableColorIds = PART_MAP[partId].availableColorIds || [];
         } finally {
             state.modal.isLoadingColors = false;
@@ -441,7 +441,7 @@
           const batch = missingPartIds.slice(i, i + BATCH_SIZE);
           try {
             const rawParts = await apiFetchPaginated(`/parts/?part_nums=${batch.join(',')}`);
-            rawParts.forEach(processPartData);
+            rawParts.map(processPartData).filter(Boolean);
           } catch(err) {
             console.error(`Could not fetch details for batch starting with part ${batch[0]}:`, err);
             state.apiError = (state.apiError ? state.apiError + '\n' : '') + 'Не удалось загрузить данные для некоторых деталей коллекции.';
@@ -473,7 +473,19 @@
       const viewButtonStyle = (view) => `w-1/2 flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
       
       let categoriesToRender = state.categories;
+      let allPartsButtonHtml = '';
+
       if (state.currentView === 'collection') {
+          const isSelected = state.selectedCollectionCategoryId === null;
+          const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
+          allPartsButtonHtml = `
+            <li>
+              <button data-action="show-all-collection" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
+                <span class="truncate">Все детали</span>
+              </button>
+            </li>
+          `;
+
           const collectionCategoryIds = new Set(
               Object.keys(state.collection)
                   .map(partId => PART_MAP[partId]?.categoryId)
@@ -485,10 +497,10 @@
       let categoryListContent = '';
       if (state.isLoading && state.categories.length === 0) {
           categoryListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
-      } else if (categoriesToRender.length === 0) {
-          if (state.currentView === 'collection' && Object.keys(state.collection).length > 0) {
-              categoryListContent = `<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>`;
-          }
+      } else if (state.currentView === 'catalog' && categoriesToRender.length === 0) {
+          // No special message for catalog, as it's the default state before selection
+      } else if (state.currentView === 'collection' && Object.keys(state.collection).length > 0 && categoriesToRender.length === 0) {
+          categoryListContent = `<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>`;
       } else {
           categoryListContent = categoriesToRender.map(cat => {
               const isSelected = state.currentView === 'catalog' 
@@ -496,7 +508,7 @@
                   : state.selectedCollectionCategoryId === cat.id;
               const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
               return `
-                  <li class="mb-1">
+                  <li>
                     <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
                       <span class="truncate">${cat.name}</span>
                     </button>
@@ -519,14 +531,14 @@
         </div>
         
         <div class="flex-grow overflow-y-auto no-scrollbar">
-          <h2 class="text-lg font-semibold text-white mb-2">Категории</h2>
+          <h2 class="text-lg font-semibold text-white mb-3">Категории</h2>
           <nav>
-            <ul id="category-list">${categoryListContent}</ul>
+            <ul id="category-list" class="space-y-1">${allPartsButtonHtml}${categoryListContent}</ul>
           </nav>
         </div>
         
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
-            <h2 class="text-lg font-semibold text-white mb-2">Сводка коллекции</h2>
+            <h2 class="text-lg font-semibold text-white mb-3">Сводка коллекции</h2>
             ${totalPartsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
               <div class="space-y-2 text-sm">
                   <div class="flex justify-between"><span class="text-gray-400">Уникальные модели:</span><span class="font-bold text-white">${uniqueModelsCount}</span></div>
@@ -536,7 +548,7 @@
         </div>
 
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
-            <h2 class="text-lg font-semibold text-white mb-2">Управление данными</h2>
+            <h2 class="text-lg font-semibold text-white mb-3">Управление данными</h2>
             <div class="space-y-2">
                 <button id="import-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
                     ${UploadIcon('w-5 h-5 mr-2')} Импорт .zip
@@ -583,8 +595,8 @@
         
         let quantityIndicator = '';
         if (quantity > 0) {
-            const positionClass = inCollection ? 'left-2' : 'right-2';
-            quantityIndicator = `<div class="absolute top-2 ${positionClass} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${quantity}</div>`;
+            const positionClass = inCollection ? 'left-3' : 'right-3';
+            quantityIndicator = `<div class="absolute top-3 ${positionClass} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${quantity}</div>`;
         }
         
         let imageUrl = part.rebrickable_img_url;
@@ -598,7 +610,7 @@
         return `
             <div data-group-id="${groupId}" data-part-id="${part.id}" ${inCollection ? `data-color-id="${color.id}"` : ''} class="part-card relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
                 ${inCollection ? `
-                    <button aria-label="Удалить ${part.name} (${color.name})" data-action="delete-from-collection" data-part-id="${part.id}" data-color-id="${color.id}" class="absolute top-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md transition-colors hover:bg-red-700 opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                    <button aria-label="Удалить ${part.name} (${color.name})" data-action="delete-from-collection" data-part-id="${part.id}" data-color-id="${color.id}" class="absolute top-3 right-3 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md transition-colors hover:bg-red-700 opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         ${TrashIcon('w-4 h-4')}
                     </button>
                 ` : ''}
@@ -608,11 +620,11 @@
                         <img ${getPartImageUrl(imageUrl)} alt="${part.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
                     </div>
                 </div>
-                <div class="p-4">
+                <div class="p-4 space-y-1">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${part.name}</h3>
                     <p class="text-xs text-gray-400 pointer-events-none">ID: ${part.id}</p>
                     ${inCollection ? `
-                        <div class="flex items-center mt-2 pointer-events-none">
+                        <div class="flex items-center pt-1 pointer-events-none">
                             <span class="w-4 h-4 rounded-full border border-gray-500 ${color.isTransparent ? 'checkerboard' : ''}" style="background-color: ${color.hex};"></span>
                             <span class="ml-2 text-xs text-gray-300 truncate">${color.name}</span>
                         </div>
@@ -680,7 +692,7 @@
                 emptyMsg += '.';
                 content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
             } else {
-                content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-4">
+                content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
                     ${filteredItems.map(item => renderPartCard(item.part, item.color, item.quantity)).join('')}
                 </div>`;
             }
@@ -703,7 +715,7 @@
             } else {
                 const groupsToRender = groupKeys.slice(0, state.itemsToDisplay);
 
-                content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-4 p-4">
+                content = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
                     ${groupsToRender.map(key => {
                         const representativePart = groupsToShow[key][0];
                         const totalQuantity = Object.values(state.collection[representativePart.id] || {}).reduce((sum, q) => sum + q, 0);
@@ -749,8 +761,8 @@
         let variationSelector = '';
         if (partVariations && partVariations.length > 1) {
             variationSelector = `
-                <div class="mb-4">
-                    <label for="variation-select" class="block text-sm font-medium text-gray-400 mb-1">Вариация</label>
+                <div>
+                    <label for="variation-select" class="block text-sm font-medium text-gray-400 mb-2">Вариация</label>
                     <select id="variation-select" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                         ${partVariations.map(variation => `
                             <option value="${variation.id}" ${variation.id === state.selectedPartId ? 'selected' : ''}>
@@ -767,7 +779,7 @@
             colorSelectorContent = `<div class="flex items-center justify-center h-24"><div class="loader !w-8 !h-8"></div></div>`;
         } else if (availableColorIds.length > 0) {
             colorSelectorContent = `
-                <div id="color-selector" class="grid grid-cols-6 sm:grid-cols-8 gap-2 mb-4">
+                <div id="color-selector" class="grid grid-cols-[repeat(auto-fill,minmax(40px,1fr))] gap-3">
                     ${availableColorIds.map(cid => {
                         const color = COLOR_MAP[cid];
                         if (!color) return '';
@@ -785,53 +797,61 @@
         
         document.body.classList.add('overflow-hidden');
         modalContainer.innerHTML = `
-        <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl m-4 flex flex-col md:flex-row relative">
-            <button id="modal-close" class="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors z-10">${XIcon('w-6 h-6')}</button>
+        <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg lg:max-w-4xl m-4 flex flex-col max-h-[calc(100vh-2rem)]">
             
-            <div class="md:w-1/2 p-6 bg-gray-700/50 rounded-t-lg md:rounded-l-lg md:rounded-tr-none flex items-center justify-center relative">
-                 <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
-                    ${isImageLoading ? `<div class="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
-                    <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-full object-contain">
-                 </div>
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-8">${part.name}</h2>
+                 <button id="modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
             </div>
             
-            <div class="md:w-1/2 p-6 flex flex-col">
-                <h2 class="text-2xl font-bold text-white">${part.name}</h2>
-                <p class="text-sm text-gray-400 mb-4">ID: ${part.id}</p>
-                
-                ${variationSelector}
-                
-                <div class="flex-grow">
-                    <h3 class="text-md font-semibold text-gray-300 mb-2">Доступные цвета</h3>
-                    ${colorSelectorContent}
+            <div class="flex-grow flex flex-col lg:flex-row overflow-y-auto no-scrollbar">
+                <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
+                     <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
+                        ${isImageLoading ? `<div class="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
+                        <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-full object-contain">
+                     </div>
                 </div>
                 
-                ${selectedColor ? `
-                    <div class="bg-gray-700/50 rounded-lg p-4 mt-auto">
-                        <div class="space-y-3">
-                            <div class="grid grid-cols-2 gap-x-4 items-center">
-                                <p class="text-white font-semibold truncate" title="${selectedColor.name}">${selectedColor.name}</p>
-                                <p class="text-sm text-gray-400 text-right">В коллекции: <span class="font-bold text-white">${currentInCollection}</span></p>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-x-4 items-center">
-                                <div class="flex items-center gap-2">
-                                    <button data-action="decrease-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${MinusIcon('w-5 h-5')}</button>
-                                    <input type="number" value="${quantity}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                                    <button data-action="increase-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${PlusIcon('w-5 h-5')}</button>
-                                </div>
-                                <button data-action="update-collection" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                                    ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
-                                </button>
-                            </div>
-                            ${currentInCollection > 0 ? `
-                                <div>
-                                    <button data-action="delete-from-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции</button>
-                                </div>
-                            ` : ''}
+                <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
+                    <div class="space-y-6">
+                        <div>
+                            <p class="text-sm text-gray-400">ID: ${part.id}</p>
+                            ${variationSelector ? `<div class="mt-4">${variationSelector}</div>` : ''}
                         </div>
+                        
+                        <div>
+                          <h3 class="text-md font-semibold text-gray-300 mb-3">Доступные цвета</h3>
+                           ${colorSelectorContent}
+                        </div>
+                        
+                        ${selectedColor ? `
+                            <div class="bg-gray-700/50 rounded-lg p-4">
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center">
+                                        <p class="text-white font-semibold truncate" title="${selectedColor.name}">${selectedColor.name}</p>
+                                        <p class="text-sm text-gray-400 text-right">В коллекции: <span class="font-bold text-white">${currentInCollection}</span></p>
+                                    </div>
+                                    
+                                    <div class="flex justify-between items-center gap-4">
+                                        <div class="flex items-center gap-2">
+                                            <button data-action="decrease-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${MinusIcon('w-5 h-5')}</button>
+                                            <input type="number" value="${quantity}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
+                                            <button data-action="increase-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${PlusIcon('w-5 h-5')}</button>
+                                        </div>
+                                        <button data-action="update-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                                            ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
+                                        </button>
+                                    </div>
+                                    ${currentInCollection > 0 ? `
+                                        <div>
+                                            <button data-action="delete-from-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции</button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        ` : ''}
                     </div>
-                ` : ''}
+                </div>
             </div>
         </div>
         `;
@@ -1008,6 +1028,15 @@
             return;
         }
 
+        const showAllCollectionButton = target.closest('[data-action="show-all-collection"]');
+        if (showAllCollectionButton) {
+            clearStatusOnClick();
+            state.selectedCollectionCategoryId = null;
+            if (isMobile) state.isSidebarOpen = false;
+            updateUI();
+            return;
+        }
+
         const categoryButton = target.closest('[data-category-id]');
         if (categoryButton?.dataset.categoryId) {
             const catId = parseInt(categoryButton.dataset.categoryId, 10);
@@ -1050,11 +1079,26 @@
             clearStatusOnClick();
             state.selectedPartId = partCard.dataset.partId;
             const groupId = partCard.dataset.groupId;
+            
             const representativePart = PART_MAP[state.selectedPartId];
-            if (!representativePart) { state.selectedPartId = null; return; }
+            if (!representativePart) { 
+                console.error(`Part ${state.selectedPartId} not found in PART_MAP.`);
+                state.selectedPartId = null; 
+                return; 
+            }
 
-            const groupsSource = state.searchResultGroups || state.catalogGroups;
-            const variations = (groupsSource && groupsSource[groupId]) ? groupsSource[groupId] : [representativePart];
+            let variations = [representativePart];
+            if (state.currentView === 'catalog') {
+                const groupsSource = state.searchResultGroups || state.catalogGroups;
+                variations = (groupsSource && groupsSource[groupId]) ? groupsSource[groupId] : [representativePart];
+            } else {
+                // In collection view, we don't have groups. Find variations from the main PART_MAP.
+                const allParts = Object.values(PART_MAP);
+                variations = allParts
+                    .filter(p => getGroupId(p.part_num) === groupId)
+                    .sort(partRelevanceComparator);
+                if (variations.length === 0) variations = [representativePart];
+            }
             
             state.modal = { 
                 partGroupId: groupId,
@@ -1067,13 +1111,13 @@
             };
             
             if (state.currentView === 'collection' && partCard.dataset.colorId) {
-                // This logic needs adjustment for grouping, as collection view is flat.
-                // For now, opening from collection will behave like catalog.
-                // Future improvement: group collection items too.
+                state.modal.selectedColorId = partCard.dataset.colorId;
             }
             
             if (!representativePart.availableColorIds) {
                 fetchPartColors(representativePart.id);
+            } else if (state.modal.selectedColorId) {
+                fetchPartColorSpecifics(representativePart.id, state.modal.selectedColorId);
             } else if (representativePart.availableColorIds.length > 0) {
                 state.modal.selectedColorId = representativePart.availableColorIds[0];
                 fetchPartColorSpecifics(representativePart.id, representativePart.availableColorIds[0]);
@@ -1158,6 +1202,10 @@
             e.preventDefault();
             triggerSearch();
         }
+        if (e.key === 'Escape' && state.selectedPartId) {
+            state.selectedPartId = null;
+            updateUI();
+        }
     });
 
     document.addEventListener('change', (e) => {
@@ -1170,6 +1218,7 @@
 
             state.selectedPartId = newPartId;
             const newPart = PART_MAP[newPartId];
+            if (!newPart) return;
             
             state.modal.selectedColorId = null;
             state.modal.quantity = 1;
