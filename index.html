@@ -71,6 +71,7 @@
     // --- DATA MAPS (populated dynamically) ---
     let COLOR_MAP = {};
     let PART_MAP = {};
+    let flatCategories = [];
 
     // --- ICONS ---
     const CatalogIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`;
@@ -84,11 +85,14 @@
     const ImageIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
     const TrashIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
     const SearchIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>`;
-
+    const ChevronDownIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+    const DiceIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><path d="M16 8h.01"></path><path d="M12 12h.01"></path><path d="M8 16h.01"></path><path d="M8 8h.01"></path><path d="M16 16h.01"></path></svg>`;
+    
     // --- STATE MANAGEMENT ---
     let state = {
       currentView: 'catalog',
-      categories: [],
+      categoryTree: [],
+      expandedCategories: new Set(),
       selectedCategoryId: null,
       selectedCollectionCategoryId: null,
       catalogGroups: null,
@@ -215,14 +219,60 @@
         return groups;
     }
 
+    function buildCategoryTree(categories) {
+        const categoryGroups = {
+            'Bricks': ['brick'],
+            'Plates': ['plate'],
+            'Technic': ['technic'],
+            'Slopes & Wedges': ['slope', 'wedge'],
+            'Tiles': ['tile'],
+            'Panels, Doors & Windows': ['panel', 'door', 'window'],
+            'Wheels & Tyres': ['wheel', 'tyre'],
+            'Minifig': ['minifig', 'minidoll', 'headwear'],
+            'Bars, Hinges & Connectors': ['bar', 'hinge', 'connector', 'link', 'axle', 'pin'],
+            'Arches & Curves': ['arch', 'curved', 'round', 'cone', 'cylinder'],
+        };
+
+        const tree = {};
+        const other = [];
+
+        categories.forEach(cat => {
+            const lowerName = cat.name.toLowerCase();
+            let found = false;
+            for (const groupName in categoryGroups) {
+                if (categoryGroups[groupName].some(keyword => lowerName.includes(keyword))) {
+                    if (!tree[groupName]) {
+                        tree[groupName] = { name: groupName, children: [] };
+                    }
+                    tree[groupName].children.push(cat);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                other.push(cat);
+            }
+        });
+        
+        const sortedTree = Object.values(tree).sort((a,b) => a.name.localeCompare(b.name));
+        
+        if (other.length > 0) {
+            sortedTree.push({ name: 'Other', children: other.sort((a,b) => a.name.localeCompare(b.name))});
+        }
+        
+        return sortedTree;
+    }
+
+
     async function fetchCategories() {
         try {
             const categories = await apiFetchPaginated('/part_categories/');
-            state.categories = categories.sort((a, b) => a.name.localeCompare(b.name));
+            flatCategories = categories.sort((a, b) => a.name.localeCompare(b.name));
+            state.categoryTree = buildCategoryTree(flatCategories);
         } catch (error) {
             console.error("Ошибка загрузки категорий:", error);
             state.apiError = `Не удалось загрузить категории: ${error.message}`;
-            state.categories = [];
+            state.categoryTree = [];
         }
     }
 
@@ -449,6 +499,43 @@
       }
     }
 
+    async function handleFeelingLucky() {
+      state.isLoading = true;
+      state.apiError = null;
+      updateUI();
+      try {
+        if (flatCategories.length === 0) {
+          throw new Error("Категории еще не загружены.");
+        }
+        const randomCategory = flatCategories[Math.floor(Math.random() * flatCategories.length)];
+        
+        const rawParts = await apiFetchPaginated(`/parts/?part_cat_id=${randomCategory.id}&page_size=100`);
+        if (rawParts.length === 0) {
+            handleFeelingLucky(); // Try again if category is empty
+            return;
+        }
+
+        const parts = rawParts.map(processPartData).filter(Boolean);
+        const randomPart = parts[Math.floor(Math.random() * parts.length)];
+
+        if (!randomPart) {
+          throw new Error("Не удалось выбрать случайную деталь.");
+        }
+        
+        const groups = groupParts(parts);
+        const groupId = getGroupId(randomPart.part_num);
+        const variations = groups[groupId] || [randomPart];
+        
+        openModalForPart(randomPart.id, groupId, variations);
+
+      } catch (error) {
+        console.error("Feeling lucky failed:", error);
+        state.apiError = `Не удалось совершить чудо: ${error.message}`;
+      } finally {
+        state.isLoading = false;
+        updateUI();
+      }
+    }
 
     // --- RENDER FUNCTIONS ---
     function getPartImageUrl(url) {
@@ -472,7 +559,7 @@
 
       const viewButtonStyle = (view) => `w-1/2 flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
       
-      let categoriesToRender = state.categories;
+      let categoriesToRender = state.categoryTree;
       let allPartsButtonHtml = '';
 
       if (state.currentView === 'collection') {
@@ -491,29 +578,49 @@
                   .map(partId => PART_MAP[partId]?.categoryId)
                   .filter(id => id !== undefined && id !== null)
           );
-          categoriesToRender = state.categories.filter(cat => collectionCategoryIds.has(cat.id));
+          
+          categoriesToRender = JSON.parse(JSON.stringify(state.categoryTree)); // Deep copy
+          categoriesToRender = categoriesToRender.map(group => {
+              group.children = group.children.filter(cat => collectionCategoryIds.has(cat.id));
+              return group;
+          }).filter(group => group.children.length > 0);
       }
       
       let categoryListContent = '';
-      if (state.isLoading && state.categories.length === 0) {
+      if (state.isLoading && state.categoryTree.length === 0) {
           categoryListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
       } else if (state.currentView === 'catalog' && categoriesToRender.length === 0) {
           // No special message for catalog, as it's the default state before selection
       } else if (state.currentView === 'collection' && Object.keys(state.collection).length > 0 && categoriesToRender.length === 0) {
           categoryListContent = `<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>`;
       } else {
-          categoryListContent = categoriesToRender.map(cat => {
-              const isSelected = state.currentView === 'catalog' 
-                  ? state.selectedCategoryId === cat.id
-                  : state.selectedCollectionCategoryId === cat.id;
-              const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
-              return `
-                  <li>
-                    <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
-                      <span class="truncate">${cat.name}</span>
+           categoryListContent = categoriesToRender.map(group => {
+            const isExpanded = state.expandedCategories.has(group.name);
+            const childList = group.children.map(cat => {
+                 const isSelected = state.currentView === 'catalog' 
+                    ? state.selectedCategoryId === cat.id
+                    : state.selectedCollectionCategoryId === cat.id;
+                 const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
+                 return `
+                    <li>
+                        <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 pl-8 rounded-md transition-colors duration-150 ${buttonStyle}">
+                          <span class="truncate">${cat.name}</span>
+                        </button>
+                    </li>
+                 `;
+            }).join('');
+            
+            return `
+                <li class="space-y-1">
+                    <button data-parent-category="${group.name}" class="w-full text-left flex items-center justify-between p-2 rounded-md hover:bg-gray-700 transition-colors duration-150">
+                        <span class="font-semibold text-gray-200">${group.name}</span>
+                        ${ChevronDownIcon(`w-5 h-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`)}
                     </button>
-                  </li>
-              `;
+                    <ul class="space-y-1 ${isExpanded ? '' : 'hidden'}">
+                        ${childList}
+                    </ul>
+                </li>
+            `;
           }).join('');
       }
 
@@ -711,7 +818,13 @@
             const groupKeys = groupsToShow ? Object.keys(groupsToShow) : [];
 
             if (groupKeys.length === 0) {
-                content = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMessage}</p></div>`;
+                content = `
+                    <div class="flex flex-col items-center justify-center h-full p-4 text-center">
+                        <p class="text-gray-400 max-w-sm mb-6">${emptyMessage}</p>
+                        <button id="feeling-lucky-button" class="flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            ${DiceIcon('w-6 h-6')} Мне повезёт!
+                        </button>
+                    </div>`;
             } else {
                 const groupsToRender = groupKeys.slice(0, state.itemsToDisplay);
 
@@ -1000,6 +1113,35 @@
             searchRebrickableParts(query);
         }
     }
+
+    function openModalForPart(partId, groupId, variations) {
+        state.selectedPartId = partId;
+        const representativePart = PART_MAP[partId];
+        if (!representativePart) { 
+            console.error(`Part ${partId} not found in PART_MAP.`);
+            state.selectedPartId = null; 
+            return; 
+        }
+
+        state.modal = { 
+            partGroupId: groupId,
+            partVariations: variations,
+            selectedColorId: null, 
+            quantity: 1, 
+            isLoadingColors: false,
+            isImageLoading: false,
+            partImageUrl: representativePart.rebrickable_img_url,
+        };
+        
+        if (!representativePart.availableColorIds) {
+            fetchPartColors(representativePart.id);
+        } else if (representativePart.availableColorIds.length > 0) {
+            state.modal.selectedColorId = representativePart.availableColorIds[0];
+            fetchPartColorSpecifics(representativePart.id, representativePart.availableColorIds[0]);
+        }
+        
+        updateUI();
+    }
     
     document.addEventListener('click', (e) => {
         if (!(e.target instanceof Element)) return;
@@ -1042,6 +1184,18 @@
             return;
         }
 
+        const parentCategoryButton = target.closest('[data-parent-category]');
+        if(parentCategoryButton?.dataset.parentCategory) {
+            const groupName = parentCategoryButton.dataset.parentCategory;
+            if (state.expandedCategories.has(groupName)) {
+                state.expandedCategories.delete(groupName);
+            } else {
+                state.expandedCategories.add(groupName);
+            }
+            renderSidebar(); // Only re-render sidebar for performance
+            return;
+        }
+
         const categoryButton = target.closest('[data-category-id]');
         if (categoryButton?.dataset.categoryId) {
             const catId = parseInt(categoryButton.dataset.categoryId, 10);
@@ -1070,6 +1224,11 @@
             updateUI();
             return;
         }
+
+        if(target.closest('#feeling-lucky-button')) {
+            handleFeelingLucky();
+            return;
+        }
         
         const deleteButton = target.closest('[data-action="delete-from-collection"]');
         if (deleteButton?.dataset.partId && deleteButton.dataset.colorId) {
@@ -1080,22 +1239,17 @@
         const partCard = target.closest('.part-card');
         if (partCard?.dataset.groupId && partCard.dataset.partId) {
             clearStatusOnClick();
-            state.selectedPartId = partCard.dataset.partId;
+            const partId = partCard.dataset.partId;
             const groupId = partCard.dataset.groupId;
             
-            const representativePart = PART_MAP[state.selectedPartId];
-            if (!representativePart) { 
-                console.error(`Part ${state.selectedPartId} not found in PART_MAP.`);
-                state.selectedPartId = null; 
-                return; 
-            }
+            const representativePart = PART_MAP[partId];
+            if (!representativePart) { return; }
 
             let variations = [representativePart];
             if (state.currentView === 'catalog') {
                 const groupsSource = state.searchResultGroups || state.catalogGroups;
                 variations = (groupsSource && groupsSource[groupId]) ? groupsSource[groupId] : [representativePart];
             } else {
-                // In collection view, we don't have groups. Find variations from the main PART_MAP.
                 const allParts = Object.values(PART_MAP);
                 variations = allParts
                     .filter(p => getGroupId(p.part_num) === groupId)
@@ -1103,30 +1257,12 @@
                 if (variations.length === 0) variations = [representativePart];
             }
             
-            state.modal = { 
-                partGroupId: groupId,
-                partVariations: variations,
-                selectedColorId: null, 
-                quantity: 1, 
-                isLoadingColors: false,
-                isImageLoading: false,
-                partImageUrl: representativePart.rebrickable_img_url,
-            };
-            
+            openModalForPart(partId, groupId, variations);
             if (state.currentView === 'collection' && partCard.dataset.colorId) {
                 state.modal.selectedColorId = partCard.dataset.colorId;
+                fetchPartColorSpecifics(partId, state.modal.selectedColorId);
+                renderModal();
             }
-            
-            if (!representativePart.availableColorIds) {
-                fetchPartColors(representativePart.id);
-            } else if (state.modal.selectedColorId) {
-                fetchPartColorSpecifics(representativePart.id, state.modal.selectedColorId);
-            } else if (representativePart.availableColorIds.length > 0) {
-                state.modal.selectedColorId = representativePart.availableColorIds[0];
-                fetchPartColorSpecifics(representativePart.id, representativePart.availableColorIds[0]);
-            }
-            
-            updateUI();
             return;
         }
         
@@ -1234,8 +1370,6 @@
 
     let lastWindowWidth = window.innerWidth;
     window.addEventListener('resize', () => {
-        // Только запускать полное обновление пользовательского интерфейса при изменении ширины,
-        // чтобы предотвратить повторный рендеринг при появлении виртуальной клавиатуры на мобильных устройствах.
         if (window.innerWidth !== lastWindowWidth) {
             lastWindowWidth = window.innerWidth;
             const isDesktop = window.innerWidth >= 1024;
