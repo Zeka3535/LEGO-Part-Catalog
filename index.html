@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -174,6 +173,12 @@
     const FilterIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>`;
     const ThemeIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
     const SettingsIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
+    const HeartIcon = (className, filled = false) => {
+        if (filled) {
+            return `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+        }
+        return `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+    };
 
     // --- STATE MANAGEMENT ---
     let state = {
@@ -184,12 +189,14 @@
       selectedCategoryId: null,
       selectedCollectionCategoryId: null,
       catalogGroups: null,
+      favoriteCategoryIds: new Set(),
       // Set state
       themeTree: [],
       expandedThemes: new Set(),
       selectedThemeId: null,
       selectedSetCollectionThemeId: null,
       setResults: null,
+      favoriteThemeIds: new Set(),
       // Search state
       searchQuery: '',
       searchResultGroups: null, // For parts
@@ -272,11 +279,31 @@
           state.setCollection = {};
         }
       }
+      const savedFavoriteCategories = localStorage.getItem('favoriteCategoryIds');
+      if (savedFavoriteCategories) {
+          try {
+              state.favoriteCategoryIds = new Set(JSON.parse(savedFavoriteCategories));
+          } catch (e) {
+              console.error("Failed to parse favorite categories from localStorage", e);
+              state.favoriteCategoryIds = new Set();
+          }
+      }
+      const savedFavoriteThemes = localStorage.getItem('favoriteThemeIds');
+      if (savedFavoriteThemes) {
+          try {
+              state.favoriteThemeIds = new Set(JSON.parse(savedFavoriteThemes));
+          } catch (e) {
+              console.error("Failed to parse favorite themes from localStorage", e);
+              state.favoriteThemeIds = new Set();
+          }
+      }
     }
 
     function saveState() {
       localStorage.setItem('legoCollection', JSON.stringify(state.collection));
       localStorage.setItem('legoSetCollection', JSON.stringify(state.setCollection));
+      localStorage.setItem('favoriteCategoryIds', JSON.stringify(Array.from(state.favoriteCategoryIds)));
+      localStorage.setItem('favoriteThemeIds', JSON.stringify(Array.from(state.favoriteThemeIds)));
     }
 
     // --- DOM Elements ---
@@ -1120,6 +1147,24 @@
             themesToRender = filterThemeTreeForCollection(state.themeTree, collectedThemeIds);
         }
 
+        const sortThemesWithFavorites = (nodes) => {
+            if (!Array.isArray(nodes)) return [];
+            nodes.forEach(node => {
+                if (node && Array.isArray(node.children)) {
+                    sortThemesWithFavorites(node.children);
+                }
+            });
+            nodes.sort((a, b) => {
+                const aIsFav = state.favoriteThemeIds.has(a.id);
+                const bIsFav = state.favoriteThemeIds.has(b.id);
+                if (aIsFav && !bIsFav) return -1;
+                if (!aIsFav && bIsFav) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            return nodes;
+        };
+        sortThemesWithFavorites(themesToRender);
+
         const renderThemeTree = (nodes, depth = 0) => {
             if (!Array.isArray(nodes)) return '';
             return nodes.map(theme => {
@@ -1127,20 +1172,25 @@
                 const isExpanded = state.expandedThemes.has(theme.id);
                 const isSelected = (state.currentView === 'sets' && state.selectedThemeId === theme.id) || (state.currentView === 'set_collection' && state.selectedSetCollectionThemeId === theme.id);
                 const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
-                
                 const childrenHtml = Array.isArray(theme.children) && theme.children.length > 0 ? `<ul class="space-y-1 ${isExpanded ? '' : 'hidden'}">${renderThemeTree(theme.children, depth + 1)}</ul>` : '';
 
                 return `
                     <li class="space-y-1">
-                        <button data-theme-id="${theme.id}" class="w-full text-left flex items-center justify-between p-2 rounded-md transition-colors duration-150 ${buttonStyle}" style="padding-left: ${0.5 + depth * 1.5}rem;">
-                            <span class="truncate">${theme.name}</span>
-                            ${Array.isArray(theme.children) && theme.children.length > 0 ? ChevronDownIcon(`w-5 h-5 text-gray-400 transform transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`) : ''}
+                        <button data-theme-id="${theme.id}" class="w-full text-left flex items-center justify-between p-2 rounded-md transition-colors duration-150 ${buttonStyle} group" style="padding-left: ${0.5 + depth * 1.5}rem;">
+                            <span class="truncate flex-grow">${theme.name}</span>
+                            <div class="flex items-center flex-shrink-0">
+                                <span data-action="toggle-favorite-theme" data-theme-id="${theme.id}" class="p-1 rounded-full text-gray-500 hover:bg-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity z-10 mr-1" aria-label="Добавить в избранное">
+                                    ${HeartIcon('w-4 h-4', state.favoriteThemeIds.has(theme.id))}
+                                </span>
+                                ${Array.isArray(theme.children) && theme.children.length > 0 ? ChevronDownIcon(`w-5 h-5 text-gray-400 transform transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`) : ''}
+                            </div>
                         </button>
                         ${childrenHtml}
                     </li>
                 `;
             }).join('');
         };
+
         if (state.isLoading && state.themeTree.length === 0) {
             mainListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
         } else {
@@ -1183,6 +1233,19 @@
         } else if (state.currentView === 'collection' && Object.keys(state.collection).length > 0 && categoriesToRender.length === 0) {
             mainListContent = `<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>`;
         } else {
+             // Sort children within each group by favorite status then name
+             categoriesToRender.forEach(group => {
+                if (Array.isArray(group.children)) {
+                    group.children.sort((a, b) => {
+                        const aIsFav = state.favoriteCategoryIds.has(a.id);
+                        const bIsFav = state.favoriteCategoryIds.has(b.id);
+                        if (aIsFav && !bIsFav) return -1;
+                        if (!aIsFav && bIsFav) return 1;
+                        return a.name.localeCompare(b.name);
+                    });
+                }
+             });
+
              mainListContent = allItemsButtonHtml + categoriesToRender.map(group => {
               const isExpanded = state.expandedCategories.has(group.name);
               const childList = group.children.map(cat => {
@@ -1192,8 +1255,11 @@
                    const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
                    return `
                       <li>
-                          <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 pl-11 rounded-md transition-colors duration-150 ${buttonStyle}">
+                          <button data-category-id="${cat.id}" class="w-full text-left flex items-center justify-between p-2 pl-11 rounded-md transition-colors duration-150 ${buttonStyle} group">
                             <span class="truncate">${cat.name}</span>
+                            <span data-action="toggle-favorite-category" data-category-id="${cat.id}" class="p-1 rounded-full text-gray-500 hover:bg-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" aria-label="Добавить в избранное">
+                                ${HeartIcon('w-4 h-4', state.favoriteCategoryIds.has(cat.id))}
+                            </span>
                           </button>
                       </li>
                    `;
@@ -2696,6 +2762,43 @@
         if (!(e.target instanceof Element)) return;
         const target = e.target;
 
+        // --- FAVORITE HANDLERS ---
+        const favoriteCategoryButton = target.closest('[data-action="toggle-favorite-category"]');
+        if (favoriteCategoryButton?.dataset.categoryId) {
+            e.stopPropagation(); // Prevent category selection
+            const catId = parseInt(favoriteCategoryButton.dataset.categoryId, 10);
+            if (state.favoriteCategoryIds.has(catId)) {
+                state.favoriteCategoryIds.delete(catId);
+            } else {
+                state.favoriteCategoryIds.add(catId);
+            }
+            saveState();
+            const scrollContainer = document.getElementById('sidebar-scroll-container');
+            const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+            renderSidebar();
+            const newScrollContainer = document.getElementById('sidebar-scroll-container');
+            if (newScrollContainer) newScrollContainer.scrollTop = scrollTop;
+            return;
+        }
+
+        const favoriteThemeButton = target.closest('[data-action="toggle-favorite-theme"]');
+        if (favoriteThemeButton?.dataset.themeId) {
+            e.stopPropagation(); // Prevent theme selection/expansion
+            const themeId = parseInt(favoriteThemeButton.dataset.themeId, 10);
+            if (state.favoriteThemeIds.has(themeId)) {
+                state.favoriteThemeIds.delete(themeId);
+            } else {
+                state.favoriteThemeIds.add(themeId);
+            }
+            saveState();
+            const scrollContainer = document.getElementById('sidebar-scroll-container');
+            const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+            renderSidebar();
+            const newScrollContainer = document.getElementById('sidebar-scroll-container');
+            if (newScrollContainer) newScrollContainer.scrollTop = scrollTop;
+            return;
+        }
+
         if (target.closest('#scroll-to-top-btn')) {
             mainContent.scrollTo({
                 top: 0,
@@ -2790,7 +2893,7 @@
                 if (sublist && sublist.tagName === 'UL') {
                     sublist.classList.toggle('hidden', isExpanded);
                 }
-                const icon = themeButton.querySelector('svg:last-child');
+                const icon = themeButton.querySelector('svg.transform');
                 if (icon) {
                     icon.classList.toggle('rotate-180', !isExpanded);
                 }
