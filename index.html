@@ -1077,6 +1077,7 @@
       const viewButtonStyle = (view) => `flex items-center w-full p-3 text-base font-semibold rounded-lg transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`;
       
       const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
+      const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection';
 
       let mainListContent = '';
       let mainListTitle = '';
@@ -1220,9 +1221,9 @@
 
         <div class="space-y-1 mb-4 flex-shrink-0">
             <button data-view="catalog" class="${viewButtonStyle('catalog')}">${CatalogIcon('w-5 h-5 mr-3')}<span>Каталог деталей</span></button>
-            <button data-view="collection" class="${viewButtonStyle('collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция деталей</span></button>
+            <button data-view="collection" class="${viewButtonStyle('collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция деталей</span>${totalPartsCount > 0 ? `<span class="ml-auto text-xs font-medium bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full">${totalPartsCount}</span>`: ''}</button>
             <button data-view="sets" class="${viewButtonStyle('sets')}">${SetsIcon('w-5 h-5 mr-3')}<span>Каталог наборов</span></button>
-            <button data-view="set_collection" class="${viewButtonStyle('set_collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция наборов</span></button>
+            <button data-view="set_collection" class="${viewButtonStyle('set_collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция наборов</span>${totalSetsCount > 0 ? `<span class="ml-auto text-xs font-medium bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full">${totalSetsCount}</span>`: ''}</button>
         </div>
         
         <div class="flex-grow overflow-y-auto no-scrollbar">
@@ -1232,7 +1233,7 @@
           </nav>
         </div>
         
-        <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
+        ${isCollectionView ? `<div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <h2 class="text-lg font-semibold text-white mb-3">Сводка коллекции</h2>
             ${totalPartsCount === 0 && uniqueSetsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
               <div class="space-y-2 text-sm">
@@ -1242,7 +1243,7 @@
                   <div class="flex justify-between"><span class="text-gray-400">Всего деталей:</span><span class="font-bold text-white">${totalPartsCount}</span></div>
               </div>
             `}
-        </div>
+        </div>` : ''}
 
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
@@ -1624,28 +1625,27 @@
         
         return `
             <div class="bg-gray-700/50 rounded-lg p-4">
-                <h3 class="text-md font-semibold text-gray-300 mb-3">Коллекция наборов</h3>
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <p class="text-white font-semibold">Этот набор</p>
-                        <p class="text-sm text-gray-400 text-right">В коллекции: <span id="set-modal-in-collection-qty" class="font-bold text-white">${currentInCollection}</span></p>
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md font-semibold text-gray-300">Коллекция наборов</h3>
+                    <p class="text-sm text-gray-400">В коллекции: <span id="set-modal-in-collection-qty" class="font-bold text-white">${currentInCollection}</span></p>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <div class="flex items-center">
+                        <button data-action="decrease-set-qty" class="p-2 rounded-l-md bg-gray-600 hover:bg-gray-500 text-white transition-colors h-10 flex items-center">${MinusIcon('w-5 h-5')}</button>
+                        <input id="set-modal-quantity-input" type="number" value="${quantity}" readonly class="w-12 h-10 text-center bg-gray-900 text-white font-bold outline-none border-y border-gray-600"/>
+                        <button data-action="increase-set-qty" class="p-2 rounded-r-md bg-gray-600 hover:bg-gray-500 text-white transition-colors h-10 flex items-center">${PlusIcon('w-5 h-5')}</button>
                     </div>
                     
-                    <div class="flex justify-between items-center gap-4">
-                        <div class="flex items-center gap-2">
-                            <button data-action="decrease-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${MinusIcon('w-5 h-5')}</button>
-                            <input id="set-modal-quantity-input" type="number" value="${quantity}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                            <button data-action="increase-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${PlusIcon('w-5 h-5')}</button>
-                        </div>
-                        <button data-action="update-set-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                            ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
-                        </button>
-                    </div>
+                    <button data-action="update-set-collection" class="flex-grow h-10 bg-blue-600 text-white font-bold px-4 rounded-md hover:bg-blue-700 transition-colors">
+                        ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
+                    </button>
+                    
                     ${currentInCollection > 0 ? `
-                        <div id="set-modal-delete-container">
-                            <button data-action="delete-from-set-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции наборов</button>
-                        </div>
-                    ` : '<div id="set-modal-delete-container"></div>'}
+                        <button data-action="delete-from-set-collection-modal" class="h-10 w-10 p-2 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors flex-shrink-0 flex items-center justify-center" aria-label="Удалить из коллекции">
+                            ${TrashIcon('w-5 h-5')}
+                        </button>
+                    ` : ''}
                 </div>
             </div>
         `;
@@ -1659,10 +1659,10 @@
         if (isBulkUpdating) {
             return `
                 <div class="bg-gray-700/50 rounded-lg p-4 mt-4">
-                     <h3 class="text-md font-semibold text-gray-300 mb-3">Коллекция деталей</h3>
-                     <div class="flex items-center justify-center gap-3 text-white">
+                     <h3 class="text-md font-semibold text-gray-300 mb-2">Коллекция деталей</h3>
+                     <div class="flex items-center justify-center gap-3 text-white h-10">
                         <div class="loader !w-5 !h-5 !border-2"></div>
-                        <span>Обновление коллекции...</span>
+                        <span>Обновление...</span>
                      </div>
                 </div>
             `;
@@ -1670,13 +1670,13 @@
 
         return `
             <div class="bg-gray-700/50 rounded-lg p-4 mt-4">
-                <h3 class="text-md font-semibold text-gray-300 mb-3">Коллекция деталей</h3>
-                <div class="space-y-2">
-                    <button data-action="bulk-add-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-green-600 hover:bg-green-700 text-white">
-                        ${PlusIcon('w-5 h-5 mr-2')} Добавить все детали в коллекцию
+                <h3 class="text-md font-semibold text-gray-300 mb-2">Коллекция деталей</h3>
+                <div class="grid grid-cols-2 gap-2">
+                    <button data-action="bulk-add-parts" class="flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-green-600 hover:bg-green-700 text-white">
+                        ${PlusIcon('w-5 h-5 mr-2')} Добавить все
                     </button>
-                    <button data-action="bulk-remove-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white">
-                        ${MinusIcon('w-5 h-5 mr-2')} Удалить все детали из коллекции
+                    <button data-action="bulk-remove-parts" class="flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white">
+                        ${MinusIcon('w-5 h-5 mr-2')} Удалить все
                     </button>
                 </div>
             </div>
@@ -1795,25 +1795,10 @@
     function updateSetModalControlsState() {
         if (!state.selectedSetNum) return;
         
-        const currentInCollection = state.setCollection[state.selectedSetNum]?.quantity || 0;
-        
-        const inCollectionQtySpan = document.getElementById('set-modal-in-collection-qty');
-        if (inCollectionQtySpan) inCollectionQtySpan.textContent = currentInCollection;
-        
-        const updateBtn = document.querySelector('[data-action="update-set-collection"]');
-        if (updateBtn) updateBtn.textContent = currentInCollection > 0 ? 'Обновить' : 'Добавить';
-        
-        const deleteContainer = document.getElementById('set-modal-delete-container');
-        if (deleteContainer) {
-            if (currentInCollection > 0 && !deleteContainer.innerHTML.trim()) {
-                deleteContainer.innerHTML = `<button data-action="delete-from-set-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции наборов</button>`;
-            } else if (currentInCollection === 0) {
-                deleteContainer.innerHTML = '';
-            }
+        const controlsContainer = document.getElementById('set-modal-controls-container');
+        if (controlsContainer) {
+          controlsContainer.innerHTML = renderSetCollectionControls() + renderSetBulkPartsControls();
         }
-
-        const qtyInput = document.getElementById('set-modal-quantity-input');
-        if(qtyInput) qtyInput.value = state.setModal.quantity;
     }
 
     function renderModal() {
