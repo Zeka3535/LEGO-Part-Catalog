@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Каталог деталей и наборов LEGO</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     body { font-family: sans-serif; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -207,6 +206,8 @@
           hasNextInventoryPage: false,
           quantity: 1,
           isBulkUpdating: false,
+          statusMessage: '',
+          statusType: '',
       },
       isFilterModalOpen: false,
       isSettingsModalOpen: false,
@@ -218,7 +219,6 @@
       itemsIncrement: 48,
       collection: {},
       setCollection: {},
-      importExportStatus: { message: '', type: '' },
       filters: {
           colorIds: [],
           inCollectionOnly: false,
@@ -1111,7 +1111,7 @@
                 const isSelected = (state.currentView === 'sets' && state.selectedThemeId === theme.id) || (state.currentView === 'set_collection' && state.selectedSetCollectionThemeId === theme.id);
                 const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
                 
-                const childrenHtml = Array.isArray(theme.children) && theme.children.length > 0 && isExpanded ? `<ul>${renderThemeTree(theme.children, depth + 1)}</ul>` : '';
+                const childrenHtml = Array.isArray(theme.children) && theme.children.length > 0 ? `<ul class="space-y-1 ${isExpanded ? '' : 'hidden'}">${renderThemeTree(theme.children, depth + 1)}</ul>` : '';
 
                 return `
                     <li class="space-y-1">
@@ -1241,12 +1241,6 @@
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
                 ${SettingsIcon('w-5 h-5 mr-2')} Настройки
             </button>
-            <input type="file" id="import-zip-input" class="hidden" accept=".zip">
-            ${state.importExportStatus.message ? `
-              <div id="import-export-status" class="mt-3 p-2 text-sm rounded-md ${state.importExportStatus.type === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
-                ${state.importExportStatus.message}
-              </div>
-            ` : ''}
         </div>
       `;
     }
@@ -1709,8 +1703,8 @@
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-8">${set.name}</h2>
                  <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
             </div>
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
-                <div class="lg:w-1/3 p-6 bg-gray-900/30 flex flex-col flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700 overflow-y-auto no-scrollbar">
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden" style="min-height: 0;">
+                <div class="lg:w-1/3 p-6 bg-gray-900/30 flex flex-col border-b lg:border-b-0 lg:border-r border-gray-700 overflow-y-auto no-scrollbar flex-grow lg:flex-grow-0" style="min-height: 0;">
                      <div class="flex flex-col items-center justify-center space-y-4">
                         <div class="w-48 h-48 sm:w-56 sm:h-56 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg flex-shrink-0">
                             <img ${getPartImageUrl(set.set_img_url)} alt="${set.name}" class="max-w-full max-h-full object-contain">
@@ -1726,13 +1720,13 @@
                         ${renderSetCollectionControls()}
                         ${renderSetBulkPartsControls()}
                      </div>
-                     ${state.importExportStatus.message && (setModalContainer?.contains(document.activeElement) || setModalContainer.querySelector(':focus-within')) ? `
-                        <div class="mt-4 p-2 text-sm rounded-md ${state.importExportStatus.type === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
-                            ${state.importExportStatus.message}
+                     ${state.setModal.statusMessage ? `
+                        <div class="mt-4 p-2 text-sm rounded-md ${state.setModal.statusType === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
+                            ${state.setModal.statusMessage}
                         </div>
                      ` : ''}
                 </div>
-                <div id="set-inventory-container" class="lg:w-2/3 p-4 flex flex-col overflow-y-auto no-scrollbar">
+                <div id="set-inventory-container" class="lg:w-2/3 p-4 flex flex-col overflow-y-auto no-scrollbar h-[35vh] lg:h-auto" style="min-height: 0;">
                     ${renderSetInventory()}
                 </div>
             </div>
@@ -2151,7 +2145,7 @@
         const { confirmingDelete } = state.settingsModal;
         const totalPartsCount = Object.values(state.collection).reduce((sum, colors) => sum + Object.keys(colors).length, 0);
         const totalSetsCount = Object.keys(state.setCollection).length;
-
+        
         let deletePartsSection = '';
         if (confirmingDelete === 'parts') {
             deletePartsSection = `
@@ -2184,22 +2178,6 @@
                      <button id="settings-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
                 </div>
                 <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
-                    <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Импорт / Экспорт</h3>
-                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
-                            <button id="import-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
-                                ${UploadIcon('w-5 h-5 mr-2')} Импорт .zip
-                            </button>
-                            <button id="export-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white ${totalPartsCount === 0 && totalSetsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${totalPartsCount === 0 && totalSetsCount === 0 ? 'disabled' : ''}>
-                                ${DownloadIcon('w-5 h-5 mr-2')} Экспорт .zip
-                            </button>
-                            ${state.importExportStatus.message ? `
-                              <div class="mt-1 p-2 text-sm rounded-md ${state.importExportStatus.type === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
-                                ${state.importExportStatus.message}
-                              </div>
-                            ` : ''}
-                        </div>
-                    </div>
                      <div>
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Опасная зона</h3>
                         <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 space-y-3">
@@ -2324,109 +2302,6 @@
         }
     }
 
-    // --- IMPORT/EXPORT HANDLING ---
-    async function handleZipImport(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        state.importExportStatus = { message: 'Обработка файла...', type: 'success' };
-        if (state.isSettingsModalOpen) renderSettingsModal();
-
-        try {
-            const jszip = new JSZip();
-            const zip = await jszip.loadAsync(file);
-            const collectionFile = zip.file('collection.json');
-            const setCollectionFile = zip.file('set_collection.json');
-
-            let partMsg = '', setMsg = '';
-
-            if (collectionFile) {
-                const content = await collectionFile.async('string');
-                const importedCollection = JSON.parse(content);
-                let mergedCount = 0;
-                for (const partId in importedCollection) {
-                    if (!state.collection[partId]) state.collection[partId] = {};
-                    for (const colorId in importedCollection[partId]) {
-                        const quantity = importedCollection[partId][colorId];
-                        if (typeof quantity === 'number' && quantity > 0) {
-                            state.collection[partId][colorId] = (state.collection[partId][colorId] || 0) + quantity;
-                            mergedCount++;
-                        }
-                    }
-                }
-                if (mergedCount > 0) partMsg = `Добавлено ${Object.keys(importedCollection).length} записей деталей.`;
-            }
-            
-            if(setCollectionFile) {
-                const content = await setCollectionFile.async('string');
-                const importedSetCollection = JSON.parse(content);
-                let mergedCount = 0;
-                for (const setNum in importedSetCollection) {
-                    const quantity = importedSetCollection[setNum]?.quantity;
-                     if (typeof quantity === 'number' && quantity > 0) {
-                        state.setCollection[setNum] = { quantity: (state.setCollection[setNum]?.quantity || 0) + quantity };
-                        mergedCount++;
-                    }
-                }
-                if (mergedCount > 0) setMsg = `Добавлено ${Object.keys(importedSetCollection).length} записей наборов.`;
-            }
-
-            if (!partMsg && !setMsg) throw new Error("В архиве не найдено подходящих файлов ('collection.json', 'set_collection.json') или они пусты.");
-            
-            saveState();
-
-            await Promise.all([
-                fetchMissingCollectionPartDetails(),
-                fetchMissingCollectionSetDetails()
-            ]);
-            await fetchColorDetailsForCollectionParts();
-
-            state.importExportStatus = { message: `Импорт успешен! ${[partMsg, setMsg].filter(Boolean).join(' ')}`, type: 'success' };
-            state.isGridStale = true;
-            updateUI();
-            if(state.isSettingsModalOpen) renderSettingsModal();
-
-        } catch (error) {
-            console.error("Import failed:", error);
-            state.importExportStatus = { message: `Ошибка импорта: ${error.message}`, type: 'error' };
-            if(state.isSettingsModalOpen) renderSettingsModal();
-        } finally {
-            event.target.value = '';
-        }
-    }
-
-    async function handleExportCollection() {
-        state.importExportStatus = { message: '', type: '' };
-        const hasParts = Object.keys(state.collection).length > 0;
-        const hasSets = Object.keys(state.setCollection).length > 0;
-
-        if (!hasParts && !hasSets) {
-            state.importExportStatus = { message: 'Коллекция пуста для экспорта.', type: 'error' };
-            if (state.isSettingsModalOpen) renderSettingsModal();
-            return;
-        }
-
-        try {
-            const jszip = new JSZip();
-            if(hasParts) jszip.file("collection.json", JSON.stringify(state.collection, null, 2));
-            if(hasSets) jszip.file("set_collection.json", JSON.stringify(state.setCollection, null, 2));
-
-            const blob = await jszip.generateAsync({ type: "blob" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `lego-collection-${new Date().toISOString().slice(0,10)}.zip`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
-            state.importExportStatus = { message: 'Экспорт начался.', type: 'success' };
-        } catch (error) {
-            console.error("Export failed:", error);
-            state.importExportStatus = { message: `Ошибка экспорта: ${error.message}`, type: 'error' };
-        }
-        if (state.isSettingsModalOpen) renderSettingsModal();
-    }
-
     // --- EVENT HANDLING ---
     async function handleUpdateCollection(partId, colorId, quantity) {
         if (!state.collection[partId]) state.collection[partId] = {};
@@ -2444,7 +2319,6 @@
             await fetchColorDetailsForPart(partId);
         }
         
-        state.importExportStatus = { message: '', type: '' };
         saveState();
         
         state.isGridStale = false;
@@ -2524,7 +2398,8 @@
         if (state.setModal.isBulkUpdating) return;
 
         state.setModal.isBulkUpdating = true;
-        state.importExportStatus = { message: '', type: '' };
+        state.setModal.statusMessage = '';
+        state.setModal.statusType = '';
         updateSetModal();
 
         try {
@@ -2559,30 +2434,23 @@
             await fetchMissingCollectionPartDetails();
             await fetchColorDetailsForCollectionParts();
             
-            state.importExportStatus = { message: `Детали успешно ${action === 'add' ? 'добавлены' : 'удалены'}.`, type: 'success' };
+            state.setModal.statusMessage = `Детали успешно ${action === 'add' ? 'добавлены' : 'удалены'}.`;
+            state.setModal.statusType = 'success';
             state.isGridStale = true;
             updateUI();
         } catch (error) {
             console.error(`Bulk ${action} failed for set ${setNum}:`, error);
-            state.importExportStatus = { message: `Ошибка: не удалось ${action === 'add' ? 'добавить' : 'удалить'} детали.`, type: 'error' };
+            state.setModal.statusMessage = `Ошибка: не удалось ${action === 'add' ? 'добавить' : 'удалить'} детали.`;
+            state.setModal.statusType = 'error';
         } finally {
             state.setModal.isBulkUpdating = false;
-            if (state.selectedSetNum) { // Update modal content without re-animating
-                updateSetModal();
+            if (state.selectedSetNum) {
+                renderSetModal(false);
             }
         }
     }
     
-    function clearStatusOnClick() {
-        if(state.importExportStatus.message) {
-            state.importExportStatus = { message: '', type: '' };
-            if(state.isSettingsModalOpen) renderSettingsModal();
-            else renderSidebar();
-        }
-    }
-
     function triggerSearch(useCurrentFilters = false) {
-        clearStatusOnClick();
         const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
 
         if (!useCurrentFilters) {
@@ -2652,12 +2520,9 @@
         modalContent.addEventListener('animationend', () => {
             if (modalContent.classList.contains('modal-content-leave')) {
                 state.selectedSetNum = null;
-                state.setModal = { isLoading: false, inventory: [], inventoryPage: 1, hasNextInventoryPage: false, quantity: 1, isBulkUpdating: false };
+                state.setModal = { isLoading: false, inventory: [], inventoryPage: 1, hasNextInventoryPage: false, quantity: 1, isBulkUpdating: false, statusMessage: '', statusType: '' };
                 setModalContainer.classList.add('modal-hidden');
                 setModalContainer.innerHTML = '';
-                 if (state.importExportStatus.message) { // Clear modal-specific status on close
-                    state.importExportStatus = { message: '', type: '' };
-                }
             }
         }, { once: true });
     }
@@ -2701,10 +2566,6 @@
                 settingsModalContainer.classList.add('modal-hidden');
                 settingsModalContainer.innerHTML = '';
                 state.settingsModal.confirmingDelete = null;
-                if (state.importExportStatus.message) {
-                    state.importExportStatus = { message: '', type: '' };
-                    renderSidebar();
-                }
             }
         }, { once: true });
     }
@@ -2788,7 +2649,6 @@
         const target = e.target;
 
         if (target.closest('#sidebar-toggle')) {
-            clearStatusOnClick();
             state.isSidebarOpen = true;
             updateUI();
             return;
@@ -2801,7 +2661,6 @@
 
         const viewButton = target.closest('[data-view]');
         if (viewButton?.dataset.view) {
-            clearStatusOnClick();
             const newView = viewButton.dataset.view;
             if (state.currentView === newView) return;
 
@@ -2834,7 +2693,6 @@
         }
 
         if (target.closest('[data-action="show-all-collection"]')) {
-            clearStatusOnClick();
             state.selectedCollectionCategoryId = null;
             state.isGridStale = true;
             updateUI();
@@ -2842,7 +2700,6 @@
         }
         
         if (target.closest('[data-action="show-all-collection-sets"]')) {
-            clearStatusOnClick();
             state.selectedSetCollectionThemeId = null;
             state.isGridStale = true;
             updateUI();
@@ -2851,21 +2708,31 @@
         
         const themeButton = target.closest('[data-theme-id]');
         if (themeButton?.dataset.themeId) {
-            clearStatusOnClick();
             const themeId = parseInt(themeButton.dataset.themeId, 10);
-            
             const themeNode = THEME_MAP[themeId];
-            if (themeNode && Array.isArray(themeNode.children) && themeNode.children.length > 0) {
-                 if (state.expandedThemes.has(themeId)) {
+            const hasChildren = themeNode && Array.isArray(themeNode.children) && themeNode.children.length > 0;
+            const isSetCollectionView = state.currentView === 'set_collection';
+            const currentSelection = isSetCollectionView ? state.selectedSetCollectionThemeId : state.selectedThemeId;
+
+            // Handle expansion/collapse first
+            if (hasChildren) {
+                const isExpanded = state.expandedThemes.has(themeId);
+                if (isExpanded) {
                     state.expandedThemes.delete(themeId);
                 } else {
                     state.expandedThemes.add(themeId);
                 }
+                const sublist = themeButton.nextElementSibling;
+                if (sublist && sublist.tagName === 'UL') {
+                    sublist.classList.toggle('hidden', isExpanded);
+                }
+                const icon = themeButton.querySelector('svg:last-child');
+                if (icon) {
+                    icon.classList.toggle('rotate-180', !isExpanded);
+                }
             }
-            
-            const isSetCollectionView = state.currentView === 'set_collection';
-            const currentSelection = isSetCollectionView ? state.selectedSetCollectionThemeId : state.selectedThemeId;
 
+            // Handle selection if it's a new theme
             if (currentSelection !== themeId) {
                 state.searchQuery = '';
                 state.sortBy = 'year_desc';
@@ -2874,18 +2741,10 @@
                 if (isSetCollectionView) {
                     state.selectedSetCollectionThemeId = themeId;
                     state.isGridStale = true;
-                    updateUI();
+                    updateUI(); // Re-render sidebar for selection highlight and main content
                 } else {
                     state.selectedThemeId = themeId;
-                    fetchSets();
-                }
-            } else {
-                const scrollableSidebar = sidebarContainer.querySelector('.flex-grow.overflow-y-auto');
-                const scrollTop = scrollableSidebar ? scrollableSidebar.scrollTop : 0;
-                renderSidebar();
-                const newScrollableSidebar = sidebarContainer.querySelector('.flex-grow.overflow-y-auto');
-                if (newScrollableSidebar) {
-                    newScrollableSidebar.scrollTop = scrollTop;
+                    fetchSets(); // Fetches data and then calls updateUI
                 }
             }
             return;
@@ -2893,18 +2752,22 @@
 
         const parentCategoryButton = target.closest('[data-parent-category]');
         if(parentCategoryButton?.dataset.parentCategory) {
-            const scrollableSidebar = sidebarContainer.querySelector('.flex-grow.overflow-y-auto');
-            const scrollTop = scrollableSidebar ? scrollableSidebar.scrollTop : 0;
             const groupName = parentCategoryButton.dataset.parentCategory;
-            if (state.expandedCategories.has(groupName)) {
+            const isExpanded = state.expandedCategories.has(groupName);
+
+            if (isExpanded) {
                 state.expandedCategories.delete(groupName);
             } else {
                 state.expandedCategories.add(groupName);
             }
-            renderSidebar();
-            const newScrollableSidebar = sidebarContainer.querySelector('.flex-grow.overflow-y-auto');
-            if (newScrollableSidebar) {
-                newScrollableSidebar.scrollTop = scrollTop;
+
+            const sublist = parentCategoryButton.nextElementSibling;
+            if (sublist && sublist.tagName === 'UL') {
+                sublist.classList.toggle('hidden', isExpanded);
+            }
+            const icon = parentCategoryButton.querySelector('svg:last-child');
+            if (icon) {
+                icon.classList.toggle('rotate-180', !isExpanded);
             }
             return;
         }
@@ -2912,7 +2775,6 @@
         const categoryButton = target.closest('[data-category-id]');
         if (categoryButton?.dataset.categoryId) {
             const catId = parseInt(categoryButton.dataset.categoryId, 10);
-            clearStatusOnClick();
             state.searchQuery = '';
             state.filters = { colorIds: [], inCollectionOnly: false };
             state.sortBy = 'popularity';
@@ -2953,14 +2815,12 @@
 
         const setCard = target.closest('.set-card');
         if (setCard?.dataset.setNum) {
-            clearStatusOnClick();
             openModalForSet(setCard.dataset.setNum);
             return;
         }
         
         const partCard = target.closest('.part-card');
         if (partCard?.dataset.groupId && partCard.dataset.partId) {
-            clearStatusOnClick();
             const partId = partCard.dataset.partId;
             const groupId = partCard.dataset.groupId;
             
@@ -3015,7 +2875,6 @@
         }
         
         if (target.closest('#settings-button')) {
-            clearStatusOnClick();
             state.isSettingsModalOpen = true;
             renderSettingsModal();
             return;
@@ -3062,23 +2921,20 @@
                 case 'confirm-delete-parts':
                     state.collection = {};
                     saveState();
-                    state.importExportStatus = { message: 'Коллекция деталей удалена.', type: 'success' };
-                    closeSettingsModal();
-                    updateUI();
+                    state.settingsModal.confirmingDelete = null;
+                    renderSettingsModal();
+                    updateUI(); // Full UI update to reflect changes
                     break;
                 case 'confirm-delete-sets':
                     state.setCollection = {};
                     saveState();
-                    state.importExportStatus = { message: 'Коллекция наборов удалена.', type: 'success' };
-                    closeSettingsModal();
-                    updateUI();
+                    state.settingsModal.confirmingDelete = null;
+                    renderSettingsModal();
+                    updateUI(); // Full UI update to reflect changes
                     break;
             }
-            // Import/Export are handled by #import-button and #export-button listeners
+            return;
         }
-
-        if (target.closest('#import-button')) { document.getElementById('import-zip-input')?.click(); return; }
-        if (target.closest('#export-button')) { handleExportCollection(); return; }
         
         if(setModalContainer?.contains(target)) {
             const actionTarget = target.closest('[data-action]');
@@ -3280,9 +3136,6 @@
     });
 
     document.addEventListener('change', (e) => {
-        if (e.target.id === 'import-zip-input') {
-            handleZipImport(e);
-        }
         if (e.target.id === 'variation-select') {
             const newPartId = e.target.value;
             if (state.selectedPartId === newPartId) return;
