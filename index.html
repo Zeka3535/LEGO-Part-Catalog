@@ -183,7 +183,7 @@
       importExportStatus: { message: '', type: '' },
       isFilterModalOpen: false,
       filters: {
-          colorId: null,
+          colorIds: [],
           inCollectionOnly: false,
       },
       sortBy: 'relevance', // 'relevance', 'alpha_asc', 'alpha_desc', 'popularity'
@@ -380,10 +380,17 @@
         state.isGridStale = true;
         updateUI();
 
+        if (state.filters.colorIds && state.filters.colorIds.length > 1) {
+            state.catalogGroups = {};
+            state.isLoading = false;
+            updateUI();
+            return;
+        }
+
         try {
             let endpoint = `/parts/?part_cat_id=${categoryId}`;
-            if (state.filters.colorId) {
-                endpoint += `&color_id=${state.filters.colorId}`;
+            if (state.filters.colorIds && state.filters.colorIds.length === 1) {
+                endpoint += `&color_id=${state.filters.colorIds[0]}`;
             }
             const rawParts = await apiFetchPaginated(endpoint);
             const parts = rawParts.map(processPartData).filter(Boolean);
@@ -457,10 +464,17 @@
         state.isGridStale = true;
         updateUI();
 
+        if (state.filters.colorIds && state.filters.colorIds.length > 1) {
+            state.searchResultGroups = {};
+            state.isLoading = false;
+            updateUI();
+            return;
+        }
+
         try {
             let endpoint = `/parts/?search=${encodeURIComponent(query)}`;
-             if (state.filters.colorId) {
-                endpoint += `&color_id=${state.filters.colorId}`;
+            if (state.filters.colorIds && state.filters.colorIds.length === 1) {
+                endpoint += `&color_id=${state.filters.colorIds[0]}`;
             }
             const rawParts = await apiFetchPaginated(endpoint);
             let parts = rawParts.map(processPartData).filter(Boolean);
@@ -914,20 +928,23 @@
     }
 
     function renderAppliedFilters() {
-        const { colorId, inCollectionOnly } = state.filters;
+        const { colorIds, inCollectionOnly } = state.filters;
         const { sortBy } = state;
 
         const isDefaultSort = state.searchQuery ? sortBy === 'relevance' : sortBy === 'popularity';
-        if (!colorId && !inCollectionOnly && isDefaultSort) {
+        if ((!colorIds || colorIds.length === 0) && !inCollectionOnly && isDefaultSort) {
             return '';
         }
 
-        const colorTag = colorId && COLOR_MAP[colorId] ? `
+        const colorTags = colorIds.map(colorId => {
+            if (!COLOR_MAP[colorId]) return '';
+            return `
             <div class="flex items-center bg-blue-900/50 text-blue-200 rounded-full pl-3 pr-2 py-1 text-sm">
-                <span class="mr-2">Цвет: ${COLOR_MAP[colorId].name}</span>
-                <button data-action="remove-filter" data-filter-type="color" class="text-blue-200 hover:bg-blue-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
+                <span class="mr-2">${COLOR_MAP[colorId].name}</span>
+                <button data-action="remove-filter" data-filter-type="color" data-color-id="${colorId}" class="text-blue-200 hover:bg-blue-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
             </div>
-        ` : '';
+            `;
+        }).join('');
 
         const collectionTag = inCollectionOnly && state.currentView === 'catalog' ? `
             <div class="flex items-center bg-green-900/50 text-green-200 rounded-full pl-3 pr-2 py-1 text-sm">
@@ -950,7 +967,7 @@
             </div>
         ` : '';
         
-        const tags = [sortTag, colorTag, collectionTag].filter(Boolean).join('');
+        const tags = [sortTag, colorTags, collectionTag].filter(Boolean).join('');
 
         if (!tags) return '';
 
@@ -988,8 +1005,8 @@
             if (state.selectedCollectionCategoryId) {
                 items = items.filter(({ part }) => PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId);
             }
-            if (state.filters.colorId) {
-                items = items.filter(item => item.color.id === state.filters.colorId);
+            if (state.filters.colorIds && state.filters.colorIds.length > 0) {
+                items = items.filter(item => state.filters.colorIds.includes(item.color.id));
             }
 
             const query = state.searchQuery.trim().toLowerCase();
@@ -1022,7 +1039,7 @@
 
             if (items.length === 0) {
                 let emptyMsg = 'В вашей коллекции нет деталей';
-                if (state.searchQuery || state.filters.colorId || state.selectedCollectionCategoryId) emptyMsg += ', соответствующих фильтрам';
+                if (state.searchQuery || (state.filters.colorIds && state.filters.colorIds.length > 0) || state.selectedCollectionCategoryId) emptyMsg += ', соответствующих фильтрам';
                 emptyMsg += '.';
                 gridContent = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
             } else {
@@ -1035,7 +1052,10 @@
             let groupsToShow = {};
             let emptyMessage = 'Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском.';
 
-            if (state.searchResultGroups !== null) {
+            if (state.filters.colorIds && state.filters.colorIds.length > 1) {
+                groupsToShow = {};
+                emptyMessage = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".';
+            } else if (state.searchResultGroups !== null) {
                 groupsToShow = state.searchResultGroups;
                 emptyMessage = 'По вашему запросу ничего не найдено.';
             } else if (state.selectedCategoryId !== null) {
@@ -1320,7 +1340,7 @@
         const sortedColorIds = Object.keys(COLOR_MAP).sort((a,b) => COLOR_MAP[a].name.localeCompare(COLOR_MAP[b].name));
         const colorButtons = sortedColorIds.map(cid => {
             const color = COLOR_MAP[cid];
-            const isSelected = tempFilters.filters.colorId === cid;
+            const isSelected = tempFilters.filters.colorIds.includes(cid);
             return `
                 <button data-action="modal-set-color" data-color-id="${cid}" title="${color.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${color.isTransparent ? 'checkerboard' : ''} ${isSelected ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};"></button>
             `;
@@ -1348,9 +1368,14 @@
                     <div>
                          <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтр по цвету</h3>
                          <div class="bg-gray-900/50 rounded-lg p-3">
-                            <button data-action="modal-set-color" data-color-id="null" class="w-full mb-3 py-2 text-sm rounded-md transition-colors ${!tempFilters.filters.colorId ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}">Все цвета</button>
-                            <div class="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-3">
-                                ${colorButtons}
+                            <button data-action="modal-set-color" data-color-id="null" class="w-full mb-3 py-2 text-sm rounded-md transition-colors ${tempFilters.filters.colorIds.length === 0 ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}">Все цвета</button>
+                            <div class="relative">
+                                <div class="max-h-48 overflow-y-auto no-scrollbar pr-2">
+                                    <div class="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-3">
+                                        ${colorButtons}
+                                    </div>
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
                             </div>
                          </div>
                     </div>
@@ -1361,6 +1386,42 @@
                 </div>
             </div>
         `;
+    }
+
+    function updateFilterModalUI() {
+        if (!state.isFilterModalOpen || !filterModalContainer.innerHTML) return;
+
+        // Update Sort Radios
+        const sortRadios = filterModalContainer.querySelectorAll('input[name="sort"]');
+        sortRadios.forEach(radio => {
+            radio.checked = tempFilters.sortBy === radio.value;
+        });
+        
+        // Update Collection Toggle
+        const collectionToggle = filterModalContainer.querySelector('input[data-action="modal-toggle-collection"]');
+        if (collectionToggle) {
+            collectionToggle.checked = tempFilters.filters.inCollectionOnly;
+        }
+
+        // Update "All Colors" button
+        const allColorsButton = filterModalContainer.querySelector('button[data-color-id="null"]');
+        if (allColorsButton) {
+            const isActive = tempFilters.filters.colorIds.length === 0;
+            allColorsButton.className = `w-full mb-3 py-2 text-sm rounded-md transition-colors ${isActive ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}`;
+        }
+
+        // Update Color Palette buttons
+        const colorButtons = filterModalContainer.querySelectorAll('button[data-action="modal-set-color"]');
+        colorButtons.forEach(button => {
+            const colorId = button.dataset.colorId;
+            if (colorId && colorId !== 'null') {
+                const isSelected = tempFilters.filters.colorIds.includes(colorId);
+                const color = COLOR_MAP[colorId];
+                if (color) {
+                    button.className = `w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${color.isTransparent ? 'checkerboard' : ''} ${isSelected ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}`;
+                }
+            }
+        });
     }
 
     function updateModalPartially(updates) {
@@ -1581,7 +1642,7 @@
         clearStatusOnClick();
         if (!useCurrentFilters) {
              state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
-             state.filters.colorId = null;
+             state.filters.colorIds = [];
              state.filters.inCollectionOnly = false;
         }
         const query = state.searchQuery.trim();
@@ -1747,7 +1808,7 @@
             const catId = parseInt(categoryButton.dataset.categoryId, 10);
             clearStatusOnClick();
             state.searchQuery = '';
-            state.filters = { colorId: null, inCollectionOnly: false };
+            state.filters = { colorIds: [], inCollectionOnly: false };
             state.sortBy = 'popularity';
 
             if (state.currentView === 'collection') {
@@ -1853,7 +1914,12 @@
         const filterAction = target.closest('[data-action="remove-filter"]');
         if (filterAction) {
             const type = filterAction.dataset.filterType;
-            if (type === 'color') state.filters.colorId = null;
+            if (type === 'color') {
+                 const colorIdToRemove = filterAction.dataset.colorId;
+                 if (colorIdToRemove) {
+                    state.filters.colorIds = state.filters.colorIds.filter(id => id !== colorIdToRemove);
+                 }
+            }
             if (type === 'inCollectionOnly') state.filters.inCollectionOnly = false;
             if (type === 'sortBy') state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
             refreshWithNewFilters();
@@ -1861,7 +1927,7 @@
         }
 
         if (target.closest('[data-action="remove-all-filters"]')) {
-            state.filters.colorId = null;
+            state.filters.colorIds = [];
             state.filters.inCollectionOnly = false;
             state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
             refreshWithNewFilters();
@@ -1886,7 +1952,16 @@
                     break;
                 case 'modal-set-color':
                     const colorId = actionTarget.dataset.colorId;
-                    tempFilters.filters.colorId = colorId === 'null' ? null : colorId;
+                    if (colorId === 'null') {
+                        tempFilters.filters.colorIds = [];
+                    } else {
+                        const index = tempFilters.filters.colorIds.indexOf(colorId);
+                        if (index > -1) {
+                            tempFilters.filters.colorIds.splice(index, 1);
+                        } else {
+                            tempFilters.filters.colorIds.push(colorId);
+                        }
+                    }
                     break;
                 case 'modal-apply-filters':
                     state.filters = JSON.parse(JSON.stringify(tempFilters.filters));
@@ -1895,13 +1970,12 @@
                     refreshWithNewFilters();
                     return;
                 case 'modal-reset-filters':
-                    tempFilters.filters.colorId = null;
+                    tempFilters.filters.colorIds = [];
                     tempFilters.filters.inCollectionOnly = false;
                     tempFilters.sortBy = state.searchQuery ? 'relevance' : 'popularity';
                     break;
             }
-            // Re-render modal to reflect temporary state change
-            renderFilterModal();
+            updateFilterModalUI();
         }
 
         if (modalContainer?.contains(target)) {
