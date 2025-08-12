@@ -1173,14 +1173,19 @@
                 const isSelected = (state.currentView === 'sets' && state.selectedThemeId === theme.id) || (state.currentView === 'set_collection' && state.selectedSetCollectionThemeId === theme.id);
                 const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
                 const childrenHtml = Array.isArray(theme.children) && theme.children.length > 0 ? `<ul class="space-y-1 ${isExpanded ? '' : 'hidden'}">${renderThemeTree(theme.children, depth + 1)}</ul>` : '';
+                
+                const isFav = state.favoriteThemeIds.has(theme.id);
+                const heartClasses = isFav
+                    ? 'text-red-400 opacity-100'
+                    : 'text-gray-500 opacity-0 group-hover:opacity-100';
 
                 return `
                     <li class="space-y-1">
                         <button data-theme-id="${theme.id}" class="w-full text-left flex items-center justify-between p-2 rounded-md transition-colors duration-150 ${buttonStyle} group" style="padding-left: ${0.5 + depth * 1.5}rem;">
                             <span class="truncate flex-grow">${theme.name}</span>
                             <div class="flex items-center flex-shrink-0">
-                                <span data-action="toggle-favorite-theme" data-theme-id="${theme.id}" class="p-1 rounded-full text-gray-500 hover:bg-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity z-10 mr-1" aria-label="Добавить в избранное">
-                                    ${HeartIcon('w-4 h-4', state.favoriteThemeIds.has(theme.id))}
+                                <span data-action="toggle-favorite-theme" data-theme-id="${theme.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-10 mr-1 ${heartClasses}" aria-label="Добавить в избранное">
+                                    ${HeartIcon('w-4 h-4', isFav)}
                                 </span>
                                 ${Array.isArray(theme.children) && theme.children.length > 0 ? ChevronDownIcon(`w-5 h-5 text-gray-400 transform transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`) : ''}
                             </div>
@@ -1253,12 +1258,18 @@
                       ? state.selectedCategoryId === cat.id
                       : state.selectedCollectionCategoryId === cat.id;
                    const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
+                   
+                   const isFav = state.favoriteCategoryIds.has(cat.id);
+                   const heartClasses = isFav
+                       ? 'text-red-400 opacity-100'
+                       : 'text-gray-500 opacity-0 group-hover:opacity-100';
+
                    return `
                       <li>
                           <button data-category-id="${cat.id}" class="w-full text-left flex items-center justify-between p-2 pl-11 rounded-md transition-colors duration-150 ${buttonStyle} group">
                             <span class="truncate">${cat.name}</span>
-                            <span data-action="toggle-favorite-category" data-category-id="${cat.id}" class="p-1 rounded-full text-gray-500 hover:bg-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity z-10" aria-label="Добавить в избранное">
-                                ${HeartIcon('w-4 h-4', state.favoriteCategoryIds.has(cat.id))}
+                            <span data-action="toggle-favorite-category" data-category-id="${cat.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-10 ${heartClasses}" aria-label="Добавить в избранное">
+                                ${HeartIcon('w-4 h-4', isFav)}
                             </span>
                           </button>
                       </li>
