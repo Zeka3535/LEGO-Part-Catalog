@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Каталог деталей LEGO</title>
+  <title>Каталог деталей и наборов LEGO</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
@@ -62,11 +61,11 @@
     }
 
     /* Animation Classes */
-    #modal-container, #filter-modal-container {
+    #modal-container, #filter-modal-container, #set-modal-container, #settings-modal-container {
         opacity: 0;
         transition: opacity 0.2s ease-out;
     }
-    #modal-container.visible, #filter-modal-container.visible {
+    #modal-container.visible, #filter-modal-container.visible, #set-modal-container.visible, #settings-modal-container.visible {
         opacity: 1;
     }
     .modal-content-enter {
@@ -75,7 +74,7 @@
     .modal-content-leave {
       animation: scaleOut 0.2s ease-out forwards;
     }
-    .part-card.animate-in {
+    .part-card.animate-in, .set-card.animate-in {
       opacity: 0;
       animation: fadeInUp 0.4s ease-out forwards;
     }
@@ -103,11 +102,17 @@
 
   </div>
 
-  <!-- Modal -->
+  <!-- Part Modal -->
   <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
   
+  <!-- Set Modal -->
+  <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
+
   <!-- Filter Modal -->
   <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
 
 
   <script>
@@ -123,11 +128,14 @@
     // --- DATA MAPS (populated dynamically) ---
     let COLOR_MAP = {};
     let PART_MAP = {};
+    let SET_MAP = {};
+    let THEME_MAP = {};
     let flatCategories = [];
 
     // --- ICONS ---
     const CatalogIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`;
     const CollectionIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polygon points="2 17 12 22 22 17"></polygon><polygon points="2 12 12 17 22 12"></polygon></svg>`;
+    const SetsIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
     const PlusIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
     const MinusIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
     const XIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
@@ -151,22 +159,36 @@
     const ArchIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V11c0-3.87 3.13-7 7-7s7 3.13 7 7v10"></path><path d="M5 21h14"></path></svg>`;
     const OtherIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
     const FilterIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>`;
+    const ThemeIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
+    const SettingsIcon = (className) => `<svg xmlns="http://www.w3.org/2000/svg" class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
 
     // --- STATE MANAGEMENT ---
     let state = {
-      currentView: 'catalog',
+      currentView: 'catalog', // 'catalog', 'collection', 'sets', 'set_collection'
+      // Part state
       categoryTree: [],
       expandedCategories: new Set(),
       selectedCategoryId: null,
       selectedCollectionCategoryId: null,
       catalogGroups: null,
+      // Set state
+      themeTree: [],
+      expandedThemes: new Set(),
+      selectedThemeId: null,
+      selectedSetCollectionThemeId: null,
+      setResults: null,
+      // Search state
       searchQuery: '',
-      searchResultGroups: null,
+      searchResultGroups: null, // For parts
+      searchSetResults: null, // For sets
+      // Global state
       isLoading: true, // Start in loading state for initialization
       apiError: null,
-      selectedPartId: null, // This is the ID of the selected *variation*
+      selectedPartId: null,
+      selectedSetNum: null,
       isSidebarOpen: window.innerWidth >= 1024,
       isGridStale: true, // Flag to trigger grid animations
+      // Modals state
       modal: {
           partGroupId: null,
           partVariations: [],
@@ -177,16 +199,36 @@
           partImageUrl: null,
           areColorsExpanded: false,
       },
+      setModal: {
+          isLoading: false,
+          inventory: [],
+          inventoryPage: 1,
+          hasNextInventoryPage: false,
+          quantity: 1,
+          isBulkUpdating: false,
+      },
+      isFilterModalOpen: false,
+      isSettingsModalOpen: false,
+      settingsModal: {
+          confirmingDelete: null, // null, 'parts', or 'sets'
+      },
+      // Other state
       itemsToDisplay: 48,
       itemsIncrement: 48,
       collection: {},
+      setCollection: {},
       importExportStatus: { message: '', type: '' },
-      isFilterModalOpen: false,
       filters: {
           colorIds: [],
           inCollectionOnly: false,
       },
-      sortBy: 'relevance', // 'relevance', 'alpha_asc', 'alpha_desc', 'popularity'
+      setFilters: {
+          minYear: '',
+          maxYear: '',
+          minParts: '',
+          maxParts: '',
+      },
+      sortBy: 'relevance',
     };
     
     let tempFilters = {};
@@ -204,10 +246,23 @@
           state.collection = {};
         }
       }
+      const savedSetCollection = localStorage.getItem('legoSetCollection');
+      if (savedSetCollection) {
+        try {
+          const parsed = JSON.parse(savedSetCollection);
+          if (typeof parsed === 'object' && parsed !== null) {
+            state.setCollection = parsed;
+          }
+        } catch (e) {
+          console.error("Failed to parse lego set collection from localStorage", e);
+          state.setCollection = {};
+        }
+      }
     }
 
     function saveState() {
       localStorage.setItem('legoCollection', JSON.stringify(state.collection));
+      localStorage.setItem('legoSetCollection', JSON.stringify(state.setCollection));
     }
 
     // --- DOM Elements ---
@@ -216,7 +271,9 @@
     const headerContainer = document.getElementById('header-container');
     const mainContent = document.getElementById('main-content');
     const modalContainer = document.getElementById('modal-container');
+    const setModalContainer = document.getElementById('set-modal-container');
     const filterModalContainer = document.getElementById('filter-modal-container');
+    const settingsModalContainer = document.getElementById('settings-modal-container');
     
     // --- API & DATA HANDLING ---
     
@@ -277,7 +334,7 @@
     
     function groupParts(parts) {
         const groups = {};
-        parts.forEach(part => {
+        (parts || []).forEach(part => {
             if (!part || !part.part_num) {
                 console.warn('Пропуск детали без номера:', part);
                 return;
@@ -311,7 +368,7 @@
         const tree = {};
         const other = [];
 
-        categories.forEach(cat => {
+        (categories || []).forEach(cat => {
             const lowerName = cat.name.toLowerCase();
             let found = false;
             for (const groupName in categoryGroups) {
@@ -351,10 +408,58 @@
         }
     }
 
+    async function fetchThemes() {
+        try {
+            const themes = await apiFetchPaginated('/themes/');
+            const tree = [];
+            const lookup = {};
+
+            // First pass: create all nodes in lookup table and THEME_MAP
+            (themes || []).forEach(t => {
+                if (t && t.id) {
+                    // The node in lookup has the .children property
+                    const node = { ...t, children: [] };
+                    lookup[t.id] = node;
+                    THEME_MAP[t.id] = node;
+                }
+            });
+
+            // Second pass: build the tree structure
+            (themes || []).forEach(t => {
+                if (t && t.id && lookup[t.id]) { // Ensure node exists
+                    if (t.parent_id && lookup[t.parent_id]) {
+                        // Ensure children array exists before pushing
+                        if (!Array.isArray(lookup[t.parent_id].children)) {
+                            lookup[t.parent_id].children = [];
+                        }
+                        lookup[t.parent_id].children.push(lookup[t.id]);
+                    } else {
+                        tree.push(lookup[t.id]);
+                    }
+                }
+            });
+
+            const sortRec = (node) => {
+                if (Array.isArray(node.children) && node.children.length > 0) {
+                    node.children.sort((a, b) => a.name.localeCompare(b.name));
+                    node.children.forEach(sortRec);
+                }
+            };
+
+            tree.sort((a, b) => a.name.localeCompare(b.name));
+            tree.forEach(sortRec);
+            state.themeTree = tree;
+        } catch (error) {
+            console.error("Ошибка загрузки тем:", error);
+            state.apiError = (state.apiError ? state.apiError + '\n' : '') + `Не удалось загрузить темы: ${error.message}`;
+            state.themeTree = [];
+        }
+    }
+
     async function fetchAllColors() {
         try {
             const colors = await apiFetchPaginated('/colors/');
-            colors.forEach(colorInfo => {
+            (colors || []).forEach(colorInfo => {
                 const colorIdStr = String(colorInfo.id);
                 COLOR_MAP[colorIdStr] = {
                     id: colorIdStr,
@@ -401,7 +506,8 @@
             }
 
             state.catalogGroups = groupParts(filteredParts);
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Rebrickable parts fetch failed:", error);
             state.apiError = error.message;
         } finally {
@@ -513,6 +619,64 @@
         }
     }
     
+    async function fetchSets() {
+        state.isLoading = true;
+        state.apiError = null;
+        state.setResults = null;
+        state.searchSetResults = null;
+        state.itemsToDisplay = state.itemsIncrement;
+        state.isGridStale = true;
+        updateUI();
+
+        try {
+            let params = new URLSearchParams();
+            
+            if (state.searchQuery) {
+                params.append('search', state.searchQuery);
+            } else if (state.selectedThemeId) {
+                params.append('theme_id', state.selectedThemeId);
+            } else {
+                 state.isLoading = false;
+                 updateUI();
+                 return;
+            }
+
+            if(state.setFilters.minYear) params.append('min_year', state.setFilters.minYear);
+            if(state.setFilters.maxYear) params.append('max_year', state.setFilters.maxYear);
+            if(state.setFilters.minParts) params.append('min_parts', state.setFilters.minParts);
+            if(state.setFilters.maxParts) params.append('max_parts', state.setFilters.maxParts);
+            
+            let ordering;
+            if (state.sortBy === 'alpha_asc') ordering = 'name';
+            else if (state.sortBy === 'alpha_desc') ordering = '-name';
+            else if (state.sortBy === 'year_asc') ordering = 'year';
+            else if (state.sortBy === 'year_desc') ordering = '-year';
+            else if (state.sortBy === 'parts_asc') ordering = 'num_parts';
+            else if (state.sortBy === 'parts_desc') ordering = '-num_parts';
+            
+            if(ordering) params.append('ordering', ordering);
+
+            const rawSets = await apiFetchPaginated(`/sets/?${params.toString()}`);
+            const sets = rawSets.map(s => {
+                SET_MAP[s.set_num] = s;
+                return s;
+            });
+            
+            if (state.searchQuery) {
+                state.searchSetResults = sets;
+            } else {
+                state.setResults = sets;
+            }
+
+        } catch (error) {
+            console.error("Ошибка загрузки наборов Rebrickable:", error);
+            state.apiError = error.message;
+        } finally {
+            state.isLoading = false;
+            updateUI();
+        }
+    }
+
     async function fetchPartColors(partId) {
         state.modal.isLoadingColors = true;
         updateModalPartially({ colors: true });
@@ -568,7 +732,7 @@
             if (!PART_MAP[partId]) PART_MAP[partId] = { id: partId };
             
             const colorImages = {};
-            colorAvailability.forEach(colorInfo => {
+            (colorAvailability || []).forEach(colorInfo => {
                 if (colorInfo.part_img_url) {
                     colorImages[String(colorInfo.color_id)] = colorInfo.part_img_url;
                 }
@@ -614,6 +778,122 @@
           }
       }
     }
+    
+    async function fetchMissingCollectionSetDetails() {
+        const collectionSetNums = Object.keys(state.setCollection);
+        const missingSetNums = collectionSetNums.filter(num => !SET_MAP[num] || !SET_MAP[num].name);
+        if (missingSetNums.length === 0) return;
+
+        console.log(`Fetching details for ${missingSetNums.length} sets from collection...`);
+        
+        for (const setNum of missingSetNums) {
+            try {
+                const response = await fetch(`${REBRICKABLE_API_URL}/sets/${setNum}/`, {
+                    headers: { 'Authorization': `key ${REBRICKABLE_API_KEY}` }
+                });
+                if (!response.ok) throw new Error(`Set ${setNum} not found.`);
+                const set = await response.json();
+                SET_MAP[set.set_num] = set;
+                await new Promise(resolve => setTimeout(resolve, 200)); // Small delay between fetches
+            } catch(err) {
+                console.error(`Could not fetch details for set ${setNum}:`, err);
+            }
+        }
+    }
+
+    async function fetchSetInventory(setNum, page = 1) {
+        state.setModal.isLoading = true;
+        if (page === 1) {
+            state.setModal.inventory = [];
+        }
+        updateSetModal();
+
+        try {
+            const endpoint = `/sets/${setNum}/parts/?page=${page}&page_size=50`; // Use smaller page size for modal
+            const response = await fetch(`${REBRICKABLE_API_URL}${endpoint}`, {
+                headers: { 'Authorization': `key ${REBRICKABLE_API_KEY}` }
+            });
+            if (!response.ok) throw new Error('Could not fetch set inventory');
+            const data = await response.json();
+            
+            const inventoryItems = (data.results || []).map(item => {
+                processPartData(item.part);
+                const colorIdStr = String(item.color.id);
+                if (!COLOR_MAP[colorIdStr]) {
+                     COLOR_MAP[colorIdStr] = {
+                        id: colorIdStr,
+                        name: item.color.name,
+                        hex: `#${item.color.rgb}`,
+                        isTransparent: item.color.is_trans,
+                    };
+                }
+                return {
+                    part: item.part,
+                    color: COLOR_MAP[colorIdStr],
+                    quantity: item.quantity,
+                    is_spare: item.is_spare,
+                    element_id: item.element_id,
+                };
+            }).filter(item => !item.is_spare);
+
+            state.setModal.inventory = [...state.setModal.inventory, ...inventoryItems];
+            state.setModal.inventoryPage = page;
+            state.setModal.hasNextInventoryPage = !!data.next;
+            
+        } catch (error) {
+             console.error(`Failed to fetch inventory for ${setNum}:`, error);
+        } finally {
+             state.setModal.isLoading = false;
+             updateSetModal();
+        }
+    }
+    
+    async function fetchAllSetInventory(setNum) {
+        let allResults = [];
+        let page = 1;
+        const PAGE_SIZE = 500;
+
+        while (true) {
+            const endpoint = `/sets/${setNum}/parts/?page=${page}&page_size=${PAGE_SIZE}`;
+            const response = await fetch(`${REBRICKABLE_API_URL}${endpoint}`, {
+                headers: { 'Authorization': `key ${REBRICKABLE_API_KEY}` }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ detail: 'Не удалось получить детали ошибки.' }));
+                throw new Error(`Ошибка API Rebrickable: ${response.status} - ${errorData.detail}`);
+            }
+
+            const data = await response.json();
+            const inventoryItems = (data.results || []).map(item => {
+                processPartData(item.part);
+                const colorIdStr = String(item.color.id);
+                if (!COLOR_MAP[colorIdStr]) {
+                     COLOR_MAP[colorIdStr] = {
+                        id: colorIdStr,
+                        name: item.color.name,
+                        hex: `#${item.color.rgb}`,
+                        isTransparent: item.color.is_trans,
+                    };
+                }
+                return {
+                    part: item.part,
+                    color: COLOR_MAP[colorIdStr],
+                    quantity: item.quantity,
+                    is_spare: item.is_spare,
+                };
+            }).filter(item => !item.is_spare);
+
+            if (inventoryItems.length > 0) {
+                allResults = allResults.concat(inventoryItems);
+            }
+            
+            if (!data.next) break;
+            page++;
+            await new Promise(resolve => setTimeout(resolve, 1100)); // Prevent API rate limiting
+        }
+        return allResults;
+    }
 
     async function handleFeelingLucky() {
       state.isLoading = true;
@@ -647,6 +927,41 @@
 
       } catch (error) {
         console.error("Feeling lucky failed:", error);
+        state.apiError = `Не удалось совершить чудо: ${error.message}`;
+      } finally {
+        state.isLoading = false;
+        updateUI();
+      }
+    }
+
+    async function handleFeelingLuckyForSets() {
+      state.isLoading = true;
+      state.apiError = null;
+      state.isGridStale = true;
+      updateUI();
+      try {
+        const themeIds = Object.keys(THEME_MAP);
+        if (themeIds.length === 0) throw new Error("Темы еще не загружены.");
+        
+        let attempts = 0;
+        while(attempts < 10) { // Safety break to prevent infinite loops
+            const randomThemeId = themeIds[Math.floor(Math.random() * themeIds.length)];
+            const rawSets = await apiFetchPaginated(`/sets/?theme_id=${randomThemeId}&page_size=100`);
+            
+            if (rawSets.length > 0) {
+                const randomSet = rawSets[Math.floor(Math.random() * rawSets.length)];
+                SET_MAP[randomSet.set_num] = randomSet;
+                openModalForSet(randomSet.set_num);
+                state.isLoading = false;
+                updateUI();
+                return;
+            }
+            attempts++;
+        }
+        throw new Error("Не удалось найти случайный набор после нескольких попыток.");
+
+      } catch (error) {
+        console.error("Feeling lucky for sets failed:", error);
         state.apiError = `Не удалось совершить чудо: ${error.message}`;
       } finally {
         state.isLoading = false;
@@ -720,6 +1035,22 @@
         'Arches & Curves': ArchIcon,
         'Other': OtherIcon,
     };
+    
+    function filterThemeTreeForCollection(nodes, collectedThemeIds) {
+        if (!Array.isArray(nodes)) return [];
+        return nodes.map(node => {
+            if (!node || !node.id) return null;
+            const filteredChildren = Array.isArray(node.children) && node.children.length > 0
+                ? filterThemeTreeForCollection(node.children, collectedThemeIds)
+                : [];
+            
+            if (collectedThemeIds.has(node.id) || filteredChildren.length > 0) {
+                return { ...node, children: filteredChildren };
+            }
+            
+            return null;
+        }).filter(Boolean);
+    }
 
     function renderSidebar() {
       const { uniqueModelsCount, totalPartsCount } = Object.keys(state.collection).reduce((acc, partId) => {
@@ -732,77 +1063,143 @@
         return acc;
       }, { uniqueModelsCount: 0, totalPartsCount: 0 });
 
-      const viewButtonStyle = (view) => `w-1/2 flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
+      const totalSetsCount = Object.values(state.setCollection).reduce((sum, set) => sum + set.quantity, 0);
+      const uniqueSetsCount = Object.keys(state.setCollection).length;
+
+      const viewButtonStyle = (view) => `flex items-center w-full p-3 text-base font-semibold rounded-lg transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`;
       
-      let categoriesToRender = state.categoryTree;
-      let allPartsButtonHtml = '';
+      const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
 
-      if (state.currentView === 'collection') {
-          const isSelected = state.selectedCollectionCategoryId === null;
-          const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
-          allPartsButtonHtml = `
-            <li>
-              <button data-action="show-all-collection" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
-                <span class="truncate">Все детали</span>
-              </button>
-            </li>
-          `;
-
-          const collectionCategoryIds = new Set(
-              Object.keys(state.collection)
-                  .map(partId => PART_MAP[partId]?.categoryId)
-                  .filter(id => id !== undefined && id !== null)
-          );
-          
-          categoriesToRender = JSON.parse(JSON.stringify(state.categoryTree)); // Deep copy
-          categoriesToRender = categoriesToRender.map(group => {
-              group.children = group.children.filter(cat => collectionCategoryIds.has(cat.id));
-              return group;
-          }).filter(group => group.children.length > 0);
-      }
+      let mainListContent = '';
+      let mainListTitle = '';
       
-      let categoryListContent = '';
-      if (state.isLoading && state.categoryTree.length === 0) {
-          categoryListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
-      } else if (state.currentView === 'catalog' && categoriesToRender.length === 0) {
-          // No special message for catalog, as it's the default state before selection
-      } else if (state.currentView === 'collection' && Object.keys(state.collection).length > 0 && categoriesToRender.length === 0) {
-          categoryListContent = `<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>`;
-      } else {
-           categoryListContent = categoriesToRender.map(group => {
-            const isExpanded = state.expandedCategories.has(group.name);
-            const childList = group.children.map(cat => {
-                 const isSelected = state.currentView === 'catalog' 
-                    ? state.selectedCategoryId === cat.id
-                    : state.selectedCollectionCategoryId === cat.id;
-                 const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
-                 return `
-                    <li>
-                        <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 pl-11 rounded-md transition-colors duration-150 ${buttonStyle}">
-                          <span class="truncate">${cat.name}</span>
-                        </button>
-                    </li>
-                 `;
-            }).join('');
-            
-            const IconComponent = CATEGORY_ICONS[group.name] || OtherIcon;
-            const iconHtml = IconComponent('w-5 h-5 mr-3 text-gray-400 flex-shrink-0');
-
-            return `
-                <li class="space-y-1">
-                    <button data-parent-category="${group.name}" class="w-full text-left flex items-center justify-between p-2 rounded-md hover:bg-gray-700 transition-colors duration-150">
-                        <div class="flex items-center truncate">
-                          ${iconHtml}
-                          <span class="font-semibold text-gray-200 truncate">${group.name}</span>
-                        </div>
-                        ${ChevronDownIcon(`w-5 h-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`)}
-                    </button>
-                    <ul class="space-y-1 ${isExpanded ? '' : 'hidden'}">
-                        ${childList}
-                    </ul>
-                </li>
+      if (isSetView) {
+        mainListTitle = 'Темы';
+        let themesToRender = state.themeTree;
+        let allItemsButtonHtml = '';
+        
+        if (state.currentView === 'set_collection') {
+            const isSelected = state.selectedSetCollectionThemeId === null;
+            const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
+            allItemsButtonHtml = `
+              <li>
+                <button data-action="show-all-collection-sets" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
+                  <span class="truncate">Все наборы</span>
+                </button>
+              </li>
             `;
-          }).join('');
+            const collectedThemeIds = new Set();
+            Object.keys(state.setCollection).forEach(setNum => {
+                const theme = SET_MAP[setNum];
+                if (theme && theme.theme_id) {
+                    let currentThemeId = theme.theme_id;
+                    while(currentThemeId) {
+                        collectedThemeIds.add(currentThemeId);
+                        currentThemeId = THEME_MAP[currentThemeId]?.parent_id;
+                    }
+                }
+            });
+            themesToRender = filterThemeTreeForCollection(state.themeTree, collectedThemeIds);
+        }
+
+        const renderThemeTree = (nodes, depth = 0) => {
+            if (!Array.isArray(nodes)) return '';
+            return nodes.map(theme => {
+                if(!theme) return '';
+                const isExpanded = state.expandedThemes.has(theme.id);
+                const isSelected = (state.currentView === 'sets' && state.selectedThemeId === theme.id) || (state.currentView === 'set_collection' && state.selectedSetCollectionThemeId === theme.id);
+                const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
+                
+                const childrenHtml = Array.isArray(theme.children) && theme.children.length > 0 && isExpanded ? `<ul>${renderThemeTree(theme.children, depth + 1)}</ul>` : '';
+
+                return `
+                    <li class="space-y-1">
+                        <button data-theme-id="${theme.id}" class="w-full text-left flex items-center justify-between p-2 rounded-md transition-colors duration-150 ${buttonStyle}" style="padding-left: ${0.5 + depth * 1.5}rem;">
+                            <span class="truncate">${theme.name}</span>
+                            ${Array.isArray(theme.children) && theme.children.length > 0 ? ChevronDownIcon(`w-5 h-5 text-gray-400 transform transition-transform duration-200 flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`) : ''}
+                        </button>
+                        ${childrenHtml}
+                    </li>
+                `;
+            }).join('');
+        };
+        if (state.isLoading && state.themeTree.length === 0) {
+            mainListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
+        } else {
+            mainListContent = allItemsButtonHtml + renderThemeTree(themesToRender);
+        }
+
+      } else { // Parts views
+        mainListTitle = 'Категории';
+        let categoriesToRender = state.categoryTree;
+        let allItemsButtonHtml = '';
+
+        if (state.currentView === 'collection') {
+            const isSelected = state.selectedCollectionCategoryId === null;
+            const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
+            allItemsButtonHtml = `
+              <li>
+                <button data-action="show-all-collection" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
+                  <span class="truncate">Все детали</span>
+                </button>
+              </li>
+            `;
+
+            const collectionCategoryIds = new Set(
+                Object.keys(state.collection)
+                    .map(partId => PART_MAP[partId]?.categoryId)
+                    .filter(id => id !== undefined && id !== null)
+            );
+            
+            categoriesToRender = JSON.parse(JSON.stringify(state.categoryTree)); // Deep copy
+            categoriesToRender = categoriesToRender.map(group => {
+                if (Array.isArray(group.children)) {
+                    group.children = group.children.filter(cat => collectionCategoryIds.has(cat.id));
+                }
+                return group;
+            }).filter(group => Array.isArray(group.children) && group.children.length > 0);
+        }
+        
+        if (state.isLoading && state.categoryTree.length === 0) {
+            mainListContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
+        } else if (state.currentView === 'collection' && Object.keys(state.collection).length > 0 && categoriesToRender.length === 0) {
+            mainListContent = `<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>`;
+        } else {
+             mainListContent = allItemsButtonHtml + categoriesToRender.map(group => {
+              const isExpanded = state.expandedCategories.has(group.name);
+              const childList = group.children.map(cat => {
+                   const isSelected = state.currentView === 'catalog' 
+                      ? state.selectedCategoryId === cat.id
+                      : state.selectedCollectionCategoryId === cat.id;
+                   const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
+                   return `
+                      <li>
+                          <button data-category-id="${cat.id}" class="w-full text-left flex items-center p-2 pl-11 rounded-md transition-colors duration-150 ${buttonStyle}">
+                            <span class="truncate">${cat.name}</span>
+                          </button>
+                      </li>
+                   `;
+              }).join('');
+              
+              const IconComponent = CATEGORY_ICONS[group.name] || OtherIcon;
+              const iconHtml = IconComponent('w-5 h-5 mr-3 text-gray-400 flex-shrink-0');
+
+              return `
+                  <li class="space-y-1">
+                      <button data-parent-category="${group.name}" class="w-full text-left flex items-center justify-between p-2 rounded-md hover:bg-gray-700 transition-colors duration-150">
+                          <div class="flex items-center truncate">
+                            ${iconHtml}
+                            <span class="font-semibold text-gray-200 truncate">${group.name}</span>
+                          </div>
+                          ${ChevronDownIcon(`w-5 h-5 text-gray-400 transform transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`)}
+                      </button>
+                      <ul class="space-y-1 ${isExpanded ? '' : 'hidden'}">
+                          ${childList}
+                      </ul>
+                  </li>
+              `;
+            }).join('');
+        }
       }
 
       sidebarContainer.innerHTML = `
@@ -813,39 +1210,37 @@
           </button>
         </div>
 
-        <div class="flex bg-gray-900/70 rounded-lg p-1 mb-4 flex-shrink-0">
-          <button data-view="catalog" class="${viewButtonStyle('catalog')}">${CatalogIcon('w-5 h-5 mr-2')} Каталог</button>
-          <button data-view="collection" class="${viewButtonStyle('collection')}">${CollectionIcon('w-5 h-5 mr-2')} Коллекция</button>
+        <div class="space-y-1 mb-4 flex-shrink-0">
+            <button data-view="catalog" class="${viewButtonStyle('catalog')}">${CatalogIcon('w-5 h-5 mr-3')}<span>Каталог деталей</span></button>
+            <button data-view="collection" class="${viewButtonStyle('collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция деталей</span></button>
+            <button data-view="sets" class="${viewButtonStyle('sets')}">${SetsIcon('w-5 h-5 mr-3')}<span>Каталог наборов</span></button>
+            <button data-view="set_collection" class="${viewButtonStyle('set_collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция наборов</span></button>
         </div>
         
         <div class="flex-grow overflow-y-auto no-scrollbar">
-          <h2 class="text-lg font-semibold text-white mb-3">Категории</h2>
+          <h2 class="text-lg font-semibold text-white mb-3">${mainListTitle}</h2>
           <nav>
-            <ul id="category-list" class="space-y-1">${allPartsButtonHtml}${categoryListContent}</ul>
+            <ul id="category-list" class="space-y-1">${mainListContent}</ul>
           </nav>
         </div>
         
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <h2 class="text-lg font-semibold text-white mb-3">Сводка коллекции</h2>
-            ${totalPartsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
+            ${totalPartsCount === 0 && uniqueSetsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
               <div class="space-y-2 text-sm">
-                  <div class="flex justify-between"><span class="text-gray-400">Уникальные модели:</span><span class="font-bold text-white">${uniqueModelsCount}</span></div>
+                  <div class="flex justify-between"><span class="text-gray-400">Уникальные наборы:</span><span class="font-bold text-white">${uniqueSetsCount}</span></div>
+                  <div class="flex justify-between"><span class="text-gray-400">Всего наборов:</span><span class="font-bold text-white">${totalSetsCount}</span></div>
+                  <div class="flex justify-between"><span class="text-gray-400">Уникальные детали:</span><span class="font-bold text-white">${uniqueModelsCount}</span></div>
                   <div class="flex justify-between"><span class="text-gray-400">Всего деталей:</span><span class="font-bold text-white">${totalPartsCount}</span></div>
               </div>
             `}
         </div>
 
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
-            <h2 class="text-lg font-semibold text-white mb-3">Управление данными</h2>
-            <div class="space-y-2">
-                <button id="import-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
-                    ${UploadIcon('w-5 h-5 mr-2')} Импорт .zip
-                </button>
-                <input type="file" id="import-zip-input" class="hidden" accept=".zip">
-                <button id="export-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white ${totalPartsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${totalPartsCount === 0 ? 'disabled' : ''}>
-                    ${DownloadIcon('w-5 h-5 mr-2')} Экспорт .zip
-                </button>
-            </div>
+            <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
+                ${SettingsIcon('w-5 h-5 mr-2')} Настройки
+            </button>
+            <input type="file" id="import-zip-input" class="hidden" accept=".zip">
             ${state.importExportStatus.message ? `
               <div id="import-export-status" class="mt-3 p-2 text-sm rounded-md ${state.importExportStatus.type === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
                 ${state.importExportStatus.message}
@@ -856,17 +1251,18 @@
     }
 
     function renderHeader() {
+        const placeholder = (state.currentView === 'sets' || state.currentView === 'set_collection') ? "Поиск по наборам..." : "Поиск по ID или названию...";
         headerContainer.innerHTML = `
             <div class="flex justify-between items-center gap-4">
                 <div class="flex items-center">
                     <button id="sidebar-toggle" class="lg:hidden text-gray-300 hover:text-white mr-4 -ml-1 p-1">
                         ${MenuIcon('w-6 h-6')}
                     </button>
-                    <h1 class="text-xl font-bold text-white hidden sm:block">LEGO® Part Catalog</h1>
+                    <h1 class="text-xl font-bold text-white hidden sm:block">LEGO® Part & Set Catalog</h1>
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
-                        <input id="search-input" type="search" placeholder="Поиск по ID или названию..." value="${state.searchQuery}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-4 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                        <input id="search-input" type="search" placeholder="${placeholder}" value="${state.searchQuery}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-4 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                         <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white ${!state.searchQuery ? 'hidden' : ''}">${XIcon('w-5 h-5')}</button>
                     </div>
                      <button id="search-button" class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск">
@@ -880,7 +1276,31 @@
         `;
     }
 
+    function renderSetCard(set, shouldAnimate, index = 0) {
+        if (!set) return '';
+        const animationClass = shouldAnimate ? 'animate-in' : '';
+        const animationDelay = shouldAnimate ? `animation-delay: ${Math.min(index * 40, 1500)}ms;` : '';
+        const collectionInfo = state.setCollection[set.set_num];
+        const quantity = collectionInfo ? collectionInfo.quantity : 0;
+        
+        return `
+            <div data-set-num="${set.set_num}" style="${animationDelay}" class="set-card ${animationClass} relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
+                ${quantity > 0 ? `<div class="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${quantity}</div>` : ''}
+                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
+                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
+                        <img ${getPartImageUrl(set.set_img_url)} alt="${set.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                    </div>
+                </div>
+                <div class="p-4 space-y-1">
+                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${set.name}</h3>
+                    <p class="text-xs text-gray-400 pointer-events-none">#${set.set_num} • ${set.year}</p>
+                </div>
+            </div>
+        `;
+    }
+
     function renderPartCard(part, color, quantity, shouldAnimate, index = 0) {
+        if (!part) return '';
         const inCollection = state.currentView === 'collection';
         const groupId = getGroupId(part.id);
         const animationClass = shouldAnimate ? 'animate-in' : '';
@@ -928,48 +1348,66 @@
     }
 
     function renderAppliedFilters() {
-        const { colorIds, inCollectionOnly } = state.filters;
-        const { sortBy } = state;
+        let tags = '';
+        let isDefaultSort = false;
+        let showClearAll = false;
 
-        const isDefaultSort = state.searchQuery ? sortBy === 'relevance' : sortBy === 'popularity';
-        if ((!colorIds || colorIds.length === 0) && !inCollectionOnly && isDefaultSort) {
-            return '';
+        if (state.currentView === 'sets' || state.currentView === 'set_collection') {
+            const { minYear, maxYear, minParts, maxParts } = state.setFilters;
+            const setFilterTags = [
+                minYear && `Мин. год: ${minYear}`,
+                maxYear && `Макс. год: ${maxYear}`,
+                minParts && `Мин. деталей: ${minParts}`,
+                maxParts && `Макс. деталей: ${maxParts}`,
+            ].filter(Boolean).map(text => `
+                <div class="flex items-center bg-green-900/50 text-green-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">${text}</span>
+                </div>`).join('');
+            
+            const sortMap = { 'year_desc': 'Год (новые)', 'year_asc': 'Год (старые)', 'parts_desc': 'Детали (убыв.)', 'parts_asc': 'Детали (возр.)', 'alpha_asc': 'Алфавит (А-Я)', 'alpha_desc': 'Алфавит (Я-А)' };
+            isDefaultSort = state.searchQuery ? state.sortBy === 'relevance' : state.sortBy === 'year_desc';
+            const sortTag = !isDefaultSort && sortMap[state.sortBy] ? `
+                <div class="flex items-center bg-gray-600 text-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">Сортировка: ${sortMap[state.sortBy]}</span>
+                </div>
+            ` : '';
+
+            tags = [sortTag, setFilterTags].filter(Boolean).join('');
+            showClearAll = !isDefaultSort || minYear || maxYear || minParts || maxParts;
+
+        } else { // Parts views
+            const { colorIds, inCollectionOnly } = state.filters;
+            const colorTags = colorIds.map(colorId => {
+                if (!COLOR_MAP[colorId]) return '';
+                return `
+                <div class="flex items-center bg-blue-900/50 text-blue-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">${COLOR_MAP[colorId].name}</span>
+                    <button data-action="remove-filter" data-filter-type="color" data-color-id="${colorId}" class="text-blue-200 hover:bg-blue-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
+                </div>
+                `;
+            }).join('');
+
+            const collectionTag = inCollectionOnly && state.currentView === 'catalog' ? `
+                <div class="flex items-center bg-green-900/50 text-green-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">В коллекции</span>
+                    <button data-action="remove-filter" data-filter-type="inCollectionOnly" class="text-green-200 hover:bg-green-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
+                </div>
+            ` : '';
+
+            const sortMap = { 'relevance': 'Релевантность', 'alpha_asc': 'Алфавит (А-Я)', 'alpha_desc': 'Алфавит (Я-А)', 'popularity': 'Популярность' };
+            isDefaultSort = state.searchQuery ? state.sortBy === 'relevance' : state.sortBy === 'popularity';
+            const sortTag = !isDefaultSort ? `
+                <div class="flex items-center bg-gray-600 text-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">Сортировка: ${sortMap[state.sortBy]}</span>
+                    <button data-action="remove-filter" data-filter-type="sortBy" class="text-gray-200 hover:bg-gray-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
+                </div>
+            ` : '';
+            
+            tags = [sortTag, colorTags, collectionTag].filter(Boolean).join('');
+            showClearAll = !isDefaultSort || colorIds.length > 0 || inCollectionOnly;
         }
 
-        const colorTags = colorIds.map(colorId => {
-            if (!COLOR_MAP[colorId]) return '';
-            return `
-            <div class="flex items-center bg-blue-900/50 text-blue-200 rounded-full pl-3 pr-2 py-1 text-sm">
-                <span class="mr-2">${COLOR_MAP[colorId].name}</span>
-                <button data-action="remove-filter" data-filter-type="color" data-color-id="${colorId}" class="text-blue-200 hover:bg-blue-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
-            </div>
-            `;
-        }).join('');
-
-        const collectionTag = inCollectionOnly && state.currentView === 'catalog' ? `
-            <div class="flex items-center bg-green-900/50 text-green-200 rounded-full pl-3 pr-2 py-1 text-sm">
-                <span class="mr-2">В коллекции</span>
-                <button data-action="remove-filter" data-filter-type="inCollectionOnly" class="text-green-200 hover:bg-green-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
-            </div>
-        ` : '';
-
-        const sortMap = {
-            'relevance': 'Релевантность',
-            'alpha_asc': 'Алфавит (А-Я)',
-            'alpha_desc': 'Алфавит (Я-А)',
-            'popularity': 'Популярность'
-        };
-
-        const sortTag = !isDefaultSort ? `
-            <div class="flex items-center bg-gray-600 text-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
-                <span class="mr-2">Сортировка: ${sortMap[sortBy]}</span>
-                <button data-action="remove-filter" data-filter-type="sortBy" class="text-gray-200 hover:bg-gray-500/50 rounded-full p-0.5">${XIcon('w-4 h-4')}</button>
-            </div>
-        ` : '';
-        
-        const tags = [sortTag, colorTags, collectionTag].filter(Boolean).join('');
-
-        if (!tags) return '';
+        if (!showClearAll) return '';
 
         return `
             <div class="px-4 pt-2 pb-0">
@@ -988,6 +1426,77 @@
             gridContent = `<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>`;
         } else if (state.apiError) {
             gridContent = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${state.apiError}</p></div>`;
+        } else if (state.currentView === 'sets') {
+            const setsToDisplay = state.searchQuery ? state.searchSetResults : state.setResults;
+            let emptyMessage = 'Выберите тему для просмотра наборов или воспользуйтесь поиском.';
+            if (state.searchQuery) emptyMessage = 'По вашему запросу ничего не найдено.';
+            else if (state.selectedThemeId) emptyMessage = 'В этой теме нет наборов.';
+
+            if (!setsToDisplay || setsToDisplay.length === 0) {
+                 gridContent = `
+                    <div class="flex flex-col items-center justify-center h-full p-4 text-center">
+                        <p class="text-gray-400 max-w-sm mb-6">${emptyMessage}</p>
+                        <button id="feeling-lucky-set-button" class="flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            ${DiceIcon('w-6 h-6')} Мне повезёт!
+                        </button>
+                    </div>`;
+            } else {
+                const setsToRender = setsToDisplay.slice(0, state.itemsToDisplay);
+                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
+                    ${setsToRender.map((set, index) => renderSetCard(set, state.isGridStale, index)).join('')}
+                </div>`;
+                if(setsToDisplay.length > state.itemsToDisplay) {
+                    gridContent += `<div class="p-4 text-center">
+                        <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                            Загрузить ещё
+                        </button>
+                    </div>`;
+                }
+            }
+        } else if (state.currentView === 'set_collection') {
+            let sets = Object.keys(state.setCollection).map(setNum => SET_MAP[setNum]).filter(Boolean);
+            
+            if (state.selectedSetCollectionThemeId) {
+                const getChildThemes = (themeId) => {
+                    const theme = THEME_MAP[themeId];
+                    if (!theme) return [];
+                    let ids = [theme.id];
+                    if(Array.isArray(theme.children)) {
+                        theme.children.forEach(child => {
+                            ids = ids.concat(getChildThemes(child.id));
+                        });
+                    }
+                    return ids;
+                }
+                const themeIdsToMatch = getChildThemes(state.selectedSetCollectionThemeId);
+                sets = sets.filter(set => themeIdsToMatch.includes(set.theme_id));
+            }
+
+            const query = state.searchQuery.trim().toLowerCase();
+            if (query) {
+                sets = sets.filter(s => s.name.toLowerCase().includes(query) || s.set_num.toLowerCase().includes(query));
+            }
+            
+            switch(state.sortBy) {
+                case 'alpha_asc': sets.sort((a, b) => a.name.localeCompare(b.name)); break;
+                case 'alpha_desc': sets.sort((a, b) => b.name.localeCompare(a.name)); break;
+                case 'year_asc': sets.sort((a, b) => a.year - b.year); break;
+                case 'year_desc': sets.sort((a, b) => b.year - a.year); break;
+                case 'parts_asc': sets.sort((a, b) => a.num_parts - b.num_parts); break;
+                case 'parts_desc': sets.sort((a, b) => b.num_parts - a.num_parts); break;
+            }
+
+            if (sets.length === 0) {
+                let emptyMsg = 'В вашей коллекции нет наборов';
+                if (state.searchQuery || state.selectedSetCollectionThemeId) emptyMsg += ', соответствующих фильтрам';
+                emptyMsg += '.';
+                gridContent = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
+            } else {
+                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
+                    ${sets.map((set, index) => renderSetCard(set, state.isGridStale, index)).join('')}
+                </div>`;
+            }
+
         } else if (state.currentView === 'collection') {
             let items = [];
             for (const partId in state.collection) {
@@ -1001,7 +1510,6 @@
               }
             }
             
-            // Apply client-side filters for collection view
             if (state.selectedCollectionCategoryId) {
                 items = items.filter(({ part }) => PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId);
             }
@@ -1030,7 +1538,6 @@
                     .map(i => i.item);
             }
 
-            // Apply sorting for collection view
             switch(state.sortBy) {
                 case 'alpha_asc': items.sort((a, b) => a.part.name.localeCompare(b.part.name)); break;
                 case 'alpha_desc': items.sort((a, b) => b.part.name.localeCompare(a.part.name)); break;
@@ -1065,7 +1572,6 @@
             
             let allItems = Object.values(groupsToShow).flat();
             
-            // Apply sorting for catalog view
             switch(state.sortBy) {
                 case 'alpha_asc': allItems.sort((a, b) => a.name.localeCompare(b.name)); break;
                 case 'alpha_desc': allItems.sort((a, b) => b.name.localeCompare(a.name)); break;
@@ -1107,6 +1613,205 @@
         }
         mainContent.innerHTML = renderAppliedFilters() + gridContent;
         state.isGridStale = false; // Animation flag is reset after render
+    }
+    
+    function renderSetCollectionControls() {
+        if (!state.selectedSetNum) return '';
+        const { quantity } = state.setModal;
+        const currentInCollection = state.setCollection[state.selectedSetNum]?.quantity || 0;
+        
+        return `
+            <div class="bg-gray-700/50 rounded-lg p-4">
+                <h3 class="text-md font-semibold text-gray-300 mb-3">Коллекция наборов</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <p class="text-white font-semibold">Этот набор</p>
+                        <p class="text-sm text-gray-400 text-right">В коллекции: <span id="set-modal-in-collection-qty" class="font-bold text-white">${currentInCollection}</span></p>
+                    </div>
+                    
+                    <div class="flex justify-between items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <button data-action="decrease-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${MinusIcon('w-5 h-5')}</button>
+                            <input id="set-modal-quantity-input" type="number" value="${quantity}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
+                            <button data-action="increase-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${PlusIcon('w-5 h-5')}</button>
+                        </div>
+                        <button data-action="update-set-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                            ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
+                        </button>
+                    </div>
+                    ${currentInCollection > 0 ? `
+                        <div id="set-modal-delete-container">
+                            <button data-action="delete-from-set-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции наборов</button>
+                        </div>
+                    ` : '<div id="set-modal-delete-container"></div>'}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderSetBulkPartsControls() {
+        if (!state.selectedSetNum) return '';
+
+        const { isBulkUpdating } = state.setModal;
+
+        if (isBulkUpdating) {
+            return `
+                <div class="bg-gray-700/50 rounded-lg p-4 mt-4">
+                     <h3 class="text-md font-semibold text-gray-300 mb-3">Коллекция деталей</h3>
+                     <div class="flex items-center justify-center gap-3 text-white">
+                        <div class="loader !w-5 !h-5 !border-2"></div>
+                        <span>Обновление коллекции...</span>
+                     </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="bg-gray-700/50 rounded-lg p-4 mt-4">
+                <h3 class="text-md font-semibold text-gray-300 mb-3">Коллекция деталей</h3>
+                <div class="space-y-2">
+                    <button data-action="bulk-add-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-green-600 hover:bg-green-700 text-white">
+                        ${PlusIcon('w-5 h-5 mr-2')} Добавить все детали в коллекцию
+                    </button>
+                    <button data-action="bulk-remove-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white">
+                        ${MinusIcon('w-5 h-5 mr-2')} Удалить все детали из коллекции
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderSetModal(isInitialRender = false) {
+        if (!state.selectedSetNum) {
+            closeSetModal();
+            return;
+        }
+
+        const set = SET_MAP[state.selectedSetNum];
+        if (!set) {
+            closeSetModal();
+            return;
+        }
+
+        const animationClass = isInitialRender ? 'modal-content-enter' : '';
+        const theme = THEME_MAP[set.theme_id];
+
+        if (isInitialRender) {
+            document.body.classList.add('overflow-hidden');
+            setModalContainer.classList.remove('modal-hidden');
+            requestAnimationFrame(() => setModalContainer.classList.add('visible'));
+        }
+
+        setModalContainer.innerHTML = `
+        <div id="set-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-6xl flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-8">${set.name}</h2>
+                 <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
+            </div>
+            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden">
+                <div class="lg:w-1/3 p-6 bg-gray-900/30 flex flex-col flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700 overflow-y-auto no-scrollbar">
+                     <div class="flex flex-col items-center justify-center space-y-4">
+                        <div class="w-48 h-48 sm:w-56 sm:h-56 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg flex-shrink-0">
+                            <img ${getPartImageUrl(set.set_img_url)} alt="${set.name}" class="max-w-full max-h-full object-contain">
+                        </div>
+                        <div class="text-center space-y-2">
+                            <p class="text-sm text-gray-400">#${set.set_num}</p>
+                            <p class="text-sm text-gray-400">Год: ${set.year}</p>
+                            <p class="text-sm text-gray-400">Деталей: ${set.num_parts}</p>
+                            ${theme ? `<p class="text-sm text-gray-400">Тема: <button data-action="go-to-theme" data-theme-id="${theme.id}" class="text-blue-400 hover:underline">${theme.name}</button></p>` : ''}
+                        </div>
+                     </div>
+                     <div id="set-modal-controls-container" class="mt-6">
+                        ${renderSetCollectionControls()}
+                        ${renderSetBulkPartsControls()}
+                     </div>
+                     ${state.importExportStatus.message && (setModalContainer?.contains(document.activeElement) || setModalContainer.querySelector(':focus-within')) ? `
+                        <div class="mt-4 p-2 text-sm rounded-md ${state.importExportStatus.type === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
+                            ${state.importExportStatus.message}
+                        </div>
+                     ` : ''}
+                </div>
+                <div id="set-inventory-container" class="lg:w-2/3 p-4 flex flex-col overflow-y-auto no-scrollbar">
+                    ${renderSetInventory()}
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function renderSetInventory() {
+        const { inventory, isLoading, hasNextInventoryPage } = state.setModal;
+        let content = `<h3 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Инвентарь</h3>`;
+        
+        if (inventory.length === 0 && !isLoading) {
+            content += `<div class="flex-grow flex items-center justify-center"><p class="text-gray-400">Инвентарь не найден.</p></div>`;
+        } else {
+            content += `<div class="space-y-2 pr-2 overflow-y-auto no-scrollbar flex-grow">` + inventory.map(item => `
+                <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm">
+                    <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0">
+                         <img ${getPartImageUrl(item.part.part_img_url)} alt="${item.part.name}" class="w-full h-full object-contain p-1">
+                    </div>
+                    <div class="flex-grow truncate">
+                        <p class="text-white font-semibold truncate">${item.part.name}</p>
+                        <p class="text-gray-400 truncate">${item.part.part_num}</p>
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                        <span class="w-5 h-5 rounded-full border border-gray-500 ${item.color.isTransparent ? 'checkerboard' : ''}" style="background-color: ${item.color.hex};" title="${item.color.name}"></span>
+                        <span class="text-gray-300 w-8 text-right">${item.quantity}x</span>
+                    </div>
+                </div>
+            `).join('') + `</div>`;
+        }
+        
+        if(isLoading) {
+            content += `<div class="flex justify-center p-4 flex-shrink-0"><div class="loader !w-8 !h-8"></div></div>`;
+        } else if (hasNextInventoryPage) {
+            content += `<div class="pt-4 text-center flex-shrink-0">
+                <button data-action="load-more-inventory" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                    Загрузить ещё
+                </button>
+            </div>`;
+        }
+        
+        return content;
+    }
+
+    function updateSetModal() {
+        if (!state.selectedSetNum) return;
+        
+        const controlsContainer = document.getElementById('set-modal-controls-container');
+        if(controlsContainer) {
+            controlsContainer.innerHTML = renderSetCollectionControls() + renderSetBulkPartsControls();
+        }
+
+        const inventoryContainer = document.getElementById('set-inventory-container');
+        if(inventoryContainer) {
+            inventoryContainer.innerHTML = renderSetInventory();
+        }
+    }
+    
+    function updateSetModalControlsState() {
+        if (!state.selectedSetNum) return;
+        
+        const currentInCollection = state.setCollection[state.selectedSetNum]?.quantity || 0;
+        
+        const inCollectionQtySpan = document.getElementById('set-modal-in-collection-qty');
+        if (inCollectionQtySpan) inCollectionQtySpan.textContent = currentInCollection;
+        
+        const updateBtn = document.querySelector('[data-action="update-set-collection"]');
+        if (updateBtn) updateBtn.textContent = currentInCollection > 0 ? 'Обновить' : 'Добавить';
+        
+        const deleteContainer = document.getElementById('set-modal-delete-container');
+        if (deleteContainer) {
+            if (currentInCollection > 0 && !deleteContainer.innerHTML.trim()) {
+                deleteContainer.innerHTML = `<button data-action="delete-from-set-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции наборов</button>`;
+            } else if (currentInCollection === 0) {
+                deleteContainer.innerHTML = '';
+            }
+        }
+
+        const qtyInput = document.getElementById('set-modal-quantity-input');
+        if(qtyInput) qtyInput.value = state.setModal.quantity;
     }
 
     function renderModal() {
@@ -1300,58 +2005,121 @@
             return;
         }
         
-        // Sort options
-        const sortOptions = [
-            { id: 'relevance', name: 'Релевантность', desc: 'Поиск' },
-            { id: 'popularity', name: 'Популярность', desc: 'Каталог' },
-            { id: 'alpha_asc', name: 'Алфавит (А-Я)', desc: '' },
-            { id: 'alpha_desc', name: 'Алфавит (Я-А)', desc: '' },
-        ];
-        const sortRadios = sortOptions.map(opt => {
-            const isChecked = tempFilters.sortBy === opt.id;
-            const isDisabled = (opt.id === 'relevance' && !state.searchQuery) || (opt.id === 'popularity' && state.searchQuery);
-            const defaultBadge = (state.searchQuery && opt.id === 'relevance') || (!state.searchQuery && opt.id === 'popularity') ? '<span class="ml-2 text-xs bg-blue-600/50 text-blue-300 px-1.5 py-0.5 rounded-full">По умолч.</span>' : '';
-            return `
-                <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}">
-                    <input type="radio" name="sort" value="${opt.id}" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-500 focus:ring-blue-500" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} data-action="modal-set-sort">
-                    <span class="ml-3 text-white">${opt.name}</span>
-                    ${defaultBadge}
-                </label>
-            `;
-        }).join('');
-
-        // Collection toggle
-        const collectionToggle = state.currentView === 'catalog' ? `
-            <div>
-                <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтры</h3>
-                <div class="bg-gray-900/50 rounded-lg p-2">
-                    <label class="flex justify-between items-center p-2 cursor-pointer">
-                        <span class="text-white">Только детали в коллекции</span>
-                        <div class="relative">
-                            <input type="checkbox" class="sr-only peer" ${tempFilters.filters.inCollectionOnly ? 'checked' : ''} data-action="modal-toggle-collection">
-                            <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                        </div>
-                    </label>
-                </div>
-            </div>
-        ` : '';
-
-        // Color palette
-        const sortedColorIds = Object.keys(COLOR_MAP).sort((a,b) => COLOR_MAP[a].name.localeCompare(COLOR_MAP[b].name));
-        const colorButtons = sortedColorIds.map(cid => {
-            const color = COLOR_MAP[cid];
-            const isSelected = tempFilters.filters.colorIds.includes(cid);
-            return `
-                <button data-action="modal-set-color" data-color-id="${cid}" title="${color.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${color.isTransparent ? 'checkerboard' : ''} ${isSelected ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};"></button>
-            `;
-        }).join('');
-
         const animationClass = 'modal-content-enter';
         document.body.classList.add('overflow-hidden');
         filterModalContainer.classList.remove('modal-hidden');
-        requestAnimationFrame(() => {
-            filterModalContainer.classList.add('visible');
-        });
+        requestAnimationFrame(() => filterModalContainer.classList.add('visible'));
+
+        let content = '';
+        if (state.currentView === 'sets' || state.currentView === 'set_collection') {
+            const sortOptions = [
+                { id: 'relevance', name: 'Релевантность', desc: 'Поиск' },
+                { id: 'year_desc', name: 'Год (новые)', desc: 'По умолч.' },
+                { id: 'year_asc', name: 'Год (старые)', desc: '' },
+                { id: 'parts_desc', name: 'Кол-во деталей (убыв.)', desc: '' },
+                { id: 'parts_asc', name: 'Кол-во деталей (возр.)', desc: '' },
+                { id: 'alpha_asc', name: 'Алфавит (А-Я)', desc: '' },
+                { id: 'alpha_desc', name: 'Алфавит (Я-А)', desc: '' },
+            ];
+            const sortRadios = sortOptions.map(opt => {
+                const isChecked = tempFilters.sortBy === opt.id;
+                const isDisabled = opt.id === 'relevance' && !state.searchQuery;
+                const defaultBadge = (opt.id === 'relevance' && state.searchQuery) || (opt.id === 'year_desc' && !state.searchQuery) ? `<span class="ml-2 text-xs bg-blue-600/50 text-blue-300 px-1.5 py-0.5 rounded-full">По умолч.</span>` : '';
+                return `
+                    <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}">
+                        <input type="radio" name="sort" value="${opt.id}" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-500 focus:ring-blue-500" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} data-action="modal-set-sort">
+                        <span class="ml-3 text-white">${opt.name}</span>
+                        ${defaultBadge}
+                    </label>
+                `;
+            }).join('');
+            
+            content = `
+                <div>
+                    <h3 class="text-md font-semibold text-gray-300 mb-2">Сортировать по</h3>
+                    <div class="bg-gray-900/50 rounded-lg space-y-1 p-2">${sortRadios}</div>
+                </div>
+                <div>
+                    <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтры</h3>
+                    <div class="bg-gray-900/50 rounded-lg p-3 space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="min-year" class="block text-sm font-medium text-gray-400 mb-1">Мин. год</label>
+                                <input type="number" id="min-year" value="${tempFilters.setFilters.minYear}" data-filter-key="minYear" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                             <div>
+                                <label for="max-year" class="block text-sm font-medium text-gray-400 mb-1">Макс. год</label>
+                                <input type="number" id="max-year" value="${tempFilters.setFilters.maxYear}" data-filter-key="maxYear" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="min-parts" class="block text-sm font-medium text-gray-400 mb-1">Мин. деталей</label>
+                                <input type="number" id="min-parts" value="${tempFilters.setFilters.minParts}" data-filter-key="minParts" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                             <div>
+                                <label for="max-parts" class="block text-sm font-medium text-gray-400 mb-1">Макс. деталей</label>
+                                <input type="number" id="max-parts" value="${tempFilters.setFilters.maxParts}" data-filter-key="maxParts" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else { // Parts views
+            const sortOptions = [ { id: 'relevance', name: 'Релевантность', desc: 'Поиск' }, { id: 'popularity', name: 'Популярность', desc: 'Каталог' }, { id: 'alpha_asc', name: 'Алфавит (А-Я)', desc: '' }, { id: 'alpha_desc', name: 'Алфавит (Я-А)', desc: '' }, ];
+            const sortRadios = sortOptions.map(opt => {
+                const isChecked = tempFilters.sortBy === opt.id;
+                const isDisabled = (opt.id === 'relevance' && !state.searchQuery) || (opt.id === 'popularity' && state.searchQuery);
+                const defaultBadge = (state.searchQuery && opt.id === 'relevance') || (!state.searchQuery && opt.id === 'popularity') ? '<span class="ml-2 text-xs bg-blue-600/50 text-blue-300 px-1.5 py-0.5 rounded-full">По умолч.</span>' : '';
+                return `
+                    <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}">
+                        <input type="radio" name="sort" value="${opt.id}" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-500 focus:ring-blue-500" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} data-action="modal-set-sort">
+                        <span class="ml-3 text-white">${opt.name}</span>
+                        ${defaultBadge}
+                    </label>
+                `;
+            }).join('');
+            const collectionToggle = state.currentView === 'catalog' ? `
+                <div>
+                    <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтры</h3>
+                    <div class="bg-gray-900/50 rounded-lg p-2">
+                        <label class="flex justify-between items-center p-2 cursor-pointer">
+                            <span class="text-white">Только детали в коллекции</span>
+                            <div class="relative">
+                                <input type="checkbox" class="sr-only peer" ${tempFilters.filters.inCollectionOnly ? 'checked' : ''} data-action="modal-toggle-collection">
+                                <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            ` : '';
+            const sortedColorIds = Object.keys(COLOR_MAP).sort((a,b) => COLOR_MAP[a].name.localeCompare(b.name));
+            const colorButtons = sortedColorIds.map(cid => {
+                const color = COLOR_MAP[cid];
+                const isSelected = tempFilters.filters.colorIds.includes(cid);
+                return `<button data-action="modal-set-color" data-color-id="${cid}" title="${color.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${color.isTransparent ? 'checkerboard' : ''} ${isSelected ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}" style="background-color: ${color.hex};"></button>`;
+            }).join('');
+            content = `
+                <div>
+                    <h3 class="text-md font-semibold text-gray-300 mb-2">Сортировать по</h3>
+                    <div class="bg-gray-900/50 rounded-lg space-y-1 p-2">${sortRadios}</div>
+                </div>
+                ${collectionToggle}
+                <div>
+                     <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтр по цвету</h3>
+                     <div class="bg-gray-900/50 rounded-lg p-3">
+                        <button data-action="modal-set-color" data-color-id="null" class="w-full mb-3 py-2 text-sm rounded-md transition-colors ${tempFilters.filters.colorIds.length === 0 ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}">Все цвета</button>
+                        <div class="relative">
+                            <div class="max-h-48 overflow-y-auto no-scrollbar pr-2">
+                                <div class="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-3">
+                                    ${colorButtons}
+                                </div>
+                            </div>
+                            <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
+                        </div>
+                     </div>
+                </div>`;
+        }
         
         filterModalContainer.innerHTML = `
             <div id="filter-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
@@ -1359,27 +2127,7 @@
                      <h2 class="text-xl font-bold text-white">Фильтры и сортировка</h2>
                      <button id="filter-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
                 </div>
-                <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
-                    <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Сортировать по</h3>
-                        <div class="bg-gray-900/50 rounded-lg space-y-1 p-2">${sortRadios}</div>
-                    </div>
-                    ${collectionToggle}
-                    <div>
-                         <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтр по цвету</h3>
-                         <div class="bg-gray-900/50 rounded-lg p-3">
-                            <button data-action="modal-set-color" data-color-id="null" class="w-full mb-3 py-2 text-sm rounded-md transition-colors ${tempFilters.filters.colorIds.length === 0 ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}">Все цвета</button>
-                            <div class="relative">
-                                <div class="max-h-48 overflow-y-auto no-scrollbar pr-2">
-                                    <div class="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-3">
-                                        ${colorButtons}
-                                    </div>
-                                </div>
-                                <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
-                            </div>
-                         </div>
-                    </div>
-                </div>
+                <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">${content}</div>
                 <div class="flex-shrink-0 p-4 border-t border-gray-700 flex justify-between items-center gap-4">
                     <button data-action="modal-reset-filters" class="px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-gray-600 hover:bg-gray-500 text-white">Сбросить</button>
                     <button data-action="modal-apply-filters" class="flex-grow px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-blue-600 hover:bg-blue-700 text-white">Применить</button>
@@ -1388,40 +2136,115 @@
         `;
     }
 
+    function renderSettingsModal() {
+        if (!state.isSettingsModalOpen) {
+            closeSettingsModal();
+            return;
+        }
+
+        const animationClass = 'modal-content-enter';
+        document.body.classList.add('overflow-hidden');
+        settingsModalContainer.classList.remove('modal-hidden');
+        requestAnimationFrame(() => settingsModalContainer.classList.add('visible'));
+
+        const { confirmingDelete } = state.settingsModal;
+        const totalPartsCount = Object.values(state.collection).reduce((sum, colors) => sum + Object.keys(colors).length, 0);
+        const totalSetsCount = Object.keys(state.setCollection).length;
+
+        let deletePartsSection = '';
+        if (confirmingDelete === 'parts') {
+            deletePartsSection = `
+                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо.</p>
+                <div class="flex gap-2">
+                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
+                    <button data-action="confirm-delete-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
+                </div>`;
+        } else {
+            deletePartsSection = `<button data-action="delete-all-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${totalPartsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${totalPartsCount === 0 ? 'disabled' : ''}>${TrashIcon('w-5 h-5 mr-2')} Удалить все детали</button>`;
+        }
+        
+        let deleteSetsSection = '';
+        if (confirmingDelete === 'sets') {
+             deleteSetsSection = `
+                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо.</p>
+                <div class="flex gap-2">
+                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
+                    <button data-action="confirm-delete-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
+                </div>`;
+        } else {
+            deleteSetsSection = `<button data-action="delete-all-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${totalSetsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${totalSetsCount === 0 ? 'disabled' : ''}>${TrashIcon('w-5 h-5 mr-2')} Удалить все наборы</button>`;
+        }
+
+
+        settingsModalContainer.innerHTML = `
+             <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
+                <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                     <h2 class="text-xl font-bold text-white">Настройки</h2>
+                     <button id="settings-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
+                </div>
+                <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">Импорт / Экспорт</h3>
+                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                            <button id="import-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
+                                ${UploadIcon('w-5 h-5 mr-2')} Импорт .zip
+                            </button>
+                            <button id="export-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white ${totalPartsCount === 0 && totalSetsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${totalPartsCount === 0 && totalSetsCount === 0 ? 'disabled' : ''}>
+                                ${DownloadIcon('w-5 h-5 mr-2')} Экспорт .zip
+                            </button>
+                            ${state.importExportStatus.message ? `
+                              <div class="mt-1 p-2 text-sm rounded-md ${state.importExportStatus.type === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
+                                ${state.importExportStatus.message}
+                              </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                     <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">Опасная зона</h3>
+                        <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 space-y-3">
+                           ${deletePartsSection}
+                           ${deleteSetsSection}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     function updateFilterModalUI() {
         if (!state.isFilterModalOpen || !filterModalContainer.innerHTML) return;
 
-        // Update Sort Radios
+        // This function is now mostly replaced by re-rendering, but kept for potential finer-grained updates later.
+        // For now, re-rendering based on tempFilters is simpler.
         const sortRadios = filterModalContainer.querySelectorAll('input[name="sort"]');
         sortRadios.forEach(radio => {
             radio.checked = tempFilters.sortBy === radio.value;
         });
-        
-        // Update Collection Toggle
-        const collectionToggle = filterModalContainer.querySelector('input[data-action="modal-toggle-collection"]');
-        if (collectionToggle) {
-            collectionToggle.checked = tempFilters.filters.inCollectionOnly;
-        }
 
-        // Update "All Colors" button
-        const allColorsButton = filterModalContainer.querySelector('button[data-color-id="null"]');
-        if (allColorsButton) {
-            const isActive = tempFilters.filters.colorIds.length === 0;
-            allColorsButton.className = `w-full mb-3 py-2 text-sm rounded-md transition-colors ${isActive ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}`;
-        }
+        if(state.currentView === 'sets' || state.currentView === 'set_collection') {
+            // Update inputs if needed
+        } else {
+            const collectionToggle = filterModalContainer.querySelector('input[data-action="modal-toggle-collection"]');
+            if (collectionToggle) collectionToggle.checked = tempFilters.filters.inCollectionOnly;
 
-        // Update Color Palette buttons
-        const colorButtons = filterModalContainer.querySelectorAll('button[data-action="modal-set-color"]');
-        colorButtons.forEach(button => {
-            const colorId = button.dataset.colorId;
-            if (colorId && colorId !== 'null') {
-                const isSelected = tempFilters.filters.colorIds.includes(colorId);
-                const color = COLOR_MAP[colorId];
-                if (color) {
-                    button.className = `w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${color.isTransparent ? 'checkerboard' : ''} ${isSelected ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}`;
-                }
+            const allColorsButton = filterModalContainer.querySelector('button[data-color-id="null"]');
+            if (allColorsButton) {
+                const isActive = tempFilters.filters.colorIds.length === 0;
+                allColorsButton.className = `w-full mb-3 py-2 text-sm rounded-md transition-colors ${isActive ? 'bg-blue-600 text-white font-semibold' : 'bg-gray-600 hover:bg-gray-500 text-gray-200'}`;
             }
-        });
+
+            const colorButtons = filterModalContainer.querySelectorAll('button[data-action="modal-set-color"]');
+            colorButtons.forEach(button => {
+                const colorId = button.dataset.colorId;
+                if (colorId && colorId !== 'null') {
+                    const isSelected = tempFilters.filters.colorIds.includes(colorId);
+                    const color = COLOR_MAP[colorId];
+                    if (color) {
+                        button.className = `w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${color.isTransparent ? 'checkerboard' : ''} ${isSelected ? 'border-blue-500 scale-110' : 'border-gray-600 hover:border-gray-400'}`;
+                    }
+                }
+            });
+        }
     }
 
     function updateModalPartially(updates) {
@@ -1506,55 +2329,87 @@
         if (!file) return;
 
         state.importExportStatus = { message: 'Обработка файла...', type: 'success' };
-        updateUI();
+        if (state.isSettingsModalOpen) renderSettingsModal();
 
         try {
             const jszip = new JSZip();
             const zip = await jszip.loadAsync(file);
             const collectionFile = zip.file('collection.json');
+            const setCollectionFile = zip.file('set_collection.json');
 
-            if (!collectionFile) throw new Error("Файл 'collection.json' не найден.");
+            let partMsg = '', setMsg = '';
+
+            if (collectionFile) {
+                const content = await collectionFile.async('string');
+                const importedCollection = JSON.parse(content);
+                let mergedCount = 0;
+                for (const partId in importedCollection) {
+                    if (!state.collection[partId]) state.collection[partId] = {};
+                    for (const colorId in importedCollection[partId]) {
+                        const quantity = importedCollection[partId][colorId];
+                        if (typeof quantity === 'number' && quantity > 0) {
+                            state.collection[partId][colorId] = (state.collection[partId][colorId] || 0) + quantity;
+                            mergedCount++;
+                        }
+                    }
+                }
+                if (mergedCount > 0) partMsg = `Добавлено ${Object.keys(importedCollection).length} записей деталей.`;
+            }
             
-            const content = await collectionFile.async('string');
-            const importedCollection = JSON.parse(content);
-
-            let mergedCount = 0;
-            for (const partId in importedCollection) {
-                if (!state.collection[partId]) state.collection[partId] = {};
-                for (const colorId in importedCollection[partId]) {
-                    const quantity = importedCollection[partId][colorId];
-                    if (typeof quantity === 'number' && quantity > 0) {
-                        state.collection[partId][colorId] = (state.collection[partId][colorId] || 0) + quantity;
+            if(setCollectionFile) {
+                const content = await setCollectionFile.async('string');
+                const importedSetCollection = JSON.parse(content);
+                let mergedCount = 0;
+                for (const setNum in importedSetCollection) {
+                    const quantity = importedSetCollection[setNum]?.quantity;
+                     if (typeof quantity === 'number' && quantity > 0) {
+                        state.setCollection[setNum] = { quantity: (state.setCollection[setNum]?.quantity || 0) + quantity };
                         mergedCount++;
                     }
                 }
+                if (mergedCount > 0) setMsg = `Добавлено ${Object.keys(importedSetCollection).length} записей наборов.`;
             }
+
+            if (!partMsg && !setMsg) throw new Error("В архиве не найдено подходящих файлов ('collection.json', 'set_collection.json') или они пусты.");
             
             saveState();
-            state.importExportStatus = { message: `Импорт успешен! Добавлено ${mergedCount} записей.`, type: 'success' };
-            await fetchMissingCollectionPartDetails();
+
+            await Promise.all([
+                fetchMissingCollectionPartDetails(),
+                fetchMissingCollectionSetDetails()
+            ]);
             await fetchColorDetailsForCollectionParts();
+
+            state.importExportStatus = { message: `Импорт успешен! ${[partMsg, setMsg].filter(Boolean).join(' ')}`, type: 'success' };
+            state.isGridStale = true;
+            updateUI();
+            if(state.isSettingsModalOpen) renderSettingsModal();
+
         } catch (error) {
             console.error("Import failed:", error);
             state.importExportStatus = { message: `Ошибка импорта: ${error.message}`, type: 'error' };
+            if(state.isSettingsModalOpen) renderSettingsModal();
         } finally {
             event.target.value = '';
-            state.isGridStale = true;
-            updateUI();
         }
     }
 
     async function handleExportCollection() {
         state.importExportStatus = { message: '', type: '' };
-        if (Object.keys(state.collection).length === 0) {
+        const hasParts = Object.keys(state.collection).length > 0;
+        const hasSets = Object.keys(state.setCollection).length > 0;
+
+        if (!hasParts && !hasSets) {
             state.importExportStatus = { message: 'Коллекция пуста для экспорта.', type: 'error' };
-            updateUI();
+            if (state.isSettingsModalOpen) renderSettingsModal();
             return;
         }
 
         try {
             const jszip = new JSZip();
-            jszip.file("collection.json", JSON.stringify(state.collection, null, 2));
+            if(hasParts) jszip.file("collection.json", JSON.stringify(state.collection, null, 2));
+            if(hasSets) jszip.file("set_collection.json", JSON.stringify(state.setCollection, null, 2));
+
             const blob = await jszip.generateAsync({ type: "blob" });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
@@ -1568,7 +2423,7 @@
             console.error("Export failed:", error);
             state.importExportStatus = { message: `Ошибка экспорта: ${error.message}`, type: 'error' };
         }
-        updateUI();
+        if (state.isSettingsModalOpen) renderSettingsModal();
     }
 
     // --- EVENT HANDLING ---
@@ -1594,9 +2449,8 @@
         state.isGridStale = false;
         
         if(state.currentView === 'collection') {
-            updateUI(); // In collection view, a full but non-animated re-render is cleanest
+            updateUI();
         } else {
-            // In catalog view, perform targeted updates for performance
             renderSidebar();
             const card = mainContent.querySelector(`.part-card[data-part-id="${partId}"]`);
             if(card) {
@@ -1630,29 +2484,129 @@
             }
         }
     }
+
+    function handleUpdateSetCollection(setNum, quantity) {
+        if (quantity > 0) {
+            state.setCollection[setNum] = { quantity };
+        } else {
+            delete state.setCollection[setNum];
+        }
+        saveState();
+        
+        state.isGridStale = false;
+        if (state.currentView === 'set_collection') {
+            updateUI();
+        } else {
+            renderSidebar(); 
+            const card = mainContent.querySelector(`.set-card[data-set-num="${setNum}"]`);
+            if (card) {
+                let indicator = card.querySelector('.absolute.top-3.right-3');
+                if (quantity > 0) {
+                    if (!indicator) {
+                        indicator = document.createElement('div');
+                        indicator.className = 'absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md';
+                        card.prepend(indicator);
+                    }
+                    indicator.textContent = quantity;
+                } else {
+                    indicator?.remove();
+                }
+            }
+        }
+        
+        if (state.selectedSetNum === setNum) {
+            updateSetModalControlsState();
+        }
+    }
+
+    async function handleBulkUpdatePartsFromSet(setNum, action) {
+        if (state.setModal.isBulkUpdating) return;
+
+        state.setModal.isBulkUpdating = true;
+        state.importExportStatus = { message: '', type: '' };
+        updateSetModal();
+
+        try {
+            const inventory = await fetchAllSetInventory(setNum);
+
+            (inventory || []).forEach(item => {
+                const { part, color, quantity } = item;
+                if (!state.collection[part.part_num]) {
+                    state.collection[part.part_num] = {};
+                }
+                
+                const currentColorId = String(color.id);
+                const currentQuantity = state.collection[part.part_num][currentColorId] || 0;
+                
+                if (action === 'add') {
+                    state.collection[part.part_num][currentColorId] = currentQuantity + quantity;
+                } else { // remove
+                    const newQuantity = currentQuantity - quantity;
+                    if (newQuantity > 0) {
+                        state.collection[part.part_num][currentColorId] = newQuantity;
+                    } else {
+                        delete state.collection[part.part_num][currentColorId];
+                        if (Object.keys(state.collection[part.part_num]).length === 0) {
+                            delete state.collection[part.part_num];
+                        }
+                    }
+                }
+            });
+            
+            saveState();
+            
+            await fetchMissingCollectionPartDetails();
+            await fetchColorDetailsForCollectionParts();
+            
+            state.importExportStatus = { message: `Детали успешно ${action === 'add' ? 'добавлены' : 'удалены'}.`, type: 'success' };
+            state.isGridStale = true;
+            updateUI();
+        } catch (error) {
+            console.error(`Bulk ${action} failed for set ${setNum}:`, error);
+            state.importExportStatus = { message: `Ошибка: не удалось ${action === 'add' ? 'добавить' : 'удалить'} детали.`, type: 'error' };
+        } finally {
+            state.setModal.isBulkUpdating = false;
+            if (state.selectedSetNum) { // Update modal content without re-animating
+                updateSetModal();
+            }
+        }
+    }
     
     function clearStatusOnClick() {
         if(state.importExportStatus.message) {
             state.importExportStatus = { message: '', type: '' };
-            renderSidebar();
+            if(state.isSettingsModalOpen) renderSettingsModal();
+            else renderSidebar();
         }
     }
 
     function triggerSearch(useCurrentFilters = false) {
         clearStatusOnClick();
-        if (!useCurrentFilters) {
-             state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
-             state.filters.colorIds = [];
-             state.filters.inCollectionOnly = false;
-        }
-        const query = state.searchQuery.trim();
+        const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
 
-        if (state.currentView === 'collection') {
+        if (!useCurrentFilters) {
+            if (isSetView) {
+                state.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
+                state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+            } else {
+                state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+                state.filters.colorIds = [];
+                state.filters.inCollectionOnly = false;
+            }
+        }
+        
+        state.isGridStale = true;
+
+        if (state.currentView === 'collection' || state.currentView === 'set_collection') {
             state.selectedCollectionCategoryId = null;
-            state.isGridStale = true;
+            state.selectedSetCollectionThemeId = null;
             updateUI();
-        } else {
-            searchRebrickableParts(query);
+        } else if (state.currentView === 'sets') {
+            state.selectedThemeId = null;
+            fetchSets();
+        } else { // catalog
+            state.selectedCategoryId = null;
+            searchRebrickableParts(state.searchQuery.trim());
         }
     }
     
@@ -1664,7 +2618,9 @@
         
         modalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        document.body.classList.remove('overflow-hidden');
+        if (!state.selectedSetNum && !state.isFilterModalOpen && !state.isSettingsModalOpen) {
+            document.body.classList.remove('overflow-hidden');
+        }
         
         modalContent.addEventListener('animationend', () => {
             if (modalContent.classList.contains('modal-content-leave')) {
@@ -1679,6 +2635,31 @@
             }
         }, { once: true });
     }
+
+    function closeSetModal() {
+        const modalContent = document.getElementById('set-modal-content');
+        if (!modalContent || setModalContainer.classList.contains('modal-hidden')) {
+            return; 
+        }
+        
+        setModalContainer.classList.remove('visible');
+        modalContent.classList.add('modal-content-leave');
+        if (!state.selectedPartId && !state.isFilterModalOpen && !state.isSettingsModalOpen) {
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        modalContent.addEventListener('animationend', () => {
+            if (modalContent.classList.contains('modal-content-leave')) {
+                state.selectedSetNum = null;
+                state.setModal = { isLoading: false, inventory: [], inventoryPage: 1, hasNextInventoryPage: false, quantity: 1, isBulkUpdating: false };
+                setModalContainer.classList.add('modal-hidden');
+                setModalContainer.innerHTML = '';
+                 if (state.importExportStatus.message) { // Clear modal-specific status on close
+                    state.importExportStatus = { message: '', type: '' };
+                }
+            }
+        }, { once: true });
+    }
     
     function closeFilterModal() {
         const modalContent = document.getElementById('filter-modal-content');
@@ -1689,7 +2670,7 @@
         state.isFilterModalOpen = false;
         filterModalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedPartId) {
+        if (!state.selectedPartId && !state.selectedSetNum && !state.isSettingsModalOpen) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -1697,6 +2678,32 @@
             if (modalContent.classList.contains('modal-content-leave')) {
                 filterModalContainer.classList.add('modal-hidden');
                 filterModalContainer.innerHTML = '';
+            }
+        }, { once: true });
+    }
+
+    function closeSettingsModal() {
+        const modalContent = document.getElementById('settings-modal-content');
+        if (!modalContent || settingsModalContainer.classList.contains('modal-hidden')) {
+            return; 
+        }
+        
+        state.isSettingsModalOpen = false;
+        settingsModalContainer.classList.remove('visible');
+        modalContent.classList.add('modal-content-leave');
+        if (!state.selectedPartId && !state.selectedSetNum && !state.isFilterModalOpen) {
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        modalContent.addEventListener('animationend', () => {
+            if (modalContent.classList.contains('modal-content-leave')) {
+                settingsModalContainer.classList.add('modal-hidden');
+                settingsModalContainer.innerHTML = '';
+                state.settingsModal.confirmingDelete = null;
+                if (state.importExportStatus.message) {
+                    state.importExportStatus = { message: '', type: '' };
+                    renderSidebar();
+                }
             }
         }, { once: true });
     }
@@ -1733,18 +2740,45 @@
             fetchPartColorSpecifics(representativePart.id, sortedColorIds[0]);
         }
     }
+
+    function openModalForSet(setNum) {
+        if (!SET_MAP[setNum]) {
+            console.error(`Set ${setNum} not found in SET_MAP.`);
+            return;
+        }
+        state.selectedSetNum = setNum;
+        const currentQuantity = state.setCollection[setNum]?.quantity || 0;
+        state.setModal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+        
+        renderSetModal(true); // isInitialRender = true
+        fetchSetInventory(setNum);
+    }
     
     function refreshWithNewFilters() {
         state.itemsToDisplay = state.itemsIncrement;
         state.isGridStale = true;
-        if (state.currentView === 'collection') {
+        
+        const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
+        const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection';
+
+        if (isCollectionView) {
             updateUI();
-        } else if (state.searchQuery) {
-            searchRebrickableParts(state.searchQuery.trim());
-        } else if (state.selectedCategoryId) {
-            loadPartsForCategory(state.selectedCategoryId);
-        } else {
-             updateUI();
+        } else if (isSetView) { // sets catalog
+            if(state.searchQuery) {
+                fetchSets();
+            } else if (state.selectedThemeId) {
+                fetchSets();
+            } else {
+                updateUI();
+            }
+        } else { // parts catalog
+            if (state.searchQuery) {
+                searchRebrickableParts(state.searchQuery.trim());
+            } else if (state.selectedCategoryId) {
+                loadPartsForCategory(state.selectedCategoryId);
+            } else {
+                updateUI();
+            }
         }
     }
     
@@ -1772,34 +2806,105 @@
 
             state.currentView = newView;
             state.searchQuery = '';
-            state.searchResultGroups = null;
-            state.catalogGroups = null;
-            state.selectedCategoryId = null;
-            state.selectedCollectionCategoryId = null;
+            state.apiError = null;
+            // Reset common state
             state.itemsToDisplay = state.itemsIncrement;
             state.isGridStale = true;
-            refreshWithNewFilters();
+            // Reset filters
+            state.filters = { colorIds: [], inCollectionOnly: false };
+            state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+            // Reset selections
+            state.selectedCategoryId = null;
+            state.selectedCollectionCategoryId = null;
+            state.selectedThemeId = null;
+            state.selectedSetCollectionThemeId = null;
+            // Reset results
+            state.searchResultGroups = null;
+            state.catalogGroups = null;
+            state.setResults = null;
+            state.searchSetResults = null;
+            
+            // Set default sort
+            const isSetView = newView === 'sets' || newView === 'set_collection';
+            state.sortBy = isSetView ? 'year_desc' : 'popularity';
+
+            updateUI();
             return;
         }
 
-        const showAllCollectionButton = target.closest('[data-action="show-all-collection"]');
-        if (showAllCollectionButton) {
+        if (target.closest('[data-action="show-all-collection"]')) {
             clearStatusOnClick();
             state.selectedCollectionCategoryId = null;
             state.isGridStale = true;
             updateUI();
             return;
         }
+        
+        if (target.closest('[data-action="show-all-collection-sets"]')) {
+            clearStatusOnClick();
+            state.selectedSetCollectionThemeId = null;
+            state.isGridStale = true;
+            updateUI();
+            return;
+        }
+        
+        const themeButton = target.closest('[data-theme-id]');
+        if (themeButton?.dataset.themeId) {
+            clearStatusOnClick();
+            const themeId = parseInt(themeButton.dataset.themeId, 10);
+            
+            const themeNode = THEME_MAP[themeId];
+            if (themeNode && Array.isArray(themeNode.children) && themeNode.children.length > 0) {
+                 if (state.expandedThemes.has(themeId)) {
+                    state.expandedThemes.delete(themeId);
+                } else {
+                    state.expandedThemes.add(themeId);
+                }
+            }
+            
+            const isSetCollectionView = state.currentView === 'set_collection';
+            const currentSelection = isSetCollectionView ? state.selectedSetCollectionThemeId : state.selectedThemeId;
+
+            if (currentSelection !== themeId) {
+                state.searchQuery = '';
+                state.sortBy = 'year_desc';
+                state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+                
+                if (isSetCollectionView) {
+                    state.selectedSetCollectionThemeId = themeId;
+                    state.isGridStale = true;
+                    updateUI();
+                } else {
+                    state.selectedThemeId = themeId;
+                    fetchSets();
+                }
+            } else {
+                const scrollableSidebar = sidebarContainer.querySelector('.flex-grow.overflow-y-auto');
+                const scrollTop = scrollableSidebar ? scrollableSidebar.scrollTop : 0;
+                renderSidebar();
+                const newScrollableSidebar = sidebarContainer.querySelector('.flex-grow.overflow-y-auto');
+                if (newScrollableSidebar) {
+                    newScrollableSidebar.scrollTop = scrollTop;
+                }
+            }
+            return;
+        }
 
         const parentCategoryButton = target.closest('[data-parent-category]');
         if(parentCategoryButton?.dataset.parentCategory) {
+            const scrollableSidebar = sidebarContainer.querySelector('.flex-grow.overflow-y-auto');
+            const scrollTop = scrollableSidebar ? scrollableSidebar.scrollTop : 0;
             const groupName = parentCategoryButton.dataset.parentCategory;
             if (state.expandedCategories.has(groupName)) {
                 state.expandedCategories.delete(groupName);
             } else {
                 state.expandedCategories.add(groupName);
             }
-            renderSidebar(); // Only re-render sidebar for performance
+            renderSidebar();
+            const newScrollableSidebar = sidebarContainer.querySelector('.flex-grow.overflow-y-auto');
+            if (newScrollableSidebar) {
+                newScrollableSidebar.scrollTop = scrollTop;
+            }
             return;
         }
 
@@ -1836,14 +2941,19 @@
             return;
         }
 
-        if(target.closest('#feeling-lucky-button')) {
-            handleFeelingLucky();
-            return;
-        }
+        if(target.closest('#feeling-lucky-button')) { handleFeelingLucky(); return; }
+        if(target.closest('#feeling-lucky-set-button')) { handleFeelingLuckyForSets(); return; }
         
         const deleteButton = target.closest('[data-action="delete-from-collection"]');
         if (deleteButton?.dataset.partId && deleteButton.dataset.colorId) {
             handleUpdateCollection(deleteButton.dataset.partId, deleteButton.dataset.colorId, 0);
+            return;
+        }
+
+        const setCard = target.closest('.set-card');
+        if (setCard?.dataset.setNum) {
+            clearStatusOnClick();
+            openModalForSet(setCard.dataset.setNum);
             return;
         }
         
@@ -1879,21 +2989,12 @@
             return;
         }
         
-        if (target.id === 'modal-container' || target.closest('#modal-close')) {
-            closeModal();
-            return;
-        }
-        
-        if (target.id === 'filter-modal-container' || target.closest('#filter-modal-close')) {
-            closeFilterModal();
-            return;
-        }
+        if (target.id === 'modal-container' || target.closest('#modal-close')) { closeModal(); return; }
+        if (target.id === 'set-modal-container' || target.closest('#set-modal-close')) { closeSetModal(); return; }
+        if (target.id === 'filter-modal-container' || target.closest('#filter-modal-close')) { closeFilterModal(); return; }
+        if (target.id === 'settings-modal-container' || target.closest('#settings-modal-close')) { closeSettingsModal(); return; }
 
-        if (target.closest('#search-button')) {
-            triggerSearch();
-            return;
-        }
-        
+        if (target.closest('#search-button')) { triggerSearch(); return; }
         if (target.closest('#clear-search')) {
             state.searchQuery = '';
             document.getElementById('search-input')?.focus();
@@ -1905,9 +3006,17 @@
             state.isFilterModalOpen = true;
             tempFilters = {
                 filters: JSON.parse(JSON.stringify(state.filters)),
+                setFilters: JSON.parse(JSON.stringify(state.setFilters)),
                 sortBy: state.sortBy
             };
             renderFilterModal();
+            return;
+        }
+        
+        if (target.closest('#settings-button')) {
+            clearStatusOnClick();
+            state.isSettingsModalOpen = true;
+            renderSettingsModal();
             return;
         }
 
@@ -1927,15 +3036,88 @@
         }
 
         if (target.closest('[data-action="remove-all-filters"]')) {
-            state.filters.colorIds = [];
-            state.filters.inCollectionOnly = false;
-            state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+            const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
+            if (isSetView) {
+                state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+                state.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
+            } else {
+                state.filters.colorIds = [];
+                state.filters.inCollectionOnly = false;
+                state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+            }
             refreshWithNewFilters();
             return;
+        }
+        
+        if(settingsModalContainer?.contains(target)) {
+            const actionTarget = target.closest('[data-action]');
+            if(!actionTarget) return;
+            const { action } = actionTarget.dataset;
+
+            switch(action) {
+                case 'delete-all-parts': state.settingsModal.confirmingDelete = 'parts'; renderSettingsModal(); break;
+                case 'delete-all-sets': state.settingsModal.confirmingDelete = 'sets'; renderSettingsModal(); break;
+                case 'cancel-delete': state.settingsModal.confirmingDelete = null; renderSettingsModal(); break;
+                case 'confirm-delete-parts':
+                    state.collection = {};
+                    saveState();
+                    state.importExportStatus = { message: 'Коллекция деталей удалена.', type: 'success' };
+                    closeSettingsModal();
+                    updateUI();
+                    break;
+                case 'confirm-delete-sets':
+                    state.setCollection = {};
+                    saveState();
+                    state.importExportStatus = { message: 'Коллекция наборов удалена.', type: 'success' };
+                    closeSettingsModal();
+                    updateUI();
+                    break;
+            }
+            // Import/Export are handled by #import-button and #export-button listeners
         }
 
         if (target.closest('#import-button')) { document.getElementById('import-zip-input')?.click(); return; }
         if (target.closest('#export-button')) { handleExportCollection(); return; }
+        
+        if(setModalContainer?.contains(target)) {
+            const actionTarget = target.closest('[data-action]');
+            if(!actionTarget) return;
+
+            const { action } = actionTarget.dataset;
+            if(action === 'load-more-inventory') {
+                fetchSetInventory(state.selectedSetNum, state.setModal.inventoryPage + 1);
+            }
+            if(action === 'go-to-theme' && actionTarget.dataset.themeId) {
+                const themeId = parseInt(actionTarget.dataset.themeId, 10);
+                closeSetModal();
+                setTimeout(() => {
+                    state.currentView = 'sets';
+                    state.selectedThemeId = themeId;
+                    state.selectedSetCollectionThemeId = null;
+                    fetchSets();
+                }, 200);
+            }
+            if(action === 'increase-set-qty') {
+                state.setModal.quantity++;
+                updateSetModalControlsState();
+            }
+            if(action === 'decrease-set-qty') {
+                state.setModal.quantity = Math.max(1, state.setModal.quantity - 1);
+                updateSetModalControlsState();
+            }
+            if(action === 'update-set-collection' && state.selectedSetNum) {
+                handleUpdateSetCollection(state.selectedSetNum, state.setModal.quantity);
+            }
+            if(action === 'delete-from-set-collection-modal' && state.selectedSetNum) {
+                handleUpdateSetCollection(state.selectedSetNum, 0);
+            }
+            if(action === 'bulk-add-parts' && state.selectedSetNum) {
+                handleBulkUpdatePartsFromSet(state.selectedSetNum, 'add');
+            }
+            if(action === 'bulk-remove-parts' && state.selectedSetNum) {
+                handleBulkUpdatePartsFromSet(state.selectedSetNum, 'remove');
+            }
+        }
 
         if (filterModalContainer?.contains(target)) {
             const actionTarget = target.closest('[data-action]');
@@ -1944,36 +3126,37 @@
             const { action } = actionTarget.dataset;
 
             switch(action) {
-                case 'modal-set-sort':
-                    tempFilters.sortBy = actionTarget.value;
-                    break;
-                case 'modal-toggle-collection':
-                    tempFilters.filters.inCollectionOnly = actionTarget.checked;
-                    break;
+                case 'modal-set-sort': tempFilters.sortBy = actionTarget.value; break;
+                case 'modal-toggle-collection': tempFilters.filters.inCollectionOnly = actionTarget.checked; break;
                 case 'modal-set-color':
                     const colorId = actionTarget.dataset.colorId;
                     if (colorId === 'null') {
                         tempFilters.filters.colorIds = [];
                     } else {
                         const index = tempFilters.filters.colorIds.indexOf(colorId);
-                        if (index > -1) {
-                            tempFilters.filters.colorIds.splice(index, 1);
-                        } else {
-                            tempFilters.filters.colorIds.push(colorId);
-                        }
+                        if (index > -1) tempFilters.filters.colorIds.splice(index, 1);
+                        else tempFilters.filters.colorIds.push(colorId);
                     }
                     break;
                 case 'modal-apply-filters':
                     state.filters = JSON.parse(JSON.stringify(tempFilters.filters));
+                    state.setFilters = JSON.parse(JSON.stringify(tempFilters.setFilters));
                     state.sortBy = tempFilters.sortBy;
                     closeFilterModal();
                     refreshWithNewFilters();
                     return;
                 case 'modal-reset-filters':
-                    tempFilters.filters.colorIds = [];
-                    tempFilters.filters.inCollectionOnly = false;
-                    tempFilters.sortBy = state.searchQuery ? 'relevance' : 'popularity';
-                    break;
+                    const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
+                    if (isSetView) {
+                        tempFilters.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+                        tempFilters.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
+                    } else {
+                        tempFilters.filters.colorIds = [];
+                        tempFilters.filters.inCollectionOnly = false;
+                        tempFilters.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+                    }
+                    renderFilterModal(); // Re-render with reset values
+                    return;
             }
             updateFilterModalUI();
         }
@@ -2062,14 +3245,23 @@
             if (clearButton) {
                 clearButton.classList.toggle('hidden', !state.searchQuery);
             }
-            if (state.currentView === 'collection') {
-                if (state.selectedCollectionCategoryId !== null) {
+            const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection';
+            if (isCollectionView) {
+                 if (state.selectedCollectionCategoryId !== null) {
                     state.selectedCollectionCategoryId = null;
+                    renderSidebar();
+                }
+                if (state.selectedSetCollectionThemeId !== null) {
+                    state.selectedSetCollectionThemeId = null;
                     renderSidebar();
                 }
                 state.isGridStale = false; // No animation for client-side filtering
                 renderMainContent();
             }
+        }
+        if (filterModalContainer?.contains(e.target) && e.target.dataset.filterKey) {
+            const key = e.target.dataset.filterKey;
+            tempFilters.setFilters[key] = e.target.value;
         }
     });
     
@@ -2079,11 +3271,10 @@
             triggerSearch();
         }
         if (e.key === 'Escape') {
-             if (state.isFilterModalOpen) {
-                closeFilterModal();
-             } else if (state.selectedPartId) {
-                closeModal();
-             }
+             if (state.isSettingsModalOpen) closeSettingsModal();
+             else if (state.isFilterModalOpen) closeFilterModal();
+             else if (state.selectedPartId) closeModal();
+             else if (state.selectedSetNum) closeSetModal();
         }
     });
 
@@ -2132,11 +3323,16 @@
         try {
             await Promise.all([
                 fetchCategories(),
-                fetchAllColors()
+                fetchAllColors(),
+                fetchThemes()
             ]);
             
-            await fetchMissingCollectionPartDetails();
+            await Promise.all([
+                fetchMissingCollectionPartDetails(),
+                fetchMissingCollectionSetDetails()
+            ]);
             await fetchColorDetailsForCollectionParts();
+
         } catch (error) {
             console.error("Initialization failed:", error);
             state.apiError = error.message;
