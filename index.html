@@ -215,6 +215,7 @@
           isBulkUpdating: false,
           statusMessage: '',
           statusType: '',
+          currentView: 'details',
       },
       isFilterModalOpen: false,
       isSettingsModalOpen: false,
@@ -814,7 +815,7 @@
         if (page === 1) {
             state.setModal.inventory = [];
         }
-        updateSetModal();
+        updateSetModalView();
 
         try {
             const endpoint = `/sets/${setNum}/parts/?page=${page}&page_size=50`; // Use smaller page size for modal
@@ -852,7 +853,9 @@
              console.error(`Failed to fetch inventory for ${setNum}:`, error);
         } finally {
              state.setModal.isLoading = false;
-             updateSetModal();
+             if (state.selectedSetNum) {
+                 updateSetModalView();
+             }
         }
     }
     
@@ -1005,7 +1008,7 @@
             const colorA = COLOR_MAP[a];
             const colorB = COLOR_MAP[b];
             if (colorA && colorB) {
-                return colorA.name.localeCompare(colorB.name);
+                return colorA.name.localeCompare(b.name);
             }
 
             return 0;
@@ -1236,11 +1239,15 @@
         ${isCollectionView ? `<div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <h2 class="text-lg font-semibold text-white mb-3">Сводка коллекции</h2>
             ${totalPartsCount === 0 && uniqueSetsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
-              <div class="space-y-2 text-sm">
-                  <div class="flex justify-between"><span class="text-gray-400">Уникальные наборы:</span><span class="font-bold text-white">${uniqueSetsCount}</span></div>
-                  <div class="flex justify-between"><span class="text-gray-400">Всего наборов:</span><span class="font-bold text-white">${totalSetsCount}</span></div>
-                  <div class="flex justify-between"><span class="text-gray-400">Уникальные детали:</span><span class="font-bold text-white">${uniqueModelsCount}</span></div>
-                  <div class="flex justify-between"><span class="text-gray-400">Всего деталей:</span><span class="font-bold text-white">${totalPartsCount}</span></div>
+              <div class="space-y-1">
+                  <div class="flex justify-between items-center text-sm text-gray-400">
+                      <span>${SetsIcon('inline-block w-4 h-4 mr-1')} Наборы</span>
+                      <span class="font-semibold text-white">${uniqueSetsCount} уник. / ${totalSetsCount} всего</span>
+                  </div>
+                  <div class="flex justify-between items-center text-sm text-gray-400">
+                      <span>${BrickIcon('inline-block w-4 h-4 mr-1')} Детали</span>
+                      <span class="font-semibold text-white">${uniqueModelsCount} уник. / ${totalPartsCount} всего</span>
+                  </div>
               </div>
             `}
         </div>` : ''}
@@ -1625,27 +1632,27 @@
         
         return `
             <div class="bg-gray-700/50 rounded-lg p-4">
-                <div class="flex justify-between items-center mb-3">
-                    <h3 class="text-md font-semibold text-gray-300">Коллекция наборов</h3>
-                    <p class="text-sm text-gray-400">В коллекции: <span id="set-modal-in-collection-qty" class="font-bold text-white">${currentInCollection}</span></p>
-                </div>
-                
-                <div class="flex items-center gap-2">
-                    <div class="flex items-center">
-                        <button data-action="decrease-set-qty" class="p-2 rounded-l-md bg-gray-600 hover:bg-gray-500 text-white transition-colors h-10 flex items-center">${MinusIcon('w-5 h-5')}</button>
-                        <input id="set-modal-quantity-input" type="number" value="${quantity}" readonly class="w-12 h-10 text-center bg-gray-900 text-white font-bold outline-none border-y border-gray-600"/>
-                        <button data-action="increase-set-qty" class="p-2 rounded-r-md bg-gray-600 hover:bg-gray-500 text-white transition-colors h-10 flex items-center">${PlusIcon('w-5 h-5')}</button>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-white font-semibold">Коллекция наборов</h3>
+                        <p class="text-sm text-gray-400 text-right">В коллекции: <span id="set-modal-in-collection-qty" class="font-bold text-white">${currentInCollection}</span></p>
                     </div>
                     
-                    <button data-action="update-set-collection" class="flex-grow h-10 bg-blue-600 text-white font-bold px-4 rounded-md hover:bg-blue-700 transition-colors">
-                        ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
-                    </button>
-                    
-                    ${currentInCollection > 0 ? `
-                        <button data-action="delete-from-set-collection-modal" class="h-10 w-10 p-2 rounded-md bg-red-600 hover:bg-red-700 text-white transition-colors flex-shrink-0 flex items-center justify-center" aria-label="Удалить из коллекции">
-                            ${TrashIcon('w-5 h-5')}
+                    <div class="flex justify-between items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <button data-action="decrease-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${MinusIcon('w-5 h-5')}</button>
+                            <input id="set-modal-quantity-input" type="number" value="${quantity}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
+                            <button data-action="increase-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${PlusIcon('w-5 h-5')}</button>
+                        </div>
+                        <button data-action="update-set-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                            ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
                         </button>
-                    ` : ''}
+                    </div>
+                    ${currentInCollection > 0 ? `
+                        <div>
+                            <button data-action="delete-from-set-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции</button>
+                        </div>
+                    ` : '<div></div>'}
                 </div>
             </div>
         `;
@@ -1683,6 +1690,87 @@
         `;
     }
 
+    function renderSetModalToggleButton() {
+        const set = SET_MAP[state.selectedSetNum];
+        if (!set) return '';
+
+        if (state.setModal.currentView === 'details') {
+            return `<button data-action="toggle-set-modal-view" class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-md transition-colors bg-gray-600 hover:bg-gray-500 text-white">
+                ${BrickIcon('w-5 h-5')}
+                <span>Инвентарь</span>
+                <span class="text-xs bg-gray-700 text-gray-200 px-1.5 py-0.5 rounded-full">${set.num_parts}</span>
+            </button>`;
+        } else { // inventory view
+            return `<button data-action="toggle-set-modal-view" class="flex items-center gap-2 px-3 py-1.5 text-sm font-semibold rounded-md transition-colors bg-blue-600 hover:bg-blue-700 text-white">
+                ${CatalogIcon('w-5 h-5')}
+                <span>Детали набора</span>
+            </button>`;
+        }
+    }
+
+    function renderSetModalDetailsView() {
+        const set = SET_MAP[state.selectedSetNum];
+        const theme = THEME_MAP[set.theme_id];
+        
+        return `
+        <div class="flex-grow flex flex-col lg:flex-row overflow-y-auto no-scrollbar h-full">
+            <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
+                 <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
+                    <img ${getPartImageUrl(set.set_img_url)} alt="${set.name}" class="max-w-full max-h-full object-contain">
+                 </div>
+            </div>
+            
+            <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-3">Детали</h3>
+                        <div class="space-y-1 text-sm text-gray-400">
+                            <p>ID: ${set.set_num}</p>
+                            <p>Год: ${set.year}</p>
+                            <p>Кол-во деталей: ${set.num_parts}</p>
+                            ${theme ? `<div class="flex items-center">
+                                <span class="mr-1">Тема:</span>
+                                <button data-action="go-to-theme" data-theme-id="${theme.id}" class="text-blue-400 hover:text-blue-300 hover:underline text-left truncate">
+                                    ${theme.name}
+                                </button>
+                            </div>` : ''}
+                        </div>
+                    </div>
+
+                    <div id="set-modal-controls-container">
+                        ${renderSetCollectionControls()}
+                        ${renderSetBulkPartsControls()}
+                    </div>
+                    
+                     ${state.setModal.statusMessage ? `
+                        <div class="mt-4 p-2 text-sm rounded-md ${state.setModal.statusType === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
+                            ${state.setModal.statusMessage}
+                        </div>
+                     ` : ''}
+                </div>
+            </div>
+        </div>
+        `;
+    }
+
+    function renderSetModalInventoryView() {
+        return `<div id="set-inventory-container" class="p-4 flex flex-col overflow-y-auto no-scrollbar h-full">
+            ${renderSetInventory()}
+        </div>`;
+    }
+
+    function updateSetModalView() {
+        if (!state.selectedSetNum) return;
+        const viewContainer = document.getElementById('set-modal-view-container');
+        if (!viewContainer) return;
+
+        if (state.setModal.currentView === 'details') {
+            viewContainer.innerHTML = renderSetModalDetailsView();
+        } else {
+            viewContainer.innerHTML = renderSetModalInventoryView();
+        }
+    }
+
     function renderSetModal(isInitialRender = false) {
         if (!state.selectedSetNum) {
             closeSetModal();
@@ -1696,7 +1784,10 @@
         }
 
         const animationClass = isInitialRender ? 'modal-content-enter' : '';
-        const theme = THEME_MAP[set.theme_id];
+        const isInventoryView = state.setModal.currentView === 'inventory';
+
+        const sizeClass = isInventoryView ? 'max-w-6xl' : 'max-w-4xl';
+        const heightClass = isInventoryView ? 'h-[calc(100vh-4rem)]' : 'max-h-[calc(100vh-2rem)]';
 
         if (isInitialRender) {
             document.body.classList.add('overflow-hidden');
@@ -1705,40 +1796,21 @@
         }
 
         setModalContainer.innerHTML = `
-        <div id="set-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-6xl flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
-            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
-                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-8">${set.name}</h2>
-                 <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
+        <div id="set-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] ${sizeClass} flex flex-col ${heightClass} ${animationClass} transition-all duration-300">
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
+                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${set.name}</h2>
+                 <div class="flex items-center gap-2 flex-shrink-0">
+                    ${renderSetModalToggleButton()}
+                    <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
+                 </div>
             </div>
-            <div class="flex-grow flex flex-col lg:flex-row overflow-hidden" style="min-height: 0;">
-                <div class="lg:w-1/3 p-4 md:p-6 bg-gray-900/30 flex flex-col border-b lg:border-b-0 lg:border-r border-gray-700 overflow-y-auto no-scrollbar flex-shrink-0">
-                     <div class="flex flex-row items-start gap-4 md:gap-6">
-                        <div class="w-32 h-32 md:w-40 md:h-40 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg flex-shrink-0">
-                            <img ${getPartImageUrl(set.set_img_url)} alt="${set.name}" class="max-w-full max-h-full object-contain">
-                        </div>
-                        <div class="text-left space-y-1 flex-grow">
-                            <p class="text-sm text-gray-400">#${set.set_num}</p>
-                            <p class="text-sm text-gray-400">Год: ${set.year}</p>
-                            <p class="text-sm text-gray-400">Деталей: ${set.num_parts}</p>
-                            ${theme ? `<p class="text-sm text-gray-400">Тема: <button data-action="go-to-theme" data-theme-id="${theme.id}" class="text-blue-400 hover:underline">${theme.name}</button></p>` : ''}
-                        </div>
-                     </div>
-                     <div id="set-modal-controls-container" class="mt-4">
-                        ${renderSetCollectionControls()}
-                        ${renderSetBulkPartsControls()}
-                     </div>
-                     ${state.setModal.statusMessage ? `
-                        <div class="mt-4 p-2 text-sm rounded-md ${state.setModal.statusType === 'error' ? 'bg-red-900/50 text-red-300' : 'bg-green-900/50 text-green-300'}">
-                            ${state.setModal.statusMessage}
-                        </div>
-                     ` : ''}
-                </div>
-                <div id="set-inventory-container" class="lg:w-2/3 p-4 flex flex-col overflow-y-auto no-scrollbar h-[45vh] lg:h-auto" style="min-height: 0;">
-                    ${renderSetInventory()}
-                </div>
+            <div id="set-modal-view-container" class="flex-grow overflow-hidden" style="min-height: 0;">
+                <!-- View content is injected by updateSetModalView -->
             </div>
         </div>
         `;
+        
+        updateSetModalView();
     }
 
     function renderSetInventory() {
@@ -1776,20 +1848,6 @@
         }
         
         return content;
-    }
-
-    function updateSetModal() {
-        if (!state.selectedSetNum) return;
-        
-        const controlsContainer = document.getElementById('set-modal-controls-container');
-        if(controlsContainer) {
-            controlsContainer.innerHTML = renderSetCollectionControls() + renderSetBulkPartsControls();
-        }
-
-        const inventoryContainer = document.getElementById('set-inventory-container');
-        if(inventoryContainer) {
-            inventoryContainer.innerHTML = renderSetInventory();
-        }
     }
     
     function updateSetModalControlsState() {
@@ -2392,7 +2450,7 @@
         state.setModal.isBulkUpdating = true;
         state.setModal.statusMessage = '';
         state.setModal.statusType = '';
-        updateSetModal();
+        updateSetModalControlsState();
 
         try {
             const inventory = await fetchAllSetInventory(setNum);
@@ -2512,7 +2570,7 @@
         modalContent.addEventListener('animationend', () => {
             if (modalContent.classList.contains('modal-content-leave')) {
                 state.selectedSetNum = null;
-                state.setModal = { isLoading: false, inventory: [], inventoryPage: 1, hasNextInventoryPage: false, quantity: 1, isBulkUpdating: false, statusMessage: '', statusType: '' };
+                state.setModal = { isLoading: false, inventory: [], inventoryPage: 1, hasNextInventoryPage: false, quantity: 1, isBulkUpdating: false, statusMessage: '', statusType: '', currentView: 'details' };
                 setModalContainer.classList.add('modal-hidden');
                 setModalContainer.innerHTML = '';
             }
@@ -2602,7 +2660,18 @@
         }
         state.selectedSetNum = setNum;
         const currentQuantity = state.setCollection[setNum]?.quantity || 0;
-        state.setModal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+        
+        state.setModal = {
+            isLoading: false,
+            inventory: [],
+            inventoryPage: 1,
+            hasNextInventoryPage: false,
+            quantity: currentQuantity > 0 ? currentQuantity : 1,
+            isBulkUpdating: false,
+            statusMessage: '',
+            statusType: '',
+            currentView: 'details',
+        };
         
         renderSetModal(true); // isInitialRender = true
         fetchSetInventory(setNum);
@@ -2966,6 +3035,10 @@
             if(action === 'bulk-remove-parts' && state.selectedSetNum) {
                 handleBulkUpdatePartsFromSet(state.selectedSetNum, 'remove');
             }
+            if(action === 'toggle-set-modal-view') {
+                state.setModal.currentView = state.setModal.currentView === 'details' ? 'inventory' : 'details';
+                renderSetModal(false);
+            }
         }
 
         if (filterModalContainer?.contains(target)) {
@@ -3193,3 +3266,4 @@
   </script>
 </body>
 </html>
+
