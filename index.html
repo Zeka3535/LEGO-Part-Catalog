@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -60,11 +61,11 @@
     }
 
     /* Animation Classes */
-    #modal-container, #filter-modal-container, #set-modal-container, #settings-modal-container {
+    #modal-container, #filter-modal-container, #set-modal-container, #settings-modal-container, #minifig-modal-container {
         opacity: 0;
         transition: opacity 0.2s ease-out;
     }
-    #modal-container.visible, #filter-modal-container.visible, #set-modal-container.visible, #settings-modal-container.visible {
+    #modal-container.visible, #filter-modal-container.visible, #set-modal-container.visible, #settings-modal-container.visible, #minifig-modal-container.visible {
         opacity: 1;
     }
     .modal-content-enter {
@@ -73,7 +74,7 @@
     .modal-content-leave {
       animation: scaleOut 0.2s ease-out forwards;
     }
-    .part-card.animate-in, .set-card.animate-in {
+    .part-card.animate-in, .set-card.animate-in, .minifig-card.animate-in {
       opacity: 0;
       animation: fadeInUp 0.4s ease-out forwards;
     }
@@ -106,6 +107,9 @@
   
   <!-- Set Modal -->
   <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
+  
+  <!-- Minifig Modal -->
+  <div id="minifig-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
 
   <!-- Filter Modal -->
   <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
@@ -141,6 +145,7 @@
     let COLOR_MAP = {};
     let PART_MAP = {};
     let SET_MAP = {};
+    let MINIFIG_MAP = {};
     let THEME_MAP = {};
     let flatCategories = [];
 
@@ -182,7 +187,7 @@
 
     // --- STATE MANAGEMENT ---
     let state = {
-      currentView: 'catalog', // 'catalog', 'collection', 'sets', 'set_collection'
+      currentView: 'catalog', // 'catalog', 'collection', 'sets', 'set_collection', 'minifigs_catalog', 'minifigs_collection'
       // Part state
       categoryTree: [],
       expandedCategories: new Set(),
@@ -197,6 +202,9 @@
       selectedSetCollectionThemeId: null,
       setResults: null,
       favoriteThemeIds: new Set(),
+      // Minifig state
+      minifigResults: null,
+      searchMinifigResults: null,
       // Search state
       searchQuery: '',
       searchResultGroups: null, // For parts
@@ -206,6 +214,7 @@
       apiError: null,
       selectedPartId: null,
       selectedSetNum: null,
+      selectedFigNum: null,
       isSidebarOpen: window.innerWidth >= 1024,
       isGridStale: true, // Flag to trigger grid animations
       // Modals state
@@ -228,17 +237,24 @@
           statusMessage: '',
           statusType: '',
           currentView: 'details',
+          minifigs: [],
+          areMinifigsLoading: false,
+      },
+      minifigModal: {
+        isLoading: false,
+        quantity: 1,
       },
       isFilterModalOpen: false,
       isSettingsModalOpen: false,
       settingsModal: {
-          confirmingDelete: null, // null, 'parts', or 'sets'
+          confirmingDelete: null, // null, 'parts', 'sets', 'minifigs'
       },
       // Other state
       itemsToDisplay: 48,
       itemsIncrement: 48,
       collection: {},
       setCollection: {},
+      minifigCollection: {},
       filters: {
           colorIds: [],
           inCollectionOnly: false,
@@ -279,6 +295,18 @@
           state.setCollection = {};
         }
       }
+      const savedMinifigCollection = localStorage.getItem('legoMinifigCollection');
+        if (savedMinifigCollection) {
+            try {
+                const parsed = JSON.parse(savedMinifigCollection);
+                if (typeof parsed === 'object' && parsed !== null) {
+                    state.minifigCollection = parsed;
+                }
+            } catch (e) {
+                console.error("Failed to parse lego minifig collection from localStorage", e);
+                state.minifigCollection = {};
+            }
+        }
       const savedFavoriteCategories = localStorage.getItem('favoriteCategoryIds');
       if (savedFavoriteCategories) {
           try {
@@ -302,6 +330,7 @@
     function saveState() {
       localStorage.setItem('legoCollection', JSON.stringify(state.collection));
       localStorage.setItem('legoSetCollection', JSON.stringify(state.setCollection));
+      localStorage.setItem('legoMinifigCollection', JSON.stringify(state.minifigCollection));
       localStorage.setItem('favoriteCategoryIds', JSON.stringify(Array.from(state.favoriteCategoryIds)));
       localStorage.setItem('favoriteThemeIds', JSON.stringify(Array.from(state.favoriteThemeIds)));
     }
@@ -313,6 +342,7 @@
     const mainContent = document.getElementById('main-content');
     const modalContainer = document.getElementById('modal-container');
     const setModalContainer = document.getElementById('set-modal-container');
+    const minifigModalContainer = document.getElementById('minifig-modal-container');
     const filterModalContainer = document.getElementById('filter-modal-container');
     const settingsModalContainer = document.getElementById('settings-modal-container');
     const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
@@ -718,6 +748,51 @@
             updateUI();
         }
     }
+    
+    async function fetchMinifigs() {
+        state.isLoading = true;
+        state.apiError = null;
+        state.minifigResults = null;
+        state.searchMinifigResults = null;
+        state.itemsToDisplay = state.itemsIncrement;
+        state.isGridStale = true;
+        updateUI();
+
+        try {
+            let params = new URLSearchParams();
+            
+            if (state.searchQuery) {
+                params.append('search', state.searchQuery);
+            }
+
+            let ordering;
+            if (state.sortBy === 'name_asc') ordering = 'name';
+            else if (state.sortBy === 'name_desc') ordering = '-name';
+            else if (state.sortBy === 'num_parts_desc') ordering = '-num_parts';
+            else if (state.sortBy === 'num_parts_asc') ordering = 'num_parts';
+
+            if(ordering) params.append('ordering', ordering);
+
+            const rawMinifigs = await apiFetchPaginated(`/minifigs/?${params.toString()}`);
+            const minifigs = rawMinifigs.map(mf => {
+                MINIFIG_MAP[mf.set_num] = mf;
+                return mf;
+            });
+            
+            if (state.searchQuery) {
+                state.searchMinifigResults = minifigs;
+            } else {
+                state.minifigResults = minifigs;
+            }
+
+        } catch (error) {
+            console.error("Ошибка загрузки минифигурок Rebrickable:", error);
+            state.apiError = error.message;
+        } finally {
+            state.isLoading = false;
+            updateUI();
+        }
+    }
 
     async function fetchPartColors(partId) {
         state.modal.isLoadingColors = true;
@@ -843,6 +918,28 @@
         }
     }
 
+    async function fetchMissingCollectionMinifigDetails() {
+        const collectionFigNums = Object.keys(state.minifigCollection);
+        const missingFigNums = collectionFigNums.filter(num => !MINIFIG_MAP[num] || !MINIFIG_MAP[num].name);
+        if (missingFigNums.length === 0) return;
+
+        console.log(`Fetching details for ${missingFigNums.length} minifigs from collection...`);
+        
+        for (const figNum of missingFigNums) {
+            try {
+                const response = await fetch(`${REBRICKABLE_API_URL}/minifigs/${figNum}/`, {
+                    headers: { 'Authorization': `key ${getApiKey()}` }
+                });
+                if (!response.ok) throw new Error(`Minifig ${figNum} not found.`);
+                const minifig = await response.json();
+                MINIFIG_MAP[minifig.set_num] = minifig;
+                await new Promise(resolve => setTimeout(resolve, 200));
+            } catch(err) {
+                console.error(`Could not fetch details for minifig ${figNum}:`, err);
+            }
+        }
+    }
+
     async function fetchSetInventory(setNum, page = 1) {
         state.setModal.isLoading = true;
         if (page === 1) {
@@ -939,6 +1036,54 @@
         return allResults;
     }
 
+    async function fetchSetMinifigs(setNum) {
+        state.setModal.areMinifigsLoading = true;
+        updateSetModalView(); // Show loader
+
+        try {
+            const minifigs = await apiFetchPaginated(`/sets/${setNum}/minifigs/`);
+            state.setModal.minifigs = (minifigs || []).map(mf => ({
+                ...mf,
+                isExpanded: false,
+                isLoadingParts: false,
+                parts: null, // Use null to indicate not fetched yet
+            }));
+        } catch (error) {
+            console.error(`Failed to fetch minifigs for set ${setNum}:`, error);
+            state.setModal.minifigs = [];
+        } finally {
+            state.setModal.areMinifigsLoading = false;
+            if (state.selectedSetNum) { // Check if modal is still open
+                updateSetModalView();
+            }
+        }
+    }
+
+    async function fetchMinifigParts(figNum) {
+        try {
+            const partInventory = await apiFetchPaginated(`/minifigs/${figNum}/parts/`);
+            return (partInventory || []).map(item => {
+                processPartData(item.part);
+                const colorIdStr = String(item.color.id);
+                if (!COLOR_MAP[colorIdStr]) {
+                     COLOR_MAP[colorIdStr] = {
+                        id: colorIdStr,
+                        name: item.color.name,
+                        hex: `#${item.color.rgb}`,
+                        isTransparent: item.color.is_trans,
+                    };
+                }
+                return {
+                    ...item,
+                    color: COLOR_MAP[colorIdStr],
+                };
+            });
+        } catch (error) {
+            console.error(`Failed to fetch parts for minifig ${figNum}:`, error);
+            return [];
+        }
+    }
+
     async function handleFeelingLucky() {
       state.isLoading = true;
       state.apiError = null;
@@ -1006,6 +1151,28 @@
 
       } catch (error) {
         console.error("Feeling lucky for sets failed:", error);
+        state.apiError = `Не удалось совершить чудо: ${error.message}`;
+      } finally {
+        state.isLoading = false;
+        updateUI();
+      }
+    }
+
+    async function handleFeelingLuckyForMinifigs() {
+      state.isLoading = true;
+      state.apiError = null;
+      state.isGridStale = true;
+      updateUI();
+      try {
+        const rawMinifigs = await apiFetchPaginated(`/minifigs/?page_size=200`);
+        if (rawMinifigs.length === 0) {
+            throw new Error("Не удалось загрузить случайные минифигурки.");
+        }
+        const randomMinifig = rawMinifigs[Math.floor(Math.random() * rawMinifigs.length)];
+        MINIFIG_MAP[randomMinifig.set_num] = randomMinifig;
+        openModalForMinifig(randomMinifig.set_num);
+      } catch (error) {
+        console.error("Feeling lucky for minifigs failed:", error);
         state.apiError = `Не удалось совершить чудо: ${error.message}`;
       } finally {
         state.isLoading = false;
@@ -1110,10 +1277,14 @@
       const totalSetsCount = Object.values(state.setCollection).reduce((sum, set) => sum + set.quantity, 0);
       const uniqueSetsCount = Object.keys(state.setCollection).length;
 
+      const totalMinifigsCount = Object.values(state.minifigCollection).reduce((sum, fig) => sum + fig.quantity, 0);
+      const uniqueMinifigsCount = Object.keys(state.minifigCollection).length;
+
       const viewButtonStyle = (view) => `flex items-center w-full p-3 text-base font-semibold rounded-lg transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`;
       
       const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-      const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection';
+      const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
+      const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection' || state.currentView === 'minifigs_collection';
 
       let mainListContent = '';
       let mainListTitle = '';
@@ -1201,7 +1372,9 @@
         } else {
             mainListContent = allItemsButtonHtml + renderThemeTree(themesToRender);
         }
-
+      } else if (isMinifigView) {
+        mainListTitle = 'Минифигурки';
+        mainListContent = `<li class="text-gray-400 text-sm p-2">Используйте поиск для навигации.</li>`;
       } else { // Parts views
         mainListTitle = 'Категории';
         let categoriesToRender = state.categoryTree;
@@ -1310,6 +1483,8 @@
             <button data-view="collection" class="${viewButtonStyle('collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция деталей</span>${totalPartsCount > 0 ? `<span class="ml-auto text-xs font-medium bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full">${totalPartsCount}</span>`: ''}</button>
             <button data-view="sets" class="${viewButtonStyle('sets')}">${SetsIcon('w-5 h-5 mr-3')}<span>Каталог наборов</span></button>
             <button data-view="set_collection" class="${viewButtonStyle('set_collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция наборов</span>${totalSetsCount > 0 ? `<span class="ml-auto text-xs font-medium bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full">${totalSetsCount}</span>`: ''}</button>
+            <button data-view="minifigs_catalog" class="${viewButtonStyle('minifigs_catalog')}">${MinifigIcon('w-5 h-5 mr-3')}<span>Каталог минифигурок</span></button>
+            <button data-view="minifigs_collection" class="${viewButtonStyle('minifigs_collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция минифигурок</span>${totalMinifigsCount > 0 ? `<span class="ml-auto text-xs font-medium bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full">${totalMinifigsCount}</span>`: ''}</button>
         </div>
         
         <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar">
@@ -1321,15 +1496,19 @@
         
         ${isCollectionView ? `<div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <h2 class="text-lg font-semibold text-white mb-3">Сводка коллекции</h2>
-            ${totalPartsCount === 0 && uniqueSetsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
+            ${totalPartsCount === 0 && uniqueSetsCount === 0 && uniqueMinifigsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
               <div class="space-y-1">
+                  <div class="flex justify-between items-center text-sm text-gray-400">
+                      <span>${BrickIcon('inline-block w-4 h-4 mr-1')} Детали</span>
+                      <span class="font-semibold text-white">${uniqueModelsCount} уник. / ${totalPartsCount} всего</span>
+                  </div>
                   <div class="flex justify-between items-center text-sm text-gray-400">
                       <span>${SetsIcon('inline-block w-4 h-4 mr-1')} Наборы</span>
                       <span class="font-semibold text-white">${uniqueSetsCount} уник. / ${totalSetsCount} всего</span>
                   </div>
-                  <div class="flex justify-between items-center text-sm text-gray-400">
-                      <span>${BrickIcon('inline-block w-4 h-4 mr-1')} Детали</span>
-                      <span class="font-semibold text-white">${uniqueModelsCount} уник. / ${totalPartsCount} всего</span>
+                   <div class="flex justify-between items-center text-sm text-gray-400">
+                      <span>${MinifigIcon('inline-block w-4 h-4 mr-1')} Минифигурки</span>
+                      <span class="font-semibold text-white">${uniqueMinifigsCount} уник. / ${totalMinifigsCount} всего</span>
                   </div>
               </div>
             `}
@@ -1344,7 +1523,13 @@
     }
 
     function renderHeader() {
-        const placeholder = (state.currentView === 'sets' || state.currentView === 'set_collection') ? "Поиск по наборам..." : "Поиск по ID или названию...";
+        const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
+        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
+        
+        let placeholder = "Поиск по ID или названию...";
+        if (isSetView) placeholder = "Поиск по наборам...";
+        if (isMinifigView) placeholder = "Поиск по минифигуркам...";
+
         headerContainer.innerHTML = `
             <div class="flex justify-between items-center gap-4">
                 <div class="flex items-center">
@@ -1387,6 +1572,29 @@
                 <div class="p-4 space-y-1">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${set.name}</h3>
                     <p class="text-xs text-gray-400 pointer-events-none">#${set.set_num} • ${set.year}</p>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderMinifigCard(minifig, shouldAnimate, index = 0) {
+        if (!minifig) return '';
+        const animationClass = shouldAnimate ? 'animate-in' : '';
+        const animationDelay = shouldAnimate ? `animation-delay: ${Math.min(index * 40, 1500)}ms;` : '';
+        const collectionInfo = state.minifigCollection[minifig.set_num];
+        const quantity = collectionInfo ? collectionInfo.quantity : 0;
+        
+        return `
+            <div data-fig-num="${minifig.set_num}" style="${animationDelay}" class="minifig-card ${animationClass} relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
+                ${quantity > 0 ? `<div class="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${quantity}</div>` : ''}
+                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
+                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
+                        <img ${getPartImageUrl(minifig.set_img_url)} alt="${minifig.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                    </div>
+                </div>
+                <div class="p-4 space-y-1">
+                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${minifig.name}</h3>
+                    <p class="text-xs text-gray-400 pointer-events-none">#${minifig.set_num}</p>
                 </div>
             </div>
         `;
@@ -1444,6 +1652,8 @@
         let tags = '';
         let isDefaultSort = false;
         let showClearAll = false;
+        
+        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
 
         if (state.currentView === 'sets' || state.currentView === 'set_collection') {
             const { minYear, maxYear, minParts, maxParts } = state.setFilters;
@@ -1467,7 +1677,16 @@
 
             tags = [sortTag, setFilterTags].filter(Boolean).join('');
             showClearAll = !isDefaultSort || minYear || maxYear || minParts || maxParts;
-
+        } else if (isMinifigView) {
+            const sortMap = { 'name_asc': 'Алфавит (А-Я)', 'name_desc': 'Алфавит (Я-А)', 'num_parts_desc': 'Кол-во деталей (убыв.)', 'num_parts_asc': 'Кол-во деталей (возр.)' };
+            isDefaultSort = state.searchQuery ? state.sortBy === 'relevance' : state.sortBy === 'name_asc';
+            const sortTag = !isDefaultSort && sortMap[state.sortBy] ? `
+                <div class="flex items-center bg-gray-600 text-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">Сортировка: ${sortMap[state.sortBy]}</span>
+                </div>
+            ` : '';
+            tags = sortTag;
+            showClearAll = !isDefaultSort;
         } else { // Parts views
             const { colorIds, inCollectionOnly } = state.filters;
             const colorTags = colorIds.map(colorId => {
@@ -1514,11 +1733,63 @@
 
     function renderMainContent() {
         let gridContent = '';
+        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
         
         if (state.isLoading) {
             gridContent = `<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>`;
         } else if (state.apiError) {
             gridContent = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${state.apiError}</p></div>`;
+        } else if (state.currentView === 'minifigs_catalog') {
+            const minifigsToDisplay = state.searchQuery ? state.searchMinifigResults : state.minifigResults;
+            let emptyMessage = 'Используйте поиск для навигации по минифигуркам.';
+            if (state.searchQuery) emptyMessage = 'По вашему запросу ничего не найдено.';
+            
+            if (!minifigsToDisplay || minifigsToDisplay.length === 0) {
+                 gridContent = `
+                    <div class="flex flex-col items-center justify-center h-full p-4 text-center">
+                        <p class="text-gray-400 max-w-sm mb-6">${emptyMessage}</p>
+                        <button id="feeling-lucky-minifig-button" class="flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                            ${DiceIcon('w-6 h-6')} Мне повезёт!
+                        </button>
+                    </div>`;
+            } else {
+                const minifigsToRender = minifigsToDisplay.slice(0, state.itemsToDisplay);
+                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
+                    ${minifigsToRender.map((fig, index) => renderMinifigCard(fig, state.isGridStale, index)).join('')}
+                </div>`;
+                if(minifigsToDisplay.length > state.itemsToDisplay) {
+                    gridContent += `<div class="p-4 text-center">
+                        <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                            Загрузить ещё
+                        </button>
+                    </div>`;
+                }
+            }
+        } else if (state.currentView === 'minifigs_collection') {
+            let minifigs = Object.keys(state.minifigCollection).map(figNum => MINIFIG_MAP[figNum]).filter(Boolean);
+            
+            const query = state.searchQuery.trim().toLowerCase();
+            if (query) {
+                minifigs = minifigs.filter(mf => mf.name.toLowerCase().includes(query) || mf.set_num.toLowerCase().includes(query));
+            }
+            
+            switch(state.sortBy) {
+                case 'name_asc': minifigs.sort((a, b) => a.name.localeCompare(b.name)); break;
+                case 'name_desc': minifigs.sort((a, b) => b.name.localeCompare(a.name)); break;
+                case 'num_parts_desc': minifigs.sort((a, b) => b.num_parts - a.num_parts); break;
+                case 'num_parts_asc': minifigs.sort((a, b) => a.num_parts - b.num_parts); break;
+            }
+
+            if (minifigs.length === 0) {
+                let emptyMsg = 'В вашей коллекции нет минифигурок';
+                if (state.searchQuery) emptyMsg += ', соответствующих фильтрам';
+                emptyMsg += '.';
+                gridContent = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
+            } else {
+                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
+                    ${minifigs.map((fig, index) => renderMinifigCard(fig, state.isGridStale, index)).join('')}
+                </div>`;
+            }
         } else if (state.currentView === 'sets') {
             const setsToDisplay = state.searchQuery ? state.searchSetResults : state.setResults;
             let emptyMessage = 'Выберите тему для просмотра наборов или воспользуйтесь поиском.';
@@ -1897,40 +2168,117 @@
     }
 
     function renderSetInventory() {
-        const { inventory, isLoading, hasNextInventoryPage } = state.setModal;
-        let content = `<h3 class="text-lg font-semibold text-white mb-4 flex-shrink-0">Инвентарь</h3>`;
-        
-        if (inventory.length === 0 && !isLoading) {
-            content += `<div class="flex-grow flex items-center justify-center"><p class="text-gray-400">Инвентарь не найден.</p></div>`;
-        } else {
-            content += `<div class="space-y-2 pr-2 overflow-y-auto no-scrollbar flex-grow">` + inventory.map(item => `
-                <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm">
-                    <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0">
-                         <img ${getPartImageUrl(item.part.part_img_url)} alt="${item.part.name}" class="w-full h-full object-contain p-1">
+        const { inventory, isLoading, hasNextInventoryPage, minifigs, areMinifigsLoading } = state.setModal;
+
+        let minifigsContent = '';
+        if (areMinifigsLoading) {
+            minifigsContent = `<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>`;
+        } else if (minifigs && minifigs.length > 0) {
+            minifigsContent = minifigs.map(mf => {
+                const figNum = mf.set_num;
+                const collectionQty = state.minifigCollection[figNum]?.quantity || 0;
+                return `
+                    <div class="bg-gray-700/50 rounded-lg overflow-hidden">
+                        <div class="flex items-center p-2 gap-3 text-sm">
+                            <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0">
+                                <img ${getPartImageUrl(mf.set_img_url)} alt="${mf.set_name}" class="w-full h-full object-contain p-1">
+                            </div>
+                            <div class="flex-grow truncate">
+                                <p class="text-white font-semibold truncate">${mf.set_name}</p>
+                                <p class="text-gray-400 truncate">${figNum}</p>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <span class="text-gray-300 w-8 text-right font-semibold">${mf.quantity}x</span>
+                                <button data-action="add-minifig-to-collection" data-fig-num="${figNum}" data-quantity="${mf.quantity}" class="p-2 rounded-full text-white transition-colors ${collectionQty > 0 ? 'bg-green-600' : 'bg-blue-600 hover:bg-blue-700'}" title="${collectionQty > 0 ? `В коллекции: ${collectionQty}` : `Добавить ${mf.quantity} в коллекцию минифигурок`}">
+                                    ${MinifigIcon('w-5 h-5')}
+                                </button>
+                                <button data-action="toggle-minifig-parts" data-fig-num="${figNum}" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors" title="Показать/скрыть детали">
+                                    ${ChevronDownIcon(`w-5 h-5 transform transition-transform duration-200 ${mf.isExpanded ? 'rotate-180' : ''}`)}
+                                </button>
+                            </div>
+                        </div>
+                        <div id="minifig-parts-${figNum.replace(/[^a-zA-Z0-9]/g, '-')}" class="${mf.isExpanded ? 'bg-gray-900/40 p-2 max-h-60 overflow-y-auto no-scrollbar' : 'hidden'}">
+                             ${mf.isExpanded ? `
+                                <div class="flex justify-end items-center mb-2 px-1.5">
+                                    <button data-action="add-minifig-parts-to-collection" data-fig-num="${figNum}" class="flex items-center gap-2 text-xs px-2 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50" title="Добавить все детали этой минифигурки в вашу коллекцию деталей" ${state.setModal.isBulkUpdating ? 'disabled' : ''}>
+                                        ${PlusIcon('w-4 h-4')}
+                                        <span>Добавить детали</span>
+                                    </button>
+                                </div>
+                            ` : ''}
+                            ${mf.isLoadingParts
+                                ? `<div class="flex items-center justify-center p-2"><div class="loader !w-5 !h-5"></div></div>`
+                                : (mf.parts || []).map(item => `
+                                    <div class="flex items-center p-1.5 rounded-md gap-2 text-xs">
+                                        <div class="w-8 h-8 bg-white rounded flex items-center justify-center flex-shrink-0">
+                                            <img ${getPartImageUrl(item.part.part_img_url)} alt="${item.part.name}" class="w-full h-full object-contain p-0.5">
+                                        </div>
+                                        <div class="flex-grow truncate">
+                                            <p class="text-gray-200 truncate">${item.part.name}</p>
+                                            <p class="text-gray-400 truncate">${item.part.part_num}</p>
+                                        </div>
+                                        <div class="flex items-center gap-2 flex-shrink-0">
+                                            <span class="w-4 h-4 rounded-full border border-gray-500 ${item.color.isTransparent ? 'checkerboard' : ''}" style="background-color: ${item.color.hex};" title="${item.color.name}"></span>
+                                            <span class="text-gray-300 w-6 text-right">${item.quantity}x</span>
+                                        </div>
+                                    </div>
+                                `).join('') || (mf.parts && mf.parts.length === 0 ? `<p class="text-xs text-gray-400 text-center p-2">Детали не найдены.</p>` : '')
+                            }
+                        </div>
                     </div>
-                    <div class="flex-grow truncate">
-                        <p class="text-white font-semibold truncate">${item.part.name}</p>
-                        <p class="text-gray-400 truncate">${item.part.part_num}</p>
-                    </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                        <span class="w-5 h-5 rounded-full border border-gray-500 ${item.color.isTransparent ? 'checkerboard' : ''}" style="background-color: ${item.color.hex};" title="${item.color.name}"></span>
-                        <span class="text-gray-300 w-8 text-right">${item.quantity}x</span>
-                    </div>
-                </div>
-            `).join('') + `</div>`;
+                `
+            }).join('');
         }
-        
+
+        const partsListContent = inventory.map(item => `
+            <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm">
+                <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0">
+                        <img ${getPartImageUrl(item.part.part_img_url)} alt="${item.part.name}" class="w-full h-full object-contain p-1">
+                </div>
+                <div class="flex-grow truncate">
+                    <p class="text-white font-semibold truncate">${item.part.name}</p>
+                    <p class="text-gray-400 truncate">${item.part.part_num}</p>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="w-5 h-5 rounded-full border border-gray-500 ${item.color.isTransparent ? 'checkerboard' : ''}" style="background-color: ${item.color.hex};" title="${item.color.name}"></span>
+                    <span class="text-gray-300 w-8 text-right">${item.quantity}x</span>
+                </div>
+            </div>
+        `).join('');
+
+        let loadMoreButton = '';
         if(isLoading) {
-            content += `<div class="flex justify-center p-4 flex-shrink-0"><div class="loader !w-8 !h-8"></div></div>`;
+            loadMoreButton = `<div class="flex justify-center p-4 flex-shrink-0"><div class="loader !w-8 !h-8"></div></div>`;
         } else if (hasNextInventoryPage) {
-            content += `<div class="pt-4 text-center flex-shrink-0">
+            loadMoreButton = `<div class="pt-4 text-center flex-shrink-0">
                 <button data-action="load-more-inventory" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
                     Загрузить ещё
                 </button>
             </div>`;
         }
-        
-        return content;
+
+        return `
+            <div class="space-y-6">
+                ${minifigsContent ? `
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                            ${MinifigIcon('w-5 h-5')} Минифигурки
+                        </h3>
+                        <div class="space-y-2">${minifigsContent}</div>
+                    </div>` : ''
+                }
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                        ${BrickIcon('w-5 h-5')} Детали
+                    </h3>
+                    ${inventory.length > 0 || isLoading ? `
+                        <div class="space-y-2">${partsListContent}</div>
+                        ${loadMoreButton}
+                    ` : `<div class="text-sm text-gray-400 p-2">Инвентарь (кроме минифигурок) не найден.</div>`
+                    }
+                </div>
+            </div>
+        `;
     }
     
     function updateSetModalControlsState() {
@@ -2118,6 +2466,8 @@
         requestAnimationFrame(() => filterModalContainer.classList.add('visible'));
 
         let content = '';
+        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
+
         if (state.currentView === 'sets' || state.currentView === 'set_collection') {
             const sortOptions = [
                 { id: 'relevance', name: 'Релевантность', desc: 'Поиск' },
@@ -2170,6 +2520,32 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            `;
+        } else if (isMinifigView) {
+            const sortOptions = [
+                { id: 'relevance', name: 'Релевантность', desc: 'Поиск' },
+                { id: 'name_asc', name: 'Алфавит (А-Я)', desc: 'По умолч.' },
+                { id: 'name_desc', name: 'Алфавит (Я-А)', desc: '' },
+                { id: 'num_parts_desc', name: 'Кол-во деталей (убыв.)', desc: '' },
+                { id: 'num_parts_asc', name: 'Кол-во деталей (возр.)', desc: '' },
+            ];
+            const sortRadios = sortOptions.map(opt => {
+                const isChecked = tempFilters.sortBy === opt.id;
+                const isDisabled = opt.id === 'relevance' && !state.searchQuery;
+                const defaultBadge = (opt.id === 'relevance' && state.searchQuery) || (opt.id === 'name_asc' && !state.searchQuery) ? `<span class="ml-2 text-xs bg-blue-600/50 text-blue-300 px-1.5 py-0.5 rounded-full">По умолч.</span>` : '';
+                return `
+                    <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}">
+                        <input type="radio" name="sort" value="${opt.id}" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-500 focus:ring-blue-500" ${isChecked ? 'checked' : ''} ${isDisabled ? 'disabled' : ''} data-action="modal-set-sort">
+                        <span class="ml-3 text-white">${opt.name}</span>
+                        ${defaultBadge}
+                    </label>
+                `;
+            }).join('');
+            content = `
+                <div>
+                    <h3 class="text-md font-semibold text-gray-300 mb-2">Сортировать по</h3>
+                    <div class="bg-gray-900/50 rounded-lg space-y-1 p-2">${sortRadios}</div>
                 </div>
             `;
         } else { // Parts views
@@ -2257,6 +2633,7 @@
         const { confirmingDelete } = state.settingsModal;
         const totalPartsCount = Object.values(state.collection).reduce((sum, colors) => sum + Object.keys(colors).length, 0);
         const totalSetsCount = Object.keys(state.setCollection).length;
+        const totalMinifigsCount = Object.keys(state.minifigCollection).length;
         
         let deletePartsSection = '';
         if (confirmingDelete === 'parts') {
@@ -2282,6 +2659,18 @@
             deleteSetsSection = `<button data-action="delete-all-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${totalSetsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${totalSetsCount === 0 ? 'disabled' : ''}>${TrashIcon('w-5 h-5 mr-2')} Удалить все наборы</button>`;
         }
 
+        let deleteMinifigsSection = '';
+        if (confirmingDelete === 'minifigs') {
+            deleteMinifigsSection = `
+                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо.</p>
+                <div class="flex gap-2">
+                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
+                    <button data-action="confirm-delete-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
+                </div>`;
+        } else {
+            deleteMinifigsSection = `<button data-action="delete-all-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${totalMinifigsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${totalMinifigsCount === 0 ? 'disabled' : ''}>${TrashIcon('w-5 h-5 mr-2')} Удалить все минифигурки</button>`;
+        }
+
 
         settingsModalContainer.innerHTML = `
              <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
@@ -2295,6 +2684,7 @@
                         <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 space-y-3">
                            ${deletePartsSection}
                            ${deleteSetsSection}
+                           ${deleteMinifigsSection}
                         </div>
                     </div>
                 </div>
@@ -2312,7 +2702,7 @@
             radio.checked = tempFilters.sortBy === radio.value;
         });
 
-        if(state.currentView === 'sets' || state.currentView === 'set_collection') {
+        if(state.currentView === 'sets' || state.currentView === 'set_collection' || state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection') {
             // Update inputs if needed
         } else {
             const collectionToggle = filterModalContainer.querySelector('input[data-action="modal-toggle-collection"]');
@@ -2393,6 +2783,88 @@
         if(qtyInput) qtyInput.value = state.modal.quantity;
     }
 
+    function renderMinifigModal(isInitialRender = false) {
+        if (!state.selectedFigNum) {
+            closeMinifigModal();
+            return;
+        }
+
+        const minifig = MINIFIG_MAP[state.selectedFigNum];
+        if (!minifig) {
+            closeMinifigModal();
+            return;
+        }
+
+        const animationClass = isInitialRender ? 'modal-content-enter' : '';
+        const sizeClass = 'max-w-4xl';
+
+        if (isInitialRender) {
+            document.body.classList.add('overflow-hidden');
+            minifigModalContainer.classList.remove('modal-hidden');
+            requestAnimationFrame(() => minifigModalContainer.classList.add('visible'));
+        }
+        
+        const { quantity } = state.minifigModal;
+        const currentInCollection = state.minifigCollection[state.selectedFigNum]?.quantity || 0;
+        
+        const collectionControls = `
+            <div class="bg-gray-700/50 rounded-lg p-4">
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-white font-semibold">Коллекция минифигурок</h3>
+                        <p class="text-sm text-gray-400 text-right">В коллекции: <span class="font-bold text-white">${currentInCollection}</span></p>
+                    </div>
+                    
+                    <div class="flex justify-between items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <button data-action="decrease-minifig-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${MinusIcon('w-5 h-5')}</button>
+                            <input type="number" value="${quantity}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
+                            <button data-action="increase-minifig-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${PlusIcon('w-5 h-5')}</button>
+                        </div>
+                        <button data-action="update-minifig-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
+                            ${currentInCollection > 0 ? 'Обновить' : 'Добавить'}
+                        </button>
+                    </div>
+                    ${currentInCollection > 0 ? `
+                        <div>
+                            <button data-action="delete-from-minifig-collection-modal" class="w-full mt-1 text-sm text-red-400 hover:text-red-300 hover:bg-red-900/50 rounded-md py-1.5 transition-colors">Удалить из коллекции</button>
+                        </div>
+                    ` : '<div></div>'}
+                </div>
+            </div>`;
+
+        minifigModalContainer.innerHTML = `
+        <div id="minifig-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] ${sizeClass} flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
+                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${minifig.name}</h2>
+                 <div class="flex items-center gap-2 flex-shrink-0">
+                    <button id="minifig-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
+                 </div>
+            </div>
+            <div class="flex-grow overflow-y-auto no-scrollbar">
+                <div class="flex flex-col lg:flex-row">
+                    <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
+                         <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
+                            <img ${getPartImageUrl(minifig.set_img_url)} alt="${minifig.name}" class="max-w-full max-h-full object-contain">
+                         </div>
+                    </div>
+                    <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-md font-semibold text-gray-300 mb-3">Информация</h3>
+                                <div class="space-y-1 text-sm text-gray-400">
+                                    <p>ID: ${minifig.set_num}</p>
+                                    <p>Кол-во деталей: ${minifig.num_parts}</p>
+                                </div>
+                            </div>
+                            ${collectionControls}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+    }
 
     function updateUI() {
         renderSidebar();
@@ -2508,6 +2980,40 @@
             updateSetModalControlsState();
         }
     }
+    
+    function handleUpdateMinifigCollection(figNum, quantity) {
+        if (quantity > 0) {
+            state.minifigCollection[figNum] = { quantity };
+        } else {
+            delete state.minifigCollection[figNum];
+        }
+        saveState();
+        
+        state.isGridStale = false;
+        if (state.currentView === 'minifigs_collection') {
+            updateUI();
+        } else {
+            renderSidebar();
+            const card = mainContent.querySelector(`.minifig-card[data-fig-num="${figNum}"]`);
+            if (card) {
+                let indicator = card.querySelector('.absolute.top-3.right-3');
+                if (quantity > 0) {
+                    if (!indicator) {
+                        indicator = document.createElement('div');
+                        indicator.className = 'absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md';
+                        card.prepend(indicator);
+                    }
+                    indicator.textContent = quantity;
+                } else {
+                    indicator?.remove();
+                }
+            }
+        }
+        
+        if (state.selectedFigNum === figNum) {
+            renderMinifigModal(false);
+        }
+    }
 
     async function handleBulkUpdatePartsFromSet(setNum, action) {
         if (state.setModal.isBulkUpdating) return;
@@ -2564,15 +3070,73 @@
             }
         }
     }
+
+    async function handleBulkAddMinifigParts(figNum) {
+        // This function is now only called from the Set Modal
+        const minifig = state.setModal.minifigs.find(mf => mf.set_num === figNum);
+        if (!minifig || state.setModal.isBulkUpdating) return;
+
+        state.setModal.isBulkUpdating = true;
+        state.setModal.statusMessage = `Добавление деталей из "${minifig.set_name}"...`;
+        state.setModal.statusType = 'info';
+        renderSetModal(false);
+
+        try {
+            let parts = minifig.parts;
+            if(!parts) parts = await fetchMinifigParts(figNum);
+            minifig.parts = parts;
+
+            if (!parts || parts.length === 0) throw new Error("Детали минифигурки не найдены.");
+
+            const quantityMultiplier = minifig.quantity;
+
+            (parts || []).forEach(item => {
+                const partId = item.part.part_num;
+                const colorId = String(item.color.id);
+                const quantityToAdd = item.quantity * quantityMultiplier;
+
+                if (!state.collection[partId]) state.collection[partId] = {};
+                const currentQuantity = state.collection[partId][colorId] || 0;
+                state.collection[partId][colorId] = currentQuantity + quantityToAdd;
+            });
+
+            saveState();
+            await Promise.all([
+                fetchMissingCollectionPartDetails(),
+                fetchColorDetailsForCollectionParts()
+            ]);
+            
+            state.setModal.statusMessage = `Детали из "${minifig.name}" (${parts.length} видов) добавлены.`;
+            state.setModal.statusType = 'success';
+            
+        } catch(error) {
+            console.error('Error adding minifig parts:', error);
+            state.setModal.statusMessage = 'Ошибка при добавлении деталей.';
+            state.setModal.statusType = 'error';
+        } finally {
+            state.setModal.isBulkUpdating = false;
+            if (state.selectedSetNum) renderSetModal(false);
+            
+            if (state.currentView === 'collection') {
+                state.isGridStale = true;
+                updateUI();
+            } else {
+                renderSidebar(); // Update counts
+            }
+        }
+    }
     
     function triggerSearch(useCurrentFilters = false) {
         const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
+        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
 
         if (!useCurrentFilters) {
             if (isSetView) {
                 state.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
                 state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
-            } else {
+            } else if (isMinifigView) {
+                state.sortBy = state.searchQuery ? 'relevance' : 'name_asc';
+            } else { // parts view
                 state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
                 state.filters.colorIds = [];
                 state.filters.inCollectionOnly = false;
@@ -2581,13 +3145,15 @@
         
         state.isGridStale = true;
 
-        if (state.currentView === 'collection' || state.currentView === 'set_collection') {
+        if (state.currentView === 'collection' || state.currentView === 'set_collection' || state.currentView === 'minifigs_collection') {
             state.selectedCollectionCategoryId = null;
             state.selectedSetCollectionThemeId = null;
             updateUI();
         } else if (state.currentView === 'sets') {
             state.selectedThemeId = null;
             fetchSets();
+        } else if (state.currentView === 'minifigs_catalog') {
+            fetchMinifigs();
         } else { // catalog
             state.selectedCategoryId = null;
             searchRebrickableParts(state.searchQuery.trim());
@@ -2602,7 +3168,7 @@
         
         modalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedSetNum && !state.isFilterModalOpen && !state.isSettingsModalOpen) {
+        if (!state.selectedSetNum && !state.isFilterModalOpen && !state.isSettingsModalOpen && !state.selectedFigNum) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -2628,16 +3194,38 @@
         
         setModalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedPartId && !state.isFilterModalOpen && !state.isSettingsModalOpen) {
+        if (!state.selectedPartId && !state.isFilterModalOpen && !state.isSettingsModalOpen && !state.selectedFigNum) {
             document.body.classList.remove('overflow-hidden');
         }
         
         modalContent.addEventListener('animationend', () => {
             if (modalContent.classList.contains('modal-content-leave')) {
                 state.selectedSetNum = null;
-                state.setModal = { isLoading: false, inventory: [], inventoryPage: 1, hasNextInventoryPage: false, quantity: 1, isBulkUpdating: false, statusMessage: '', statusType: '', currentView: 'details' };
+                state.setModal = { isLoading: false, inventory: [], inventoryPage: 1, hasNextInventoryPage: false, quantity: 1, isBulkUpdating: false, statusMessage: '', statusType: '', currentView: 'details', minifigs: [], areMinifigsLoading: false, };
                 setModalContainer.classList.add('modal-hidden');
                 setModalContainer.innerHTML = '';
+            }
+        }, { once: true });
+    }
+
+    function closeMinifigModal() {
+        const modalContent = document.getElementById('minifig-modal-content');
+        if (!modalContent || minifigModalContainer.classList.contains('modal-hidden')) {
+            return; 
+        }
+        
+        minifigModalContainer.classList.remove('visible');
+        modalContent.classList.add('modal-content-leave');
+        if (!state.selectedPartId && !state.selectedSetNum && !state.isFilterModalOpen && !state.isSettingsModalOpen) {
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        modalContent.addEventListener('animationend', () => {
+            if (modalContent.classList.contains('modal-content-leave')) {
+                state.selectedFigNum = null;
+                state.minifigModal = { isLoading: false, quantity: 1 };
+                minifigModalContainer.classList.add('modal-hidden');
+                minifigModalContainer.innerHTML = '';
             }
         }, { once: true });
     }
@@ -2651,7 +3239,7 @@
         state.isFilterModalOpen = false;
         filterModalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedPartId && !state.selectedSetNum && !state.isSettingsModalOpen) {
+        if (!state.selectedPartId && !state.selectedSetNum && !state.isSettingsModalOpen && !state.selectedFigNum) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -2672,7 +3260,7 @@
         state.isSettingsModalOpen = false;
         settingsModalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedPartId && !state.selectedSetNum && !state.isFilterModalOpen) {
+        if (!state.selectedPartId && !state.selectedSetNum && !state.isFilterModalOpen && !state.selectedFigNum) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -2735,10 +3323,29 @@
             statusMessage: '',
             statusType: '',
             currentView: 'details',
+            minifigs: [],
+            areMinifigsLoading: false,
         };
         
         renderSetModal(true); // isInitialRender = true
         fetchSetInventory(setNum);
+        fetchSetMinifigs(setNum);
+    }
+
+    function openModalForMinifig(figNum) {
+        if (!MINIFIG_MAP[figNum]) {
+            console.error(`Minifig ${figNum} not found in MINIFIG_MAP.`);
+            return;
+        }
+        state.selectedFigNum = figNum;
+        const currentQuantity = state.minifigCollection[figNum]?.quantity || 0;
+        
+        state.minifigModal = {
+            isLoading: false,
+            quantity: currentQuantity > 0 ? currentQuantity : 1,
+        };
+        
+        renderMinifigModal(true);
     }
     
     function refreshWithNewFilters() {
@@ -2746,18 +3353,19 @@
         state.isGridStale = true;
         
         const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-        const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection';
+        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
+        const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection' || state.currentView === 'minifigs_collection';
 
         if (isCollectionView) {
             updateUI();
         } else if (isSetView) { // sets catalog
-            if(state.searchQuery) {
-                fetchSets();
-            } else if (state.selectedThemeId) {
+            if(state.searchQuery || state.selectedThemeId) {
                 fetchSets();
             } else {
                 updateUI();
             }
+        } else if (isMinifigView) {
+            fetchMinifigs();
         } else { // parts catalog
             if (state.searchQuery) {
                 searchRebrickableParts(state.searchQuery.trim());
@@ -2853,12 +3461,21 @@
             state.catalogGroups = null;
             state.setResults = null;
             state.searchSetResults = null;
+            state.minifigResults = null;
+            state.searchMinifigResults = null;
             
             // Set default sort
             const isSetView = newView === 'sets' || newView === 'set_collection';
-            state.sortBy = isSetView ? 'year_desc' : 'popularity';
+            const isMinifigView = newView === 'minifigs_catalog' || newView === 'minifigs_collection';
+
+            if (isSetView) state.sortBy = 'year_desc';
+            else if (isMinifigView) state.sortBy = 'name_asc';
+            else state.sortBy = 'popularity';
 
             updateUI();
+            if(newView === 'minifigs_catalog' && !state.minifigResults) {
+                fetchMinifigs();
+            }
             return;
         }
 
@@ -2992,10 +3609,17 @@
 
         if(target.closest('#feeling-lucky-button')) { handleFeelingLucky(); return; }
         if(target.closest('#feeling-lucky-set-button')) { handleFeelingLuckyForSets(); return; }
+        if(target.closest('#feeling-lucky-minifig-button')) { handleFeelingLuckyForMinifigs(); return; }
         
         const deleteButton = target.closest('[data-action="delete-from-collection"]');
         if (deleteButton?.dataset.partId && deleteButton.dataset.colorId) {
             handleUpdateCollection(deleteButton.dataset.partId, deleteButton.dataset.colorId, 0);
+            return;
+        }
+
+        const minifigCard = target.closest('.minifig-card');
+        if (minifigCard?.dataset.figNum) {
+            openModalForMinifig(minifigCard.dataset.figNum);
             return;
         }
 
@@ -3038,6 +3662,7 @@
         
         if (target.id === 'modal-container' || target.closest('#modal-close')) { closeModal(); return; }
         if (target.id === 'set-modal-container' || target.closest('#set-modal-close')) { closeSetModal(); return; }
+        if (target.id === 'minifig-modal-container' || target.closest('#minifig-modal-close')) { closeMinifigModal(); return; }
         if (target.id === 'filter-modal-container' || target.closest('#filter-modal-close')) { closeFilterModal(); return; }
         if (target.id === 'settings-modal-container' || target.closest('#settings-modal-close')) { closeSettingsModal(); return; }
 
@@ -3083,9 +3708,12 @@
 
         if (target.closest('[data-action="remove-all-filters"]')) {
             const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
+            const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
             if (isSetView) {
                 state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
                 state.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
+            } else if (isMinifigView) {
+                state.sortBy = state.searchQuery ? 'relevance' : 'name_asc';
             } else {
                 state.filters.colorIds = [];
                 state.filters.inCollectionOnly = false;
@@ -3103,283 +3731,341 @@
             switch(action) {
                 case 'delete-all-parts': state.settingsModal.confirmingDelete = 'parts'; renderSettingsModal(); break;
                 case 'delete-all-sets': state.settingsModal.confirmingDelete = 'sets'; renderSettingsModal(); break;
+                case 'delete-all-minifigs': state.settingsModal.confirmingDelete = 'minifigs'; renderSettingsModal(); break;
                 case 'cancel-delete': state.settingsModal.confirmingDelete = null; renderSettingsModal(); break;
                 case 'confirm-delete-parts':
                     state.collection = {};
                     saveState();
                     state.settingsModal.confirmingDelete = null;
                     renderSettingsModal();
-                    updateUI(); // Full UI update to reflect changes
+                    updateUI();
                     break;
                 case 'confirm-delete-sets':
                     state.setCollection = {};
                     saveState();
                     state.settingsModal.confirmingDelete = null;
                     renderSettingsModal();
-                    updateUI(); // Full UI update to reflect changes
+                    updateUI();
+                    break;
+                case 'confirm-delete-minifigs':
+                    state.minifigCollection = {};
+                    saveState();
+                    state.settingsModal.confirmingDelete = null;
+                    renderSettingsModal();
+                    updateUI();
+                    break;
+            }
+            return;
+        }
+
+        if(minifigModalContainer?.contains(target)) {
+            const actionTarget = target.closest('[data-action]');
+            if(!actionTarget) return;
+            const { action } = actionTarget.dataset;
+
+            switch(action) {
+                case 'decrease-minifig-qty':
+                    if (state.minifigModal.quantity > 1) {
+                        state.minifigModal.quantity--;
+                        renderMinifigModal(false);
+                    }
+                    break;
+                case 'increase-minifig-qty':
+                    state.minifigModal.quantity++;
+                    renderMinifigModal(false);
+                    break;
+                case 'update-minifig-collection':
+                    if (state.selectedFigNum) {
+                        handleUpdateMinifigCollection(state.selectedFigNum, state.minifigModal.quantity);
+                    }
+                    break;
+                case 'delete-from-minifig-collection-modal':
+                    if (state.selectedFigNum) {
+                        handleUpdateMinifigCollection(state.selectedFigNum, 0);
+                        state.minifigModal.quantity = 1;
+                    }
+                    break;
+            }
+            return;
+        }
+
+        if(setModalContainer?.contains(target)) {
+            const actionTarget = target.closest('[data-action]');
+            if(!actionTarget) return;
+            const { action, themeId, figNum, quantity } = actionTarget.dataset;
+
+            switch(action) {
+                case 'toggle-set-modal-view':
+                    state.setModal.currentView = state.setModal.currentView === 'details' ? 'inventory' : 'details';
+                    renderSetModal(false);
+                    break;
+                case 'load-more-inventory':
+                    if (state.selectedSetNum) {
+                        fetchSetInventory(state.selectedSetNum, state.setModal.inventoryPage + 1);
+                    }
+                    break;
+                case 'decrease-set-qty':
+                    if (state.setModal.quantity > 1) {
+                        state.setModal.quantity--;
+                        updateSetModalControlsState();
+                    }
+                    break;
+                case 'increase-set-qty':
+                    state.setModal.quantity++;
+                    updateSetModalControlsState();
+                    break;
+                case 'update-set-collection':
+                    if (state.selectedSetNum) {
+                        handleUpdateSetCollection(state.selectedSetNum, state.setModal.quantity);
+                    }
+                    break;
+                case 'delete-from-set-collection-modal':
+                    if (state.selectedSetNum) {
+                        handleUpdateSetCollection(state.selectedSetNum, 0);
+                        state.setModal.quantity = 1;
+                    }
+                    break;
+                case 'go-to-theme':
+                    if (themeId) {
+                        closeSetModal();
+                        state.currentView = 'sets';
+                        state.selectedThemeId = parseInt(themeId, 10);
+                        fetchSets();
+                    }
+                    break;
+                case 'bulk-add-parts':
+                    if (state.selectedSetNum) handleBulkUpdatePartsFromSet(state.selectedSetNum, 'add');
+                    break;
+                case 'bulk-remove-parts':
+                    if (state.selectedSetNum) handleBulkUpdatePartsFromSet(state.selectedSetNum, 'remove');
+                    break;
+                case 'toggle-minifig-parts':
+                    if(figNum) {
+                        const minifig = state.setModal.minifigs.find(mf => mf.set_num === figNum);
+                        if (minifig) {
+                            minifig.isExpanded = !minifig.isExpanded;
+                            if (minifig.isExpanded && !minifig.parts) {
+                                minifig.isLoadingParts = true;
+                                renderSetModal(false);
+                                fetchMinifigParts(figNum).then(parts => {
+                                    minifig.parts = parts;
+                                    minifig.isLoadingParts = false;
+                                    if(state.selectedSetNum) renderSetModal(false);
+                                });
+                            } else {
+                                renderSetModal(false);
+                            }
+                        }
+                    }
+                    break;
+                case 'add-minifig-to-collection':
+                    if (figNum && quantity) {
+                        const currentQty = state.minifigCollection[figNum]?.quantity || 0;
+                        handleUpdateMinifigCollection(figNum, currentQty + parseInt(quantity, 10));
+                    }
+                    break;
+                case 'add-minifig-parts-to-collection':
+                    if (figNum) {
+                        handleBulkAddMinifigParts(figNum);
+                    }
+                    break;
+            }
+            return;
+        }
+
+        if(filterModalContainer?.contains(target)) {
+            const actionTarget = target.closest('[data-action]');
+            if(!actionTarget) return;
+            const { action, colorId } = actionTarget.dataset;
+
+            switch(action) {
+                case 'modal-set-sort':
+                    // This is handled by the change event listener now
+                    break;
+                case 'modal-toggle-collection':
+                    // This is handled by the change event listener now
+                    break;
+                case 'modal-set-color':
+                    if (colorId === 'null') {
+                        tempFilters.filters.colorIds = [];
+                    } else if (colorId) {
+                        const index = tempFilters.filters.colorIds.indexOf(colorId);
+                        if (index > -1) {
+                            tempFilters.filters.colorIds.splice(index, 1);
+                        } else {
+                            tempFilters.filters.colorIds.push(colorId);
+                        }
+                    }
+                    updateFilterModalUI();
+                    break;
+                case 'modal-reset-filters':
+                    const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
+                    const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
+                    if (isSetView) {
+                        tempFilters.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
+                        tempFilters.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: ''};
+                    } else if (isMinifigView) {
+                        tempFilters.sortBy = state.searchQuery ? 'relevance' : 'name_asc';
+                    } else {
+                        tempFilters.sortBy = state.searchQuery ? 'relevance' : 'popularity';
+                        tempFilters.filters = { colorIds: [], inCollectionOnly: false };
+                    }
+                    renderFilterModal();
+                    break;
+                case 'modal-apply-filters':
+                    state.filters = tempFilters.filters;
+                    state.setFilters = tempFilters.setFilters;
+                    state.sortBy = tempFilters.sortBy;
+                    closeFilterModal();
+                    refreshWithNewFilters();
                     break;
             }
             return;
         }
         
-        if(setModalContainer?.contains(target)) {
+        if(modalContainer?.contains(target)) {
             const actionTarget = target.closest('[data-action]');
-            if(!actionTarget) return;
-
-            const { action } = actionTarget.dataset;
-            if(action === 'load-more-inventory') {
-                fetchSetInventory(state.selectedSetNum, state.setModal.inventoryPage + 1);
-            }
-            if(action === 'go-to-theme' && actionTarget.dataset.themeId) {
-                const themeId = parseInt(actionTarget.dataset.themeId, 10);
-                closeSetModal();
-                setTimeout(() => {
-                    state.currentView = 'sets';
-                    state.selectedThemeId = themeId;
-                    state.selectedSetCollectionThemeId = null;
-                    fetchSets();
-                }, 200);
-            }
-            if(action === 'increase-set-qty') {
-                state.setModal.quantity++;
-                updateSetModalControlsState();
-            }
-            if(action === 'decrease-set-qty') {
-                state.setModal.quantity = Math.max(1, state.setModal.quantity - 1);
-                updateSetModalControlsState();
-            }
-            if(action === 'update-set-collection' && state.selectedSetNum) {
-                handleUpdateSetCollection(state.selectedSetNum, state.setModal.quantity);
-            }
-            if(action === 'delete-from-set-collection-modal' && state.selectedSetNum) {
-                handleUpdateSetCollection(state.selectedSetNum, 0);
-            }
-            if(action === 'bulk-add-parts' && state.selectedSetNum) {
-                handleBulkUpdatePartsFromSet(state.selectedSetNum, 'add');
-            }
-            if(action === 'bulk-remove-parts' && state.selectedSetNum) {
-                handleBulkUpdatePartsFromSet(state.selectedSetNum, 'remove');
-            }
-            if(action === 'toggle-set-modal-view') {
-                state.setModal.currentView = state.setModal.currentView === 'details' ? 'inventory' : 'details';
-                renderSetModal(false);
-            }
-        }
-
-        if (filterModalContainer?.contains(target)) {
-            const actionTarget = target.closest('[data-action]');
-            if(!actionTarget) return;
-
-            const { action } = actionTarget.dataset;
-
-            switch(action) {
-                case 'modal-set-sort': tempFilters.sortBy = actionTarget.value; break;
-                case 'modal-toggle-collection': tempFilters.filters.inCollectionOnly = actionTarget.checked; break;
-                case 'modal-set-color':
-                    const colorId = actionTarget.dataset.colorId;
-                    if (colorId === 'null') {
-                        tempFilters.filters.colorIds = [];
-                    } else {
-                        const index = tempFilters.filters.colorIds.indexOf(colorId);
-                        if (index > -1) tempFilters.filters.colorIds.splice(index, 1);
-                        else tempFilters.filters.colorIds.push(colorId);
-                    }
-                    break;
-                case 'modal-apply-filters':
-                    state.filters = JSON.parse(JSON.stringify(tempFilters.filters));
-                    state.setFilters = JSON.parse(JSON.stringify(tempFilters.setFilters));
-                    state.sortBy = tempFilters.sortBy;
-                    closeFilterModal();
-                    refreshWithNewFilters();
-                    return;
-                case 'modal-reset-filters':
-                    const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-                    if (isSetView) {
-                        tempFilters.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
-                        tempFilters.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
-                    } else {
-                        tempFilters.filters.colorIds = [];
-                        tempFilters.filters.inCollectionOnly = false;
-                        tempFilters.sortBy = state.searchQuery ? 'relevance' : 'popularity';
-                    }
-                    renderFilterModal(); // Re-render with reset values
-                    return;
-            }
-            updateFilterModalUI();
-        }
-
-        if (modalContainer?.contains(target)) {
-            const goToCategoryButton = target.closest('[data-action="go-to-category"]');
-            if (goToCategoryButton?.dataset.categoryId) {
-                const catId = parseInt(goToCategoryButton.dataset.categoryId, 10);
-                
-                const parentGroup = state.categoryTree.find(group => group.children.some(child => child.id === catId));
-                if (parentGroup) {
-                    state.expandedCategories.add(parentGroup.name);
+            if(actionTarget) {
+                const { action, categoryId } = actionTarget.dataset;
+                switch(action) {
+                    case 'go-to-category':
+                        if (categoryId) {
+                            closeModal();
+                            state.currentView = 'catalog';
+                            state.selectedCategoryId = parseInt(categoryId, 10);
+                            loadPartsForCategory(state.selectedCategoryId);
+                        }
+                        break;
+                    case 'decrease-qty':
+                        if (state.modal.quantity > 1) {
+                            state.modal.quantity--;
+                            updateModalControlsState();
+                        }
+                        break;
+                    case 'increase-qty':
+                        state.modal.quantity++;
+                        updateModalControlsState();
+                        break;
+                    case 'update-collection':
+                        if (state.selectedPartId && state.modal.selectedColorId) {
+                            handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
+                        }
+                        break;
+                    case 'delete-from-collection-modal':
+                        if (state.selectedPartId && state.modal.selectedColorId) {
+                            handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
+                            state.modal.quantity = 1;
+                        }
+                        break;
                 }
-
-                closeModal();
-                setTimeout(() => {
-                    state.currentView = 'catalog';
-                    state.selectedCollectionCategoryId = null; 
-                    loadPartsForCategory(catId);
-                }, 200);
-                return;
             }
 
-            const colorButton = target.closest('[data-color-id]');
+            const colorButton = target.closest('button[data-color-id]');
             if (colorButton?.dataset.colorId) {
                 const newColorId = colorButton.dataset.colorId;
-                if(state.modal.selectedColorId !== newColorId) {
-                    // Update selection style
-                    const oldSelected = modalContainer.querySelector('.border-blue-500');
-                    oldSelected?.classList.remove('border-blue-500', 'scale-110');
-                    oldSelected?.classList.add('border-gray-600');
-                    colorButton.classList.remove('border-gray-600');
-                    colorButton.classList.add('border-blue-500', 'scale-110');
-                    
+                if (state.modal.selectedColorId !== newColorId) {
                     state.modal.selectedColorId = newColorId;
-                    const currentQuantity = (state.collection[state.selectedPartId]?.[state.modal.selectedColorId]) || 0;
+                    const currentQuantity = state.collection[state.selectedPartId]?.[newColorId] || 0;
                     state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
-                    
-                    updateModalPartially({ controls: true });
+                    updateModalPartially({ colors: true, controls: true });
                     fetchPartColorSpecifics(state.selectedPartId, newColorId);
                 }
-                return;
             }
-
-            const actionButton = target.closest('[data-action]');
-            if (actionButton?.dataset.action) {
-                const { action } = actionButton.dataset;
-                
-                if (action === 'increase-qty') {
-                    state.modal.quantity++;
-                    updateModalControlsState();
-                } else if (action === 'decrease-qty') {
-                    state.modal.quantity = Math.max(1, state.modal.quantity - 1);
-                    updateModalControlsState();
-                } else if (action === 'update-collection' && state.modal.selectedColorId && state.selectedPartId) {
-                    handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
-                } else if (action === 'delete-from-collection-modal' && state.modal.selectedColorId && state.selectedPartId) {
-                    handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
-                    closeModal();
-                    return;
-                }
+            
+            return;
+        }
+    });
+    
+    document.addEventListener('change', (e) => {
+        if (!(e.target instanceof Element)) return;
+        const target = e.target;
+        
+        if (target.id === 'variation-select') {
+            const newPartId = target.value;
+            if (state.selectedPartId !== newPartId) {
+                const variations = state.modal.partVariations;
+                openModalForPart(newPartId, state.modal.partGroupId, variations);
+            }
+            return;
+        }
+        
+        if (filterModalContainer?.contains(target)) {
+            if (target.name === 'sort') {
+                tempFilters.sortBy = target.value;
+            }
+            if (target.dataset.action === 'modal-toggle-collection') {
+                 tempFilters.filters.inCollectionOnly = target.checked;
             }
         }
     });
 
     document.addEventListener('input', (e) => {
-        if (e.target.id === 'search-input') {
-            state.searchQuery = e.target.value;
-            const clearButton = document.getElementById('clear-search');
-            if (clearButton) {
-                clearButton.classList.toggle('hidden', !state.searchQuery);
-            }
-            const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection';
-            if (isCollectionView) {
-                 if (state.selectedCollectionCategoryId !== null) {
-                    state.selectedCollectionCategoryId = null;
-                    renderSidebar();
-                }
-                if (state.selectedSetCollectionThemeId !== null) {
-                    state.selectedSetCollectionThemeId = null;
-                    renderSidebar();
-                }
-                state.isGridStale = false; // No animation for client-side filtering
-                renderMainContent();
-            }
+        if (!(e.target instanceof Element)) return;
+        const target = e.target;
+        
+        if (target.id === 'search-input') {
+            state.searchQuery = target.value;
+            const clearBtn = document.getElementById('clear-search');
+            if(clearBtn) clearBtn.classList.toggle('hidden', !state.searchQuery);
+            return;
         }
-        if (filterModalContainer?.contains(e.target) && e.target.dataset.filterKey) {
-            const key = e.target.dataset.filterKey;
-            tempFilters.setFilters[key] = e.target.value;
+        
+        if (filterModalContainer?.contains(target)) {
+            const filterKey = target.dataset.filterKey;
+            if (filterKey && typeof tempFilters.setFilters[filterKey] !== 'undefined') {
+                tempFilters.setFilters[filterKey] = target.value;
+            }
         }
     });
-    
-    document.addEventListener('keydown', (e) => {
+
+    document.addEventListener('keyup', (e) => {
         if (e.target.id === 'search-input' && e.key === 'Enter') {
-            e.preventDefault();
             triggerSearch();
         }
-        if (e.key === 'Escape') {
-             if (state.isSettingsModalOpen) closeSettingsModal();
-             else if (state.isFilterModalOpen) closeFilterModal();
-             else if (state.selectedPartId) closeModal();
-             else if (state.selectedSetNum) closeSetModal();
-        }
     });
 
-    document.addEventListener('change', (e) => {
-        if (e.target.id === 'variation-select') {
-            const newPartId = e.target.value;
-            if (state.selectedPartId === newPartId) return;
-
-            const scrollable = document.getElementById('modal-scroll-area');
-            const savedScrollTop = scrollable ? scrollable.scrollTop : 0;
-            
-            openModalForPart(newPartId, state.modal.partGroupId, state.modal.partVariations);
-
-            requestAnimationFrame(() => {
-                const newScrollable = document.getElementById('modal-scroll-area');
-                if(newScrollable) {
-                    newScrollable.scrollTop = savedScrollTop;
-                }
-            });
-        }
-    });
-
-    let lastWindowWidth = window.innerWidth;
-    window.addEventListener('resize', () => {
-        if (window.innerWidth !== lastWindowWidth) {
-            lastWindowWidth = window.innerWidth;
-            const isDesktop = window.innerWidth >= 1024;
-            if (isDesktop && !state.isSidebarOpen) {
-              state.isSidebarOpen = true;
-            }
-            updateUI();
-        }
-    });
-    
     mainContent.addEventListener('scroll', () => {
-        if (mainContent.scrollTop > 400) {
+        if (mainContent.scrollTop > 300) {
             scrollToTopBtn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
         } else {
             scrollToTopBtn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
         }
-    }, { passive: true });
+    });
+
 
     // --- INITIALIZATION ---
     async function initializeApp() {
+        console.log("Initializing LEGO Catalog...");
         loadState();
-        if (!state.searchQuery) {
-            state.sortBy = 'popularity';
-        }
-        updateUI();
+        updateUI(); // Show initial UI with loaders
         
         try {
             await Promise.all([
-                fetchCategories(),
                 fetchAllColors(),
+                fetchCategories(),
                 fetchThemes()
             ]);
             
             await Promise.all([
                 fetchMissingCollectionPartDetails(),
-                fetchMissingCollectionSetDetails()
+                fetchMissingCollectionSetDetails(),
+                fetchMissingCollectionMinifigDetails()
             ]);
+
             await fetchColorDetailsForCollectionParts();
 
         } catch (error) {
             console.error("Initialization failed:", error);
-            state.apiError = error.message;
+            state.apiError = `Не удалось инициализировать приложение: ${error.message}`;
         } finally {
             state.isLoading = false;
-            state.isGridStale = true;
+            console.log("Initialization complete.");
             updateUI();
         }
     }
 
     initializeApp();
+
   </script>
 </body>
 </html>
