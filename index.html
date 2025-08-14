@@ -893,11 +893,16 @@
         if (partsToFetch.length === 0) return;
         console.log(`Fetching color-specific images for ${partsToFetch.length} parts from collection...`);
     
-        const BATCH_SIZE = 20;
+        const BATCH_SIZE = 5; // Respect Rebrickable burst limit
+        const BATCH_DELAY = 1000; // 1 second delay between batches
+
         for (let i = 0; i < partsToFetch.length; i += BATCH_SIZE) {
             const batch = partsToFetch.slice(i, i + BATCH_SIZE);
             const promises = batch.map(partId => fetchColorDetailsForPart(partId));
             await Promise.all(promises);
+            if (i + BATCH_SIZE < partsToFetch.length) {
+                await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+            }
         }
     }
 
@@ -966,8 +971,8 @@
         
         for (const figNum of missingFigNums) {
             await fetchMinifigDetails(figNum);
-            // Add a small delay to avoid hitting API rate limits if any
-            await new Promise(resolve => setTimeout(resolve, 100)); 
+            // Add a delay to respect API rate limits (2 req/sec)
+            await new Promise(resolve => setTimeout(resolve, 500)); 
         }
     }
 
@@ -1073,8 +1078,18 @@
 
         try {
             const minifigs = await apiFetchPaginated(`/sets/${setNum}/minifigs/`);
-            const minifigDetailsPromises = minifigs.map(mf => fetchMinifigDetails(mf.set_num));
-            await Promise.all(minifigDetailsPromises);
+            
+            // Fetch details in batches to avoid rate limiting
+            const BATCH_SIZE = 5;
+            const BATCH_DELAY = 1000;
+            for (let i = 0; i < minifigs.length; i += BATCH_SIZE) {
+                const batch = minifigs.slice(i, i + BATCH_SIZE);
+                const promises = batch.map(mf => fetchMinifigDetails(mf.set_num));
+                await Promise.all(promises);
+                if (i + BATCH_SIZE < minifigs.length) {
+                    await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+                }
+            }
 
             state.setModal.minifigs = (minifigs || []).map(mf => ({
                 ...MINIFIG_MAP[mf.set_num], // Use the full detail from the map
@@ -2668,7 +2683,7 @@
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">О приложении</h3>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">О сайте</h3>
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3 text-sm text-gray-400">
                            <p>
                                <strong>Избранное:</strong> Чтобы добавить категорию или тему в избранное для быстрого доступа, наведите на нее курсор в боковом меню и нажмите на появившееся сердечко. Избранные элементы всегда будут отображаться вверху своих списков.
@@ -3205,53 +3220,63 @@
 
             const minifigsInSet = state.setModal.minifigs || (await apiFetchPaginated(`/sets/${setNum}/minifigs/`));
             
-            await Promise.all(minifigsInSet.map(async (minifig) => {
-                const figNum = minifig.set_num;
-                const quantityInSet = minifig.quantity;
-
-                // Update minifig collection
-                const currentMinifigQty = state.minifigCollection[figNum]?.quantity || 0;
-                if (action === 'add') {
-                    state.minifigCollection[figNum] = { quantity: currentMinifigQty + quantityInSet };
-                    minifigsAddedCount += quantityInSet;
-                } else {
-                    const newMinifigQty = currentMinifigQty - quantityInSet;
-                    if(newMinifigQty > 0) {
-                        state.minifigCollection[figNum] = { quantity: newMinifigQty };
-                    } else {
-                        delete state.minifigCollection[figNum];
-                    }
-                    minifigsRemovedCount += quantityInSet;
-                }
+            const BATCH_SIZE = 3;
+            const BATCH_DELAY = 1000;
+            for (let i = 0; i < minifigsInSet.length; i += BATCH_SIZE) {
+                const batch = minifigsInSet.slice(i, i + BATCH_SIZE);
                 
-                // Update parts from minifigs
-                const minifigParts = minifig.parts || await fetchMinifigParts(figNum);
-                minifig.parts = minifigParts; // cache for later
-                
-                (minifigParts || []).forEach(partItem => {
-                    const partId = partItem.part.part_num;
-                    const colorId = String(partItem.color.id);
-                    const quantityInMinifig = partItem.quantity;
-                    const totalQuantityToChange = quantityInMinifig * quantityInSet;
+                await Promise.all(batch.map(async (minifig) => {
+                    const figNum = minifig.set_num;
+                    const quantityInSet = minifig.quantity;
 
-                    if (!state.collection[partId]) state.collection[partId] = {};
-                    const currentPartQty = state.collection[partId][colorId] || 0;
-                    
+                    // Update minifig collection
+                    const currentMinifigQty = state.minifigCollection[figNum]?.quantity || 0;
                     if (action === 'add') {
-                         state.collection[partId][colorId] = currentPartQty + totalQuantityToChange;
-                         minifigPartsAddedCount += totalQuantityToChange;
+                        state.minifigCollection[figNum] = { quantity: currentMinifigQty + quantityInSet };
+                        minifigsAddedCount += quantityInSet;
                     } else {
-                        const newPartQty = currentPartQty - totalQuantityToChange;
-                        if (newPartQty > 0) {
-                            state.collection[partId][colorId] = newPartQty;
+                        const newMinifigQty = currentMinifigQty - quantityInSet;
+                        if(newMinifigQty > 0) {
+                            state.minifigCollection[figNum] = { quantity: newMinifigQty };
                         } else {
-                            delete state.collection[partId][colorId];
-                            if (Object.keys(state.collection[partId]).length === 0) delete state.collection[partId];
+                            delete state.minifigCollection[figNum];
                         }
-                        minifigPartsRemovedCount += totalQuantityToChange;
+                        minifigsRemovedCount += quantityInSet;
                     }
-                });
-            }));
+                    
+                    // Update parts from minifigs
+                    const minifigParts = minifig.parts || await fetchMinifigParts(figNum);
+                    minifig.parts = minifigParts; // cache for later
+                    
+                    (minifigParts || []).forEach(partItem => {
+                        const partId = partItem.part.part_num;
+                        const colorId = String(partItem.color.id);
+                        const quantityInMinifig = partItem.quantity;
+                        const totalQuantityToChange = quantityInMinifig * quantityInSet;
+
+                        if (!state.collection[partId]) state.collection[partId] = {};
+                        const currentPartQty = state.collection[partId][colorId] || 0;
+                        
+                        if (action === 'add') {
+                             state.collection[partId][colorId] = currentPartQty + totalQuantityToChange;
+                             minifigPartsAddedCount += totalQuantityToChange;
+                        } else {
+                            const newPartQty = currentPartQty - totalQuantityToChange;
+                            if (newPartQty > 0) {
+                                state.collection[partId][colorId] = newPartQty;
+                            } else {
+                                delete state.collection[partId][colorId];
+                                if (Object.keys(state.collection[partId]).length === 0) delete state.collection[partId];
+                            }
+                            minifigPartsRemovedCount += totalQuantityToChange;
+                        }
+                    });
+                }));
+                
+                if (i + BATCH_SIZE < minifigsInSet.length) {
+                    await new Promise(resolve => setTimeout(resolve, BATCH_DELAY));
+                }
+            }
             
             // 3. Save the updated state to localStorage
             saveState();
@@ -4169,15 +4194,6 @@
             if(actionTarget) {
                 const { action, categoryId } = actionTarget.dataset;
                 switch(action) {
-                    case 'go-to-category':
-                        if (categoryId) {
-                            closeModal();
-                            state.currentView = 'catalog';
-                            state.activeSubView = 'parts';
-                            state.selectedCategoryId = parseInt(categoryId, 10);
-                            loadPartsForCategory(state.selectedCategoryId);
-                        }
-                        break;
                     case 'decrease-qty':
                         if (state.modal.quantity > 1) {
                             state.modal.quantity--;
@@ -4190,30 +4206,34 @@
                         break;
                     case 'update-collection':
                         if (state.selectedPartId && state.modal.selectedColorId) {
-                            handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
+                            await handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, state.modal.quantity);
                         }
                         break;
                     case 'delete-from-collection-modal':
                          if (state.selectedPartId && state.modal.selectedColorId) {
                             await handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
-                            state.modal.quantity = 1; // Reset quantity for next interaction
-                            updateModalControlsState();
+                            state.modal.quantity = 1;
+                        }
+                        break;
+                    case 'go-to-category':
+                        if (categoryId) {
+                            closeModal();
+                            state.currentView = 'catalog';
+                            state.activeSubView = 'parts';
+                            state.selectedCategoryId = parseInt(categoryId, 10);
+                            loadPartsForCategory(state.selectedCategoryId);
                         }
                         break;
                 }
             }
-            
+
             const colorButton = target.closest('button[data-color-id]');
-            if (colorButton && colorButton.dataset.colorId) {
-                const newColorId = colorButton.dataset.colorId;
-                if (state.modal.selectedColorId !== newColorId) {
-                    state.modal.selectedColorId = newColorId;
-                    const currentQuantity = state.collection[state.selectedPartId]?.[newColorId] || 0;
-                    state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
-                    
-                    updateModalPartially({ colors: true, controls: true });
-                    fetchPartColorSpecifics(state.selectedPartId, newColorId);
-                }
+            if(colorButton) {
+                state.modal.selectedColorId = colorButton.dataset.colorId;
+                const currentQuantity = state.collection[state.selectedPartId]?.[state.modal.selectedColorId] || 0;
+                state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+                updateModalPartially({ colors: true, controls: true });
+                fetchPartColorSpecifics(state.selectedPartId, state.modal.selectedColorId);
             }
         }
     });
@@ -4222,108 +4242,122 @@
         if (!(e.target instanceof Element)) return;
         const target = e.target;
         
-        if(target.id === 'search-input') {
+        if (target.id === 'search-input') {
             state.searchQuery = target.value;
-            if (state.searchQuery.trim() === '') {
-                 triggerSearch();
+            const clearBtn = document.getElementById('clear-search');
+            if (clearBtn) clearBtn.classList.toggle('hidden', !state.searchQuery);
+            return;
+        }
+
+        if (target.id === 'variation-select') {
+            const newPartId = target.value;
+            if (newPartId && newPartId !== state.selectedPartId) {
+                const newPart = PART_MAP[newPartId];
+                if (newPart) {
+                    state.selectedPartId = newPartId;
+                    state.modal.selectedColorId = null;
+                    state.modal.partImageUrl = newPart.rebrickable_img_url;
+                    renderModal();
+                    if (!newPart.availableColorIds) {
+                        fetchPartColors(newPartId);
+                    } else {
+                        const sortedColorIds = sortColorIds(newPart.availableColorIds, newPartId);
+                        state.modal.selectedColorId = sortedColorIds[0];
+                        updateModalPartially({ controls: true });
+                        fetchPartColorSpecifics(newPartId, sortedColorIds[0]);
+                    }
+                }
             }
-            renderHeader(); // to show/hide clear button
+            return;
         }
         
+        if (target.closest('#filter-modal-content')) {
+            const action = target.dataset.action;
+            if (action === 'modal-set-sort') {
+                tempFilters.sortBy = target.value;
+                updateFilterModalUI();
+            } else if (action === 'modal-toggle-collection') {
+                tempFilters.filters.inCollectionOnly = target.checked;
+            } else if (target.dataset.filterKey) {
+                const { filterKey } = target.dataset;
+                 if(state.activeSubView === 'sets') {
+                    tempFilters.setFilters[filterKey] = target.value;
+                 }
+            }
+        }
+
         if (target.id === 'import-csv-input') {
             const file = target.files?.[0];
             if (file) {
                 importCollectionFromCSV(file);
             }
-            target.value = ''; // Reset input so user can select the same file again
-        }
-
-        if (modalContainer && modalContainer.contains(target) && target.id === 'variation-select') {
-            const newPartId = target.value;
-            if (newPartId && newPartId !== state.selectedPartId) {
-                openModalForPart(newPartId, state.modal.partGroupId, state.modal.partVariations);
-            }
-        }
-
-        if (filterModalContainer && filterModalContainer.contains(target)) {
-            if (target.matches('input[name="sort"]')) {
-                tempFilters.sortBy = target.value;
-            }
-            if(target.matches('[data-action="modal-toggle-collection"]')) {
-                tempFilters.filters.inCollectionOnly = target.checked;
-            }
-            if(target.matches('[data-filter-key]')) {
-                 tempFilters.setFilters[target.dataset.filterKey] = target.value;
-            }
+            target.value = ''; // Reset for next import
         }
     });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
-            if (!imageViewerContainer.classList.contains('viewer-hidden')) { closeImageViewer(); return; }
-            if (state.isSettingsModalOpen) { closeSettingsModal(); return; }
-            if (state.isFilterModalOpen) { closeFilterModal(); return; }
-            if (state.selectedFigNum) { closeMinifigModal(); return; }
-            if (state.selectedSetNum) { closeSetModal(); return; }
-            if (state.selectedPartId) { closeModal(); return; }
+            if (!imageViewerContainer.classList.contains('viewer-hidden')) closeImageViewer();
+            else if (state.isFilterModalOpen) closeFilterModal();
+            else if (state.isSettingsModalOpen) closeSettingsModal();
+            else if (state.selectedSetNum) closeSetModal();
+            else if (state.selectedFigNum) closeMinifigModal();
+            else if (state.selectedPartId) closeModal();
         }
-        if (e.key === 'Enter' && e.target.id === 'search-input') {
+        if (e.key === 'Enter' && document.activeElement.id === 'search-input') {
             triggerSearch();
         }
     });
-    
-    mainContent.addEventListener('scroll', (e) => {
-        if (mainContent.scrollTop > 300) {
-            scrollToTopBtn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
-        } else {
-            scrollToTopBtn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
-        }
+
+    mainContent.addEventListener('scroll', () => {
+      const isAtBottom = mainContent.scrollHeight - mainContent.scrollTop <= mainContent.clientHeight + 1; // +1 for pixel perfection
+      if (isAtBottom && mainContent.querySelector('#load-more-button')) {
+        state.itemsToDisplay += state.itemsIncrement;
+        renderMainContent();
+      }
+
+      const show = mainContent.scrollTop > 300;
+      if (show && scrollToTopBtn.classList.contains('opacity-0')) {
+        scrollToTopBtn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+      } else if (!show && !scrollToTopBtn.classList.contains('opacity-0')) {
+        scrollToTopBtn.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+      }
     });
+
 
     // --- INITIALIZATION ---
     async function initializeApp() {
-        console.log("Initializing LEGO Catalog...");
-        imageViewerCloseBtn.innerHTML = XIcon('w-7 h-7');
-        loadState();
-        updateUI();
-
+        console.log("Инициализация каталога LEGO...");
         state.isLoading = true;
         updateUI();
-
+        loadState();
+        
         try {
             await Promise.all([
                 fetchAllColors(),
                 fetchCategories(),
-                fetchThemes(),
+                fetchThemes()
             ]);
-            
-            const collectionPromises = [
+            await Promise.all([
                 fetchMissingCollectionPartDetails(),
                 fetchMissingCollectionSetDetails(),
                 fetchMissingCollectionMinifigDetails()
-            ];
-
-            // Initial catalog load for minifigs if on that view
-            if(state.currentView === 'catalog' && state.activeSubView === 'minifigs') {
-                collectionPromises.push(fetchMinifigs());
-            }
-
-            await Promise.all(collectionPromises);
-
+            ]);
             await fetchColorDetailsForCollectionParts();
-            
-        } catch(error) {
-            console.error("Initialization failed:", error);
-            state.apiError = `Не удалось загрузить начальные данные: ${error.message}`;
+            state.apiError = null;
+        } catch(e) {
+            console.error("Initialization failed:", e);
+            state.apiError = state.apiError || 'Не удалось загрузить начальные данные.';
         } finally {
             state.isLoading = false;
             updateUI();
-            console.log("Initialization complete.");
         }
     }
     
-    initializeApp();
-
+    document.addEventListener('DOMContentLoaded', () => {
+        imageViewerCloseBtn.innerHTML = XIcon('w-6 h-6');
+        initializeApp();
+    });
   </script>
 </body>
 </html>
