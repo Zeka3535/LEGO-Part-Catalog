@@ -1909,7 +1909,7 @@
                     case 'year_asc': collectionItems.sort((a, b) => a.year - b.year); break;
                     case 'year_desc': collectionItems.sort((a, b) => b.year - a.year); break;
                     case 'parts_asc': collectionItems.sort((a, b) => a.num_parts - b.num_parts); break;
-                    case 'parts_desc': collectionItems.sort((a, b) => b.num_parts - b.num_parts); break;
+                    case 'parts_desc': collectionItems.sort((a, b) => b.num_parts - a.num_parts); break;
                 }
                 renderFn = (item, anim, i) => renderSetCard(item, anim, i);
             } else { // minifigs
@@ -2368,7 +2368,12 @@
             return `<div class="flex items-center justify-center h-24"><div class="loader !w-8 !h-8"></div></div>`;
         }
         if (availableColorIds.length === 0) {
-            return `<p class="text-sm text-gray-400 text-center py-4">Нет информации о доступных цветах.</p>`;
+            return `<div class="text-center py-4">
+                        <p class="text-sm text-gray-400 mb-3">Нет информации о доступных цветах.</p>
+                        <button data-action="retry-fetch-colors" class="bg-blue-600 text-white font-bold py-1.5 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                            Попробовать снова
+                        </button>
+                    </div>`;
         }
         
         const sortedColorIds = sortColorIds(availableColorIds, part.id);
@@ -2958,6 +2963,14 @@
              state.settingsModal.statusMessage = message;
              state.settingsModal.statusType = type;
              renderSettingsModal();
+             if (type !== 'error') {
+                 setTimeout(() => {
+                     if (state.isSettingsModalOpen && state.settingsModal.statusMessage === message) {
+                         state.settingsModal.statusMessage = '';
+                         renderSettingsModal();
+                     }
+                 }, 3000);
+             }
         };
     
         const reader = new FileReader();
@@ -3289,21 +3302,30 @@
             ]);
             
             // 5. Set the appropriate status message
+            let statusMessageText = '';
             if (action === 'add') {
                 let messageParts = [`Детали набора успешно добавлены.`];
                 if (minifigsAddedCount > 0) {
                     messageParts.push(`${minifigsAddedCount} минифигурок и их детали (${minifigPartsAddedCount} шт.) также добавлены.`);
                 }
-                state.setModal.statusMessage = messageParts.join(' ');
+                statusMessageText = messageParts.join(' ');
             } else {
                 let messageParts = [`Детали набора успешно удалены.`];
                 if (minifigsRemovedCount > 0) {
                     messageParts.push(`Также удалены ${minifigsRemovedCount} минифигурок и их детали (${minifigPartsRemovedCount} шт.).`);
                 }
-                state.setModal.statusMessage = messageParts.join(' ');
+                statusMessageText = messageParts.join(' ');
             }
             
+            state.setModal.statusMessage = statusMessageText;
             state.setModal.statusType = 'success';
+            setTimeout(() => {
+                if (state.selectedSetNum && state.setModal.statusMessage === statusMessageText) {
+                    state.setModal.statusMessage = '';
+                    renderSetModal(false);
+                }
+            }, 3000);
+            
             state.isGridStale = true;
             updateUI(); // This will re-render everything to reflect the new collection state
         } catch (error) {
@@ -3354,8 +3376,15 @@
                 fetchColorDetailsForCollectionParts()
             ]);
             
-            state.setModal.statusMessage = `Детали из "${minifig.name}" (${parts.length} видов) добавлены.`;
+            const successMessage = `Детали из "${minifig.name}" (${parts.length} видов) добавлены.`;
+            state.setModal.statusMessage = successMessage;
             state.setModal.statusType = 'success';
+            setTimeout(() => {
+                if (state.selectedSetNum && state.setModal.statusMessage === successMessage) {
+                    state.setModal.statusMessage = '';
+                    renderSetModal(false);
+                }
+            }, 3000);
             
         } catch(error) {
             console.error('Error adding minifig parts:', error);
@@ -4222,6 +4251,11 @@
                             state.activeSubView = 'parts';
                             state.selectedCategoryId = parseInt(categoryId, 10);
                             loadPartsForCategory(state.selectedCategoryId);
+                        }
+                        break;
+                    case 'retry-fetch-colors':
+                        if (state.selectedPartId) {
+                            fetchPartColors(state.selectedPartId);
                         }
                         break;
                 }
