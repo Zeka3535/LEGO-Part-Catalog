@@ -88,12 +88,12 @@
 <body class="bg-gray-900 text-gray-200">
 
   <!-- Sidebar -->
-  <aside id="sidebar-container" class="w-72 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full"></aside>
+  <aside id="sidebar-container" class="w-80 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 -translate-x-full"></aside>
 
   <!-- Backdrop for mobile sidebar -->
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden lg:hidden"></div>
 
-  <div class="lg:ml-72 flex flex-col h-screen">
+  <div class="lg:ml-80 flex flex-col h-screen">
     <!-- Header -->
     <header id="header-container" class="bg-gray-800/50 backdrop-blur-sm sticky top-0 z-20 p-4 border-b border-gray-700"></header>
     
@@ -116,6 +116,7 @@
 
   <!-- Settings Modal -->
   <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
+  <input type="file" id="import-csv-input" class="hidden" accept=".csv">
 
   <!-- Scroll to Top Button -->
   <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 opacity-0 pointer-events-none z-50 transform translate-y-4" aria-label="Вернуться наверх">
@@ -187,7 +188,8 @@
 
     // --- STATE MANAGEMENT ---
     let state = {
-      currentView: 'catalog', // 'catalog', 'collection', 'sets', 'set_collection', 'minifigs_catalog', 'minifigs_collection'
+      currentView: 'catalog', // 'catalog', 'collection'
+      activeSubView: 'parts', // 'parts', 'sets', 'minifigs'
       // Part state
       categoryTree: [],
       expandedCategories: new Set(),
@@ -204,11 +206,11 @@
       favoriteThemeIds: new Set(),
       // Minifig state
       minifigResults: null,
-      searchMinifigResults: null,
       // Search state
       searchQuery: '',
       searchResultGroups: null, // For parts
       searchSetResults: null, // For sets
+      searchMinifigResults: null,
       // Global state
       isLoading: true, // Start in loading state for initialization
       apiError: null,
@@ -248,6 +250,8 @@
       isSettingsModalOpen: false,
       settingsModal: {
           confirmingDelete: null, // null, 'parts', 'sets', 'minifigs'
+          statusMessage: '',
+          statusType: 'info' // 'info', 'success', 'error'
       },
       // Other state
       itemsToDisplay: 48,
@@ -265,7 +269,7 @@
           minParts: '',
           maxParts: '',
       },
-      sortBy: 'relevance',
+      sortBy: 'popularity',
     };
     
     let tempFilters = {};
@@ -752,11 +756,9 @@
     async function fetchMinifigs() {
         state.isLoading = true;
         state.apiError = null;
-        state.minifigResults = null;
-        state.searchMinifigResults = null;
         state.itemsToDisplay = state.itemsIncrement;
         state.isGridStale = true;
-        updateUI();
+        updateUI(); // Show loader
 
         try {
             let params = new URLSearchParams();
@@ -770,8 +772,8 @@
             else if (state.sortBy === 'name_desc') ordering = '-name';
             else if (state.sortBy === 'num_parts_desc') ordering = '-num_parts';
             else if (state.sortBy === 'num_parts_asc') ordering = 'num_parts';
-
-            if(ordering) params.append('ordering', ordering);
+            
+            if(ordering && state.sortBy !== 'relevance') params.append('ordering', ordering);
 
             const rawMinifigs = await apiFetchPaginated(`/minifigs/?${params.toString()}`);
             const minifigs = rawMinifigs.map(mf => {
@@ -781,8 +783,10 @@
             
             if (state.searchQuery) {
                 state.searchMinifigResults = minifigs;
+                state.minifigResults = null;
             } else {
                 state.minifigResults = minifigs;
+                state.searchMinifigResults = null;
             }
 
         } catch (error) {
@@ -903,18 +907,32 @@
 
         console.log(`Fetching details for ${missingSetNums.length} sets from collection...`);
         
-        for (const setNum of missingSetNums) {
+        const BATCH_SIZE = 100;
+        for (let i = 0; i < missingSetNums.length; i += BATCH_SIZE) {
+            const batch = missingSetNums.slice(i, i + BATCH_SIZE);
             try {
-                const response = await fetch(`${REBRICKABLE_API_URL}/sets/${setNum}/`, {
-                    headers: { 'Authorization': `key ${getApiKey()}` }
+                const rawSets = await apiFetchPaginated(`/sets/?set_nums=${batch.join(',')}`);
+                (rawSets || []).forEach(set => {
+                    SET_MAP[set.set_num] = set;
                 });
-                if (!response.ok) throw new Error(`Set ${setNum} not found.`);
-                const set = await response.json();
-                SET_MAP[set.set_num] = set;
-                await new Promise(resolve => setTimeout(resolve, 200)); // Small delay between fetches
             } catch(err) {
-                console.error(`Could not fetch details for set ${setNum}:`, err);
+                console.error(`Could not fetch details for batch of sets starting with ${batch[0]}:`, err);
+                state.apiError = (state.apiError ? state.apiError + '\n' : '') + 'Не удалось загрузить данные для некоторых наборов коллекции.';
             }
+        }
+    }
+
+    async function fetchMinifigDetails(figNum) {
+        if (MINIFIG_MAP[figNum]) return;
+        try {
+            const response = await fetch(`${REBRICKABLE_API_URL}/minifigs/${figNum}/`, {
+                headers: { 'Authorization': `key ${getApiKey()}` }
+            });
+            if (!response.ok) throw new Error(`Minifig ${figNum} not found.`);
+            const minifig = await response.json();
+            MINIFIG_MAP[minifig.set_num] = minifig;
+        } catch (err) {
+            console.error(`Could not fetch details for minifig ${figNum}:`, err);
         }
     }
 
@@ -926,17 +944,8 @@
         console.log(`Fetching details for ${missingFigNums.length} minifigs from collection...`);
         
         for (const figNum of missingFigNums) {
-            try {
-                const response = await fetch(`${REBRICKABLE_API_URL}/minifigs/${figNum}/`, {
-                    headers: { 'Authorization': `key ${getApiKey()}` }
-                });
-                if (!response.ok) throw new Error(`Minifig ${figNum} not found.`);
-                const minifig = await response.json();
-                MINIFIG_MAP[minifig.set_num] = minifig;
-                await new Promise(resolve => setTimeout(resolve, 200));
-            } catch(err) {
-                console.error(`Could not fetch details for minifig ${figNum}:`, err);
-            }
+            await fetchMinifigDetails(figNum);
+            await new Promise(resolve => setTimeout(resolve, 200));
         }
     }
 
@@ -1031,7 +1040,7 @@
             
             if (!data.next) break;
             page++;
-            await new Promise(resolve => setTimeout(resolve, 1100)); // Prevent API rate limiting
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Prevent API rate limiting
         }
         return allResults;
     }
@@ -1090,89 +1099,44 @@
       state.isGridStale = true;
       updateUI();
       try {
-        if (flatCategories.length === 0) {
-          throw new Error("Категории еще не загружены.");
+        let randomItem;
+        if (state.activeSubView === 'parts') {
+            if (flatCategories.length === 0) throw new Error("Категории еще не загружены.");
+            const randomCategory = flatCategories[Math.floor(Math.random() * flatCategories.length)];
+            const rawParts = await apiFetchPaginated(`/parts/?part_cat_id=${randomCategory.id}&page_size=100`);
+            if (rawParts.length === 0) { return handleFeelingLucky(); } // Try again
+            randomItem = rawParts[Math.floor(Math.random() * rawParts.length)];
+            const part = processPartData(randomItem);
+            if (!part) throw new Error("Не удалось выбрать случайную деталь.");
+            const groupId = getGroupId(part.part_num);
+            openModalForPart(part.id, groupId, [part]);
+        } else if (state.activeSubView === 'sets') {
+            const themeIds = Object.keys(THEME_MAP);
+            if (themeIds.length === 0) throw new Error("Темы еще не загружены.");
+            let attempts = 0;
+            while(attempts < 10) {
+                const randomThemeId = themeIds[Math.floor(Math.random() * themeIds.length)];
+                const rawSets = await apiFetchPaginated(`/sets/?theme_id=${randomThemeId}&page_size=100`);
+                if (rawSets.length > 0) {
+                    randomItem = rawSets[Math.floor(Math.random() * rawSets.length)];
+                    SET_MAP[randomItem.set_num] = randomItem;
+                    openModalForSet(randomItem.set_num);
+                    state.isLoading = false;
+                    updateUI();
+                    return;
+                }
+                attempts++;
+            }
+            throw new Error("Не удалось найти случайный набор.");
+        } else { // minifigs
+            const rawMinifigs = await apiFetchPaginated(`/minifigs/?page_size=200`);
+            if (rawMinifigs.length === 0) throw new Error("Не удалось загрузить минифигурки.");
+            randomItem = rawMinifigs[Math.floor(Math.random() * rawMinifigs.length)];
+            MINIFIG_MAP[randomItem.set_num] = randomItem;
+            openModalForMinifig(randomItem.set_num);
         }
-        const randomCategory = flatCategories[Math.floor(Math.random() * flatCategories.length)];
-        
-        const rawParts = await apiFetchPaginated(`/parts/?part_cat_id=${randomCategory.id}&page_size=100`);
-        if (rawParts.length === 0) {
-            handleFeelingLucky(); // Try again if category is empty
-            return;
-        }
-
-        const parts = rawParts.map(processPartData).filter(Boolean);
-        const randomPart = parts[Math.floor(Math.random() * parts.length)];
-
-        if (!randomPart) {
-          throw new Error("Не удалось выбрать случайную деталь.");
-        }
-        
-        const groups = groupParts(parts);
-        const groupId = getGroupId(randomPart.part_num);
-        const variations = groups[groupId] || [randomPart];
-        
-        openModalForPart(randomPart.id, groupId, variations);
-
       } catch (error) {
         console.error("Feeling lucky failed:", error);
-        state.apiError = `Не удалось совершить чудо: ${error.message}`;
-      } finally {
-        state.isLoading = false;
-        updateUI();
-      }
-    }
-
-    async function handleFeelingLuckyForSets() {
-      state.isLoading = true;
-      state.apiError = null;
-      state.isGridStale = true;
-      updateUI();
-      try {
-        const themeIds = Object.keys(THEME_MAP);
-        if (themeIds.length === 0) throw new Error("Темы еще не загружены.");
-        
-        let attempts = 0;
-        while(attempts < 10) { // Safety break to prevent infinite loops
-            const randomThemeId = themeIds[Math.floor(Math.random() * themeIds.length)];
-            const rawSets = await apiFetchPaginated(`/sets/?theme_id=${randomThemeId}&page_size=100`);
-            
-            if (rawSets.length > 0) {
-                const randomSet = rawSets[Math.floor(Math.random() * rawSets.length)];
-                SET_MAP[randomSet.set_num] = randomSet;
-                openModalForSet(randomSet.set_num);
-                state.isLoading = false;
-                updateUI();
-                return;
-            }
-            attempts++;
-        }
-        throw new Error("Не удалось найти случайный набор после нескольких попыток.");
-
-      } catch (error) {
-        console.error("Feeling lucky for sets failed:", error);
-        state.apiError = `Не удалось совершить чудо: ${error.message}`;
-      } finally {
-        state.isLoading = false;
-        updateUI();
-      }
-    }
-
-    async function handleFeelingLuckyForMinifigs() {
-      state.isLoading = true;
-      state.apiError = null;
-      state.isGridStale = true;
-      updateUI();
-      try {
-        const rawMinifigs = await apiFetchPaginated(`/minifigs/?page_size=200`);
-        if (rawMinifigs.length === 0) {
-            throw new Error("Не удалось загрузить случайные минифигурки.");
-        }
-        const randomMinifig = rawMinifigs[Math.floor(Math.random() * rawMinifigs.length)];
-        MINIFIG_MAP[randomMinifig.set_num] = randomMinifig;
-        openModalForMinifig(randomMinifig.set_num);
-      } catch (error) {
-        console.error("Feeling lucky for minifigs failed:", error);
         state.apiError = `Не удалось совершить чудо: ${error.message}`;
       } finally {
         state.isLoading = false;
@@ -1232,6 +1196,33 @@
         return 'цветов';
     }
 
+    function parseCsvLine(line) {
+        const results = [];
+        let current = '';
+        let inQuotes = false;
+        const quoteChar = '"';
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === quoteChar) {
+                if (inQuotes && line[i+1] === quoteChar) {
+                    current += quoteChar;
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (char === ',' && !inQuotes) {
+                results.push(current);
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        results.push(current);
+        return results.map(r => r.trim());
+    }
+
     // --- RENDER FUNCTIONS ---
     const CATEGORY_ICONS = {
         'Bricks': BrickIcon,
@@ -1264,7 +1255,7 @@
     }
 
     function renderSidebar() {
-      const { uniqueModelsCount, totalPartsCount } = Object.keys(state.collection).reduce((acc, partId) => {
+      const { totalPartsCount, uniqueModelsCount } = Object.keys(state.collection).reduce((acc, partId) => {
         const colors = state.collection[partId] || {};
         const colorKeys = Object.keys(colors);
         if (colorKeys.length > 0) {
@@ -1282,24 +1273,29 @@
 
       const viewButtonStyle = (view) => `flex items-center w-full p-3 text-base font-semibold rounded-lg transition-colors duration-150 ${state.currentView === view ? 'bg-blue-600 text-white' : 'text-gray-400 hover:bg-gray-700 hover:text-white'}`;
       
-      const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-      const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
-      const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection' || state.currentView === 'minifigs_collection';
+      const subViewButtonStyle = (subView) => `relative flex-1 py-2 px-1 rounded-lg text-sm font-semibold transition-colors duration-200 flex flex-col items-center justify-center gap-1 ${state.activeSubView === subView ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
+
+      const badge = (subView, count) => {
+            if (count === 0 || state.currentView !== 'collection') return '';
+            const style = `absolute top-1 right-1 text-xs px-1.5 py-0.5 rounded-full font-bold ${state.activeSubView === subView ? 'bg-blue-200 text-blue-800' : 'bg-gray-600 text-gray-200'}`;
+            return `<span class="${style}">${count}</span>`;
+      };
+
 
       let mainListContent = '';
       let mainListTitle = '';
       
-      if (isSetView) {
+      if (state.activeSubView === 'sets') {
         mainListTitle = 'Темы';
         let themesToRender = state.themeTree;
         let allItemsButtonHtml = '';
         
-        if (state.currentView === 'set_collection') {
+        if (state.currentView === 'collection') {
             const isSelected = state.selectedSetCollectionThemeId === null;
             const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
             allItemsButtonHtml = `
               <li>
-                <button data-action="show-all-collection-sets" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
+                <button data-action="show-all-collection-items" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
                   <span class="truncate">Все наборы</span>
                 </button>
               </li>
@@ -1341,7 +1337,7 @@
             return nodes.map(theme => {
                 if(!theme) return '';
                 const isExpanded = state.expandedThemes.has(theme.id);
-                const isSelected = (state.currentView === 'sets' && state.selectedThemeId === theme.id) || (state.currentView === 'set_collection' && state.selectedSetCollectionThemeId === theme.id);
+                const isSelected = (state.currentView === 'catalog' && state.selectedThemeId === theme.id) || (state.currentView === 'collection' && state.selectedSetCollectionThemeId === theme.id);
                 const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
                 const childrenHtml = Array.isArray(theme.children) && theme.children.length > 0 ? `<ul class="space-y-1 ${isExpanded ? '' : 'hidden'}">${renderThemeTree(theme.children, depth + 1)}</ul>` : '';
                 
@@ -1372,10 +1368,10 @@
         } else {
             mainListContent = allItemsButtonHtml + renderThemeTree(themesToRender);
         }
-      } else if (isMinifigView) {
+      } else if (state.activeSubView === 'minifigs') {
         mainListTitle = 'Минифигурки';
-        mainListContent = `<li class="text-gray-400 text-sm p-2">Используйте поиск для навигации.</li>`;
-      } else { // Parts views
+        mainListContent = `<li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог.</li>`;
+      } else { // 'parts'
         mainListTitle = 'Категории';
         let categoriesToRender = state.categoryTree;
         let allItemsButtonHtml = '';
@@ -1385,7 +1381,7 @@
             const buttonStyle = isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white';
             allItemsButtonHtml = `
               <li>
-                <button data-action="show-all-collection" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
+                <button data-action="show-all-collection-items" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${buttonStyle}">
                   <span class="truncate">Все детали</span>
                 </button>
               </li>
@@ -1411,7 +1407,6 @@
         } else if (state.currentView === 'collection' && Object.keys(state.collection).length > 0 && categoriesToRender.length === 0) {
             mainListContent = `<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>`;
         } else {
-             // Sort children within each group by favorite status then name
              categoriesToRender.forEach(group => {
                 if (Array.isArray(group.children)) {
                     group.children.sort((a, b) => {
@@ -1427,15 +1422,10 @@
              mainListContent = allItemsButtonHtml + categoriesToRender.map(group => {
               const isExpanded = state.expandedCategories.has(group.name);
               const childList = group.children.map(cat => {
-                   const isSelected = state.currentView === 'catalog' 
-                      ? state.selectedCategoryId === cat.id
-                      : state.selectedCollectionCategoryId === cat.id;
+                   const isSelected = (state.currentView === 'catalog' && state.selectedCategoryId === cat.id) || (state.currentView === 'collection' && state.selectedCollectionCategoryId === cat.id);
                    const buttonStyle = isSelected ? 'bg-blue-600/80 text-white' : 'text-gray-400 hover:bg-gray-700/50 hover:text-gray-200';
-                   
                    const isFav = state.favoriteCategoryIds.has(cat.id);
-                   const heartClasses = isFav
-                       ? 'text-red-400 opacity-100'
-                       : 'text-gray-500 opacity-0 group-hover:opacity-100';
+                   const heartClasses = isFav ? 'text-red-400 opacity-100' : 'text-gray-500 opacity-0 group-hover:opacity-100';
 
                    return `
                       <li>
@@ -1478,13 +1468,27 @@
           </button>
         </div>
 
-        <div class="space-y-1 mb-4 flex-shrink-0">
-            <button data-view="catalog" class="${viewButtonStyle('catalog')}">${CatalogIcon('w-5 h-5 mr-3')}<span>Каталог деталей</span></button>
-            <button data-view="collection" class="${viewButtonStyle('collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция деталей</span>${totalPartsCount > 0 ? `<span class="ml-auto text-xs font-medium bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full">${totalPartsCount}</span>`: ''}</button>
-            <button data-view="sets" class="${viewButtonStyle('sets')}">${SetsIcon('w-5 h-5 mr-3')}<span>Каталог наборов</span></button>
-            <button data-view="set_collection" class="${viewButtonStyle('set_collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция наборов</span>${totalSetsCount > 0 ? `<span class="ml-auto text-xs font-medium bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full">${totalSetsCount}</span>`: ''}</button>
-            <button data-view="minifigs_catalog" class="${viewButtonStyle('minifigs_catalog')}">${MinifigIcon('w-5 h-5 mr-3')}<span>Каталог минифигурок</span></button>
-            <button data-view="minifigs_collection" class="${viewButtonStyle('minifigs_collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция минифигурок</span>${totalMinifigsCount > 0 ? `<span class="ml-auto text-xs font-medium bg-gray-600 text-gray-200 px-2 py-0.5 rounded-full">${totalMinifigsCount}</span>`: ''}</button>
+        <div class="space-y-2 mb-4 flex-shrink-0">
+            <button data-view="catalog" class="${viewButtonStyle('catalog')}">${CatalogIcon('w-5 h-5 mr-3')}<span>Каталог</span></button>
+            <button data-view="collection" class="${viewButtonStyle('collection')}">${CollectionIcon('w-5 h-5 mr-3')}<span>Коллекция</span></button>
+        </div>
+
+        <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1">
+            <button data-sub-view="parts" class="${subViewButtonStyle('parts')}">
+                ${BrickIcon('w-5 h-5')}
+                <span class="mt-1">Детали</span>
+                ${badge('parts', totalPartsCount)}
+            </button>
+            <button data-sub-view="sets" class="${subViewButtonStyle('sets')}">
+                ${SetsIcon('w-5 h-5')}
+                <span class="mt-1">Наборы</span>
+                ${badge('sets', totalSetsCount)}
+            </button>
+            <button data-sub-view="minifigs" class="${subViewButtonStyle('minifigs')}">
+                ${MinifigIcon('w-5 h-5')}
+                <span class="mt-1">Фигурки</span>
+                ${badge('minifigs', totalMinifigsCount)}
+            </button>
         </div>
         
         <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar">
@@ -1494,27 +1498,28 @@
           </nav>
         </div>
         
-        ${isCollectionView ? `<div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
-            <h2 class="text-lg font-semibold text-white mb-3">Сводка коллекции</h2>
-            ${totalPartsCount === 0 && uniqueSetsCount === 0 && uniqueMinifigsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
-              <div class="space-y-1">
-                  <div class="flex justify-between items-center text-sm text-gray-400">
-                      <span>${BrickIcon('inline-block w-4 h-4 mr-1')} Детали</span>
-                      <span class="font-semibold text-white">${uniqueModelsCount} уник. / ${totalPartsCount} всего</span>
+        <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4 space-y-4">
+            ${state.currentView === 'collection' ? `
+            <div>
+                <h2 class="text-lg font-semibold text-white mb-3">Сводка коллекции</h2>
+                ${totalPartsCount === 0 && uniqueSetsCount === 0 && uniqueMinifigsCount === 0 ? '<p class="text-gray-400 text-sm">Ваша коллекция пуста.</p>' : `
+                  <div class="space-y-1">
+                      <div class="flex justify-between items-center text-sm text-gray-400">
+                          <span>${BrickIcon('inline-block w-4 h-4 mr-1')} Детали</span>
+                          <span class="font-semibold text-white">${uniqueModelsCount} уник. / ${totalPartsCount} всего</span>
+                      </div>
+                      <div class="flex justify-between items-center text-sm text-gray-400">
+                          <span>${SetsIcon('inline-block w-4 h-4 mr-1')} Наборы</span>
+                          <span class="font-semibold text-white">${uniqueSetsCount} уник. / ${totalSetsCount} всего</span>
+                      </div>
+                       <div class="flex justify-between items-center text-sm text-gray-400">
+                          <span>${MinifigIcon('inline-block w-4 h-4 mr-1')} Минифигурки</span>
+                          <span class="font-semibold text-white">${uniqueMinifigsCount} уник. / ${totalMinifigsCount} всего</span>
+                      </div>
                   </div>
-                  <div class="flex justify-between items-center text-sm text-gray-400">
-                      <span>${SetsIcon('inline-block w-4 h-4 mr-1')} Наборы</span>
-                      <span class="font-semibold text-white">${uniqueSetsCount} уник. / ${totalSetsCount} всего</span>
-                  </div>
-                   <div class="flex justify-between items-center text-sm text-gray-400">
-                      <span>${MinifigIcon('inline-block w-4 h-4 mr-1')} Минифигурки</span>
-                      <span class="font-semibold text-white">${uniqueMinifigsCount} уник. / ${totalMinifigsCount} всего</span>
-                  </div>
-              </div>
-            `}
-        </div>` : ''}
-
-        <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
+                `}
+            </div>
+            ` : ''}
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
                 ${SettingsIcon('w-5 h-5 mr-2')} Настройки
             </button>
@@ -1523,12 +1528,10 @@
     }
 
     function renderHeader() {
-        const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
-        
+        const { activeSubView } = state;
         let placeholder = "Поиск по ID или названию...";
-        if (isSetView) placeholder = "Поиск по наборам...";
-        if (isMinifigView) placeholder = "Поиск по минифигуркам...";
+        if (activeSubView === 'sets') placeholder = "Поиск по наборам...";
+        if (activeSubView === 'minifigs') placeholder = "Поиск по минифигуркам...";
 
         headerContainer.innerHTML = `
             <div class="flex justify-between items-center gap-4">
@@ -1536,7 +1539,7 @@
                     <button id="sidebar-toggle" class="lg:hidden text-gray-300 hover:text-white mr-4 -ml-1 p-1">
                         ${MenuIcon('w-6 h-6')}
                     </button>
-                    <h1 class="text-xl font-bold text-white hidden sm:block">LEGO® Part & Set Catalog</h1>
+                    <h1 class="text-xl font-bold text-white hidden sm:block">LEGO® Catalog</h1>
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
@@ -1602,19 +1605,19 @@
 
     function renderPartCard(part, color, quantity, shouldAnimate, index = 0) {
         if (!part) return '';
-        const inCollection = state.currentView === 'collection';
+        const isCollectionView = state.currentView === 'collection';
         const groupId = getGroupId(part.id);
         const animationClass = shouldAnimate ? 'animate-in' : '';
         const animationDelay = shouldAnimate ? `animation-delay: ${Math.min(index * 40, 1500)}ms;` : '';
         
         let quantityIndicator = '';
         if (quantity > 0) {
-            const positionClass = inCollection ? 'left-3' : 'right-3';
+            const positionClass = isCollectionView ? 'left-3' : 'right-3';
             quantityIndicator = `<div class="absolute top-3 ${positionClass} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${quantity}</div>`;
         }
         
         let imageUrl = part.rebrickable_img_url;
-        if (inCollection && color) {
+        if (isCollectionView && color) {
             const colorSpecificUrl = PART_MAP[part.id]?.colorImages?.[color.id];
             if (colorSpecificUrl) {
                 imageUrl = colorSpecificUrl;
@@ -1622,8 +1625,8 @@
         }
 
         return `
-            <div data-group-id="${groupId}" data-part-id="${part.id}" ${inCollection ? `data-color-id="${color.id}"` : ''} style="${animationDelay}" class="part-card ${animationClass} relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
-                ${inCollection ? `
+            <div data-group-id="${groupId}" data-part-id="${part.id}" ${isCollectionView ? `data-color-id="${color.id}"` : ''} style="${animationDelay}" class="part-card ${animationClass} relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
+                ${isCollectionView ? `
                     <button aria-label="Удалить ${part.name} (${color.name})" data-action="delete-from-collection" data-part-id="${part.id}" data-color-id="${color.id}" class="absolute top-3 right-3 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md transition-colors hover:bg-red-700 opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
                         ${TrashIcon('w-4 h-4')}
                     </button>
@@ -1637,7 +1640,7 @@
                 <div class="p-4 space-y-1">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${part.name}</h3>
                     <p class="text-xs text-gray-400 pointer-events-none">ID: ${part.id}</p>
-                    ${inCollection ? `
+                    ${isCollectionView ? `
                         <div class="flex items-center pt-1 pointer-events-none">
                             <span class="w-4 h-4 rounded-full border border-gray-500 ${color.isTransparent ? 'checkerboard' : ''}" style="background-color: ${color.hex};"></span>
                             <span class="ml-2 text-xs text-gray-300 truncate">${color.name}</span>
@@ -1653,9 +1656,7 @@
         let isDefaultSort = false;
         let showClearAll = false;
         
-        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
-
-        if (state.currentView === 'sets' || state.currentView === 'set_collection') {
+        if (state.activeSubView === 'sets') {
             const { minYear, maxYear, minParts, maxParts } = state.setFilters;
             const setFilterTags = [
                 minYear && `Мин. год: ${minYear}`,
@@ -1677,7 +1678,7 @@
 
             tags = [sortTag, setFilterTags].filter(Boolean).join('');
             showClearAll = !isDefaultSort || minYear || maxYear || minParts || maxParts;
-        } else if (isMinifigView) {
+        } else if (state.activeSubView === 'minifigs') {
             const sortMap = { 'name_asc': 'Алфавит (А-Я)', 'name_desc': 'Алфавит (Я-А)', 'num_parts_desc': 'Кол-во деталей (убыв.)', 'num_parts_asc': 'Кол-во деталей (возр.)' };
             isDefaultSort = state.searchQuery ? state.sortBy === 'relevance' : state.sortBy === 'name_asc';
             const sortTag = !isDefaultSort && sortMap[state.sortBy] ? `
@@ -1716,7 +1717,7 @@
             ` : '';
             
             tags = [sortTag, colorTags, collectionTag].filter(Boolean).join('');
-            showClearAll = !isDefaultSort || colorIds.length > 0 || inCollectionOnly;
+            showClearAll = !isDefaultSort || colorIds.length > 0 || (inCollectionOnly && state.currentView === 'catalog');
         }
 
         if (!showClearAll) return '';
@@ -1733,220 +1734,56 @@
 
     function renderMainContent() {
         let gridContent = '';
-        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
         
         if (state.isLoading) {
             gridContent = `<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>`;
         } else if (state.apiError) {
             gridContent = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${state.apiError}</p></div>`;
-        } else if (state.currentView === 'minifigs_catalog') {
-            const minifigsToDisplay = state.searchQuery ? state.searchMinifigResults : state.minifigResults;
-            let emptyMessage = 'Используйте поиск для навигации по минифигуркам.';
-            if (state.searchQuery) emptyMessage = 'По вашему запросу ничего не найдено.';
+        } else if (state.currentView === 'catalog') {
+            let itemsToDisplay;
+            let renderFn;
+            let emptyMessage;
+            let gridClass = 'grid-cols-[repeat(auto-fill,minmax(150px,1fr))]';
             
-            if (!minifigsToDisplay || minifigsToDisplay.length === 0) {
-                 gridContent = `
-                    <div class="flex flex-col items-center justify-center h-full p-4 text-center">
-                        <p class="text-gray-400 max-w-sm mb-6">${emptyMessage}</p>
-                        <button id="feeling-lucky-minifig-button" class="flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
-                            ${DiceIcon('w-6 h-6')} Мне повезёт!
-                        </button>
-                    </div>`;
-            } else {
-                const minifigsToRender = minifigsToDisplay.slice(0, state.itemsToDisplay);
-                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
-                    ${minifigsToRender.map((fig, index) => renderMinifigCard(fig, state.isGridStale, index)).join('')}
-                </div>`;
-                if(minifigsToDisplay.length > state.itemsToDisplay) {
-                    gridContent += `<div class="p-4 text-center">
-                        <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
-                            Загрузить ещё
-                        </button>
-                    </div>`;
+            if (state.activeSubView === 'parts') {
+                let groupsToShow = {};
+                emptyMessage = 'Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском.';
+                if (state.filters.colorIds && state.filters.colorIds.length > 1) {
+                    emptyMessage = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".';
+                } else if (state.searchResultGroups !== null) {
+                    groupsToShow = state.searchResultGroups;
+                    emptyMessage = 'По вашему запросу ничего не найдено.';
+                } else if (state.selectedCategoryId !== null) {
+                    groupsToShow = state.catalogGroups;
+                    emptyMessage = 'В этой категории нет деталей.';
                 }
-            }
-        } else if (state.currentView === 'minifigs_collection') {
-            let minifigs = Object.keys(state.minifigCollection).map(figNum => MINIFIG_MAP[figNum]).filter(Boolean);
-            
-            const query = state.searchQuery.trim().toLowerCase();
-            if (query) {
-                minifigs = minifigs.filter(mf => mf.name.toLowerCase().includes(query) || mf.set_num.toLowerCase().includes(query));
-            }
-            
-            switch(state.sortBy) {
-                case 'name_asc': minifigs.sort((a, b) => a.name.localeCompare(b.name)); break;
-                case 'name_desc': minifigs.sort((a, b) => b.name.localeCompare(a.name)); break;
-                case 'num_parts_desc': minifigs.sort((a, b) => b.num_parts - a.num_parts); break;
-                case 'num_parts_asc': minifigs.sort((a, b) => a.num_parts - b.num_parts); break;
-            }
-
-            if (minifigs.length === 0) {
-                let emptyMsg = 'В вашей коллекции нет минифигурок';
-                if (state.searchQuery) emptyMsg += ', соответствующих фильтрам';
-                emptyMsg += '.';
-                gridContent = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
-            } else {
-                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
-                    ${minifigs.map((fig, index) => renderMinifigCard(fig, state.isGridStale, index)).join('')}
-                </div>`;
-            }
-        } else if (state.currentView === 'sets') {
-            const setsToDisplay = state.searchQuery ? state.searchSetResults : state.setResults;
-            let emptyMessage = 'Выберите тему для просмотра наборов или воспользуйтесь поиском.';
-            if (state.searchQuery) emptyMessage = 'По вашему запросу ничего не найдено.';
-            else if (state.selectedThemeId) emptyMessage = 'В этой теме нет наборов.';
-
-            if (!setsToDisplay || setsToDisplay.length === 0) {
-                 gridContent = `
-                    <div class="flex flex-col items-center justify-center h-full p-4 text-center">
-                        <p class="text-gray-400 max-w-sm mb-6">${emptyMessage}</p>
-                        <button id="feeling-lucky-set-button" class="flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
-                            ${DiceIcon('w-6 h-6')} Мне повезёт!
-                        </button>
-                    </div>`;
-            } else {
-                const setsToRender = setsToDisplay.slice(0, state.itemsToDisplay);
-                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
-                    ${setsToRender.map((set, index) => renderSetCard(set, state.isGridStale, index)).join('')}
-                </div>`;
-                if(setsToDisplay.length > state.itemsToDisplay) {
-                    gridContent += `<div class="p-4 text-center">
-                        <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
-                            Загрузить ещё
-                        </button>
-                    </div>`;
+                let allItems = Object.values(groupsToShow).flat();
+                switch(state.sortBy) {
+                    case 'alpha_asc': allItems.sort((a, b) => a.name.localeCompare(b.name)); break;
+                    case 'alpha_desc': allItems.sort((a, b) => b.name.localeCompare(a.name)); break;
+                    case 'popularity': allItems.sort((a, b) => b.num_sets - a.num_sets); break;
                 }
-            }
-        } else if (state.currentView === 'set_collection') {
-            let sets = Object.keys(state.setCollection).map(setNum => SET_MAP[setNum]).filter(Boolean);
-            
-            if (state.selectedSetCollectionThemeId) {
-                const getChildThemes = (themeId) => {
-                    const theme = THEME_MAP[themeId];
-                    if (!theme) return [];
-                    let ids = [theme.id];
-                    if(Array.isArray(theme.children)) {
-                        theme.children.forEach(child => {
-                            ids = ids.concat(getChildThemes(child.id));
-                        });
-                    }
-                    return ids;
-                }
-                const themeIdsToMatch = getChildThemes(state.selectedSetCollectionThemeId);
-                sets = sets.filter(set => themeIdsToMatch.includes(set.theme_id));
-            }
-
-            const query = state.searchQuery.trim().toLowerCase();
-            if (query) {
-                sets = sets.filter(s => s.name.toLowerCase().includes(query) || s.set_num.toLowerCase().includes(query));
-            }
-            
-            switch(state.sortBy) {
-                case 'alpha_asc': sets.sort((a, b) => a.name.localeCompare(b.name)); break;
-                case 'alpha_desc': sets.sort((a, b) => b.name.localeCompare(a.name)); break;
-                case 'year_asc': sets.sort((a, b) => a.year - b.year); break;
-                case 'year_desc': sets.sort((a, b) => b.year - a.year); break;
-                case 'parts_asc': sets.sort((a, b) => a.num_parts - b.num_parts); break;
-                case 'parts_desc': sets.sort((a, b) => b.num_parts - a.num_parts); break;
-            }
-
-            if (sets.length === 0) {
-                let emptyMsg = 'В вашей коллекции нет наборов';
-                if (state.searchQuery || state.selectedSetCollectionThemeId) emptyMsg += ', соответствующих фильтрам';
-                emptyMsg += '.';
-                gridContent = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
-            } else {
-                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
-                    ${sets.map((set, index) => renderSetCard(set, state.isGridStale, index)).join('')}
-                </div>`;
-            }
-
-        } else if (state.currentView === 'collection') {
-            let items = [];
-            for (const partId in state.collection) {
-              for (const colorId in state.collection[partId]) {
-                const part = PART_MAP[partId];
-                const color = COLOR_MAP[colorId];
-                const quantity = state.collection[partId][colorId];
-                if (part && color && quantity > 0) {
-                  items.push({ part, color, quantity });
-                }
-              }
-            }
-            
-            if (state.selectedCollectionCategoryId) {
-                items = items.filter(({ part }) => PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId);
-            }
-            if (state.filters.colorIds && state.filters.colorIds.length > 0) {
-                items = items.filter(item => state.filters.colorIds.includes(item.color.id));
-            }
-
-            const query = state.searchQuery.trim().toLowerCase();
-            if (query) {
-                const getClientRelevanceScore = (item, q) => {
-                    const lowerName = item.part.name.toLowerCase();
-                    const partId = item.part.id.toLowerCase();
-                    if (partId === q) return 100;
-                    if (lowerName === q) return 90;
-                    if (partId.startsWith(q)) return 80;
-                    if (lowerName.startsWith(q)) return 70;
-                    if (partId.includes(q)) return 60;
-                    if (lowerName.includes(q)) return 50;
-                    return 0;
+                groupsToShow = groupParts(allItems);
+                const groupKeys = groupsToShow ? Object.keys(groupsToShow) : [];
+                itemsToDisplay = groupKeys.map(key => groupsToShow[key][0]);
+                renderFn = (item) => {
+                    const totalQuantity = Object.values(state.collection[item.id] || {}).reduce((sum, q) => sum + q, 0);
+                    return renderPartCard(item, null, totalQuantity, state.isGridStale);
                 };
+                gridClass = 'grid-cols-[repeat(auto-fill,minmax(130px,1fr))]';
 
-                items = items
-                    .map(item => ({ item, score: getClientRelevanceScore(item, query) }))
-                    .filter(i => i.score > 0)
-                    .sort((a, b) => b.score - a.score)
-                    .map(i => i.item);
+            } else if (state.activeSubView === 'sets') {
+                itemsToDisplay = state.searchQuery ? state.searchSetResults : state.setResults;
+                renderFn = (item) => renderSetCard(item, state.isGridStale);
+                emptyMessage = state.searchQuery ? 'По вашему запросу ничего не найдено.' : 'Выберите тему для просмотра наборов.';
+            } else { // minifigs
+                itemsToDisplay = state.searchQuery ? state.searchMinifigResults : state.minifigResults;
+                renderFn = (item) => renderMinifigCard(item, state.isGridStale);
+                emptyMessage = state.searchQuery ? 'По вашему запросу ничего не найдено.' : 'В каталоге нет минифигурок. Попробуйте поиск.';
             }
 
-            switch(state.sortBy) {
-                case 'alpha_asc': items.sort((a, b) => a.part.name.localeCompare(b.part.name)); break;
-                case 'alpha_desc': items.sort((a, b) => b.part.name.localeCompare(a.part.name)); break;
-                case 'popularity': items.sort((a, b) => (PART_MAP[b.part.id]?.num_sets || 0) - (PART_MAP[a.part.id]?.num_sets || 0)); break;
-            }
-
-            if (items.length === 0) {
-                let emptyMsg = 'В вашей коллекции нет деталей';
-                if (state.searchQuery || (state.filters.colorIds && state.filters.colorIds.length > 0) || state.selectedCollectionCategoryId) emptyMsg += ', соответствующих фильтрам';
-                emptyMsg += '.';
-                gridContent = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
-            } else {
-                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
-                    ${items.map((item, index) => renderPartCard(item.part, item.color, item.quantity, state.isGridStale, index)).join('')}
-                </div>`;
-            }
-
-        } else { // Catalog view
-            let groupsToShow = {};
-            let emptyMessage = 'Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском.';
-
-            if (state.filters.colorIds && state.filters.colorIds.length > 1) {
-                groupsToShow = {};
-                emptyMessage = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".';
-            } else if (state.searchResultGroups !== null) {
-                groupsToShow = state.searchResultGroups;
-                emptyMessage = 'По вашему запросу ничего не найдено.';
-            } else if (state.selectedCategoryId !== null) {
-                groupsToShow = state.catalogGroups;
-                emptyMessage = 'В этой категории нет деталей.';
-            }
-            
-            let allItems = Object.values(groupsToShow).flat();
-            
-            switch(state.sortBy) {
-                case 'alpha_asc': allItems.sort((a, b) => a.name.localeCompare(b.name)); break;
-                case 'alpha_desc': allItems.sort((a, b) => b.name.localeCompare(a.name)); break;
-                case 'popularity': allItems.sort((a, b) => b.num_sets - a.num_sets); break;
-            }
-            groupsToShow = groupParts(allItems);
-
-            const groupKeys = groupsToShow ? Object.keys(groupsToShow) : [];
-
-            if (groupKeys.length === 0) {
-                gridContent = `
+            if (!itemsToDisplay || itemsToDisplay.length === 0) {
+                 gridContent = `
                     <div class="flex flex-col items-center justify-center h-full p-4 text-center">
                         <p class="text-gray-400 max-w-sm mb-6">${emptyMessage}</p>
                         <button id="feeling-lucky-button" class="flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
@@ -1954,29 +1791,115 @@
                         </button>
                     </div>`;
             } else {
-                const groupsToRender = groupKeys.slice(0, state.itemsToDisplay);
-
-                gridContent = `<div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4 p-4">
-                    ${groupsToRender.map((key, index) => {
-                        const representativePart = groupsToShow[key][0];
-                        const totalQuantity = Object.values(state.collection[representativePart.id] || {}).reduce((sum, q) => sum + q, 0);
-                        return renderPartCard(representativePart, null, totalQuantity, state.isGridStale, index);
+                const itemsToRender = itemsToDisplay.slice(0, state.itemsToDisplay);
+                gridContent = `<div class="grid ${gridClass} gap-4 p-4">
+                    ${itemsToRender.map((item, index) => {
+                        const card = renderFn(item);
+                        // A bit of a hack to add index to the animation
+                        return card.replace('class="part-card ', `style="animation-delay: ${Math.min(index * 40, 1500)}ms;" class="part-card `)
+                                   .replace('class="set-card ', `style="animation-delay: ${Math.min(index * 40, 1500)}ms;" class="set-card `)
+                                   .replace('class="minifig-card ', `style="animation-delay: ${Math.min(index * 40, 1500)}ms;" class="minifig-card `);
                     }).join('')}
                 </div>`;
-                
-                if (groupKeys.length > state.itemsToDisplay) {
-                    gridContent += `
-                        <div class="p-4 text-center">
-                            <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
-                                Загрузить ещё
-                            </button>
-                        </div>
-                    `;
+                if(itemsToDisplay.length > state.itemsToDisplay) {
+                    gridContent += `<div class="p-4 text-center">
+                        <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                            Загрузить ещё
+                        </button>
+                    </div>`;
+                }
+            }
+        } else { // Collection View
+            let collectionItems = [];
+            let renderFn;
+            let emptyMsg = `В вашей коллекции нет ${state.activeSubView === 'parts' ? 'деталей' : state.activeSubView === 'sets' ? 'наборов' : 'минифигурок'}`;
+            const query = state.searchQuery.trim().toLowerCase();
+            let gridClass = 'grid-cols-[repeat(auto-fill,minmax(150px,1fr))]';
+
+            if (state.activeSubView === 'parts') {
+                for (const partId in state.collection) {
+                  for (const colorId in state.collection[partId]) {
+                    const part = PART_MAP[partId];
+                    const color = COLOR_MAP[colorId];
+                    const quantity = state.collection[partId][colorId];
+                    if (part && color && quantity > 0) {
+                      collectionItems.push({ part, color, quantity });
+                    }
+                  }
+                }
+                if (state.selectedCollectionCategoryId) {
+                    collectionItems = collectionItems.filter(({ part }) => PART_MAP[part.id]?.categoryId === state.selectedCollectionCategoryId);
+                }
+                if (state.filters.colorIds && state.filters.colorIds.length > 0) {
+                    collectionItems = collectionItems.filter(item => state.filters.colorIds.includes(item.color.id));
+                }
+                if (query) {
+                    collectionItems = collectionItems.filter(({part}) => part.name.toLowerCase().includes(query) || part.id.toLowerCase().includes(query));
+                }
+                switch(state.sortBy) {
+                    case 'alpha_asc': collectionItems.sort((a, b) => a.part.name.localeCompare(b.part.name)); break;
+                    case 'alpha_desc': collectionItems.sort((a, b) => b.part.name.localeCompare(a.part.name)); break;
+                    case 'popularity': collectionItems.sort((a, b) => (PART_MAP[b.part.id]?.num_sets || 0) - (PART_MAP[a.part.id]?.num_sets || 0)); break;
+                }
+                renderFn = (item, anim, i) => renderPartCard(item.part, item.color, item.quantity, anim, i);
+                gridClass = 'grid-cols-[repeat(auto-fill,minmax(130px,1fr))]';
+            } else if (state.activeSubView === 'sets') {
+                collectionItems = Object.keys(state.setCollection).map(setNum => SET_MAP[setNum]).filter(Boolean);
+                if (state.selectedSetCollectionThemeId) {
+                    const getChildThemes = (themeId) => {
+                        const theme = THEME_MAP[themeId];
+                        if (!theme) return [];
+                        let ids = [theme.id];
+                        if(Array.isArray(theme.children)) { theme.children.forEach(child => { ids = ids.concat(getChildThemes(child.id)); }); }
+                        return ids;
+                    }
+                    const themeIdsToMatch = getChildThemes(state.selectedSetCollectionThemeId);
+                    collectionItems = collectionItems.filter(set => themeIdsToMatch.includes(set.theme_id));
+                }
+                if (query) { collectionItems = collectionItems.filter(s => s.name.toLowerCase().includes(query) || s.set_num.toLowerCase().includes(query)); }
+                switch(state.sortBy) {
+                    case 'alpha_asc': collectionItems.sort((a, b) => a.name.localeCompare(b.name)); break;
+                    case 'alpha_desc': collectionItems.sort((a, b) => b.name.localeCompare(a.name)); break;
+                    case 'year_asc': collectionItems.sort((a, b) => a.year - b.year); break;
+                    case 'year_desc': collectionItems.sort((a, b) => b.year - a.year); break;
+                    case 'parts_asc': collectionItems.sort((a, b) => a.num_parts - b.num_parts); break;
+                    case 'parts_desc': collectionItems.sort((a, b) => b.num_parts - b.num_parts); break;
+                }
+                renderFn = (item, anim, i) => renderSetCard(item, anim, i);
+            } else { // minifigs
+                collectionItems = Object.keys(state.minifigCollection).map(figNum => MINIFIG_MAP[figNum]).filter(Boolean);
+                if (query) { collectionItems = collectionItems.filter(mf => mf.name.toLowerCase().includes(query) || mf.set_num.toLowerCase().includes(query)); }
+                switch(state.sortBy) {
+                    case 'name_asc': collectionItems.sort((a, b) => a.name.localeCompare(b.name)); break;
+                    case 'name_desc': collectionItems.sort((a, b) => b.name.localeCompare(a.name)); break;
+                    case 'num_parts_desc': collectionItems.sort((a, b) => b.num_parts - b.num_parts); break;
+                    case 'num_parts_asc': collectionItems.sort((a, b) => a.num_parts - b.num_parts); break;
+                }
+                renderFn = (item, anim, i) => renderMinifigCard(item, anim, i);
+            }
+
+            if (collectionItems.length === 0) {
+                if(query || (state.activeSubView === 'parts' && (state.filters.colorIds.length > 0 || state.selectedCollectionCategoryId)) || (state.activeSubView === 'sets' && state.selectedSetCollectionThemeId)) {
+                    emptyMsg += ', соответствующих фильтрам';
+                }
+                emptyMsg += '.';
+                gridContent = `<div class="flex items-center justify-center h-full p-4 text-center"><p class="text-gray-400">${emptyMsg}</p></div>`;
+            } else {
+                const itemsToRender = collectionItems.slice(0, state.itemsToDisplay);
+                gridContent = `<div class="grid ${gridClass} gap-4 p-4">
+                    ${itemsToRender.map((item, index) => renderFn(item, state.isGridStale, index)).join('')}
+                </div>`;
+                if (collectionItems.length > state.itemsToDisplay) {
+                    gridContent += `<div class="p-4 text-center">
+                        <button id="load-more-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
+                            Загрузить ещё
+                        </button>
+                    </div>`;
                 }
             }
         }
         mainContent.innerHTML = renderAppliedFilters() + gridContent;
-        state.isGridStale = false; // Animation flag is reset after render
+        state.isGridStale = false;
     }
     
     function renderSetCollectionControls() {
@@ -2067,7 +1990,7 @@
         const theme = THEME_MAP[set.theme_id];
         
         return `
-        <div class="flex-grow flex flex-col lg:flex-row overflow-y-auto no-scrollbar h-full">
+        <div class="flex flex-col lg:flex-row">
             <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
                  <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
                     <img ${getPartImageUrl(set.set_img_url)} alt="${set.name}" class="max-w-full max-h-full object-contain">
@@ -2079,6 +2002,7 @@
                     <div>
                         <h3 class="text-md font-semibold text-gray-300 mb-3">Детали</h3>
                         <div class="space-y-1 text-sm text-gray-400">
+                            <p><span class="font-semibold text-gray-300">Название:</span> ${set.name}</p>
                             <p>ID: ${set.set_num}</p>
                             <p>Год: ${set.year}</p>
                             <p>Кол-во деталей: ${set.num_parts}</p>
@@ -2108,7 +2032,7 @@
     }
 
     function renderSetModalInventoryView() {
-        return `<div id="set-inventory-container" class="p-4 flex flex-col overflow-y-auto no-scrollbar h-full">
+        return `<div id="set-inventory-container" class="p-4 flex flex-col">
             ${renderSetInventory()}
         </div>`;
     }
@@ -2158,7 +2082,7 @@
                     <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
                  </div>
             </div>
-            <div id="set-modal-view-container" class="flex-grow overflow-hidden" style="min-height: 0;">
+            <div id="set-modal-view-container" class="flex-grow overflow-y-auto no-scrollbar" style="min-height: 0;">
                 <!-- View content is injected by updateSetModalView -->
             </div>
         </div>
@@ -2466,9 +2390,8 @@
         requestAnimationFrame(() => filterModalContainer.classList.add('visible'));
 
         let content = '';
-        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
 
-        if (state.currentView === 'sets' || state.currentView === 'set_collection') {
+        if (state.activeSubView === 'sets') {
             const sortOptions = [
                 { id: 'relevance', name: 'Релевантность', desc: 'Поиск' },
                 { id: 'year_desc', name: 'Год (новые)', desc: 'По умолч.' },
@@ -2522,7 +2445,7 @@
                     </div>
                 </div>
             `;
-        } else if (isMinifigView) {
+        } else if (state.activeSubView === 'minifigs') {
             const sortOptions = [
                 { id: 'relevance', name: 'Релевантность', desc: 'Поиск' },
                 { id: 'name_asc', name: 'Алфавит (А-Я)', desc: 'По умолч.' },
@@ -2630,7 +2553,7 @@
         settingsModalContainer.classList.remove('modal-hidden');
         requestAnimationFrame(() => settingsModalContainer.classList.add('visible'));
 
-        const { confirmingDelete } = state.settingsModal;
+        const { confirmingDelete, statusMessage, statusType } = state.settingsModal;
         const totalPartsCount = Object.values(state.collection).reduce((sum, colors) => sum + Object.keys(colors).length, 0);
         const totalSetsCount = Object.keys(state.setCollection).length;
         const totalMinifigsCount = Object.keys(state.minifigCollection).length;
@@ -2671,6 +2594,7 @@
             deleteMinifigsSection = `<button data-action="delete-all-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${totalMinifigsCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${totalMinifigsCount === 0 ? 'disabled' : ''}>${TrashIcon('w-5 h-5 mr-2')} Удалить все минифигурки</button>`;
         }
 
+        const statusColorClass = statusType === 'error' ? 'bg-red-900/50 text-red-300' : (statusType === 'success' ? 'bg-green-900/50 text-green-300' : 'bg-blue-900/50 text-blue-300');
 
         settingsModalContainer.innerHTML = `
              <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${animationClass}">
@@ -2679,6 +2603,21 @@
                      <button id="settings-modal-close" class="text-gray-400 hover:text-white transition-colors">${XIcon('w-6 h-6')}</button>
                 </div>
                 <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
+                     <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">Импорт / Экспорт</h3>
+                         ${statusMessage ? `<div id="import-export-status" class="mb-2 p-2 text-sm rounded-md ${statusColorClass}">${statusMessage}</div>` : '<div id="import-export-status" class="mb-2"></div>'}
+                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                            <p class="text-xs text-gray-400">Сохраните вашу коллекцию в CSV файл или загрузите ее из ранее сохраненного файла. Импорт объединит данные с вашей текущей коллекцией.</p>
+                            <div class="flex gap-3">
+                                <button data-action="import-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-blue-600 hover:bg-blue-700 text-white">
+                                    ${UploadIcon('w-5 h-5 mr-2')} Импорт из CSV
+                                </button>
+                                <button data-action="export-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-green-600 hover:bg-green-700 text-white">
+                                    ${DownloadIcon('w-5 h-5 mr-2')} Экспорт в CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                      <div>
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Опасная зона</h3>
                         <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 space-y-3">
@@ -2695,16 +2634,12 @@
     function updateFilterModalUI() {
         if (!state.isFilterModalOpen || !filterModalContainer.innerHTML) return;
 
-        // This function is now mostly replaced by re-rendering, but kept for potential finer-grained updates later.
-        // For now, re-rendering based on tempFilters is simpler.
         const sortRadios = filterModalContainer.querySelectorAll('input[name="sort"]');
         sortRadios.forEach(radio => {
             radio.checked = tempFilters.sortBy === radio.value;
         });
 
-        if(state.currentView === 'sets' || state.currentView === 'set_collection' || state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection') {
-            // Update inputs if needed
-        } else {
+        if (state.activeSubView === 'parts') {
             const collectionToggle = filterModalContainer.querySelector('input[data-action="modal-toggle-collection"]');
             if (collectionToggle) collectionToggle.checked = tempFilters.filters.inCollectionOnly;
 
@@ -2889,6 +2824,149 @@
         }
     }
 
+    // --- CSV Handling ---
+    function exportCollectionToCSV() {
+        const headers = 'type,id,color_id,quantity,name,color_name';
+        let csvContent = headers + '\n';
+        
+        const escapeCsvField = (field) => {
+            if (field === null || field === undefined) return '';
+            const stringField = String(field);
+            if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+                return `"${stringField.replace(/"/g, '""')}"`;
+            }
+            return stringField;
+        };
+
+        // Parts
+        for (const partId in state.collection) {
+            for (const colorId in state.collection[partId]) {
+                const quantity = state.collection[partId][colorId];
+                const partName = PART_MAP[partId]?.name || '';
+                const colorName = COLOR_MAP[colorId]?.name || '';
+                csvContent += `part,${escapeCsvField(partId)},${escapeCsvField(colorId)},${quantity},${escapeCsvField(partName)},${escapeCsvField(colorName)}\n`;
+            }
+        }
+
+        // Sets
+        for (const setNum in state.setCollection) {
+            const quantity = state.setCollection[setNum].quantity;
+            const setName = SET_MAP[setNum]?.name || '';
+            csvContent += `set,${escapeCsvField(setNum)},,${quantity},${escapeCsvField(setName)},\n`;
+        }
+        
+        // Minifigs
+        for (const figNum in state.minifigCollection) {
+            const quantity = state.minifigCollection[figNum].quantity;
+            const figName = MINIFIG_MAP[figNum]?.name || '';
+            csvContent += `minifig,${escapeCsvField(figNum)},,${quantity},${escapeCsvField(figName)},\n`;
+        }
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        const date = new Date().toISOString().slice(0, 10);
+        link.setAttribute("download", `lego-collection-${date}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    async function importCollectionFromCSV(file) {
+        state.settingsModal.statusMessage = 'Импорт файла...';
+        state.settingsModal.statusType = 'info';
+        renderSettingsModal();
+
+        const showStatus = (message, type) => {
+             state.settingsModal.statusMessage = message;
+             state.settingsModal.statusType = type;
+             renderSettingsModal();
+        };
+    
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
+                if (lines.length < 2) throw new Error("CSV файл пуст или содержит только заголовки.");
+
+                const headers = parseCsvLine(lines[0]).map(h => h.trim().replace(/"/g, ''));
+                const requiredHeaders = ['type', 'id', 'quantity'];
+                if (!requiredHeaders.every(h => headers.includes(h))) {
+                    throw new Error(`Неверные заголовки в CSV. Обязательные: ${requiredHeaders.join(', ')}.`);
+                }
+                
+                let addedCount = { parts: 0, sets: 0, minifigs: 0 };
+                const originalCollection = JSON.parse(JSON.stringify(state.collection));
+                const originalSetCollection = JSON.parse(JSON.stringify(state.setCollection));
+                const originalMinifigCollection = JSON.parse(JSON.stringify(state.minifigCollection));
+
+                for (let i = 1; i < lines.length; i++) {
+                    const values = parseCsvLine(lines[i]);
+                    const row = headers.reduce((obj, header, index) => {
+                        obj[header] = values[index] ? values[index].trim() : '';
+                        return obj;
+                    }, {});
+
+                    const { type, id, color_id, quantity } = row;
+                    const qty = parseInt(quantity, 10);
+
+                    if (!type || !id || isNaN(qty) || qty <= 0) {
+                        console.warn(`Пропуск некорректной строки ${i + 1}:`, lines[i]);
+                        continue;
+                    }
+
+                    switch (type) {
+                        case 'part':
+                            if (!color_id) continue;
+                            if (!state.collection[id]) state.collection[id] = {};
+                            const currentPartQty = state.collection[id][color_id] || 0;
+                            state.collection[id][color_id] = currentPartQty + qty;
+                            addedCount.parts++;
+                            break;
+                        case 'set':
+                            const currentSetQty = state.setCollection[id]?.quantity || 0;
+                            state.setCollection[id] = { quantity: currentSetQty + qty };
+                            addedCount.sets++;
+                            break;
+                        case 'minifig':
+                            const currentMinifigQty = state.minifigCollection[id]?.quantity || 0;
+                            state.minifigCollection[id] = { quantity: currentMinifigQty + qty };
+                            addedCount.minifigs++;
+                            break;
+                    }
+                }
+
+                saveState();
+                
+                showStatus('Загрузка данных для импортированных предметов...', 'info');
+                
+                await Promise.all([
+                    fetchMissingCollectionPartDetails(),
+                    fetchMissingCollectionSetDetails(),
+                    fetchMissingCollectionMinifigDetails()
+                ]);
+                await fetchColorDetailsForCollectionParts();
+
+                showStatus(`Импорт завершен. Добавлено: ${addedCount.parts} деталей, ${addedCount.sets} наборов, ${addedCount.minifigs} минифигурок.`, 'success');
+                
+                state.isGridStale = true;
+                updateUI();
+
+            } catch (error) {
+                console.error("CSV Import failed:", error);
+                showStatus(`Ошибка импорта: ${error.message}`, 'error');
+            }
+        };
+        reader.onerror = () => {
+            showStatus('Не удалось прочитать файл.', 'error');
+        };
+        reader.readAsText(file);
+    }
+
     // --- EVENT HANDLING ---
     async function handleUpdateCollection(partId, colorId, quantity) {
         if (!state.collection[partId]) state.collection[partId] = {};
@@ -2908,7 +2986,7 @@
         
         saveState();
         
-        state.isGridStale = false;
+        state.isGridStale = true;
         
         if(state.currentView === 'collection') {
             updateUI();
@@ -2955,8 +3033,8 @@
         }
         saveState();
         
-        state.isGridStale = false;
-        if (state.currentView === 'set_collection') {
+        state.isGridStale = true;
+        if (state.currentView === 'collection') {
             updateUI();
         } else {
             renderSidebar(); 
@@ -2981,16 +3059,20 @@
         }
     }
     
-    function handleUpdateMinifigCollection(figNum, quantity) {
+    async function handleUpdateMinifigCollection(figNum, quantity) {
         if (quantity > 0) {
             state.minifigCollection[figNum] = { quantity };
+            if (!MINIFIG_MAP[figNum]) {
+                await fetchMinifigDetails(figNum);
+            }
         } else {
             delete state.minifigCollection[figNum];
         }
         saveState();
         
-        state.isGridStale = false;
-        if (state.currentView === 'minifigs_collection') {
+        state.isGridStale = true;
+        
+        if (state.currentView === 'collection') {
             updateUI();
         } else {
             renderSidebar();
@@ -3013,6 +3095,9 @@
         if (state.selectedFigNum === figNum) {
             renderMinifigModal(false);
         }
+        if (state.selectedSetNum) {
+            renderSetModal(false); // Re-render the set modal to update button states.
+        }
     }
 
     async function handleBulkUpdatePartsFromSet(setNum, action) {
@@ -3024,8 +3109,8 @@
         updateSetModalControlsState();
 
         try {
+            // 1. Process regular parts from the set inventory
             const inventory = await fetchAllSetInventory(setNum);
-
             (inventory || []).forEach(item => {
                 const { part, color, quantity } = item;
                 if (!state.collection[part.part_num]) {
@@ -3037,7 +3122,7 @@
                 
                 if (action === 'add') {
                     state.collection[part.part_num][currentColorId] = currentQuantity + quantity;
-                } else { // remove
+                } else { // remove action
                     const newQuantity = currentQuantity - quantity;
                     if (newQuantity > 0) {
                         state.collection[part.part_num][currentColorId] = newQuantity;
@@ -3049,16 +3134,69 @@
                     }
                 }
             });
+
+            // 2. Process minifigs and their parts, ONLY for the 'add' action
+            let minifigsAddedCount = 0;
+            let minifigPartsAddedCount = 0;
+
+            if (action === 'add') {
+                const minifigsInSet = state.setModal.minifigs || [];
+                // Use Promise.all to fetch parts for all minifigs concurrently if they haven't been fetched yet
+                await Promise.all(minifigsInSet.map(async (minifig) => {
+                    const figNum = minifig.set_num;
+                    const quantityInSet = minifig.quantity;
+
+                    // Add minifig to minifig collection
+                    const currentMinifigQty = state.minifigCollection[figNum]?.quantity || 0;
+                    state.minifigCollection[figNum] = { quantity: currentMinifigQty + quantityInSet };
+                    minifigsAddedCount += quantityInSet;
+
+                    // Add the minifig's own parts to the main parts collection
+                    if (!minifig.parts) {
+                        minifig.parts = await fetchMinifigParts(figNum);
+                    }
+                    
+                    (minifig.parts || []).forEach(partItem => {
+                        const partId = partItem.part.part_num;
+                        const colorId = String(partItem.color.id);
+                        const quantityInMinifig = partItem.quantity;
+                        const totalQuantityToAdd = quantityInMinifig * quantityInSet;
+
+                        if (!state.collection[partId]) state.collection[partId] = {};
+                        const currentPartQty = state.collection[partId][colorId] || 0;
+                        state.collection[partId][colorId] = currentPartQty + totalQuantityToAdd;
+                        minifigPartsAddedCount += totalQuantityToAdd;
+                    });
+                }));
+            }
             
+            // 3. Save the updated state to localStorage
             saveState();
             
-            await fetchMissingCollectionPartDetails();
-            await fetchColorDetailsForCollectionParts();
+            // 4. Fetch any missing details for newly added items
+            const promises = [
+                fetchMissingCollectionPartDetails(),
+                fetchColorDetailsForCollectionParts(),
+            ];
+            if (action === 'add') {
+                promises.push(fetchMissingCollectionMinifigDetails());
+            }
+            await Promise.all(promises);
             
-            state.setModal.statusMessage = `Детали успешно ${action === 'add' ? 'добавлены' : 'удалены'}.`;
+            // 5. Set the appropriate status message
+            if (action === 'add') {
+                let messageParts = [`Детали набора успешно добавлены.`];
+                if (minifigsAddedCount > 0) {
+                    messageParts.push(`${minifigsAddedCount} минифигурок и их детали (${minifigPartsAddedCount} шт.) также добавлены.`);
+                }
+                state.setModal.statusMessage = messageParts.join(' ');
+            } else {
+                state.setModal.statusMessage = `Детали успешно удалены.`;
+            }
+            
             state.setModal.statusType = 'success';
             state.isGridStale = true;
-            updateUI();
+            updateUI(); // This will re-render everything to reflect the new collection state
         } catch (error) {
             console.error(`Bulk ${action} failed for set ${setNum}:`, error);
             state.setModal.statusMessage = `Ошибка: не удалось ${action === 'add' ? 'добавить' : 'удалить'} детали.`;
@@ -3070,6 +3208,7 @@
             }
         }
     }
+
 
     async function handleBulkAddMinifigParts(figNum) {
         // This function is now only called from the Set Modal
@@ -3117,7 +3256,7 @@
             state.setModal.isBulkUpdating = false;
             if (state.selectedSetNum) renderSetModal(false);
             
-            if (state.currentView === 'collection') {
+            if (state.currentView === 'collection' && state.activeSubView === 'parts') {
                 state.isGridStale = true;
                 updateUI();
             } else {
@@ -3127,14 +3266,11 @@
     }
     
     function triggerSearch(useCurrentFilters = false) {
-        const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
-
         if (!useCurrentFilters) {
-            if (isSetView) {
+            if (state.activeSubView === 'sets') {
                 state.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
                 state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
-            } else if (isMinifigView) {
+            } else if (state.activeSubView === 'minifigs') {
                 state.sortBy = state.searchQuery ? 'relevance' : 'name_asc';
             } else { // parts view
                 state.sortBy = state.searchQuery ? 'relevance' : 'popularity';
@@ -3145,18 +3281,20 @@
         
         state.isGridStale = true;
 
-        if (state.currentView === 'collection' || state.currentView === 'set_collection' || state.currentView === 'minifigs_collection') {
+        if (state.currentView === 'collection') {
             state.selectedCollectionCategoryId = null;
             state.selectedSetCollectionThemeId = null;
             updateUI();
-        } else if (state.currentView === 'sets') {
-            state.selectedThemeId = null;
-            fetchSets();
-        } else if (state.currentView === 'minifigs_catalog') {
-            fetchMinifigs();
         } else { // catalog
-            state.selectedCategoryId = null;
-            searchRebrickableParts(state.searchQuery.trim());
+            if (state.activeSubView === 'sets') {
+                state.selectedThemeId = null;
+                fetchSets();
+            } else if (state.activeSubView === 'minifigs') {
+                fetchMinifigs();
+            } else { // parts
+                state.selectedCategoryId = null;
+                searchRebrickableParts(state.searchQuery.trim());
+            }
         }
     }
     
@@ -3269,6 +3407,7 @@
                 settingsModalContainer.classList.add('modal-hidden');
                 settingsModalContainer.innerHTML = '';
                 state.settingsModal.confirmingDelete = null;
+                state.settingsModal.statusMessage = '';
             }
         }, { once: true });
     }
@@ -3352,32 +3491,30 @@
         state.itemsToDisplay = state.itemsIncrement;
         state.isGridStale = true;
         
-        const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-        const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
-        const isCollectionView = state.currentView === 'collection' || state.currentView === 'set_collection' || state.currentView === 'minifigs_collection';
-
-        if (isCollectionView) {
+        if (state.currentView === 'collection') {
             updateUI();
-        } else if (isSetView) { // sets catalog
-            if(state.searchQuery || state.selectedThemeId) {
-                fetchSets();
-            } else {
-                updateUI();
-            }
-        } else if (isMinifigView) {
-            fetchMinifigs();
-        } else { // parts catalog
-            if (state.searchQuery) {
-                searchRebrickableParts(state.searchQuery.trim());
-            } else if (state.selectedCategoryId) {
-                loadPartsForCategory(state.selectedCategoryId);
-            } else {
-                updateUI();
+        } else { // catalog
+            if (state.activeSubView === 'sets') {
+                if(state.searchQuery || state.selectedThemeId) {
+                    fetchSets();
+                } else {
+                    updateUI();
+                }
+            } else if (state.activeSubView === 'minifigs') {
+                fetchMinifigs();
+            } else { // parts
+                if (state.searchQuery) {
+                    searchRebrickableParts(state.searchQuery.trim());
+                } else if (state.selectedCategoryId) {
+                    loadPartsForCategory(state.selectedCategoryId);
+                } else {
+                    updateUI();
+                }
             }
         }
     }
     
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', async (e) => {
         if (!(e.target instanceof Element)) return;
         const target = e.target;
 
@@ -3441,57 +3578,70 @@
         if (viewButton?.dataset.view) {
             const newView = viewButton.dataset.view;
             if (state.currentView === newView) return;
-
             state.currentView = newView;
+            
+            // Clear things that are view-specific but keep subview
             state.searchQuery = '';
             state.apiError = null;
-            // Reset common state
-            state.itemsToDisplay = state.itemsIncrement;
             state.isGridStale = true;
-            // Reset filters
-            state.filters = { colorIds: [], inCollectionOnly: false };
-            state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
-            // Reset selections
             state.selectedCategoryId = null;
             state.selectedCollectionCategoryId = null;
             state.selectedThemeId = null;
             state.selectedSetCollectionThemeId = null;
-            // Reset results
+
+            if (state.currentView === 'catalog' && state.activeSubView === 'minifigs') {
+                fetchMinifigs();
+            } else {
+                updateUI();
+            }
+            return;
+        }
+        
+        const subViewButton = target.closest('[data-sub-view]');
+        if (subViewButton?.dataset.subView) {
+            const newSubView = subViewButton.dataset.subView;
+            if (state.activeSubView === newSubView) return;
+            
+            state.activeSubView = newSubView;
+            state.searchQuery = '';
+            state.apiError = null;
+
+            if (newSubView === 'minifigs') {
+                state.itemsIncrement = 20;
+            } else {
+                state.itemsIncrement = 48;
+            }
+            state.itemsToDisplay = state.itemsIncrement;
+            
+            state.isGridStale = true;
+            state.filters = { colorIds: [], inCollectionOnly: false };
+            state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+            state.selectedCategoryId = null;
+            state.selectedCollectionCategoryId = null;
+            state.selectedThemeId = null;
+            state.selectedSetCollectionThemeId = null;
             state.searchResultGroups = null;
             state.catalogGroups = null;
             state.setResults = null;
             state.searchSetResults = null;
             state.minifigResults = null;
             state.searchMinifigResults = null;
-            
-            // Set default sort
-            const isSetView = newView === 'sets' || newView === 'set_collection';
-            const isMinifigView = newView === 'minifigs_catalog' || newView === 'minifigs_collection';
 
-            if (isSetView) state.sortBy = 'year_desc';
-            else if (isMinifigView) state.sortBy = 'name_asc';
+            if (newSubView === 'sets') state.sortBy = 'year_desc';
+            else if (newSubView === 'minifigs') state.sortBy = 'name_asc';
             else state.sortBy = 'popularity';
 
-            updateUI();
-            if(newView === 'minifigs_catalog' && !state.minifigResults) {
+            if (state.currentView === 'catalog' && newSubView === 'minifigs') {
                 fetchMinifigs();
+            } else {
+                updateUI();
             }
             return;
         }
 
-        if (target.closest('[data-action="show-all-collection"]')) {
-            state.selectedCollectionCategoryId = null;
-            state.isGridStale = true;
-            const scrollContainer = document.getElementById('sidebar-scroll-container');
-            const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-            updateUI();
-            const newScrollContainer = document.getElementById('sidebar-scroll-container');
-            if (newScrollContainer) newScrollContainer.scrollTop = scrollTop;
-            return;
-        }
-        
-        if (target.closest('[data-action="show-all-collection-sets"]')) {
-            state.selectedSetCollectionThemeId = null;
+        if (target.closest('[data-action="show-all-collection-items"]')) {
+            if (state.activeSubView === 'parts') state.selectedCollectionCategoryId = null;
+            if (state.activeSubView === 'sets') state.selectedSetCollectionThemeId = null;
             state.isGridStale = true;
             const scrollContainer = document.getElementById('sidebar-scroll-container');
             const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
@@ -3506,46 +3656,30 @@
             const themeId = parseInt(themeButton.dataset.themeId, 10);
             const themeNode = THEME_MAP[themeId];
             const hasChildren = themeNode && Array.isArray(themeNode.children) && themeNode.children.length > 0;
-            const isSetCollectionView = state.currentView === 'set_collection';
-            const currentSelection = isSetCollectionView ? state.selectedSetCollectionThemeId : state.selectedThemeId;
-
-            // Handle expansion/collapse first
+            
             if (hasChildren) {
                 const isExpanded = state.expandedThemes.has(themeId);
-                if (isExpanded) {
-                    state.expandedThemes.delete(themeId);
-                } else {
-                    state.expandedThemes.add(themeId);
-                }
-                const sublist = themeButton.nextElementSibling;
-                if (sublist && sublist.tagName === 'UL') {
-                    sublist.classList.toggle('hidden', isExpanded);
-                }
-                const icon = themeButton.querySelector('svg.transform');
-                if (icon) {
-                    icon.classList.toggle('rotate-180', !isExpanded);
-                }
+                if (isExpanded) { state.expandedThemes.delete(themeId); } 
+                else { state.expandedThemes.add(themeId); }
             }
 
-            // Handle selection if it's a new theme
-            if (currentSelection !== themeId) {
-                state.searchQuery = '';
-                state.sortBy = 'year_desc';
-                state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
-                
-                if (isSetCollectionView) {
-                    state.selectedSetCollectionThemeId = themeId;
-                    state.isGridStale = true;
-                    const scrollContainer = document.getElementById('sidebar-scroll-container');
-                    const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-                    updateUI();
-                    const newScrollContainer = document.getElementById('sidebar-scroll-container');
-                    if (newScrollContainer) newScrollContainer.scrollTop = scrollTop;
-                } else {
+            if (state.currentView === 'collection') {
+                 if (state.selectedSetCollectionThemeId !== themeId) {
+                     state.selectedSetCollectionThemeId = themeId;
+                     state.isGridStale = true;
+                     updateUI();
+                 }
+            } else { // catalog
+                if (state.selectedThemeId !== themeId) {
                     state.selectedThemeId = themeId;
-                    fetchSets(); // Fetches data and then calls updateUI
+                    state.searchQuery = '';
+                    state.sortBy = 'year_desc';
+                    state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+                    fetchSets();
                 }
             }
+            // re-render sidebar for expansion icon
+            if(hasChildren) renderSidebar();
             return;
         }
 
@@ -3554,20 +3688,13 @@
             const groupName = parentCategoryButton.dataset.parentCategory;
             const isExpanded = state.expandedCategories.has(groupName);
 
-            if (isExpanded) {
-                state.expandedCategories.delete(groupName);
-            } else {
-                state.expandedCategories.add(groupName);
-            }
+            if (isExpanded) { state.expandedCategories.delete(groupName); } 
+            else { state.expandedCategories.add(groupName); }
 
             const sublist = parentCategoryButton.nextElementSibling;
-            if (sublist && sublist.tagName === 'UL') {
-                sublist.classList.toggle('hidden', isExpanded);
-            }
+            if (sublist && sublist.tagName === 'UL') { sublist.classList.toggle('hidden', isExpanded); }
             const icon = parentCategoryButton.querySelector('svg:last-child');
-            if (icon) {
-                icon.classList.toggle('rotate-180', !isExpanded);
-            }
+            if (icon) { icon.classList.toggle('rotate-180', !isExpanded); }
             return;
         }
 
@@ -3575,27 +3702,19 @@
         if (categoryButton?.dataset.categoryId) {
             const catId = parseInt(categoryButton.dataset.categoryId, 10);
             state.searchQuery = '';
-            state.filters = { colorIds: [], inCollectionOnly: false };
-            state.sortBy = 'popularity';
-
+            
             if (state.currentView === 'collection') {
-                state.selectedCollectionCategoryId = state.selectedCollectionCategoryId === catId ? null : catId;
-                state.isGridStale = true;
-                const scrollContainer = document.getElementById('sidebar-scroll-container');
-                const scrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-                updateUI();
-                const newScrollContainer = document.getElementById('sidebar-scroll-container');
-                if (newScrollContainer) newScrollContainer.scrollTop = scrollTop;
-            } else {
-                state.selectedCategoryId = state.selectedCategoryId === catId ? null : catId;
-                state.selectedCollectionCategoryId = null;
-                if (state.selectedCategoryId) {
-                    loadPartsForCategory(catId);
-                } else {
-                    state.catalogGroups = null;
-                    state.searchResultGroups = null;
+                if(state.selectedCollectionCategoryId !== catId) {
+                    state.selectedCollectionCategoryId = catId;
                     state.isGridStale = true;
                     updateUI();
+                }
+            } else {
+                if(state.selectedCategoryId !== catId) {
+                    state.selectedCategoryId = catId;
+                    state.filters = { colorIds: [], inCollectionOnly: false };
+                    state.sortBy = 'popularity';
+                    loadPartsForCategory(catId);
                 }
             }
             return;
@@ -3608,12 +3727,10 @@
         }
 
         if(target.closest('#feeling-lucky-button')) { handleFeelingLucky(); return; }
-        if(target.closest('#feeling-lucky-set-button')) { handleFeelingLuckyForSets(); return; }
-        if(target.closest('#feeling-lucky-minifig-button')) { handleFeelingLuckyForMinifigs(); return; }
         
         const deleteButton = target.closest('[data-action="delete-from-collection"]');
         if (deleteButton?.dataset.partId && deleteButton.dataset.colorId) {
-            handleUpdateCollection(deleteButton.dataset.partId, deleteButton.dataset.colorId, 0);
+            await handleUpdateCollection(deleteButton.dataset.partId, deleteButton.dataset.colorId, 0);
             return;
         }
 
@@ -3707,12 +3824,10 @@
         }
 
         if (target.closest('[data-action="remove-all-filters"]')) {
-            const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-            const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
-            if (isSetView) {
+            if (state.activeSubView === 'sets') {
                 state.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
                 state.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
-            } else if (isMinifigView) {
+            } else if (state.activeSubView === 'minifigs') {
                 state.sortBy = state.searchQuery ? 'relevance' : 'name_asc';
             } else {
                 state.filters.colorIds = [];
@@ -3754,6 +3869,12 @@
                     renderSettingsModal();
                     updateUI();
                     break;
+                case 'export-csv':
+                    exportCollectionToCSV();
+                    break;
+                case 'import-csv':
+                    document.getElementById('import-csv-input')?.click();
+                    break;
             }
             return;
         }
@@ -3776,12 +3897,12 @@
                     break;
                 case 'update-minifig-collection':
                     if (state.selectedFigNum) {
-                        handleUpdateMinifigCollection(state.selectedFigNum, state.minifigModal.quantity);
+                        await handleUpdateMinifigCollection(state.selectedFigNum, state.minifigModal.quantity);
                     }
                     break;
                 case 'delete-from-minifig-collection-modal':
                     if (state.selectedFigNum) {
-                        handleUpdateMinifigCollection(state.selectedFigNum, 0);
+                        await handleUpdateMinifigCollection(state.selectedFigNum, 0);
                         state.minifigModal.quantity = 1;
                     }
                     break;
@@ -3828,7 +3949,8 @@
                 case 'go-to-theme':
                     if (themeId) {
                         closeSetModal();
-                        state.currentView = 'sets';
+                        state.currentView = 'catalog';
+                        state.activeSubView = 'sets';
                         state.selectedThemeId = parseInt(themeId, 10);
                         fetchSets();
                     }
@@ -3861,7 +3983,7 @@
                 case 'add-minifig-to-collection':
                     if (figNum && quantity) {
                         const currentQty = state.minifigCollection[figNum]?.quantity || 0;
-                        handleUpdateMinifigCollection(figNum, currentQty + parseInt(quantity, 10));
+                        await handleUpdateMinifigCollection(figNum, currentQty + parseInt(quantity, 10));
                     }
                     break;
                 case 'add-minifig-parts-to-collection':
@@ -3899,12 +4021,10 @@
                     updateFilterModalUI();
                     break;
                 case 'modal-reset-filters':
-                    const isSetView = state.currentView === 'sets' || state.currentView === 'set_collection';
-                    const isMinifigView = state.currentView === 'minifigs_catalog' || state.currentView === 'minifigs_collection';
-                    if (isSetView) {
+                    if (state.activeSubView === 'sets') {
                         tempFilters.sortBy = state.searchQuery ? 'relevance' : 'year_desc';
                         tempFilters.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: ''};
-                    } else if (isMinifigView) {
+                    } else if (state.activeSubView === 'minifigs') {
                         tempFilters.sortBy = state.searchQuery ? 'relevance' : 'name_asc';
                     } else {
                         tempFilters.sortBy = state.searchQuery ? 'relevance' : 'popularity';
@@ -3932,6 +4052,7 @@
                         if (categoryId) {
                             closeModal();
                             state.currentView = 'catalog';
+                            state.activeSubView = 'parts';
                             state.selectedCategoryId = parseInt(categoryId, 10);
                             loadPartsForCategory(state.selectedCategoryId);
                         }
@@ -3952,27 +4073,27 @@
                         }
                         break;
                     case 'delete-from-collection-modal':
-                        if (state.selectedPartId && state.modal.selectedColorId) {
-                            handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
-                            state.modal.quantity = 1;
+                         if (state.selectedPartId && state.modal.selectedColorId) {
+                            await handleUpdateCollection(state.selectedPartId, state.modal.selectedColorId, 0);
+                            state.modal.quantity = 1; // Reset quantity for next interaction
+                            updateModalControlsState();
                         }
                         break;
                 }
             }
-
+            
             const colorButton = target.closest('button[data-color-id]');
-            if (colorButton?.dataset.colorId) {
+            if (colorButton && colorButton.dataset.colorId) {
                 const newColorId = colorButton.dataset.colorId;
                 if (state.modal.selectedColorId !== newColorId) {
                     state.modal.selectedColorId = newColorId;
                     const currentQuantity = state.collection[state.selectedPartId]?.[newColorId] || 0;
                     state.modal.quantity = currentQuantity > 0 ? currentQuantity : 1;
+                    
                     updateModalPartially({ colors: true, controls: true });
                     fetchPartColorSpecifics(state.selectedPartId, newColorId);
                 }
             }
-            
-            return;
         }
     });
     
@@ -3980,51 +4101,56 @@
         if (!(e.target instanceof Element)) return;
         const target = e.target;
         
-        if (target.id === 'variation-select') {
-            const newPartId = target.value;
-            if (state.selectedPartId !== newPartId) {
-                const variations = state.modal.partVariations;
-                openModalForPart(newPartId, state.modal.partGroupId, variations);
+        if(target.id === 'search-input') {
+            state.searchQuery = target.value;
+            if (state.searchQuery.trim() === '') {
+                 triggerSearch();
             }
-            return;
+            renderHeader(); // to show/hide clear button
         }
         
-        if (filterModalContainer?.contains(target)) {
-            if (target.name === 'sort') {
+        if (target.id === 'import-csv-input') {
+            const file = target.files?.[0];
+            if (file) {
+                importCollectionFromCSV(file);
+            }
+            target.value = ''; // Reset input so user can select the same file again
+        }
+
+        if (modalContainer && modalContainer.contains(target) && target.id === 'variation-select') {
+            const newPartId = target.value;
+            if (newPartId && newPartId !== state.selectedPartId) {
+                openModalForPart(newPartId, state.modal.partGroupId, state.modal.partVariations);
+            }
+        }
+
+        if (filterModalContainer && filterModalContainer.contains(target)) {
+            if (target.matches('input[name="sort"]')) {
                 tempFilters.sortBy = target.value;
             }
-            if (target.dataset.action === 'modal-toggle-collection') {
-                 tempFilters.filters.inCollectionOnly = target.checked;
+            if(target.matches('[data-action="modal-toggle-collection"]')) {
+                tempFilters.filters.inCollectionOnly = target.checked;
+            }
+            if(target.matches('[data-filter-key]')) {
+                 tempFilters.setFilters[target.dataset.filterKey] = target.value;
             }
         }
     });
 
-    document.addEventListener('input', (e) => {
-        if (!(e.target instanceof Element)) return;
-        const target = e.target;
-        
-        if (target.id === 'search-input') {
-            state.searchQuery = target.value;
-            const clearBtn = document.getElementById('clear-search');
-            if(clearBtn) clearBtn.classList.toggle('hidden', !state.searchQuery);
-            return;
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (state.isSettingsModalOpen) { closeSettingsModal(); return; }
+            if (state.isFilterModalOpen) { closeFilterModal(); return; }
+            if (state.selectedFigNum) { closeMinifigModal(); return; }
+            if (state.selectedSetNum) { closeSetModal(); return; }
+            if (state.selectedPartId) { closeModal(); return; }
         }
-        
-        if (filterModalContainer?.contains(target)) {
-            const filterKey = target.dataset.filterKey;
-            if (filterKey && typeof tempFilters.setFilters[filterKey] !== 'undefined') {
-                tempFilters.setFilters[filterKey] = target.value;
-            }
-        }
-    });
-
-    document.addEventListener('keyup', (e) => {
-        if (e.target.id === 'search-input' && e.key === 'Enter') {
+        if (e.key === 'Enter' && e.target.id === 'search-input') {
             triggerSearch();
         }
     });
-
-    mainContent.addEventListener('scroll', () => {
+    
+    mainContent.addEventListener('scroll', (e) => {
         if (mainContent.scrollTop > 300) {
             scrollToTopBtn.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
         } else {
@@ -4032,18 +4158,20 @@
         }
     });
 
-
     // --- INITIALIZATION ---
     async function initializeApp() {
         console.log("Initializing LEGO Catalog...");
         loadState();
-        updateUI(); // Show initial UI with loaders
-        
+        updateUI();
+
+        state.isLoading = true;
+        updateUI();
+
         try {
             await Promise.all([
                 fetchAllColors(),
                 fetchCategories(),
-                fetchThemes()
+                fetchThemes(),
             ]);
             
             await Promise.all([
@@ -4053,17 +4181,17 @@
             ]);
 
             await fetchColorDetailsForCollectionParts();
-
-        } catch (error) {
+            
+        } catch(error) {
             console.error("Initialization failed:", error);
-            state.apiError = `Не удалось инициализировать приложение: ${error.message}`;
+            state.apiError = `Не удалось загрузить начальные данные: ${error.message}`;
         } finally {
             state.isLoading = false;
-            console.log("Initialization complete.");
             updateUI();
+            console.log("Initialization complete.");
         }
     }
-
+    
     initializeApp();
 
   </script>
