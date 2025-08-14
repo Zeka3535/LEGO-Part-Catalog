@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -25,6 +24,7 @@
       background-position: 0 0, 0 4px, 4px -4px, -4px 0px;
     }
     .modal-hidden { display: none !important; }
+    .viewer-hidden { display: none !important; }
     .loader {
       border: 4px solid #4A5568;
       border-top: 4px solid #4299E1;
@@ -61,11 +61,11 @@
     }
 
     /* Animation Classes */
-    #modal-container, #filter-modal-container, #set-modal-container, #settings-modal-container, #minifig-modal-container {
+    #modal-container, #filter-modal-container, #set-modal-container, #settings-modal-container, #minifig-modal-container, #image-viewer-container {
         opacity: 0;
         transition: opacity 0.2s ease-out;
     }
-    #modal-container.visible, #filter-modal-container.visible, #set-modal-container.visible, #settings-modal-container.visible, #minifig-modal-container.visible {
+    #modal-container.visible, #filter-modal-container.visible, #set-modal-container.visible, #settings-modal-container.visible, #minifig-modal-container.visible, #image-viewer-container.visible {
         opacity: 1;
     }
     .modal-content-enter {
@@ -82,6 +82,16 @@
     #color-selector-wrapper {
         transition: max-height 0.35s ease-in-out;
         overflow: hidden;
+    }
+    
+    #image-viewer-container img {
+        transform: scale(0.95);
+        opacity: 0;
+        transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    }
+    #image-viewer-container.visible img {
+        transform: scale(1);
+        opacity: 1;
     }
   </style>
 </head>
@@ -118,8 +128,16 @@
   <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
 
+  <!-- Image Viewer Modal -->
+  <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[100] backdrop-blur-sm viewer-hidden">
+    <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="max-w-[90vw] max-h-[90vh] object-contain shadow-2xl rounded-lg">
+    <button id="image-viewer-close" class="absolute top-4 right-4 text-white text-opacity-80 hover:text-opacity-100 p-2 rounded-full transition-opacity bg-black/30 hover:bg-black/50">
+        <!-- XIcon SVG will be inserted here by JS -->
+    </button>
+  </div>
+
   <!-- Scroll to Top Button -->
-  <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 opacity-0 pointer-events-none z-50 transform translate-y-4" aria-label="Вернуться наверх">
+  <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 transition-all duration-300 opacity-0 pointer-events-none z-40 transform translate-y-4" aria-label="Вернуться наверх">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
       <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path>
     </svg>
@@ -350,6 +368,9 @@
     const filterModalContainer = document.getElementById('filter-modal-container');
     const settingsModalContainer = document.getElementById('settings-modal-container');
     const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
+    const imageViewerContainer = document.getElementById('image-viewer-container');
+    const fullscreenImage = document.getElementById('fullscreen-image');
+    const imageViewerCloseBtn = document.getElementById('image-viewer-close');
     
     // --- API & DATA HANDLING ---
     
@@ -907,7 +928,7 @@
 
         console.log(`Fetching details for ${missingSetNums.length} sets from collection...`);
         
-        const BATCH_SIZE = 100;
+        const BATCH_SIZE = 50;
         for (let i = 0; i < missingSetNums.length; i += BATCH_SIZE) {
             const batch = missingSetNums.slice(i, i + BATCH_SIZE);
             try {
@@ -923,7 +944,7 @@
     }
 
     async function fetchMinifigDetails(figNum) {
-        if (MINIFIG_MAP[figNum]) return;
+        if (MINIFIG_MAP[figNum] && MINIFIG_MAP[figNum].name) return;
         try {
             const response = await fetch(`${REBRICKABLE_API_URL}/minifigs/${figNum}/`, {
                 headers: { 'Authorization': `key ${getApiKey()}` }
@@ -945,7 +966,8 @@
         
         for (const figNum of missingFigNums) {
             await fetchMinifigDetails(figNum);
-            await new Promise(resolve => setTimeout(resolve, 200));
+            // Add a small delay to avoid hitting API rate limits if any
+            await new Promise(resolve => setTimeout(resolve, 100)); 
         }
     }
 
@@ -1051,8 +1073,12 @@
 
         try {
             const minifigs = await apiFetchPaginated(`/sets/${setNum}/minifigs/`);
+            const minifigDetailsPromises = minifigs.map(mf => fetchMinifigDetails(mf.set_num));
+            await Promise.all(minifigDetailsPromises);
+
             state.setModal.minifigs = (minifigs || []).map(mf => ({
-                ...mf,
+                ...MINIFIG_MAP[mf.set_num], // Use the full detail from the map
+                quantity: mf.quantity, // Keep the quantity from this specific set
                 isExpanded: false,
                 isLoadingParts: false,
                 parts: null, // Use null to indicate not fetched yet
@@ -1275,12 +1301,17 @@
       
       const subViewButtonStyle = (subView) => `relative flex-1 py-2 px-1 rounded-lg text-sm font-semibold transition-colors duration-200 flex flex-col items-center justify-center gap-1 ${state.activeSubView === subView ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white'}`;
 
-      const badge = (subView, count) => {
+      const badge = (subView, count, uniqueCount) => {
             if (count === 0 || state.currentView !== 'collection') return '';
-            const style = `absolute top-1 right-1 text-xs px-1.5 py-0.5 rounded-full font-bold ${state.activeSubView === subView ? 'bg-blue-200 text-blue-800' : 'bg-gray-600 text-gray-200'}`;
-            return `<span class="${style}">${count}</span>`;
-      };
+            
+            let displayCount = uniqueCount;
+            if(subView === 'parts') {
+                displayCount = count; // Show total for parts
+            }
 
+            const style = `absolute top-1 right-1 text-xs px-1.5 py-0.5 rounded-full font-bold ${state.activeSubView === subView ? 'bg-blue-200 text-blue-800' : 'bg-gray-600 text-gray-200'}`;
+            return `<span class="${style}">${displayCount}</span>`;
+      };
 
       let mainListContent = '';
       let mainListTitle = '';
@@ -1477,17 +1508,17 @@
             <button data-sub-view="parts" class="${subViewButtonStyle('parts')}">
                 ${BrickIcon('w-5 h-5')}
                 <span class="mt-1">Детали</span>
-                ${badge('parts', totalPartsCount)}
+                ${badge('parts', totalPartsCount, uniqueModelsCount)}
             </button>
             <button data-sub-view="sets" class="${subViewButtonStyle('sets')}">
                 ${SetsIcon('w-5 h-5')}
                 <span class="mt-1">Наборы</span>
-                ${badge('sets', totalSetsCount)}
+                ${badge('sets', totalSetsCount, uniqueSetsCount)}
             </button>
             <button data-sub-view="minifigs" class="${subViewButtonStyle('minifigs')}">
                 ${MinifigIcon('w-5 h-5')}
                 <span class="mt-1">Фигурки</span>
-                ${badge('minifigs', totalMinifigsCount)}
+                ${badge('minifigs', totalMinifigsCount, uniqueMinifigsCount)}
             </button>
         </div>
         
@@ -1779,7 +1810,7 @@
             } else { // minifigs
                 itemsToDisplay = state.searchQuery ? state.searchMinifigResults : state.minifigResults;
                 renderFn = (item) => renderMinifigCard(item, state.isGridStale);
-                emptyMessage = state.searchQuery ? 'По вашему запросу ничего не найдено.' : 'В каталоге нет минифигурок. Попробуйте поиск.';
+                emptyMessage = state.searchQuery ? 'По вашему запросу ничего не найдено.' : (state.currentView === 'catalog' && !state.searchQuery ? 'Используйте поиск для нахождения минифигурок.' : 'В коллекции нет минифигурок.');
             }
 
             if (!itemsToDisplay || itemsToDisplay.length === 0) {
@@ -1872,7 +1903,7 @@
                 switch(state.sortBy) {
                     case 'name_asc': collectionItems.sort((a, b) => a.name.localeCompare(b.name)); break;
                     case 'name_desc': collectionItems.sort((a, b) => b.name.localeCompare(a.name)); break;
-                    case 'num_parts_desc': collectionItems.sort((a, b) => b.num_parts - b.num_parts); break;
+                    case 'num_parts_desc': collectionItems.sort((a, b) => b.num_parts - a.num_parts); break;
                     case 'num_parts_asc': collectionItems.sort((a, b) => a.num_parts - b.num_parts); break;
                 }
                 renderFn = (item, anim, i) => renderMinifigCard(item, anim, i);
@@ -1992,8 +2023,11 @@
         return `
         <div class="flex flex-col lg:flex-row">
             <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
-                 <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
+                 <div data-action="view-image-fullscreen" data-image-url="${set.set_img_url || ''}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
                     <img ${getPartImageUrl(set.set_img_url)} alt="${set.name}" class="max-w-full max-h-full object-contain">
+                    <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        ${SearchIcon('w-10 h-10 text-white')}
+                    </div>
                  </div>
             </div>
             
@@ -2101,14 +2135,18 @@
             minifigsContent = minifigs.map(mf => {
                 const figNum = mf.set_num;
                 const collectionQty = state.minifigCollection[figNum]?.quantity || 0;
+                const figName = mf.name || 'Загрузка...';
                 return `
                     <div class="bg-gray-700/50 rounded-lg overflow-hidden">
                         <div class="flex items-center p-2 gap-3 text-sm">
-                            <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0">
-                                <img ${getPartImageUrl(mf.set_img_url)} alt="${mf.set_name}" class="w-full h-full object-contain p-1">
+                            <div data-action="view-image-fullscreen" data-image-url="${mf.set_img_url || ''}" class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0 cursor-pointer group relative">
+                                <img ${getPartImageUrl(mf.set_img_url)} alt="${figName}" class="w-full h-full object-contain p-1">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    ${SearchIcon('w-5 h-5 text-white')}
+                                </div>
                             </div>
                             <div class="flex-grow truncate">
-                                <p class="text-white font-semibold truncate">${mf.set_name}</p>
+                                <p class="text-white font-semibold truncate">${figName}</p>
                                 <p class="text-gray-400 truncate">${figNum}</p>
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
@@ -2264,8 +2302,11 @@
             
             <div id="modal-scroll-area" class="flex-grow flex flex-col lg:flex-row overflow-y-auto no-scrollbar">
                 <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
-                     <div id="modal-image-container" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
+                     <div id="modal-image-container" data-action="view-image-fullscreen" data-image-url="${partImageUrl || ''}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
                         <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-full object-contain">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                           ${SearchIcon('w-10 h-10 text-white')}
+                        </div>
                      </div>
                 </div>
                 
@@ -2626,6 +2667,17 @@
                            ${deleteMinifigsSection}
                         </div>
                     </div>
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">О приложении</h3>
+                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3 text-sm text-gray-400">
+                           <p>
+                               <strong>Избранное:</strong> Чтобы добавить категорию или тему в избранное для быстрого доступа, наведите на нее курсор в боковом меню и нажмите на появившееся сердечко. Избранные элементы всегда будут отображаться вверху своих списков.
+                           </p>
+                           <p class="pt-3 border-t border-gray-700/50">
+                               Этот сайт использует <a href="https://rebrickable.com/api/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">Rebrickable API</a>, но не поддерживается и не утверждается Rebrickable.
+                           </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -2671,9 +2723,13 @@
             if (imageContainer) {
                 const { partImageUrl, isImageLoading } = state.modal;
                 const part = PART_MAP[state.selectedPartId];
+                imageContainer.dataset.imageUrl = partImageUrl || '';
                 imageContainer.innerHTML = `
                     ${isImageLoading ? `<div class="absolute inset-0 bg-gray-900/80 flex items-center justify-center z-10"><div class="loader !w-10 !h-10"></div></div>` : ''}
                     <img ${getPartImageUrl(partImageUrl)} alt="${part.name}" class="max-w-full max-h-full object-contain">
+                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                       ${SearchIcon('w-10 h-10 text-white')}
+                    </div>
                 `;
             }
         }
@@ -2779,8 +2835,11 @@
             <div class="flex-grow overflow-y-auto no-scrollbar">
                 <div class="flex flex-col lg:flex-row">
                     <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
-                         <div class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative">
+                         <div data-action="view-image-fullscreen" data-image-url="${minifig.set_img_url || ''}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
                             <img ${getPartImageUrl(minifig.set_img_url)} alt="${minifig.name}" class="max-w-full max-h-full object-contain">
+                             <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                               ${SearchIcon('w-10 h-10 text-white')}
+                            </div>
                          </div>
                     </div>
                     <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
@@ -3059,10 +3118,10 @@
         }
     }
     
-    async function handleUpdateMinifigCollection(figNum, quantity) {
+    async function handleUpdateMinifigCollection(figNum, quantity, shouldFetchDetails = true) {
         if (quantity > 0) {
             state.minifigCollection[figNum] = { quantity };
-            if (!MINIFIG_MAP[figNum]) {
+            if (shouldFetchDetails && (!MINIFIG_MAP[figNum] || !MINIFIG_MAP[figNum].name)) {
                 await fetchMinifigDetails(figNum);
             }
         } else {
@@ -3096,7 +3155,10 @@
             renderMinifigModal(false);
         }
         if (state.selectedSetNum) {
-            renderSetModal(false); // Re-render the set modal to update button states.
+            const minifigInSetModal = state.setModal.minifigs.find(mf => mf.set_num === figNum);
+            if (minifigInSetModal) {
+                 renderSetModal(false); // Re-render the set modal to update button states.
+            }
         }
     }
 
@@ -3135,53 +3197,71 @@
                 }
             });
 
-            // 2. Process minifigs and their parts, ONLY for the 'add' action
+            // 2. Process minifigs and their parts
             let minifigsAddedCount = 0;
             let minifigPartsAddedCount = 0;
+            let minifigsRemovedCount = 0;
+            let minifigPartsRemovedCount = 0;
 
-            if (action === 'add') {
-                const minifigsInSet = state.setModal.minifigs || [];
-                // Use Promise.all to fetch parts for all minifigs concurrently if they haven't been fetched yet
-                await Promise.all(minifigsInSet.map(async (minifig) => {
-                    const figNum = minifig.set_num;
-                    const quantityInSet = minifig.quantity;
+            const minifigsInSet = state.setModal.minifigs || (await apiFetchPaginated(`/sets/${setNum}/minifigs/`));
+            
+            await Promise.all(minifigsInSet.map(async (minifig) => {
+                const figNum = minifig.set_num;
+                const quantityInSet = minifig.quantity;
 
-                    // Add minifig to minifig collection
-                    const currentMinifigQty = state.minifigCollection[figNum]?.quantity || 0;
+                // Update minifig collection
+                const currentMinifigQty = state.minifigCollection[figNum]?.quantity || 0;
+                if (action === 'add') {
                     state.minifigCollection[figNum] = { quantity: currentMinifigQty + quantityInSet };
                     minifigsAddedCount += quantityInSet;
-
-                    // Add the minifig's own parts to the main parts collection
-                    if (!minifig.parts) {
-                        minifig.parts = await fetchMinifigParts(figNum);
+                } else {
+                    const newMinifigQty = currentMinifigQty - quantityInSet;
+                    if(newMinifigQty > 0) {
+                        state.minifigCollection[figNum] = { quantity: newMinifigQty };
+                    } else {
+                        delete state.minifigCollection[figNum];
                     }
-                    
-                    (minifig.parts || []).forEach(partItem => {
-                        const partId = partItem.part.part_num;
-                        const colorId = String(partItem.color.id);
-                        const quantityInMinifig = partItem.quantity;
-                        const totalQuantityToAdd = quantityInMinifig * quantityInSet;
+                    minifigsRemovedCount += quantityInSet;
+                }
+                
+                // Update parts from minifigs
+                const minifigParts = minifig.parts || await fetchMinifigParts(figNum);
+                minifig.parts = minifigParts; // cache for later
+                
+                (minifigParts || []).forEach(partItem => {
+                    const partId = partItem.part.part_num;
+                    const colorId = String(partItem.color.id);
+                    const quantityInMinifig = partItem.quantity;
+                    const totalQuantityToChange = quantityInMinifig * quantityInSet;
 
-                        if (!state.collection[partId]) state.collection[partId] = {};
-                        const currentPartQty = state.collection[partId][colorId] || 0;
-                        state.collection[partId][colorId] = currentPartQty + totalQuantityToAdd;
-                        minifigPartsAddedCount += totalQuantityToAdd;
-                    });
-                }));
-            }
+                    if (!state.collection[partId]) state.collection[partId] = {};
+                    const currentPartQty = state.collection[partId][colorId] || 0;
+                    
+                    if (action === 'add') {
+                         state.collection[partId][colorId] = currentPartQty + totalQuantityToChange;
+                         minifigPartsAddedCount += totalQuantityToChange;
+                    } else {
+                        const newPartQty = currentPartQty - totalQuantityToChange;
+                        if (newPartQty > 0) {
+                            state.collection[partId][colorId] = newPartQty;
+                        } else {
+                            delete state.collection[partId][colorId];
+                            if (Object.keys(state.collection[partId]).length === 0) delete state.collection[partId];
+                        }
+                        minifigPartsRemovedCount += totalQuantityToChange;
+                    }
+                });
+            }));
             
             // 3. Save the updated state to localStorage
             saveState();
             
             // 4. Fetch any missing details for newly added items
-            const promises = [
+            await Promise.all([
                 fetchMissingCollectionPartDetails(),
                 fetchColorDetailsForCollectionParts(),
-            ];
-            if (action === 'add') {
-                promises.push(fetchMissingCollectionMinifigDetails());
-            }
-            await Promise.all(promises);
+                fetchMissingCollectionMinifigDetails()
+            ]);
             
             // 5. Set the appropriate status message
             if (action === 'add') {
@@ -3191,7 +3271,11 @@
                 }
                 state.setModal.statusMessage = messageParts.join(' ');
             } else {
-                state.setModal.statusMessage = `Детали успешно удалены.`;
+                let messageParts = [`Детали набора успешно удалены.`];
+                if (minifigsRemovedCount > 0) {
+                    messageParts.push(`Также удалены ${minifigsRemovedCount} минифигурок и их детали (${minifigPartsRemovedCount} шт.).`);
+                }
+                state.setModal.statusMessage = messageParts.join(' ');
             }
             
             state.setModal.statusType = 'success';
@@ -3216,7 +3300,7 @@
         if (!minifig || state.setModal.isBulkUpdating) return;
 
         state.setModal.isBulkUpdating = true;
-        state.setModal.statusMessage = `Добавление деталей из "${minifig.set_name}"...`;
+        state.setModal.statusMessage = `Добавление деталей из "${minifig.name}"...`;
         state.setModal.statusType = 'info';
         renderSetModal(false);
 
@@ -3297,6 +3381,28 @@
             }
         }
     }
+
+    function openImageViewer(url) {
+        if (!url || url.includes('data:image/svg+xml')) return;
+        fullscreenImage.setAttribute('src', url);
+        imageViewerContainer.classList.remove('viewer-hidden');
+        document.body.classList.add('overflow-hidden');
+        requestAnimationFrame(() => {
+            imageViewerContainer.classList.add('visible');
+        });
+    }
+
+    function closeImageViewer() {
+        imageViewerContainer.classList.remove('visible');
+        imageViewerContainer.addEventListener('transitionend', (e) => {
+            if (e.target !== imageViewerContainer) return;
+            imageViewerContainer.classList.add('viewer-hidden');
+            fullscreenImage.setAttribute('src', '');
+            if (!state.selectedPartId && !state.selectedSetNum && !state.selectedFigNum && !state.isFilterModalOpen && !state.isSettingsModalOpen) {
+               document.body.classList.remove('overflow-hidden');
+            }
+        }, { once: true });
+    }
     
     function closeModal() {
         const modalContent = document.getElementById('modal-content');
@@ -3306,7 +3412,7 @@
         
         modalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedSetNum && !state.isFilterModalOpen && !state.isSettingsModalOpen && !state.selectedFigNum) {
+        if (!state.selectedSetNum && !state.isFilterModalOpen && !state.isSettingsModalOpen && !state.selectedFigNum && imageViewerContainer.classList.contains('viewer-hidden')) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -3332,7 +3438,7 @@
         
         setModalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedPartId && !state.isFilterModalOpen && !state.isSettingsModalOpen && !state.selectedFigNum) {
+        if (!state.selectedPartId && !state.isFilterModalOpen && !state.isSettingsModalOpen && !state.selectedFigNum && imageViewerContainer.classList.contains('viewer-hidden')) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -3354,7 +3460,7 @@
         
         minifigModalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedPartId && !state.selectedSetNum && !state.isFilterModalOpen && !state.isSettingsModalOpen) {
+        if (!state.selectedPartId && !state.selectedSetNum && !state.isFilterModalOpen && !state.isSettingsModalOpen && imageViewerContainer.classList.contains('viewer-hidden')) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -3377,7 +3483,7 @@
         state.isFilterModalOpen = false;
         filterModalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedPartId && !state.selectedSetNum && !state.isSettingsModalOpen && !state.selectedFigNum) {
+        if (!state.selectedPartId && !state.selectedSetNum && !state.isSettingsModalOpen && !state.selectedFigNum && imageViewerContainer.classList.contains('viewer-hidden')) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -3398,7 +3504,7 @@
         state.isSettingsModalOpen = false;
         settingsModalContainer.classList.remove('visible');
         modalContent.classList.add('modal-content-leave');
-        if (!state.selectedPartId && !state.selectedSetNum && !state.isFilterModalOpen && !state.selectedFigNum) {
+        if (!state.selectedPartId && !state.selectedSetNum && !state.isFilterModalOpen && !state.selectedFigNum && imageViewerContainer.classList.contains('viewer-hidden')) {
             document.body.classList.remove('overflow-hidden');
         }
         
@@ -3501,7 +3607,11 @@
                     updateUI();
                 }
             } else if (state.activeSubView === 'minifigs') {
-                fetchMinifigs();
+                if (state.searchQuery || !state.minifigResults) {
+                   fetchMinifigs();
+                } else {
+                   updateUI();
+                }
             } else { // parts
                 if (state.searchQuery) {
                     searchRebrickableParts(state.searchQuery.trim());
@@ -3517,6 +3627,17 @@
     document.addEventListener('click', async (e) => {
         if (!(e.target instanceof Element)) return;
         const target = e.target;
+
+        const imageViewerButton = target.closest('[data-action="view-image-fullscreen"]');
+        if (imageViewerButton?.dataset.imageUrl) {
+            openImageViewer(imageViewerButton.dataset.imageUrl);
+            return;
+        }
+
+        if (target.id === 'image-viewer-container' || target.closest('#image-viewer-close')) {
+            closeImageViewer();
+            return;
+        }
 
         // --- FAVORITE HANDLERS ---
         const favoriteCategoryButton = target.closest('[data-action="toggle-favorite-category"]');
@@ -3589,7 +3710,7 @@
             state.selectedThemeId = null;
             state.selectedSetCollectionThemeId = null;
 
-            if (state.currentView === 'catalog' && state.activeSubView === 'minifigs') {
+            if (state.currentView === 'catalog' && state.activeSubView === 'minifigs' && !state.minifigResults) {
                 fetchMinifigs();
             } else {
                 updateUI();
@@ -3631,7 +3752,7 @@
             else if (newSubView === 'minifigs') state.sortBy = 'name_asc';
             else state.sortBy = 'popularity';
 
-            if (state.currentView === 'catalog' && newSubView === 'minifigs') {
+            if (state.currentView === 'catalog' && newSubView === 'minifigs' && !state.minifigResults) {
                 fetchMinifigs();
             } else {
                 updateUI();
@@ -3983,7 +4104,7 @@
                 case 'add-minifig-to-collection':
                     if (figNum && quantity) {
                         const currentQty = state.minifigCollection[figNum]?.quantity || 0;
-                        await handleUpdateMinifigCollection(figNum, currentQty + parseInt(quantity, 10));
+                        await handleUpdateMinifigCollection(figNum, currentQty + parseInt(quantity, 10), false);
                     }
                     break;
                 case 'add-minifig-parts-to-collection':
@@ -4139,6 +4260,7 @@
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
+            if (!imageViewerContainer.classList.contains('viewer-hidden')) { closeImageViewer(); return; }
             if (state.isSettingsModalOpen) { closeSettingsModal(); return; }
             if (state.isFilterModalOpen) { closeFilterModal(); return; }
             if (state.selectedFigNum) { closeMinifigModal(); return; }
@@ -4161,6 +4283,7 @@
     // --- INITIALIZATION ---
     async function initializeApp() {
         console.log("Initializing LEGO Catalog...");
+        imageViewerCloseBtn.innerHTML = XIcon('w-7 h-7');
         loadState();
         updateUI();
 
@@ -4174,11 +4297,18 @@
                 fetchThemes(),
             ]);
             
-            await Promise.all([
+            const collectionPromises = [
                 fetchMissingCollectionPartDetails(),
                 fetchMissingCollectionSetDetails(),
                 fetchMissingCollectionMinifigDetails()
-            ]);
+            ];
+
+            // Initial catalog load for minifigs if on that view
+            if(state.currentView === 'catalog' && state.activeSubView === 'minifigs') {
+                collectionPromises.push(fetchMinifigs());
+            }
+
+            await Promise.all(collectionPromises);
 
             await fetchColorDetailsForCollectionParts();
             
