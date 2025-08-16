@@ -243,7 +243,7 @@ async function apiFetchPaginated(e) {
     let o = 1;
     for (;;) {
         const l = e.includes("?") ? "&" : "?",
-            a = `${REBRICKABLE_API_URL}${e}${l}page=${o}&page_size=1000`,
+            a = `${REBRICKABLE_API_URL}${e}${l}page=${o}&page_size=800`,
             i = await fetch(a, {
                 headers: {
                     Authorization: `key ${getApiKey()}`
@@ -2335,35 +2335,55 @@ function updateUI() {
 }
 
 function exportCollectionToCSV() {
-    let e = "type,id,color_id,quantity,name,color_name\n";
     const t = (t) => {
         if (null == t) return "";
         const o = String(t);
         return o.includes(",") || o.includes('"') || o.includes("\n") ? `"${o.replace(/"/g,'""')}"` : o
     };
-    for (const o in S.coll)
-        for (const l in S.coll[o]) {
-            const a = S.coll[o][l],
-                i = PART_MAP[o]?.name || "",
-                n = COLOR_MAP[l]?.name || "";
-            e += `part,${t(o)},${t(l)},${a},${t(i)},${t(n)}\n`
+    const e = [
+        "type", "id", "quantity", "name",
+        "part_cat_id", "part_cat_name",
+        "color_id", "color_name",
+        "set_theme_id", "set_theme_name", "set_year", "set_num_parts",
+        "minifig_num_parts"
+    ];
+    let o = e.join(",") + "\n";
+    for (const [partNum, colors] of Object.entries(S.coll)) {
+        for (const [colorId, quantity] of Object.entries(colors)) {
+            const part = PART_MAP[partNum];
+            const color = COLOR_MAP[colorId];
+            const category = part ? flatCategories.find(cat => cat.id === part.categoryId) : null;
+            o += [
+                t("part"), t(partNum), t(quantity), t(part?.name),
+                t(part?.categoryId), t(category?.name),
+                t(colorId), t(color?.name),
+                "", "", "", "", ""
+            ].join(",") + "\n";
         }
-    for (const o in S.setColl) {
-        const l = S.setColl[o].qty,
-            a = SET_MAP[o]?.name || "";
-        e += `set,${t(o)},,${l},${t(a)},\n`
     }
-    for (const o in S.minifigColl) {
-        const l = S.minifigColl[o].qty,
-            a = MINIFIG_MAP[o]?.name || "";
-        e += `minifig,${t(o)},,${l},${t(a)},\n`
+    for (const [setNum, collectionInfo] of Object.entries(S.setColl)) {
+        const set = SET_MAP[setNum];
+        const theme = set ? THEME_MAP[set.theme_id] : null;
+        o += [
+            t("set"), t(setNum), t(collectionInfo.qty), t(set?.name),
+            "", "", "", "",
+            t(set?.theme_id), t(theme?.name), t(set?.year), t(set?.num_parts), ""
+        ].join(",") + "\n";
     }
-    const o = new Blob([e], {
+    for (const [figNum, collectionInfo] of Object.entries(S.minifigColl)) {
+        const minifig = MINIFIG_MAP[figNum];
+        o += [
+            t("minifig"), t(figNum), t(collectionInfo.qty), t(minifig?.name),
+            "", "", "", "", "", "", "", "",
+            t(minifig?.num_parts)
+        ].join(",") + "\n";
+    }
+    const l = new Blob([o], {
             type: "text/csv;charset=utf-8;"
         }),
-        l = document.createElement("a"),
-        a = URL.createObjectURL(o);
-    l.setAttribute("href", a), l.setAttribute("download", `lego-collection-${(new Date).toISOString().slice(0,10)}.csv`), l.style.visibility = "hidden", document.body.appendChild(l), l.click(), document.body.removeChild(l), URL.revokeObjectURL(a)
+        a = document.createElement("a"),
+        i = URL.createObjectURL(l);
+    a.setAttribute("href", i), a.setAttribute("download", `lego-collection-${(new Date).toISOString().slice(0,10)}.csv`), a.style.visibility = "hidden", document.body.appendChild(a), a.click(), document.body.removeChild(a), URL.revokeObjectURL(i)
 }
 async function importCollectionFromCSV(e) {
     S.settingsModal.status = "Импорт файла...", S.settingsModal.statusType = "info", renderSettingsModal();
@@ -2376,7 +2396,7 @@ async function importCollectionFromCSV(e) {
     o.onload = async o => {
         try {
             const content = o.target.result;
-            if(typeof content !== 'string') {
+            if (typeof content !== 'string') {
                 throw new Error("Не удалось прочитать файл как текст.");
             }
             const l = content.split(/\r?\n/).filter(e => "" !== e.trim());
@@ -2390,39 +2410,94 @@ async function importCollectionFromCSV(e) {
                 minifigs: 0
             };
             for (let e = 1; e < l.length; e++) {
-                const t = parseCsvLine(l[e]),
-                    o = a.reduce((e, o, l) => (e[o] = t[l] ? t[l].trim() : "", e), {});
+                const csvRow = parseCsvLine(l[e]),
+                    row = a.reduce((acc, header, index) => {
+                        acc[header] = csvRow[index] ? csvRow[index].trim() : "";
+                        return acc;
+                    }, {});
                 const {
-                    type: i,
-                    id: r,
-                    color_id: s,
-                    quantity: c
-                } = o, d = parseInt(c, 10);
-                if (!i || !r || isNaN(d) || d <= 0) {
+                    type,
+                    id,
+                    quantity
+                } = row, qty = parseInt(quantity, 10);
+                if (!type || !id || isNaN(qty) || qty <= 0) {
                     console.warn(`Пропуск некорректной строки ${e+1}:`, l[e]);
                     continue
                 }
-                switch (i) {
+                switch (type) {
                     case "part":
-                        if (!s) continue;
-                        S.coll[r] || (S.coll[r] = {});
-                        const u = S.coll[r][s] || 0;
-                        S.coll[r][s] = u + d, n.parts++;
-                        break;
+                        {
+                            const {
+                                color_id,
+                                name,
+                                part_cat_id,
+                                color_name
+                            } = row;
+                            if (!color_id) continue;
+                            S.coll[id] || (S.coll[id] = {});
+                            S.coll[id][color_id] = (S.coll[id][color_id] || 0) + qty;
+                            if (name && !PART_MAP[id]) {
+                                PART_MAP[id] = {
+                                    id: id,
+                                    part_num: id,
+                                    name: name,
+                                    categoryId: part_cat_id ? parseInt(part_cat_id, 10) : null
+                                };
+                            }
+                            if (color_name && !COLOR_MAP[color_id]) {
+                                COLOR_MAP[color_id] = {
+                                    id: color_id,
+                                    name: color_name
+                                };
+                            }
+                            n.parts++;
+                            break;
+                        }
                     case "set":
-                        const g = S.setColl[r]?.qty || 0;
-                        S.setColl[r] = {
-                            qty: g + d
-                        }, n.sets++;
-                        break;
+                        {
+                            const {
+                                name,
+                                set_theme_id,
+                                set_year,
+                                set_num_parts
+                            } = row;
+                            S.setColl[id] = {
+                                qty: (S.setColl[id]?.qty || 0) + qty
+                            };
+                            if (name && !SET_MAP[id]) {
+                                SET_MAP[id] = {
+                                    set_num: id,
+                                    name: name,
+                                    theme_id: set_theme_id ? parseInt(set_theme_id, 10) : null,
+                                    year: set_year ? parseInt(set_year, 10) : null,
+                                    num_parts: set_num_parts ? parseInt(set_num_parts, 10) : null
+                                };
+                            }
+                            n.sets++;
+                            break;
+                        }
                     case "minifig":
-                        const m = S.minifigColl[r]?.qty || 0;
-                        S.minifigColl[r] = {
-                            qty: m + d
-                        }, n.minifigs++
+                        {
+                            const {
+                                name,
+                                minifig_num_parts
+                            } = row;
+                            S.minifigColl[id] = {
+                                qty: (S.minifigColl[id]?.qty || 0) + qty
+                            };
+                            if (name && !MINIFIG_MAP[id]) {
+                                MINIFIG_MAP[id] = {
+                                    set_num: id,
+                                    name: name,
+                                    num_parts: minifig_num_parts ? parseInt(minifig_num_parts, 10) : null
+                                };
+                            }
+                            n.minifigs++;
+                            break;
+                        }
                 }
             }
-            saveState(), t("Загрузка данных для импортированных предметов...", "info"), await Promise.all([fetchMissingCollectionPartDetails(), fetchMissingCollectionSetDetails(), fetchMissingCollectionMinifigDetails()]), await fetchColorDetailsForCollectionParts(), t(`Импорт завершен. Добавлено: ${n.parts} деталей, ${n.sets} наборов, ${n.minifigs} минифигурок.`, "success"), S.gridStale = !0, updateUI()
+            saveState(), t("Загрузка недостающих данных...", "info"), await Promise.all([fetchMissingCollectionPartDetails(), fetchMissingCollectionSetDetails(), fetchMissingCollectionMinifigDetails()]), await fetchColorDetailsForCollectionParts(), t(`Импорт завершен. Добавлено: ${n.parts} деталей, ${n.sets} наборов, ${n.minifigs} минифигурок.`, "success"), S.gridStale = !0, updateUI()
         } catch (e) {
             console.error("CSV Import failed:", e), t(`Ошибка импорта: ${e.message}`, "error")
         }
@@ -3294,7 +3369,19 @@ document.addEventListener("DOMContentLoaded", () => {
     importInput.accept = '.csv';
     importInput.style.display = 'none';
     document.body.appendChild(importInput);
-    initializeApp()
+    initializeApp();
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(error => {
+                    console.log('ServiceWorker registration failed: ', error);
+                });
+        });
+    }
 });
   </script>
 </body>
