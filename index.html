@@ -110,7 +110,8 @@ let S = {
     searchGroups: null,
     searchSetRes: null,
     searchMinifigRes: null,
-    loading: !0,
+    loading: !1,
+    sidebarLoading: !1,
     err: null,
     selPartId: null,
     selSetNum: null,
@@ -927,7 +928,7 @@ function renderSidebar() {
                 `
             }).join("")
         };
-        S.loading && 0 === S.themeTree.length ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : c = t + l(e)
+        S.sidebarLoading ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : c = t + l(e)
     } else if ("minifigs" === S.subView) d = "Минифигурки", c = '<li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог.</li>';
     else {
         d = "Категории";
@@ -947,7 +948,7 @@ function renderSidebar() {
             e = JSON.parse(JSON.stringify(S.catTree));
             e = e.map(e => (Array.isArray(e.children) && (e.children = e.children.filter(e => a.has(e.id))), e)).filter(e => Array.isArray(e.children) && e.children.length > 0)
         }
-        S.loading && 0 === S.catTree.length ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : "collection" === S.view && Object.keys(S.coll).length > 0 && 0 === e.length ? c = '<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>' : (e.forEach(e => {
+        S.sidebarLoading ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : "collection" === S.view && Object.keys(S.coll).length > 0 && 0 === e.length ? c = '<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>' : (e.forEach(e => {
             Array.isArray(e.children) && e.children.sort((e, t) => {
                 const o = S.favCatIds.has(e.id),
                     l = S.favCatIds.has(t.id);
@@ -3352,14 +3353,41 @@ document.addEventListener("click", async e => {
     e && toTopBtn.classList.contains("opacity-0") ? toTopBtn.classList.remove("opacity-0", "pointer-events-none", "translate-y-4") : !e && !toTopBtn.classList.contains("opacity-0") && toTopBtn.classList.add("opacity-0", "pointer-events-none", "translate-y-4")
 });
 async function initializeApp() {
-    console.log("Инициализация каталога LEGO..."), S.loading = !0, updateUI(), loadState();
+    console.log("Инициализация каталога LEGO...");
+    loadState();
+    S.sidebarLoading = true;
+    updateUI();
+
     try {
-        await Promise.all([fetchAllColors(), fetchCategories(), fetchThemes()]), await Promise.all([fetchMissingCollectionPartDetails(), fetchMissingCollectionSetDetails(), fetchMissingCollectionMinifigDetails()]), await fetchColorDetailsForCollectionParts(), S.err = null
+        await Promise.all([fetchAllColors(), fetchCategories(), fetchThemes()]);
     } catch (e) {
-        console.error("Initialization failed:", e), S.err = S.err || "Не удалось загрузить начальные данные."
+        console.error("Essential data fetch failed:", e);
+        S.err = S.err || "Не удалось загрузить основные данные каталога.";
     } finally {
-        S.loading = !1, updateUI()
+        S.sidebarLoading = false;
+        updateUI();
     }
+
+    // Fetch non-critical collection data in the background
+    (async () => {
+        try {
+            await Promise.all([
+                fetchMissingCollectionPartDetails(),
+                fetchMissingCollectionSetDetails(),
+                fetchMissingCollectionMinifigDetails(),
+            ]);
+            await fetchColorDetailsForCollectionParts();
+            
+            // If user is on collection view, refresh it with newly fetched details
+            if (S.view === 'collection') {
+                S.gridStale = true;
+                updateUI();
+            }
+        } catch (e) {
+            console.error("Background collection data fetch failed:", e);
+            // Optionally, show a non-intrusive notification to the user
+        }
+    })();
 }
 document.addEventListener("DOMContentLoaded", () => {
     viewerCloseBtn.innerHTML = I_X("w-6 h-6");
