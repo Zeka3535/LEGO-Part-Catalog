@@ -4,6 +4,20 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Каталог деталей и наборов LEGO</title>
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="shortcut icon" href="/favicon.ico">
+  <meta name="msapplication-TileColor" content="#1a202c">
+  <meta name="theme-color" content="#1a202c">
+
+  <meta property="og:title" content="Каталог деталей и наборов LEGO">
+  <meta property="og:description" content="Современное веб-приложение для каталогизации вашей личной коллекции LEGO. Включает детали, наборы и минифигурки в едином удобном интерфейсе.">
+  <meta property="og:image" content="/ogimage.png">
+  <meta property="og:type" content="website">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body{font-family:sans-serif}.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}#search-input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}.checkerboard{background-image:linear-gradient(45deg,#374151 25%,transparent 25%),linear-gradient(-45deg,#374151 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#374151 75%),linear-gradient(-45deg,transparent 75%,#374151 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0}.modal-hidden{display:none!important}.viewer-hidden{display:none!important}.loader{border:4px solid #4a5568;border-top:4px solid #4299e1;border-radius:50%;width:48px;height:48px;animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}@keyframes scaleOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.95)}}@keyframes fadeInUp{from{opacity:0;transform:translateY(1rem)}to{opacity:1;transform:translateY(0)}}#modal-container,#filter-modal-container,#set-modal-container,#settings-modal-container,#minifig-modal-container,#image-viewer-container{opacity:0;transition:opacity .2s ease-out}#modal-container.visible,#filter-modal-container.visible,#set-modal-container.visible,#settings-modal-container.visible,#minifig-modal-container.visible,#image-viewer-container.visible{opacity:1}.modal-content-enter{animation:scaleIn .2s ease-out forwards}.modal-content-leave{animation:scaleOut .2s ease-out forwards}.part-card.animate-in,.set-card.animate-in,.minifig-card.animate-in{opacity:0;animation:fadeInUp .4s ease-out forwards}#color-selector-wrapper{transition:max-height .35s ease-in-out;overflow:hidden}#image-viewer-container img{transform:scale(.95);opacity:0;transition:transform .2s ease-out,opacity .2s ease-out}#image-viewer-container.visible img{transform:scale(1);opacity:1}
@@ -1388,7 +1402,7 @@ function renderMainContent() {
                     t.sort((e, t) => t.num_parts - e.num_parts);
                     break;
                 case "num_parts_asc":
-                    t.sort((e, t) => t.num_parts - e.num_parts)
+                    t.sort((e, t) => e.num_parts - t.num_parts)
             }
             o = (e, t, o) => renderMinifigCard(e, t, o);
         }
@@ -1404,7 +1418,16 @@ function renderMainContent() {
                 </div>`
         }
     }
-    mainEl.innerHTML = renderAppliedFilters() + e, S.gridStale = !1
+    mainEl.innerHTML = renderAppliedFilters() + e;
+    S.gridStale = !1;
+
+    // Автоматически загружать больше контента, если нет полосы прокрутки
+    requestAnimationFrame(() => {
+        if (!S.loading && S.hasMoreItems && mainEl.scrollHeight <= mainEl.clientHeight) {
+            S.toDisplay += S.increment;
+            renderMainContent();
+        }
+    });
 }
 
 function renderSetCollectionControls() {
