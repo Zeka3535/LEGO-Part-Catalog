@@ -1,3 +1,4 @@
+
 const CACHE_NAME = 'lego-catalog-cache-v1';
 const API_HOST = 'rebrickable.com';
 const IMG_HOSTS = ['cdn.rebrickable.com', 'm.rebrickable.com'];
@@ -45,13 +46,16 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
 
+    // Игнорировать запросы браузера при принудительном обновлении, чтобы избежать ошибок
+    if (event.request.cache === 'only-if-cached' && event.request.mode !== 'same-origin') {
+        return;
+    }
+
     if (url.hostname === API_HOST) {
-        event.respondWith(staleWhileRevalidate(event.request));
+        event.respondWith(networkFallingBackToCache(event.request));
     } else if (IMG_HOSTS.includes(url.hostname)) {
         event.respondWith(cacheFirst(event.request));
     } else {
-        // Для оболочки приложения и других ресурсов используйте стратегию "сначала кэш".
-        // Это более надежно, чем проверка путей, и работает с развертыванием в подкаталогах.
         event.respondWith(
             caches.match(event.request)
             .then(cachedResponse => {
@@ -62,48 +66,41 @@ self.addEventListener('fetch', event => {
 });
 
 function cacheFirst(request) {
-    return caches.match(request)
-        .then(response => {
-            if (response) {
-                return response;
-            }
-            return fetch(request)
-                .then(networkResponse => {
-                    if (networkResponse.ok) {
-                        return caches.open(CACHE_NAME).then(cache => {
-                            cache.put(request, networkResponse.clone());
-                            return networkResponse;
-                        });
-                    }
-                    return networkResponse;
+    return caches.match(request).then(response => {
+        // Если ответ есть в кэше, возвращаем его
+        if (response) {
+            return response;
+        }
+        // Иначе, делаем запрос к сети
+        return fetch(request).then(networkResponse => {
+            // Если ответ успешный, кэшируем его
+            if (networkResponse.ok) {
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(request, responseToCache);
                 });
-        })
-        .catch(error => {
-            console.error('Cache first fetch failed:', error);
-            // Could return a fallback image here if needed
+            }
+            return networkResponse;
         });
+    });
 }
 
-function staleWhileRevalidate(request) {
-    return caches.match(request)
-        .then(cachedResponse => {
-            const fetchPromise = fetch(request)
-                .then(networkResponse => {
-                    if (networkResponse.ok) {
-                        return caches.open(CACHE_NAME).then(cache => {
-                            cache.put(request, networkResponse.clone());
-                            return networkResponse;
-                        });
-                    }
-                    return networkResponse;
-                })
-                .catch(error => {
-                    console.error('Stale-while-revalidate fetch failed:', error);
-                    // This error is caught, so we don't reject the promise.
-                    // If there's a cached response, it will be used.
-                    // If not, the original `caches.match` promise will resolve to `undefined`.
+function networkFallingBackToCache(request) {
+    // Сначала пытаемся получить данные из сети
+    return fetch(request)
+        .then(networkResponse => {
+            // Если запрос успешен, обновляем кэш и возвращаем ответ
+            if (networkResponse.ok) {
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then(cache => {
+                    cache.put(request, responseToCache);
                 });
-
-            return cachedResponse || fetchPromise;
+            }
+            return networkResponse;
+        })
+        .catch(() => {
+            // Если запрос к сети не удался (офлайн, ошибка CORS и т.д.),
+            // пытаемся найти ответ в кэше.
+            return caches.match(request);
         });
 }
