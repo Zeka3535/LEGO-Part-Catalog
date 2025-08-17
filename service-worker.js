@@ -1,4 +1,3 @@
-
 const CACHE_NAME = 'lego-catalog-cache-v1';
 const API_HOST = 'rebrickable.com';
 const IMG_HOSTS = ['cdn.rebrickable.com', 'm.rebrickable.com'];
