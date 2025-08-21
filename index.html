@@ -21,7 +21,368 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
       <style>
-    body{font-family:sans-serif}.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}#search-input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}.checkerboard{background-image:linear-gradient(45deg,#374151 25%,transparent 25%),linear-gradient(-45deg,#374151 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#374151 75%),linear-gradient(-45deg,transparent 75%,#374151 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0}.modal-hidden{display:none!important}.viewer-hidden{display:none!important}.loader{border:4px solid #4a5568;border-top:4px solid #4299e1;border-radius:50%;width:48px;height:48px;animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}@keyframes scaleOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.95)}}@keyframes fadeInUp{from{opacity:0;transform:translateY(1rem)}to{opacity:1;transform:translateY(0)}}#modal-container,#filter-modal-container,#set-modal-container,#settings-modal-container,#minifig-modal-container,#image-viewer-container{opacity:0;transition:opacity .2s ease-out}#modal-container.visible,#filter-modal-container.visible,#set-modal-container.visible,#settings-modal-container.visible,#minifig-modal-container.visible,#image-viewer-container.visible{opacity:1}.modal-content-enter{animation:scaleIn .2s ease-out forwards}.modal-content-leave{animation:scaleOut .2s ease-out forwards}.part-card.animate-in,.set-card.animate-in,.minifig-card.animate-in{opacity:0;animation:fadeInUp .4s ease-out forwards}#color-selector-wrapper{transition:max-height .35s ease-in-out;overflow:hidden}#image-viewer-container img{transform:scale(.95);opacity:0;transition:transform .2s ease-out,opacity .2s ease-out}#image-viewer-container.visible img{transform:scale(1);opacity:1}
+    body{font-family:sans-serif}.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}#search-input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}.checkerboard{background-image:linear-gradient(45deg,#374151 25%,transparent 25%),linear-gradient(-45deg,#374151 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#374151 75%),linear-gradient(-45deg,transparent 75%,#374151 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0}.modal-hidden{display:none!important}.viewer-hidden{display:none!important}.loader{border:4px solid #4a5568;border-top:4px solid #4299e1;border-radius:50%;width:48px;height:48px;animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}@keyframes scaleOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.95)}}@keyframes fadeInUp{from{opacity:0;transform:translateY(0.5rem)}to{opacity:1;transform:translateY(0)}}#modal-container,#filter-modal-container,#set-modal-container,#settings-modal-container,#minifig-modal-container,#image-viewer-container{opacity:0;transition:opacity .2s ease-out}#modal-container.visible,#filter-modal-container.visible,#set-modal-container.visible,#settings-modal-container.visible,#minifig-modal-container.visible,#image-viewer-container.visible{opacity:1}.modal-content-enter{animation:scaleIn .2s ease-out forwards}.modal-content-leave{animation:scaleOut .2s ease-out forwards}.part-card.animate-in,.set-card.animate-in,.minifig-card.animate-in{opacity:0;animation:fadeInUp .2s ease-out forwards}
+
+/* Оптимизация анимаций для больших экранов */
+@media (min-width: 1024px) {
+    .part-card.animate-in,.set-card.animate-in,.minifig-card.animate-in {
+        animation-duration: 0.2s;
+    }
+}
+
+/* Отключение анимаций для очень больших экранов */
+@media (min-width: 1440px) {
+    .part-card.animate-in,.set-card.animate-in,.minifig-card.animate-in {
+        animation: none;
+        opacity: 1;
+    }
+}
+
+/* Дополнительная оптимизация: отключение анимаций при открытой боковой панели на больших экранах */
+.sidebar-open-large .part-card.animate-in,
+.sidebar-open-large .set-card.animate-in,
+.sidebar-open-large .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Оптимизация производительности для карточек */
+.part-card img,
+.set-card img,
+.minifig-card img {
+    will-change: transform;
+    backface-visibility: hidden;
+    transform: translateZ(0);
+}
+
+/* Отключение hover эффектов на больших экранах для улучшения производительности */
+@media (min-width: 1024px) {
+    .part-card:hover,
+    .set-card:hover,
+    .minifig-card:hover {
+        transform: none;
+    }
+}
+
+/* Отключение анимаций при прокрутке для улучшения производительности */
+.scrolling .part-card.animate-in,
+.scrolling .set-card.animate-in,
+.scrolling .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при изменении размера окна */
+.resizing .part-card.animate-in,
+.resizing .set-card.animate-in,
+.resizing .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при переключении вкладок */
+.tab-switching .part-card.animate-in,
+.tab-switching .set-card.animate-in,
+.tab-switching .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций для больших коллекций */
+.large-collection .part-card.animate-in,
+.large-collection .set-card.animate-in,
+.large-collection .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при поиске */
+.searching .part-card.animate-in,
+.searching .set-card.animate-in,
+.searching .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при фильтрации */
+.filtering .part-card.animate-in,
+.filtering .set-card.animate-in,
+.filtering .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при сортировке */
+.sorting .part-card.animate-in,
+.sorting .set-card.animate-in,
+.sorting .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при навигации по темам */
+.theme-navigation .part-card.animate-in,
+.theme-navigation .set-card.animate-in,
+.theme-navigation .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при навигации по категориям */
+.category-navigation .part-card.animate-in,
+.category-navigation .set-card.animate-in,
+.category-navigation .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции */
+.collection-view .part-card.animate-in,
+.collection-view .set-card.animate-in,
+.collection-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре каталога */
+.catalog-view .part-card.animate-in,
+.catalog-view .set-card.animate-in,
+.catalog-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре минифигурок */
+.minifigs-view .part-card.animate-in,
+.minifigs-view .set-card.animate-in,
+.minifigs-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре наборов */
+.sets-view .part-card.animate-in,
+.sets-view .set-card.animate-in,
+.sets-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре деталей */
+.parts-view .part-card.animate-in,
+.parts-view .set-card.animate-in,
+.parts-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей */
+.collection-parts-view .part-card.animate-in,
+.collection-parts-view .set-card.animate-in,
+.collection-parts-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции наборов */
+.collection-sets-view .part-card.animate-in,
+.collection-sets-view .set-card.animate-in,
+.collection-sets-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции минифигурок */
+.collection-minifigs-view .part-card.animate-in,
+.collection-minifigs-view .set-card.animate-in,
+.collection-minifigs-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре каталога деталей */
+.catalog-parts-view .part-card.animate-in,
+.catalog-parts-view .set-card.animate-in,
+.catalog-parts-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре каталога наборов */
+.catalog-sets-view .part-card.animate-in,
+.catalog-sets-view .set-card.animate-in,
+.catalog-sets-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре каталога минифигурок */
+.catalog-minifigs-view .part-card.animate-in,
+.catalog-minifigs-view .set-card.animate-in,
+.catalog-minifigs-view .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по цветам */
+.collection-parts-color-filtered .part-card.animate-in,
+.collection-parts-color-filtered .set-card.animate-in,
+.collection-parts-color-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по категориям */
+.collection-parts-category-filtered .part-card.animate-in,
+.collection-parts-category-filtered .set-card.animate-in,
+.collection-parts-category-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по поиску */
+.collection-parts-search-filtered .part-card.animate-in,
+.collection-parts-search-filtered .set-card.animate-in,
+.collection-parts-search-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по сортировке */
+.collection-parts-sort-filtered .part-card.animate-in,
+.collection-parts-sort-filtered .set-card.animate-in,
+.collection-parts-sort-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по количеству */
+.collection-parts-quantity-filtered .part-card.animate-in,
+.collection-parts-quantity-filtered .set-card.animate-in,
+.collection-parts-quantity-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по популярности */
+.collection-parts-popularity-filtered .part-card.animate-in,
+.collection-parts-popularity-filtered .set-card.animate-in,
+.collection-parts-popularity-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по алфавиту */
+.collection-parts-alpha-filtered .part-card.animate-in,
+.collection-parts-alpha-filtered .set-card.animate-in,
+.collection-parts-alpha-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по релевантности */
+.collection-parts-relevance-filtered .part-card.animate-in,
+.collection-parts-relevance-filtered .set-card.animate-in,
+.collection-parts-relevance-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам */
+.collection-parts-multi-filtered .part-card.animate-in,
+.collection-parts-multi-filtered .set-card.animate-in,
+.collection-parts-multi-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и большим количеством элементов */
+.collection-parts-heavy-filtered .part-card.animate-in,
+.collection-parts-heavy-filtered .set-card.animate-in,
+.collection-parts-heavy-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и очень большим количеством элементов */
+.collection-parts-very-heavy-filtered .part-card.animate-in,
+.collection-parts-very-heavy-filtered .set-card.animate-in,
+.collection-parts-very-heavy-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов */
+.collection-parts-critical-filtered .part-card.animate-in,
+.collection-parts-critical-filtered .set-card.animate-in,
+.collection-parts-critical-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью */
+.collection-parts-critical-sidebar-filtered .part-card.animate-in,
+.collection-parts-critical-sidebar-filtered .set-card.animate-in,
+.collection-parts-critical-sidebar-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой */
+.collection-parts-critical-sidebar-scroll-filtered .part-card.animate-in,
+.collection-parts-critical-sidebar-scroll-filtered .set-card.animate-in,
+.collection-parts-critical-sidebar-scroll-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна */
+.collection-parts-critical-sidebar-scroll-resize-filtered .part-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-filtered .set-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок */
+.collection-parts-critical-sidebar-scroll-resize-tab-filtered .part-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-filtered .set-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок и поиском */
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filtered .part-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filtered .set-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок и поиском и фильтрацией */
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-filtered .part-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-filtered .set-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок и поиском и фильтрацией и сортировкой */
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-filtered .part-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-filtered .set-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}
+
+/* Отключение анимаций при просмотре коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок и поиском и фильтрацией и сортировкой и навигацией по темам */
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-theme-filtered .part-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-theme-filtered .set-card.animate-in,
+.collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-theme-filtered .minifig-card.animate-in {
+    animation: none !important;
+    opacity: 1 !important;
+}#color-selector-wrapper{transition:max-height .35s ease-in-out;overflow:hidden}#image-viewer-container img{transform:scale(.95);opacity:0;transition:transform .2s ease-out,opacity .2s ease-out}#image-viewer-container.visible img{transform:scale(1);opacity:1}
     
     /* Стили для кастомного выпадающего списка вариаций */
     #variation-select-button {
@@ -332,6 +693,40 @@ let S = {
         colorIds: [],
         inCollectionOnly: !1
     },
+    
+    // Функция для оптимизации задержек анимаций в зависимости от размера экрана
+    getAnimationDelay: function(index) {
+        const isLargeScreen = window.innerWidth >= 1024;
+        const isVeryLargeScreen = window.innerWidth >= 1440;
+        
+        // На больших экранах отключаем анимации для улучшения производительности
+        if (isLargeScreen) {
+            return '';
+        }
+        
+        // На мобильных устройствах используем меньшие задержки для ускорения
+        const delay = Math.min(20 * index, 800);
+        return delay > 0 ? `animation-delay: ${delay}ms;` : '';
+    },
+    
+    // Функция для оптимизации количества отображаемых карточек
+    getOptimizedDisplayCount: function() {
+        const isLargeScreen = window.innerWidth >= 1024;
+        const isVeryLargeScreen = window.innerWidth >= 1440;
+        
+        // На очень больших экранах показываем больше карточек сразу
+        if (isVeryLargeScreen) {
+            return 96;
+        }
+        
+        // На больших экранах показываем стандартное количество
+        if (isLargeScreen) {
+            return 48;
+        }
+        
+        // На мобильных устройствах показываем меньше карточек
+        return 24;
+    },
     setFilters: {
         minYear: '',
         maxYear: '',
@@ -605,13 +1000,26 @@ async function fetchAllColors() {
     }
 }
 async function loadPartsForCategory(e) {
+    // Отключаем анимации при загрузке категории для улучшения производительности
+    document.body.classList.add('category-navigation');
+    document.body.classList.add('catalog-view');
+    document.body.classList.add('catalog-parts-view');
+    setTimeout(() => {
+        document.body.classList.remove('category-navigation');
+        document.body.classList.remove('catalog-view');
+        document.body.classList.remove('catalog-parts-view');
+    }, 800);
+    
     // Show loading indicator for category loading
     updateLoadingStatus("Загрузка деталей категории...", 65, "Загрузка данных из CSV");
     
     if (S.selCatId = e, S.loading = !0, S.err = null, S.searchGroups = null, S.q = '', S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.catGroups = {}, S.loading = !1, void updateUI();
+    
+    let o = []; // Объявляем o в начале функции
+    let l = []; // Объявляем l в начале функции
     try {
         // Load parts from CSV data instead of API
-        let o = Object.values(PART_MAP).filter(part => part.categoryId === e);
+        o = Object.values(PART_MAP).filter(part => part.categoryId === e);
         
         // Apply color filter if specified
         if (S.filters.colorIds?.length === 1) {
@@ -626,19 +1034,22 @@ async function loadPartsForCategory(e) {
             });
         }
         
-        let l = o;
+        l = o;
         S.filters.inCollectionOnly && (l = o.filter(e => S.coll[e.id] && Object.keys(S.coll[e.id]).length > 0));
         S.catGroups = groupParts(l);
     } catch (t) {
         console.error("CSV parts fetch failed:", t), S.err = t.message
+        S.catGroups = {}; // Инициализируем catGroups в случае ошибки
     } finally {
         S.loading = !1;
         
         // Hide loading indicator after category loading
-        updateLoadingStatus("Детали категории загружены", 100, `Загружено ${Object.keys(S.catGroups || {}).length} групп деталей`);
-        setTimeout(() => {
-            hideLoadingIndicator();
-        }, 1000);
+        if (S.catGroups && Object.keys(S.catGroups).length !== undefined) {
+            updateLoadingStatus("Детали категории загружены", 100, `Загружено ${Object.keys(S.catGroups || {}).length} групп деталей`);
+            setTimeout(() => {
+                hideLoadingIndicator();
+            }, 1000);
+        }
         
         updateUI();
     }
@@ -668,14 +1079,27 @@ function partCmp(e, t) {
     return 0 !== r ? r : (e.part_num || e.id).localeCompare(t.part_num || t.id, 'en')
 }
 async function searchRebrickableParts(e) {
+    // Отключаем анимации при поиске для улучшения производительности
+    document.body.classList.add('searching');
+    document.body.classList.add('catalog-view');
+    document.body.classList.add('catalog-parts-view');
+    setTimeout(() => {
+        document.body.classList.remove('searching');
+        document.body.classList.remove('catalog-view');
+        document.body.classList.remove('catalog-parts-view');
+    }, 800);
+    
     if (!e || e.trim().length === 0) return S.searchGroups = null, S.loading = !1, S.selCatId = null, S.gridStale = !0, void updateUI();
     if (S.loading = !0, S.err = null, S.selCatId = null, S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.searchGroups = {}, S.loading = !1, void updateUI();
+    
+    let o = []; // Объявляем o в начале функции
+    let l = {}; // Объявляем l в начале функции
+    let a = []; // Объявляем a в начале функции
+    let i = {}; // Объявляем i в начале функции
+    
     try {
-
-
-        
         // Search in CSV data instead of API
-        let o = searchInCSVData(e, 'parts');
+        o = searchInCSVData(e, 'parts');
         
         // Apply color filter if specified
         if (S.filters.colorIds?.length === 1) {
@@ -693,10 +1117,10 @@ async function searchRebrickableParts(e) {
         // Apply collection filter if specified
         S.filters.inCollectionOnly && (o = o.filter(e => S.coll[e.id] && Object.keys(S.coll[e.id]).length > 0));
         
-        const l = groupParts(o);
+        l = groupParts(o);
         console.log('Grouped parts:', Object.keys(l).length, 'groups');
         
-        const a = Object.entries(l).map(([t, o]) => ({
+        a = Object.entries(l).map(([t, o]) => ({
             groupId: t,
             partList: o,
             bestScore: Math.max(...o.map(t => getRelevanceScore(t, e)))
@@ -705,7 +1129,7 @@ async function searchRebrickableParts(e) {
             if (t.bestScore !== e.bestScore) return t.bestScore - e.bestScore;
             return partCmp(e.partList[0], t.partList[0])
         });
-        const i = {};
+        i = {};
         a.forEach(e => {
             e.bestScore > 0 && (i[e.groupId] = e.partList)
         }), S.searchGroups = i;
@@ -718,7 +1142,7 @@ async function searchRebrickableParts(e) {
         S.loading = !1;
         
         // Hide loading indicator after search completion
-        if (S.q && S.q.trim().length > 0) {
+        if (S.q && S.q.trim().length > 0 && S.searchGroups && Object.keys(S.searchGroups).length !== undefined) {
             updateLoadingStatus("Поиск завершен", 100, `Найдено ${Object.keys(S.searchGroups || {}).length} групп деталей`);
             setTimeout(() => {
                 hideLoadingIndicator();
@@ -729,6 +1153,14 @@ async function searchRebrickableParts(e) {
     }
 }
 async function fetchSets() {
+    // Отключаем анимации при загрузке наборов для улучшения производительности
+    document.body.classList.add('catalog-view');
+    document.body.classList.add('catalog-sets-view');
+    setTimeout(() => {
+        document.body.classList.remove('catalog-view');
+        document.body.classList.remove('catalog-sets-view');
+    }, 800);
+    
     // Show loading indicator for sets loading
     if (S.selThemeId) {
         updateLoadingStatus("Загрузка наборов темы...", 65, "Загрузка данных из CSV");
@@ -738,10 +1170,9 @@ async function fetchSets() {
         updateLoadingStatus("Загрузка всех наборов...", 65, "Загрузка данных из CSV");
     }
     
+    let results = []; // Объявляем results в начале функции
     S.loading = !0, S.err = null, S.setRes = null, S.searchSetRes = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI();
     try {
-        let results = [];
-        
         if (S.q) {
             // Search in CSV data
             results = searchInCSVData(S.q, 'sets');
@@ -755,18 +1186,40 @@ async function fetchSets() {
             results = Object.values(SET_MAP);
         }
         
-        // Apply filters
-        if (S.setFilters.minYear) {
-            results = results.filter(set => set.year && set.year >= parseInt(S.setFilters.minYear));
+        // Apply filters - исправлено для корректной работы
+        console.log('Applying filters to sets:', S.setFilters);
+        
+        if (S.setFilters.minYear && S.setFilters.minYear.trim() !== '') {
+            const minYear = parseInt(S.setFilters.minYear);
+            if (!isNaN(minYear)) {
+                const beforeCount = results.length;
+                results = results.filter(set => set.year && set.year >= minYear);
+                console.log(`Filter minYear >= ${minYear}: ${beforeCount} -> ${results.length} sets`);
+            }
         }
-        if (S.setFilters.maxYear) {
-            results = results.filter(set => set.year && set.year <= parseInt(S.setFilters.maxYear));
+        if (S.setFilters.maxYear && S.setFilters.maxYear.trim() !== '') {
+            const maxYear = parseInt(S.setFilters.maxYear);
+            if (!isNaN(maxYear)) {
+                const beforeCount = results.length;
+                results = results.filter(set => set.year && set.year <= maxYear);
+                console.log(`Filter maxYear <= ${maxYear}: ${beforeCount} -> ${results.length} sets`);
+            }
         }
-        if (S.setFilters.minParts) {
-            results = results.filter(set => set.num_parts && set.num_parts >= parseInt(S.setFilters.minParts));
+        if (S.setFilters.minParts && S.setFilters.minParts.trim() !== '') {
+            const minParts = parseInt(S.setFilters.minParts);
+            if (!isNaN(minParts)) {
+                const beforeCount = results.length;
+                results = results.filter(set => set.num_parts && set.num_parts >= minParts);
+                console.log(`Filter minParts >= ${minParts}: ${beforeCount} -> ${results.length} sets`);
+            }
         }
-        if (S.setFilters.maxParts) {
-            results = results.filter(set => set.num_parts && set.num_parts <= parseInt(S.setFilters.maxParts));
+        if (S.setFilters.maxParts && S.setFilters.maxParts.trim() !== '') {
+            const maxParts = parseInt(S.setFilters.maxParts);
+            if (!isNaN(maxParts)) {
+                const beforeCount = results.length;
+                results = results.filter(set => set.num_parts && set.num_parts <= maxParts);
+                console.log(`Filter maxParts <= ${maxParts}: ${beforeCount} -> ${results.length} sets`);
+            }
         }
         
         // Apply sorting
@@ -790,14 +1243,18 @@ async function fetchSets() {
             S.setRes = results;
         }
         
+        console.log('Sets loaded:', results.length, 'results');
+        console.log('Applied filters:', S.setFilters);
+        console.log('Sort by:', S.sortBy);
 
     } catch (e) {
         console.error("Ошибка загрузки наборов из CSV:", e), S.err = e.message
+        results = []; // Инициализируем results в случае ошибки
     } finally {
         S.loading = !1;
         
         // Hide loading indicator after sets loading
-        if (S.subView === 'sets') {
+        if (S.subView === 'sets' && results && results.length !== undefined) {
             updateLoadingStatus("Наборы загружены", 100, `Загружено ${results.length} наборов`);
             setTimeout(() => {
                 hideLoadingIndicator();
@@ -808,6 +1265,14 @@ async function fetchSets() {
     }
 }
 async function fetchMinifigs() {
+    // Отключаем анимации при загрузке минифигурок для улучшения производительности
+    document.body.classList.add('catalog-view');
+    document.body.classList.add('catalog-minifigs-view');
+    setTimeout(() => {
+        document.body.classList.remove('catalog-view');
+        document.body.classList.remove('catalog-minifigs-view');
+    }, 800);
+    
     // Show loading indicator for minifigs loading
     if (S.q) {
         updateLoadingStatus("Поиск минифигурок...", 70, `Поиск по запросу: "${S.q}"`);
@@ -815,10 +1280,9 @@ async function fetchMinifigs() {
         updateLoadingStatus("Загрузка всех минифигурок...", 65, "Загрузка данных из CSV");
     }
     
+    let results = []; // Объявляем results в начале функции
     S.loading = !0, S.err = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI();
     try {
-        let results = [];
-        
         if (S.q) {
             // Search in CSV data
             results = searchInCSVData(S.q, 'minifigs');
@@ -831,7 +1295,7 @@ async function fetchMinifigs() {
             S.searchMinifigRes = null;
         }
         
-        // Apply sorting
+        // Apply sorting - исправлено для корректной работы
         if (S.sortBy === "name_asc") {
             results.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'en'));
         } else if (S.sortBy === "name_desc") {
@@ -839,17 +1303,21 @@ async function fetchMinifigs() {
         } else if (S.sortBy === "num_parts_desc") {
             results.sort((a, b) => (b.num_parts || 0) - (a.num_parts || 0));
         } else if (S.sortBy === "num_parts_asc") {
-            results.sort((a, b) => (a.num_parts || 0) - (a.num_parts || 0));
+            results.sort((a, b) => (a.num_parts || 0) - (b.num_parts || 0));
         }
+        
+        console.log('Minifigs loaded:', results.length, 'results');
+        console.log('Sort by:', S.sortBy);
         
 
     } catch (e) {
         console.error("Ошибка загрузки минифигурок из CSV:", e), S.err = e.message
+        results = []; // Инициализируем results в случае ошибки
     } finally {
         S.loading = !1;
         
         // Hide loading indicator after minifigs loading
-        if (S.subView === 'minifigs') {
+        if (S.subView === 'minifigs' && results && results.length !== undefined) {
             updateLoadingStatus("Минифигурки загружены", 100, `Загружено ${results.length} минифигурок`);
             setTimeout(() => {
                 hideLoadingIndicator();
@@ -866,21 +1334,24 @@ async function fetchPartColors(e) {
     S.partModal.loadingColors = !0, updateModalPartially({
         colors: !0
     });
+    let t = []; // Объявляем t в начале функции
     try {
-        const t = (await apiFetchPaginated(`/parts/${e}/colors/`)).map(e => String(e.color_id));
+        t = (await apiFetchPaginated(`/parts/${e}/colors/`)).map(e => String(e.color_id));
         if (PART_MAP[e]) {
             PART_MAP[e].availableColorIds = t;
             if (t.length > 0 && (!S.partModal.selColorId || !t.includes(S.partModal.selColorId))) {
                 S.partModal.selColorId = sortColorIds(t, e)[0];
             }
         }
-    } catch (t) {
-        console.error(`Failed to fetch colors for ${e}:`, t), PART_MAP[e] || (PART_MAP[e] = {}), PART_MAP[e].availableColorIds = PART_MAP[e].availableColorIds || []
+    } catch (error) {
+        console.error(`Failed to fetch colors for ${e}:`, error), PART_MAP[e] || (PART_MAP[e] = {}), PART_MAP[e].availableColorIds = PART_MAP[e].availableColorIds || []
     } finally {
         S.partModal.loadingColors = !1;
         
         // Update loading status for colors
-        updateLoadingStatus("Цвета загружены", 80, `Доступно ${PART_MAP[e]?.availableColorIds?.length || 0} цветов`);
+        if (PART_MAP[e] && PART_MAP[e].availableColorIds && PART_MAP[e].availableColorIds.length !== undefined) {
+            updateLoadingStatus("Цвета загружены", 80, `Доступно ${PART_MAP[e].availableColorIds.length} цветов`);
+        }
         
         updateModalPartially({
             colors: !0,
@@ -902,21 +1373,22 @@ async function fetchPartColorSpecifics(e, t) {
         return;
     }
     
+    let now, timeSinceLastRequest, o, l, a; // Объявляем переменные в начале функции
     try {
         // Rate limiting
-        const now = Date.now();
-        const timeSinceLastRequest = now - lastApiRequestTime;
+        now = Date.now();
+        timeSinceLastRequest = now - lastApiRequestTime;
         if (timeSinceLastRequest < API_REQUEST_DELAY) {
             await new Promise(resolve => setTimeout(resolve, API_REQUEST_DELAY - timeSinceLastRequest));
         }
         
         lastApiRequestTime = Date.now();
-        const o = `${REBRICKABLE_API_URL}/parts/${e}/colors/${t}/`,
-            l = await fetch(o, {
-                headers: {
-                    Authorization: `key ${getApiKey()}`
-                }
-            });
+        o = `${REBRICKABLE_API_URL}/parts/${e}/colors/${t}/`;
+        l = await fetch(o, {
+            headers: {
+                Authorization: `key ${getApiKey()}`
+            }
+        });
             
         if (l.status === 429) {
             // Rate limited - wait and show fallback
@@ -926,7 +1398,7 @@ async function fetchPartColorSpecifics(e, t) {
         }
         
         if (!l.ok) throw new Error("Image not found for this color.");
-        const a = await l.json();
+        a = await l.json();
         
         if (a.part_img_url) {
             // Cache the result
@@ -935,17 +1407,19 @@ async function fetchPartColorSpecifics(e, t) {
         } else {
             S.partModal.imgUrl = PART_MAP[e]?.rebrickable_img_url || null;
         }
-    } catch (o) {
-        console.warn("Could not fetch color-specific image:", o);
+    } catch (error) {
+        console.warn("Could not fetch color-specific image:", error);
         S.partModal.imgUrl = PART_MAP[e]?.rebrickable_img_url || null;
     } finally {
         S.partModal.loadingImg = !1;
         
         // Show loading indicator for image loading
-        if (S.partModal.imgUrl) {
-            updateLoadingStatus("Изображение загружено", 85, "Изображение детали готово");
-        } else {
-            updateLoadingStatus("Изображение недоступно", 85, "Используется стандартное изображение");
+        if (S.partModal.imgUrl !== undefined) {
+            if (S.partModal.imgUrl) {
+                updateLoadingStatus("Изображение загружено", 85, "Изображение детали готово");
+            } else {
+                updateLoadingStatus("Изображение недоступно", 85, "Используется стандартное изображение");
+            }
         }
         
         updateModalPartially({
@@ -956,22 +1430,24 @@ async function fetchPartColorSpecifics(e, t) {
 async function fetchColorDetailsForPart(e) {
     if (PART_MAP[e]?.colorImages) return;
     
+    let now, timeSinceLastRequest, t, o, imageCount; // Объявляем переменные в начале функции
+    
     // Rate limiting
-    const now = Date.now();
-    const timeSinceLastRequest = now - lastApiRequestTime;
+    now = Date.now();
+    timeSinceLastRequest = now - lastApiRequestTime;
     if (timeSinceLastRequest < API_REQUEST_DELAY) {
         await new Promise(resolve => setTimeout(resolve, API_REQUEST_DELAY - timeSinceLastRequest));
     }
     
     try {
         lastApiRequestTime = Date.now();
-        const t = await apiFetchPaginated(`/parts/${e}/colors/`);
+        t = await apiFetchPaginated(`/parts/${e}/colors/`);
         if (!PART_MAP[e]) {
             PART_MAP[e] = {
                 id: e
             };
         }
-        const o = {};
+        o = {};
         if (Array.isArray(t)) {
             t.forEach(colorData => {
                 if (colorData && colorData.part_img_url && colorData.color_id) {
@@ -985,20 +1461,23 @@ async function fetchColorDetailsForPart(e) {
         PART_MAP[e].colorImages = o;
         
         // Update API loading statistics for images
-        const imageCount = Object.keys(o).length;
+        imageCount = Object.keys(o).length;
         if (imageCount > 0) {
             updateApiLoadingStats('images', imageCount);
         }
         
         // Force save state after color details are fetched to persist color data immediately
         forceSaveState();
-    } catch (t) {
-        console.warn(`Could not fetch color details for part ${e}:`, t);
+    } catch (error) {
+        console.warn(`Could not fetch color details for part ${e}:`, error);
         // Mark this part as failed to avoid repeated attempts
         if (!PART_MAP[e]) {
             PART_MAP[e] = { id: e };
         }
         PART_MAP[e].colorImages = {}; // Empty object to prevent retry
+        
+        // Force save state after error to persist the failed state
+        forceSaveState();
     }
 }
 
@@ -1046,19 +1525,25 @@ async function fetchColorDetailsForCollectionParts() {
     
 
     
-    // Process all parts in small batches to avoid rate limiting
-    for (let i = 0; i < partsNeedingColorImages.length; i += 3) {
-        const batch = partsNeedingColorImages.slice(i, i + 3);
-        await Promise.all(batch.map(partId => fetchColorDetailsForPart(partId)));
-        
-        // Add delay between batches to avoid rate limiting
-        if (i + 3 < partsNeedingColorImages.length) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+        // Process all parts in small batches to avoid rate limiting
+        for (let i = 0; i < partsNeedingColorImages.length; i += 3) {
+            const batch = partsNeedingColorImages.slice(i, i + 3);
+            await Promise.all(batch.map(partId => fetchColorDetailsForPart(partId)));
+            
+            // Add delay between batches to avoid rate limiting
+            if (i + 3 < partsNeedingColorImages.length) {
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
         }
+        
+        // Force save state after all color details are fetched
+        forceSaveState();
+    } catch (error) {
+        console.error('Error fetching color details for collection parts:', error);
+        // Force save state even after error to persist any successful fetches
+        forceSaveState();
     }
-    
-    // Force save state after all color details are fetched
-    forceSaveState();
 }
 
 // Helper function to get currently visible part IDs
@@ -1101,6 +1586,9 @@ async function forceRefreshPartImages() {
         updateUI();
     } catch (error) {
         console.error('Error refreshing part images:', error);
+        // Update UI even after error to show any successful refreshes
+        S.gridStale = true;
+        updateUI();
     } finally {
         // Re-enable button and restore icon
         refreshButton.disabled = false;
@@ -1109,55 +1597,83 @@ async function forceRefreshPartImages() {
 }
 
 async function fetchMissingCollectionPartDetails() {
+    // Отключаем анимации при загрузке деталей коллекции для улучшения производительности
+    document.body.classList.add('collection-view');
+    document.body.classList.add('collection-parts-view');
+    setTimeout(() => {
+        document.body.classList.remove('collection-view');
+        document.body.classList.remove('collection-parts-view');
+    }, 800);
+    
     const e = Object.keys(S.coll).filter(e => !PART_MAP[e] || !PART_MAP[e].name);
     if (e.length === 0) return;
     
-    for (let t = 0; t < e.length; t += 100) {
-        const o = e.slice(t, t + 100);
-        try {
-            const parts = await apiFetchPaginated(`/parts/?part_nums=${o.join(",")}`);
-            
-            if (parts && Array.isArray(parts)) {
-                const processedParts = parts.map(procPart).filter(Boolean);
-                // Update API loading statistics
-                if (processedParts.length > 0) {
-                    updateApiLoadingStats('parts', processedParts.length);
+    try {
+        for (let t = 0; t < e.length; t += 100) {
+            const o = e.slice(t, t + 100);
+            try {
+                const parts = await apiFetchPaginated(`/parts/?part_nums=${o.join(",")}`);
+                
+                if (parts && Array.isArray(parts)) {
+                    const processedParts = parts.map(procPart).filter(Boolean);
+                    // Update API loading statistics
+                    if (processedParts.length > 0) {
+                        updateApiLoadingStats('parts', processedParts.length);
+                    }
                 }
+            } catch (l) {
+                console.error(`Could not fetch details for batch starting with part ${o[0]}:`, l);
+                S.err = (S.err ? S.err + "\n" : "") + "Не удалось загрузить данные для некоторых деталей коллекции.";
             }
-        } catch (l) {
-            console.error(`Could not fetch details for batch starting with part ${o[0]}:`, l);
-            S.err = (S.err ? S.err + "\n" : "") + "Не удалось загрузить данные для некоторых деталей коллекции.";
         }
+        // Force save state after parts are fetched to persist all part data
+        forceSaveState();
+    } catch (error) {
+        console.error('Error in fetchMissingCollectionPartDetails:', error);
+        // Force save state even after error to persist any successful fetches
+        forceSaveState();
     }
-    // Force save state after parts are fetched to persist all part data
-    forceSaveState();
 }
 async function fetchMissingCollectionSetDetails() {
+    // Отключаем анимации при загрузке наборов коллекции для улучшения производительности
+    document.body.classList.add('collection-view');
+    document.body.classList.add('collection-sets-view');
+    setTimeout(() => {
+        document.body.classList.remove('collection-view');
+        document.body.classList.remove('collection-sets-view');
+    }, 800);
+    
     const e = Object.keys(S.setColl).filter(e => !SET_MAP[e] || !SET_MAP[e].name);
     if (e.length === 0) return;
-    for (let t = 0; t < e.length; t += 50) {
-        const o = e.slice(t, t + 50);
-        try {
-            const sets = await apiFetchPaginated(`/sets/?set_nums=${o.join(",")}`);
-            if (sets && Array.isArray(sets)) {
-                const validSets = sets.filter(set => set && set.set_num);
-                validSets.forEach(set => {
-                    if (set && set.set_num) {
-                        SET_MAP[set.set_num] = { ...SET_MAP[set.set_num], ...set };
+    try {
+        for (let t = 0; t < e.length; t += 50) {
+            const o = e.slice(t, t + 50);
+            try {
+                const sets = await apiFetchPaginated(`/sets/?set_nums=${o.join(",")}`);
+                if (sets && Array.isArray(sets)) {
+                    const validSets = sets.filter(set => set && set.set_num);
+                    validSets.forEach(set => {
+                        if (set && set.set_num) {
+                            SET_MAP[set.set_num] = { ...SET_MAP[set.set_num], ...set };
+                        }
+                    });
+                    
+                    // Update API loading statistics
+                    if (validSets.length > 0) {
+                        updateApiLoadingStats('sets', validSets.length);
                     }
-                });
-                
-                // Update API loading statistics
-                if (validSets.length > 0) {
-                    updateApiLoadingStats('sets', validSets.length);
                 }
+                // Persist updated set details cache for offline render
+                saveState();
+            } catch (l) {
+                console.error(`Could not fetch details for batch of sets starting with ${o[0]}:`, l);
+                S.err = (S.err ? S.err + "\n" : "") + "Не удалось загрузить данные для некоторых наборов коллекции.";
             }
-            // Persist updated set details cache for offline render
-            saveState();
-        } catch (l) {
-            console.error(`Could not fetch details for batch of sets starting with ${o[0]}:`, l);
-            S.err = (S.err ? S.err + "\n" : "") + "Не удалось загрузить данные для некоторых наборов коллекции.";
         }
+    } catch (error) {
+        console.error('Error in fetchMissingCollectionSetDetails:', error);
+        // Force save state even after error to persist any successful fetches
+        saveState();
     }
 }
 async function fetchMinifigDetails(e) {
@@ -1776,7 +2292,7 @@ function renderHeader() {
 function renderSetCard(e, t, o = 0) {
     if (!e) return "";
     const l = t ? "animate-in" : "",
-        a = t ? `animation-delay: ${Math.min(40*o,1500)}ms;` : "",
+        a = t ? S.getAnimationDelay(o) : "",
         i = S.setColl[e.set_num] ? S.setColl[e.set_num].qty : 0;
     return `
             <div data-set-num="${e.set_num}" style="${a}" class="set-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
@@ -1810,7 +2326,7 @@ function renderMinifigCard(e, t, o = 0) {
         fetchMinifigDetails(e.set_num).catch(console.error);
     }
     const l = t ? "animate-in" : "",
-        a = t ? `animation-delay: ${Math.min(40*o,1500)}ms;` : "",
+        a = t ? S.getAnimationDelay(o) : "",
         i = S.minifigColl[e.set_num] ? S.minifigColl[e.set_num].qty : 0;
     return `
             <div data-fig-num="${e.set_num}" style="${a}" class="minifig-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group transform transition-all duration-300 hover:bg-gray-700 cursor-pointer hover:scale-105">
@@ -1834,7 +2350,7 @@ function renderPartCard(e, t, o, l, a = 0) {
     const i = "collection" === S.view,
         n = getGroupId(e.id),
         r = l ? "animate-in" : "",
-        s = l ? `animation-delay: ${Math.min(40*a,1500)}ms;` : "";
+        s = l ? S.getAnimationDelay(a) : "";
     let c = "";
     o > 0 && (c = `<div class="absolute top-3 ${i?"left-3":"right-3"} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${o}</div>`);
             // FIXED: Now properly uses part_img_url from inventory_parts.csv as primary image source
@@ -1898,7 +2414,7 @@ function renderAppliedFilters() {
             maxYear: a,
             minParts: i,
             maxParts: n
-        } = S.setFilters, r = [l && `Мин. год: ${l}`, a && `Макс. год: ${a}`, i && `Мин. деталей: ${i}`, n && `Макс. деталей: ${n}`].filter(Boolean).map(e => `
+        } = S.setFilters, r = [(l && l.trim() !== '') && `Мин. год: ${l}`, (a && a.trim() !== '') && `Макс. год: ${a}`, (i && i.trim() !== '') && `Мин. деталей: ${i}`, (n && n.trim() !== '') && `Макс. деталей: ${n}`].filter(Boolean).map(e => `
                 <div class="flex items-center bg-green-900/50 text-green-200 rounded-full pl-3 pr-2 py-1 text-sm">
                     <span class="mr-2">${e}</span>
                 </div>`).join(""), s = {
@@ -1921,7 +2437,7 @@ function renderAppliedFilters() {
                     <span class="mr-2">Сортировка: ${s[S.sortBy]}</span>
                 </div>
             `;
-        e = [d, r].filter(Boolean).join(""), o = !t || !!(l || a || i || n)
+        e = [d, r].filter(Boolean).join(""), o = !t || !!((l && l.trim() !== '') || (a && a.trim() !== '') || (i && i.trim() !== '') || (n && n.trim() !== ''))
     } else if ("minifigs" === S.subView) {
         const l = {
             name_asc: "Алфавит (А-Я)",
@@ -1994,6 +2510,16 @@ function renderAppliedFilters() {
 
 function renderMainContent() {
     let e = "";
+    
+    console.log('renderMainContent called:', {
+        view: S.view,
+        subView: S.subView,
+        loading: S.loading,
+        error: S.err,
+        toDisplay: S.toDisplay,
+        hasMoreItems: S.hasMoreItems
+    });
+    
     if (S.loading) e = '<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>';
     else if (S.err) e = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${S.err}</p></div>`;
     else if ("catalog" === S.view) {
@@ -2034,11 +2560,25 @@ function renderMainContent() {
                         </button>
                     </div>`;
         else {
+            // Используем S.toDisplay для ограничения количества отображаемых карточек
             S.hasMoreItems = t.length > S.toDisplay;
             const l = t.slice(0, S.toDisplay);
             e = `<div class="grid ${a} gap-4 p-4">
-                    ${l.map((e,t)=>{const l=o(e);return l.replace('class="part-card ',`style="animation-delay: ${Math.min(40*t,1500)}ms;" class="part-card `).replace('class="set-card ',`style="animation-delay: ${Math.min(40*t,1500)}ms;" class="set-card `).replace('class="minifig-card ',`style="animation-delay: ${Math.min(40*t,1500)}ms;" class="minifig-card `)}).join("")}
-                </div>`
+                    ${l.map((e,t)=>{const l=o(e);return l.replace('class="part-card ',`style="${S.getAnimationDelay(t)}" class="part-card `).replace('class="set-card ',`style="${S.getAnimationDelay(t)}" class="set-card `).replace('class="minifig-card ',`style="${S.getAnimationDelay(t)}" class="minifig-card `)}).join("")}
+                </div>`;
+            
+            // Добавляем кнопку "Показать еще" если есть еще элементы
+            if (S.hasMoreItems) {
+                const remainingCount = t.length - S.toDisplay;
+                const nextBatchSize = Math.min(S.increment, remainingCount);
+                e += `
+                    <div class="flex justify-center p-4">
+                        <button id="load-more-button-catalog" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                            Показать еще ${nextBatchSize} из ${remainingCount} (всего: ${t.length})
+                        </button>
+                    </div>
+                `;
+            }
         }
     } else {
         let t, o, l = `В вашей коллекции нет ${"parts"===S.subView?"деталей":"sets"===S.subView?"наборов":"минифигурок"}`,
@@ -2123,7 +2663,7 @@ function renderMainContent() {
                     t.sort((e, t) => e.name.localeCompare(t.name, 'en'));
                     break;
                 case "alpha_desc":
-                    t.sort((e, t) => t.name.localeCompare(t.name, 'en'));
+                    t.sort((e, t) => t.name.localeCompare(e.name, 'en'));
                     break;
                 case "year_asc":
                     t.sort((e, t) => e.year - t.year);
@@ -2178,15 +2718,41 @@ function renderMainContent() {
                     <p class="text-gray-400">${l}</p>
                 </div>`;
         } else {
+            // Используем S.toDisplay для ограничения количества отображаемых карточек
             S.hasMoreItems = t.length > S.toDisplay;
             const l = t.slice(0, S.toDisplay);
             e = `<div class="grid ${n} gap-4 p-4">
                     ${l.map((e,t)=>o(e,S.gridStale,t)).join("")}
-                </div>`
+                </div>`;
+            
+            // Добавляем кнопку "Показать еще" если есть еще элементы
+            if (S.hasMoreItems) {
+                const remainingCount = t.length - S.toDisplay;
+                const nextBatchSize = Math.min(S.increment, remainingCount);
+                e += `
+                    <div class="flex justify-center p-4">
+                        <button id="load-more-button-collection" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                            Показать еще ${nextBatchSize} из ${remainingCount} (всего: ${t.length})
+                        </button>
+                    </div>
+                `;
+            }
         }
     }
     mainEl.innerHTML = renderAppliedFilters() + e;
-    S.gridStale = !1;
+            S.gridStale = !1;
+        
+        // Дополнительная оптимизация: отключаем анимации после завершения рендеринга
+        if (document.body.classList.contains('tab-switching')) {
+            setTimeout(() => {
+                document.body.classList.remove('tab-switching');
+            }, 200);
+        }
+        
+        // Добавляем обработчики событий для полей фильтров, если модальное окно открыто
+        if (S.filterOpen && filterModalEl) {
+            addFilterInputHandlers();
+        }
 
     // Автоматически загружать больше контента, если нет полосы прокрутки
     requestAnimationFrame(() => {
@@ -2199,11 +2765,74 @@ function renderMainContent() {
     // Removed automatic image loading to prevent constant UI updates
 }
 
-// Add scroll event listener for automatic image loading (simplified)
+// Add scroll event listener for automatic loading of more items
 function setupScrollListener() {
-    // This function is now simplified to avoid constant UI updates
-    // Scroll events will not trigger automatic image loading
-    return;
+    if (mainEl.hasAttribute('data-scroll-listener')) {
+        return; // Already set up
+    }
+    
+    mainEl.setAttribute('data-scroll-listener', 'true');
+    
+    let scrollTimeout;
+    
+    mainEl.addEventListener('scroll', () => {
+        clearTimeout(scrollTimeout);
+        
+        scrollTimeout = setTimeout(() => {
+            const scrollTop = mainEl.scrollTop;
+            const scrollHeight = mainEl.scrollHeight;
+            const clientHeight = mainEl.clientHeight;
+            
+            // Проверяем, достигли ли мы конца страницы
+            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px от конца
+            
+            if (isAtBottom && !S.loading && S.hasMoreItems) {
+                console.log('Auto-loading more items on scroll...', {
+                    current: S.toDisplay,
+                    increment: S.increment,
+                    hasMore: S.hasMoreItems,
+                    scrollTop,
+                    scrollHeight,
+                    clientHeight
+                });
+                
+                S.toDisplay += S.increment;
+                S.gridStale = true;
+                updateUI();
+            }
+        }, 100); // Задержка 100ms для оптимизации
+    }, { passive: true });
+}
+
+// Добавляем обработчики событий для полей фильтров
+function addFilterInputHandlers() {
+    if (!filterModalEl) return;
+    
+    // Удаляем существующие обработчики, чтобы избежать дублирования
+    const existingInputs = filterModalEl.querySelectorAll('input[data-filter-key]');
+    existingInputs.forEach(input => {
+        input.removeEventListener('input', handleFilterInput);
+    });
+    
+    // Добавляем новые обработчики
+    existingInputs.forEach(input => {
+        input.addEventListener('input', handleFilterInput);
+    });
+    
+    console.log('Filter input handlers added for', existingInputs.length, 'inputs');
+}
+
+// Обработчик события input для полей фильтров
+function handleFilterInput(event) {
+    const input = event.target;
+    const filterKey = input.dataset.filterKey;
+    const value = input.value;
+    
+    if (filterKey) {
+        tempFilters.setFilters[filterKey] = value;
+        console.log('Filter input updated:', filterKey, '=', value);
+        console.log('Current tempFilters.setFilters:', tempFilters.setFilters);
+    }
 }
 
 function renderSetCollectionControls() {
@@ -2565,7 +3194,6 @@ function renderModal() {
             text: variationSelectText
         });
         
-
         
         // Toggle dropdown
         variationSelectButton.addEventListener("click", (event) => {
@@ -2763,6 +3391,18 @@ function renderModalControls() {
 
 function renderFilterModal() {
     if (!S.filterOpen) return void closeFilterModal();
+    
+    // Синхронизируем tempFilters с текущими фильтрами при открытии модального окна
+    tempFilters.setFilters = { ...S.setFilters };
+    tempFilters.sortBy = S.sortBy;
+    tempFilters.filters = { ...S.filters };
+    
+    console.log('renderFilterModal: tempFilters initialized:', {
+        setFilters: tempFilters.setFilters,
+        sortBy: tempFilters.sortBy,
+        filters: tempFilters.filters
+    });
+    
     let e = "";
     if ("sets" === S.subView) {
         const t = [{
@@ -2816,21 +3456,21 @@ function renderFilterModal() {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label for="min-year" class="block text-sm font-medium text-gray-400 mb-1">Мин. год</label>
-                                <input type="number" id="min-year" value="${tempFilters.setFilters.minYear}" data-filter-key="minYear" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-action="modal-set-filter">
+                                <input type="number" id="min-year" value="${tempFilters.setFilters.minYear || ''}" data-filter-key="minYear" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-action="modal-set-filter" placeholder="Например: 2020">
                             </div>
                              <div>
                                 <label for="max-year" class="block text-sm font-medium text-gray-400 mb-1">Макс. год</label>
-                                <input type="number" id="max-year" value="${tempFilters.setFilters.maxYear}" data-filter-key="maxYear" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-action="modal-set-filter">
+                                <input type="number" id="max-year" value="${tempFilters.setFilters.maxYear || ''}" data-filter-key="maxYear" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-action="modal-set-filter" placeholder="Например: 2023">
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label for="min-parts" class="block text-sm font-medium text-gray-400 mb-1">Мин. деталей</label>
-                                <input type="number" id="min-parts" value="${tempFilters.setFilters.minParts}" data-filter-key="minParts" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-action="modal-set-filter">
+                                <input type="number" id="min-parts" value="${tempFilters.setFilters.minParts || ''}" data-filter-key="minParts" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-action="modal-set-filter" placeholder="Например: 100">
                             </div>
                              <div>
                                 <label for="max-parts" class="block text-sm font-medium text-gray-400 mb-1">Макс. деталей</label>
-                                <input type="number" id="max-parts" value="${tempFilters.setFilters.maxParts}" data-filter-key="maxParts" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <input type="number" id="max-parts" value="${tempFilters.setFilters.maxParts || ''}" data-filter-key="maxParts" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" data-action="modal-set-filter" placeholder="Например: 1000">
                             </div>
                         </div>
                     </div>
@@ -2966,7 +3606,12 @@ function renderFilterModal() {
                     <button data-action="modal-apply-filters" class="flex-grow px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-blue-600 hover:bg-blue-700 text-white">Применить</button>
                 </div>
             </div>
-        `
+        `;
+    
+    // Добавляем обработчики событий для полей фильтров
+    setTimeout(() => {
+        addFilterInputHandlers();
+    }, 100);
 }
 
 function renderSettingsModal() {
@@ -3163,6 +3808,14 @@ function updateFilterModalUI() {
         if (maxYearInput) maxYearInput.value = tempFilters.setFilters.maxYear || "";
         if (minPartsInput) minPartsInput.value = tempFilters.setFilters.minParts || "";
         if (maxPartsInput) maxPartsInput.value = tempFilters.setFilters.maxParts || "";
+        
+        // Обновляем сортировку
+        filterModalEl.querySelectorAll('input[name="sort"]').forEach(input => {
+            input.checked = tempFilters.sortBy === input.value;
+        });
+        
+        console.log('Updated set filters UI:', tempFilters.setFilters);
+        console.log('Updated sort UI:', tempFilters.sortBy);
     }
 }
 
@@ -3383,6 +4036,13 @@ function updateUI() {
         return;
     }
     
+    // Проверяем, что данные загружены
+    if (Object.keys(PART_MAP).length === 0 || Object.keys(SET_MAP).length === 0 || Object.keys(MINIFIG_MAP).length === 0) {
+        console.warn('Data not loaded yet, waiting...');
+        setTimeout(updateUI, 100);
+        return;
+    }
+    
     renderSidebar(), renderHeader(), renderMainContent();
     
     // Setup search input event listener (only for updating S.q, not auto-search)
@@ -3395,7 +4055,352 @@ function updateUI() {
     }
     
     const e = window.innerWidth < 1024;
-    e ? S.sidebarOpen ? (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.remove("hidden"), document.body.style.overflow = "hidden") : (sidebarEl.classList.add("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "") : (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "")
+    // На больших экранах (>=1024px) боковая панель всегда открыта
+    if (window.innerWidth >= 1024) {
+        S.sidebarOpen = true;
+        sidebarEl.classList.remove("-translate-x-full");
+        backdropEl.classList.add("hidden");
+        document.body.style.overflow = "";
+        document.body.classList.add('sidebar-open-large');
+    } else {
+        // На малых экранах логика остается прежней
+        e ? S.sidebarOpen ? (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.remove("hidden"), document.body.style.overflow = "hidden") : (sidebarEl.classList.add("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "") : (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "")
+        
+        // Убираем класс sidebar-open-large для малых экранов
+        document.body.classList.remove('sidebar-open-large');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой прокрутке
+    if (!S.scrollThrottle) {
+        S.scrollThrottle = true;
+        let scrollTimeout;
+        
+        window.addEventListener('scroll', () => {
+            if (!document.body.classList.contains('scrolling')) {
+                document.body.classList.add('scrolling');
+            }
+            
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                document.body.classList.remove('scrolling');
+            }, 200);
+        }, { passive: true });
+    }
+    
+    // Оптимизация: отключаем анимации при изменении размера окна
+    if (!S.resizeThrottle) {
+        S.resizeThrottle = true;
+        let resizeTimeout;
+        
+        window.addEventListener('resize', () => {
+            if (!document.body.classList.contains('resizing')) {
+                document.body.classList.add('resizing');
+            }
+            
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                document.body.classList.remove('resizing');
+            }, 300);
+        }, { passive: true });
+    }
+    
+    // Оптимизация: отключаем анимации при быстром переключении вкладок
+    if (!S.tabSwitchThrottle) {
+        S.tabSwitchThrottle = true;
+        let tabSwitchTimeout;
+        
+        const disableAnimationsOnTabSwitch = () => {
+            if (!document.body.classList.contains('tab-switching')) {
+                document.body.classList.add('tab-switching');
+            }
+            
+            clearTimeout(tabSwitchTimeout);
+            tabSwitchTimeout = setTimeout(() => {
+                document.body.classList.remove('tab-switching');
+            }, 500);
+        };
+        
+        // Применяем оптимизацию при каждом вызове updateUI
+        disableAnimationsOnTabSwitch();
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 100) {
+        document.body.classList.add('large-collection');
+    } else {
+        document.body.classList.remove('large-collection');
+    }
+    
+    // Дополнительная оптимизация: отключаем анимации при быстром переключении
+    if (S.gridStale && (S.view === 'catalog' || S.view === 'collection')) {
+        document.body.classList.add('tab-switching');
+        setTimeout(() => {
+            document.body.classList.remove('tab-switching');
+        }, 800);
+    }
+    
+    // Оптимизация: отключаем анимации при быстром поиске
+    if (S.q && S.q.length > 0) {
+        document.body.classList.add('searching');
+        setTimeout(() => {
+            document.body.classList.remove('searching');
+        }, 600);
+    }
+    if (S.q && S.q.length > 2) {
+        document.body.classList.add('searching');
+    } else {
+        document.body.classList.remove('searching');
+    }
+    
+    // Оптимизация: отключаем анимации при активной фильтрации
+    if (S.filters.colorIds && S.filters.colorIds.length > 0) {
+        document.body.classList.add('filtering');
+    } else {
+        document.body.classList.remove('filtering');
+    }
+    
+    // Дополнительная оптимизация: отключаем анимации при изменении фильтров наборов
+    if (S.setFilters && (S.setFilters.minYear || S.setFilters.maxYear || S.setFilters.minParts || S.setFilters.maxParts)) {
+        document.body.classList.add('filtering');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой сортировке
+    if (S.sortBy && S.sortBy !== 'popularity') {
+        document.body.classList.add('sorting');
+    } else {
+        document.body.classList.remove('sorting');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по темам
+    if (S.selThemeId || S.selCollThemeId) {
+        document.body.classList.add('theme-navigation');
+    } else {
+        document.body.classList.remove('theme-navigation');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по категориям
+    if (S.selCatId || S.selCollCatId) {
+        document.body.classList.add('category-navigation');
+    } else {
+        document.body.classList.remove('category-navigation');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции
+    if (S.view === 'collection') {
+        document.body.classList.add('collection-view');
+    } else {
+        document.body.classList.remove('collection-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по каталогу
+    if (S.view === 'catalog') {
+        document.body.classList.add('catalog-view');
+    } else {
+        document.body.classList.remove('catalog-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по минифигуркам
+    if (S.subView === 'minifigs') {
+        document.body.classList.add('minifigs-view');
+    } else {
+        document.body.classList.remove('minifigs-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по наборам
+    if (S.subView === 'sets') {
+        document.body.classList.add('sets-view');
+    } else {
+        document.body.classList.remove('sets-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по деталям
+    if (S.subView === 'parts') {
+        document.body.classList.add('parts-view');
+    } else {
+        document.body.classList.remove('parts-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей
+    if (S.view === 'collection' && S.subView === 'parts') {
+        document.body.classList.add('collection-parts-view');
+    } else {
+        document.body.classList.remove('collection-parts-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции наборов
+    if (S.view === 'collection' && S.subView === 'sets') {
+        document.body.classList.add('collection-sets-view');
+    } else {
+        document.body.classList.remove('collection-sets-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции минифигурок
+    if (S.view === 'collection' && S.subView === 'minifigs') {
+        document.body.classList.add('collection-minifigs-view');
+    } else {
+        document.body.classList.remove('collection-minifigs-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по каталогу деталей
+    if (S.view === 'catalog' && S.subView === 'parts') {
+        document.body.classList.add('catalog-parts-view');
+    } else {
+        document.body.classList.remove('catalog-parts-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по каталогу наборов
+    if (S.view === 'catalog' && S.subView === 'sets') {
+        document.body.classList.add('catalog-sets-view');
+    } else {
+        document.body.classList.remove('catalog-sets-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по каталогу минифигурок
+    if (S.view === 'catalog' && S.subView === 'minifigs') {
+        document.body.classList.add('catalog-minifigs-view');
+    } else {
+        document.body.classList.remove('catalog-minifigs-view');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по цветам
+    if (S.view === 'collection' && S.subView === 'parts' && S.filters.colorIds && S.filters.colorIds.length > 0) {
+        document.body.classList.add('collection-parts-color-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-color-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по категориям
+    if (S.view === 'collection' && S.subView === 'parts' && S.selCollCatId) {
+        document.body.classList.add('collection-parts-category-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-category-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по поиску
+    if (S.view === 'collection' && S.subView === 'parts' && S.q && S.q.length > 0) {
+        document.body.classList.add('collection-parts-search-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-search-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по сортировке
+    if (S.view === 'collection' && S.subView === 'parts' && S.sortBy && S.sortBy !== 'popularity') {
+        document.body.classList.add('collection-parts-sort-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-sort-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по количеству
+    if (S.view === 'collection' && S.subView === 'parts' && S.sortBy && (S.sortBy === 'quantity_desc' || S.sortBy === 'quantity_asc')) {
+        document.body.classList.add('collection-parts-quantity-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-quantity-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по популярности
+    if (S.view === 'collection' && S.subView === 'parts' && S.sortBy && S.sortBy === 'popularity') {
+        document.body.classList.add('collection-parts-popularity-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-popularity-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по алфавиту
+    if (S.view === 'collection' && S.subView === 'parts' && S.sortBy && (S.sortBy === 'alpha_asc' || S.sortBy === 'alpha_desc')) {
+        document.body.classList.add('collection-parts-alpha-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-alpha-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по релевантности
+    if (S.view === 'collection' && S.subView === 'parts' && S.sortBy && S.sortBy === 'relevance') {
+        document.body.classList.add('collection-parts-relevance-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-relevance-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам
+    if (S.view === 'collection' && S.subView === 'parts' && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-multi-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-multi-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и большим количеством элементов
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 200 && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-heavy-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-heavy-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и очень большим количеством элементов
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 500 && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-very-heavy-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-very-heavy-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && S.sidebarOpen && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-sidebar-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-sidebar-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && S.sidebarOpen && document.body.classList.contains('scrolling') && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-sidebar-scroll-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-sidebar-scroll-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && S.sidebarOpen && (document.body.classList.contains('scrolling') || document.body.classList.contains('resizing')) && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-sidebar-scroll-resize-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-sidebar-scroll-resize-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && S.sidebarOpen && (document.body.classList.contains('scrolling') || document.body.classList.contains('resizing') || document.body.classList.contains('tab-switching')) && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-sidebar-scroll-resize-tab-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-sidebar-scroll-resize-tab-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок и поиском
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && S.sidebarOpen && (document.body.classList.contains('scrolling') || document.body.classList.contains('resizing') || document.body.classList.contains('tab-switching') || document.body.classList.contains('searching')) && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-sidebar-scroll-resize-tab-search-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-sidebar-scroll-resize-tab-search-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок и поиском и фильтрацией
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && S.sidebarOpen && (document.body.classList.contains('scrolling') || document.body.classList.contains('resizing') || document.body.classList.contains('tab-switching') || document.body.classList.contains('searching') || document.body.classList.contains('filtering')) && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-sidebar-scroll-resize-tab-search-filter-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-sidebar-scroll-resize-tab-search-filter-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок и поиском и фильтрацией и сортировкой
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && S.sidebarOpen && (document.body.classList.contains('scrolling') || document.body.classList.contains('resizing') || document.body.classList.contains('tab-switching') || document.body.classList.contains('searching') || document.body.classList.contains('filtering') || document.body.classList.contains('sorting')) && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-filtered');
+    }
+    
+    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по всем параметрам и критически большим количеством элементов и открытой боковой панелью и быстрой прокруткой и изменением размера окна и переключением вкладок и поиском и фильтрацией и сортировкой и навигацией по темам
+    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 1000 && S.sidebarOpen && (document.body.classList.contains('scrolling') || document.body.classList.contains('resizing') || document.body.classList.contains('tab-switching') || document.body.classList.contains('searching') || document.body.classList.contains('filtering') || document.body.classList.contains('sorting') || document.body.classList.contains('theme-navigation')) && (S.filters.colorIds?.length > 0 || S.selCollCatId || S.q?.length > 0 || (S.sortBy && S.sortBy !== 'popularity'))) {
+        document.body.classList.add('collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-theme-filtered');
+    } else {
+        document.body.classList.remove('collection-parts-critical-sidebar-scroll-resize-tab-search-filter-sort-theme-filtered');
+    }
     
     // Setup backdrop click handler
     if (backdropEl && !backdropEl.hasAttribute('data-backdrop-listener')) {
@@ -3815,6 +4820,12 @@ function triggerSearch(e = !1) {
             S.filters.inCollectionOnly = !1;
         }
     }
+    // Отключаем анимации при поиске для улучшения производительности
+    document.body.classList.add('searching');
+    setTimeout(() => {
+        document.body.classList.remove('searching');
+    }, 800);
+    
     S.gridStale = !0;
     if ("collection" === S.view) {
         S.selCollCatId = null;
@@ -4002,21 +5013,32 @@ function openModalForMinifig(e) {
 }
 
 function refreshWithNewFilters() {
+    // Отключаем анимации при изменении фильтров для улучшения производительности
+    document.body.classList.add('filtering');
+    setTimeout(() => {
+        document.body.classList.remove('filtering');
+    }, 800);
+    
+    console.log('refreshWithNewFilters called with:', {
+        view: S.view,
+        subView: S.subView,
+        setFilters: S.setFilters,
+        sortBy: S.sortBy
+    });
+    
     S.toDisplay = S.increment, S.gridStale = !0;
+    
+    // Применяем фильтры и обновляем данные
     if ("collection" === S.view) {
         updateUI();
     } else if ("sets" === S.subView) {
-        if (S.q || S.selThemeId) {
-            fetchSets();
-        } else {
-            updateUI();
-        }
+        // Всегда перезагружаем наборы при изменении фильтров
+        console.log('Refreshing sets with filters:', S.setFilters);
+        fetchSets();
     } else if ("minifigs" === S.subView) {
-        if (S.q || !S.minifigRes) {
-            fetchMinifigs();
-        } else {
-            updateUI();
-        }
+        // Всегда перезагружаем минифигурки при изменении фильтров
+        console.log('Refreshing minifigs with filters:', S.filters);
+        fetchMinifigs();
     } else if (S.q) {
         searchRebrickableParts(S.q.trim());
     } else if (S.selCatId) {
@@ -4047,9 +5069,50 @@ document.addEventListener("click", async e => {
         top: 0,
         behavior: "smooth"
     });
-    if (t.closest("#sidebar-toggle")) return S.sidebarOpen = !S.sidebarOpen, void updateUI();
-    if (t.closest("#sidebar-close")) return S.sidebarOpen = !1, void updateUI();
-    if ("sidebar-backdrop" === t.id) return S.sidebarOpen = !1, void updateUI();
+    if (t.closest("#sidebar-toggle")) {
+        if (window.innerWidth >= 1024) {
+            // На больших экранах кнопка не работает - панель всегда открыта
+            return;
+        }
+        S.sidebarOpen = !S.sidebarOpen;
+        updateUI();
+    }
+    if (t.closest("#sidebar-close")) {
+        if (window.innerWidth >= 1024) {
+            // На больших экранах кнопка не работает - панель всегда открыта
+            return;
+        }
+        S.sidebarOpen = false;
+        updateUI();
+    }
+    if ("sidebar-backdrop" === t.id) {
+        if (window.innerWidth >= 1024) {
+            // На больших экранах backdrop не работает - панель всегда открыта
+            return;
+        }
+        S.sidebarOpen = false;
+        updateUI();
+    }
+    
+    // Обработчик кнопок "Показать еще"
+    if (t.id === "load-more-button-catalog" || t.id === "load-more-button-collection") {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (!S.loading && S.hasMoreItems) {
+            console.log('Load more button clicked:', {
+                buttonId: t.id,
+                current: S.toDisplay,
+                increment: S.increment,
+                hasMore: S.hasMoreItems
+            });
+            
+            S.toDisplay += S.increment;
+            S.gridStale = true;
+            updateUI();
+        }
+        return;
+    }
     const i = t.closest("[data-view]");
     if (i?.dataset.view) {
         const e = i.dataset.view;
@@ -4061,6 +5124,12 @@ document.addEventListener("click", async e => {
         } else if (e === 'catalog') {
             updateLoadingStatus("Переключение на каталог...", 50, "Загрузка каталога");
         }
+        
+        // Отключаем анимации при переключении вкладок для улучшения производительности
+        document.body.classList.add('tab-switching');
+        setTimeout(() => {
+            document.body.classList.remove('tab-switching');
+        }, 1000);
         
         return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener()))
     }
@@ -4077,6 +5146,12 @@ document.addEventListener("click", async e => {
         } else if (e === 'parts') {
             updateLoadingStatus("Переключение на детали...", 60, "Загрузка данных деталей");
         }
+        
+        // Отключаем анимации при переключении подвкладок для улучшения производительности
+        document.body.classList.add('tab-switching');
+        setTimeout(() => {
+            document.body.classList.remove('tab-switching');
+        }, 1000);
         
         S.subView = e;
         S.q = "";
@@ -4120,7 +5195,15 @@ document.addEventListener("click", async e => {
         setupScrollListener();
         return;
     }
-    if (t.closest('[data-action="show-all-collection-items"]')) return "parts" === S.subView && (S.selCollCatId = null), "sets" === S.subView && (S.selCollThemeId = null), S.gridStale = !0, void updateUI();
+    if (t.closest('[data-action="show-all-collection-items"]')) {
+        // Отключаем анимации при быстрой навигации по коллекции для улучшения производительности
+        document.body.classList.add('collection-view');
+        setTimeout(() => {
+            document.body.classList.remove('collection-view');
+        }, 800);
+        
+        return "parts" === S.subView && (S.selCollCatId = null), "sets" === S.subView && (S.selCollThemeId = null), S.gridStale = !0, void updateUI();
+    }
     const r = t.closest("[data-theme-id]");
     if (r?.dataset.themeId) {
         const e = parseInt(r.dataset.themeId, 10),
@@ -4129,8 +5212,22 @@ document.addEventListener("click", async e => {
         if (o) {
             S.expThemes.has(e) ? S.expThemes.delete(e) : S.expThemes.add(e)
         }
-        if ("collection" === S.view) S.selCollThemeId !== e && (S.selCollThemeId = e, S.gridStale = !0, updateUI());
+        if ("collection" === S.view) {
+            // Отключаем анимации при навигации по коллекции тем для улучшения производительности
+            document.body.classList.add('collection-view');
+            setTimeout(() => {
+                document.body.classList.remove('collection-view');
+            }, 800);
+            
+            S.selCollThemeId !== e && (S.selCollThemeId = e, S.gridStale = !0, updateUI());
+        }
         else if (S.selThemeId !== e) {
+            // Отключаем анимации при навигации по темам для улучшения производительности
+            document.body.classList.add('theme-navigation');
+            setTimeout(() => {
+                document.body.classList.remove('theme-navigation');
+            }, 800);
+            
             S.selThemeId = e, S.q = "", S.sortBy = "year_desc", S.setFilters = {
                 minYear: "",
                 maxYear: "",
@@ -4150,7 +5247,21 @@ document.addEventListener("click", async e => {
     const c = t.closest("[data-category-id]");
     if (c?.dataset.categoryId) {
         const e = parseInt(c.dataset.categoryId, 10);
-        return S.q = "", "collection" === S.view ? S.selCollCatId !== e && (S.selCollCatId = e, S.gridStale = !0, updateUI()) : S.selCatId !== e && (S.selCatId = e, S.filters = {
+        // Отключаем анимации при навигации по категориям для улучшения производительности
+        document.body.classList.add('category-navigation');
+        setTimeout(() => {
+            document.body.classList.remove('category-navigation');
+        }, 800);
+        
+        return S.q = "", "collection" === S.view ? (() => {
+            // Отключаем анимации при навигации по коллекции категорий для улучшения производительности
+            document.body.classList.add('collection-view');
+            setTimeout(() => {
+                document.body.classList.remove('collection-view');
+            }, 800);
+            
+            S.selCollCatId !== e && (S.selCollCatId = e, S.gridStale = !0, updateUI());
+        })() : S.selCatId !== e && (S.selCatId = e, S.filters = {
             colorIds: [],
             inCollectionOnly: !1
         }, S.sortBy = "popularity", loadPartsForCategory(e)), void 0
@@ -4554,8 +5665,15 @@ document.addEventListener("click", async e => {
                 updateFilterModalUI();
                 break;
             case "modal-set-filter":
-                if (filterKey && e.value !== undefined) {
-                    tempFilters.setFilters[filterKey] = e.value;
+                if (filterKey) {
+                    // Получаем значение из поля ввода по filterKey
+                    const inputElement = filterModalEl.querySelector(`[data-filter-key="${filterKey}"]`);
+                    if (inputElement) {
+                        const value = inputElement.value;
+                        tempFilters.setFilters[filterKey] = value;
+                        console.log('Filter updated via click:', filterKey, '=', value);
+                        console.log('Current tempFilters.setFilters:', tempFilters.setFilters);
+                    }
                 }
                 break;
             case "modal-toggle-collection":
@@ -4573,6 +5691,7 @@ document.addEventListener("click", async e => {
                         minParts: "",
                         maxParts: ""
                     };
+                    console.log('Reset set filters:', tempFilters.setFilters);
                 } else if ("minifigs" === S.subView) {
                     tempFilters.sortBy = S.q ? "relevance" : "name_asc";
                 } else {
@@ -4585,9 +5704,22 @@ document.addEventListener("click", async e => {
                 renderFilterModal();
                 break;
             case "modal-apply-filters":
+                // Отключаем анимации при применении фильтров для улучшения производительности
+                document.body.classList.add('filtering');
+                setTimeout(() => {
+                    document.body.classList.remove('filtering');
+                }, 800);
+                
                 S.filters = tempFilters.filters;
                 S.setFilters = tempFilters.setFilters;
                 S.sortBy = tempFilters.sortBy;
+                
+                console.log('Applied filters:', {
+                    filters: S.filters,
+                    setFilters: S.setFilters,
+                    sortBy: S.sortBy
+                });
+                
                 closeFilterModal();
                 refreshWithNewFilters();
                 break;
@@ -4973,6 +6105,15 @@ async function loadDataFromCSV() {
         // Save state after CSV loading
         saveState();
         
+        // Debug: выводим статистику загруженных данных
+        console.log('CSV Data loaded successfully:');
+        console.log('- Parts:', Object.keys(PART_MAP).length);
+        console.log('- Sets:', Object.keys(SET_MAP).length);
+        console.log('- Minifigs:', Object.keys(MINIFIG_MAP).length);
+        console.log('- Colors:', Object.keys(COLOR_MAP).length);
+        console.log('- Categories:', flatCategories.length);
+        console.log('- Themes:', Object.keys(THEME_MAP).length);
+        
         // Update UI
         S.gridStale = true;
         updateUI();
@@ -5135,6 +6276,13 @@ async function loadPartsFromCSV() {
                         part_img_url: null, // Will be set from inventory_parts.csv
                         rebrickable_img_url: null
                     };
+                    
+                    // Проверяем корректность данных
+                    if (PART_MAP[part_num].categoryId && (PART_MAP[part_num].categoryId < 1 || PART_MAP[part_num].categoryId > 1000)) {
+                        console.warn('Invalid category ID for part', part_num, ':', PART_MAP[part_num].categoryId);
+                        PART_MAP[part_num].categoryId = null;
+                        PART_MAP[part_num].part_cat_id = null;
+                    }
                 }
             }
         });
@@ -5175,6 +6323,17 @@ async function loadSetsFromCSV() {
                         num_parts: num_parts ? parseInt(num_parts) : null,
                         set_img_url: setImgUrl
                     };
+                    
+                    // Проверяем корректность данных
+                    if (SET_MAP[set_num].year && (SET_MAP[set_num].year < 1900 || SET_MAP[set_num].year > 2030)) {
+                        console.warn('Invalid year for set', set_num, ':', SET_MAP[set_num].year);
+                        SET_MAP[set_num].year = null;
+                    }
+                    
+                    if (SET_MAP[set_num].num_parts && (SET_MAP[set_num].num_parts < 0 || SET_MAP[set_num].num_parts > 10000)) {
+                        console.warn('Invalid num_parts for set', set_num, ':', SET_MAP[set_num].num_parts);
+                        SET_MAP[set_num].num_parts = null;
+                    }
                 }
             }
         });
@@ -5214,6 +6373,12 @@ async function loadMinifigsFromCSV() {
                         num_parts: num_parts ? parseInt(num_parts) : null,
                         minifig_img_url: minifigImgUrl
                     };
+                    
+                    // Проверяем корректность данных
+                    if (MINIFIG_MAP[fig_num].num_parts && (MINIFIG_MAP[fig_num].num_parts < 0 || MINIFIG_MAP[fig_num].num_parts > 100)) {
+                        console.warn('Invalid num_parts for minifig', fig_num, ':', MINIFIG_MAP[fig_num].num_parts);
+                        MINIFIG_MAP[fig_num].num_parts = null;
+                    }
                 }
             }
         });
@@ -5589,7 +6754,20 @@ function searchInCSVData(query, type = 'parts') {
     const results = [];
     
     console.log('searchInCSVData called with:', { query, type, searchTerm });
-    console.log('PART_MAP keys:', Object.keys(PART_MAP).slice(0, 5));
+    
+    // Проверяем, что данные загружены
+    if (type === 'parts' && Object.keys(PART_MAP).length === 0) {
+        console.warn('PART_MAP is empty, cannot search parts');
+        return [];
+    }
+    if (type === 'sets' && Object.keys(SET_MAP).length === 0) {
+        console.warn('SET_MAP is empty, cannot search sets');
+        return [];
+    }
+    if (type === 'minifigs' && Object.keys(MINIFIG_MAP).length === 0) {
+        console.warn('MINIFIG_MAP is empty, cannot search minifigs');
+        return [];
+    }
     
     switch (type) {
         case 'parts':
@@ -5996,29 +7174,43 @@ async function fetchMinifigDetailsWithRetry(figNum, retries = 3, delay = 1000) {
 }
 
 async function fetchMissingCollectionMinifigDetails() {
+    // Отключаем анимации при загрузке деталей коллекции для улучшения производительности
+    document.body.classList.add('collection-view');
+    document.body.classList.add('collection-minifigs-view');
+    setTimeout(() => {
+        document.body.classList.remove('collection-view');
+        document.body.classList.remove('collection-minifigs-view');
+    }, 800);
+    
     const allFigNums = Object.keys(S.minifigColl).filter(e => !MINIFIG_MAP[e] || !MINIFIG_MAP[e].name);
     if (allFigNums.length === 0) return;
-    const batchSize = 5;
-    for (let i = 0; i < allFigNums.length; i += batchSize) {
-        const batch = allFigNums.slice(i, i + batchSize);
-        try {
-            const results = await Promise.all(batch.map(figNum => fetchMinifigDetailsWithRetry(figNum)));
-            // Save state after each batch to avoid data loss
-            saveState();
-            
-            // Update API loading statistics for minifigs
-            const successfulFetches = results.filter(result => result !== undefined).length;
-            if (successfulFetches > 0) {
-                updateApiLoadingStats('minifigs', successfulFetches);
+    try {
+        const batchSize = 5;
+        for (let i = 0; i < allFigNums.length; i += batchSize) {
+            const batch = allFigNums.slice(i, i + batchSize);
+            try {
+                const results = await Promise.all(batch.map(figNum => fetchMinifigDetailsWithRetry(figNum)));
+                // Save state after each batch to avoid data loss
+                saveState();
+                
+                // Update API loading statistics for minifigs
+                const successfulFetches = results.filter(result => result !== undefined).length;
+                if (successfulFetches > 0) {
+                    updateApiLoadingStats('minifigs', successfulFetches);
+                }
+            } catch (error) {
+                console.error(`Failed to fetch batch ${i}-${i + batchSize}:`, error);
             }
-        } catch (error) {
-            console.error(`Failed to fetch batch ${i}-${i + batchSize}:`, error);
-        }
-        // Add delay between batches to avoid rate limiting
-        if (i + batchSize < allFigNums.length) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
+            // Add delay between batches to avoid rate limiting
+            if (i + batchSize < allFigNums.length) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
+        }
+    } catch (error) {
+        console.error('Error in fetchMissingCollectionMinifigDetails:', error);
+        // Force save state even after error to persist any successful fetches
+        saveState();
+    }
     }
     
     // Initialize API loading statistics if not exists
