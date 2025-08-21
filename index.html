@@ -21,7 +21,177 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
       <style>
-    body{font-family:sans-serif}.no-scrollbar::-webkit-scrollbar{display:none}.no-scrollbar{-ms-overflow-style:none;scrollbar-width:none}#search-input::-webkit-search-cancel-button{-webkit-appearance:none;appearance:none;display:none}.checkerboard{background-image:linear-gradient(45deg,#374151 25%,transparent 25%),linear-gradient(-45deg,#374151 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#374151 75%),linear-gradient(-45deg,transparent 75%,#374151 75%);background-size:8px 8px;background-position:0 0,0 4px,4px -4px,-4px 0}.modal-hidden{display:none!important}.viewer-hidden{display:none!important}.loader{border:4px solid #4a5568;border-top:4px solid #4299e1;border-radius:50%;width:48px;height:48px;animation:spin 1s linear infinite}@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0}to{opacity:1}}@keyframes fadeOut{from{opacity:1}to{opacity:0}}@keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}@keyframes scaleOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.95)}}@keyframes fadeInUp{from{opacity:0;transform:translateY(0.1rem) scale(0.995)}to{opacity:1;transform:translateY(0) scale(1)}}#modal-container,#filter-modal-container,#set-modal-container,#settings-modal-container,#minifig-modal-container,#image-viewer-container{opacity:0;transition:opacity .2s ease-out}#modal-container.visible,#filter-modal-container.visible,#set-modal-container.visible,#settings-modal-container.visible,#minifig-modal-container.visible,#image-viewer-container.visible{opacity:1}.modal-content-enter{animation:scaleIn .2s ease-out forwards}.modal-content-leave{animation:scaleOut .2s ease-out forwards}.part-card.animate-in,.set-card.animate-in,.minifig-card.animate-in{opacity:0;animation:fadeInUp .1s ease-out forwards}
+    body {
+        font-family: sans-serif;
+    }
+    
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    #search-input::-webkit-search-cancel-button {
+        -webkit-appearance: none;
+        appearance: none;
+        display: none;
+    }
+    
+    .checkerboard {
+        background-image: linear-gradient(45deg, #374151 25%, transparent 25%), 
+                          linear-gradient(-45deg, #374151 25%, transparent 25%), 
+                          linear-gradient(45deg, transparent 75%, #374151 75%), 
+                          linear-gradient(-45deg, transparent 75%, #374151 75%);
+        background-size: 8px 8px;
+        background-position: 0 0, 0 4px, 4px -4px, -4px 0;
+    }
+    
+    .modal-hidden {
+        display: none !important;
+    }
+    
+    .viewer-hidden {
+        display: none !important;
+    }
+    
+    .loader {
+        border: 4px solid #4a5568;
+        border-top: 4px solid #4299e1;
+        border-radius: 50%;
+        width: 48px;
+        height: 48px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+    
+    @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes scaleOut {
+        from { opacity: 1; transform: scale(1); }
+        to { opacity: 0; transform: scale(0.95); }
+    }
+    
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(0.1rem) scale(0.995); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    /* Модальные окна - ВАЖНО: не отключать! */
+    #modal-container,
+    #filter-modal-container,
+    #set-modal-container,
+    #settings-modal-container,
+    #minifig-modal-container,
+    #image-viewer-container {
+        opacity: 0;
+        transition: opacity 0.2s ease-out;
+    }
+    
+    #modal-container.visible,
+    #filter-modal-container.visible,
+    #set-modal-container.visible,
+    #settings-modal-container.visible,
+    #minifig-modal-container.visible,
+    #image-viewer-container.visible {
+        opacity: 1;
+    }
+    
+    /* Полноэкранный просмотр изображений */
+    #image-viewer-container {
+        cursor: zoom-out;
+        z-index: 100;
+    }
+    
+    #image-viewer-container.zoomed {
+        cursor: zoom-in;
+    }
+    
+    #fullscreen-image {
+        transition: all 0.3s ease-out;
+        cursor: zoom-in;
+        max-width: 100%;
+        max-height: 100%;
+    }
+    
+    #fullscreen-image.zoomed {
+        cursor: zoom-out;
+        transform: scale(1.5);
+        max-width: 90%;
+        max-height: 90%;
+        object-fit: contain;
+    }
+    
+    /* Контейнер для изображения с отступами */
+    #image-viewer-container > div {
+        transition: padding 0.3s ease-out;
+    }
+    
+    #image-viewer-container.zoomed > div {
+        padding: 10% !important;
+    }
+    
+    /* Гарантируем, что модальные окна всегда поверх */
+    #modal-container,
+    #set-modal-container,
+    #minifig-modal-container,
+    #filter-modal-container,
+    #settings-modal-container {
+        z-index: 50 !important;
+    }
+    
+    /* Image viewer должен быть поверх модальных окон */
+    #image-viewer-container:not(.viewer-hidden) {
+        z-index: 100 !important;
+    }
+    
+    /* Скрытый image viewer не должен блокировать клики */
+    #image-viewer-container.viewer-hidden {
+        z-index: -1 !important;
+        pointer-events: none !important;
+    }
+    
+    /* Кнопка закрытия всегда поверх и кликабельна */
+    #image-viewer-close {
+        z-index: 101 !important;
+        pointer-events: auto !important;
+    }
+    
+
+    
+    .modal-content-enter {
+        animation: scaleIn 0.2s ease-out forwards;
+    }
+    
+    .modal-content-leave {
+        animation: scaleOut 0.2s ease-out forwards;
+    }
+    
+    .part-card.animate-in,
+    .set-card.animate-in,
+    .minifig-card.animate-in {
+        opacity: 0;
+        animation: fadeInUp 0.1s ease-out forwards;
+    }
 
 /* Анимации для всех экранов - МИНИМАЛЬНЫЕ */
 .part-card.animate-in,.set-card.animate-in,.minifig-card.animate-in {
@@ -173,13 +343,13 @@ body.tab-switching .minifig-card {
     transform: none !important;
 }
 
-/* Анимация для новых карточек при загрузке - МИНИМАЛЬНАЯ */
+/* Анимация для новых карточек при загрузке - ОТКЛЮЧЕНА */
 .part-card:not(.animate-in),
 .set-card:not(.animate-in),
 .minifig-card:not(.animate-in) {
-    opacity: 0;
-    transform: translateY(0.1rem) scale(0.995);
-    animation: fadeInUp 0.1s ease-out forwards;
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
 }
 
 /* Анимация для кнопки "Показать еще" - ОПТИМИЗИРОВАННАЯ */
@@ -233,11 +403,13 @@ body.tab-switching .minifig-card {
     animation: errorShake 0.5s ease-in-out;
 }
 
-/* Анимация для изменения фильтров - МИНИМАЛЬНАЯ */
+/* Анимация для изменения фильтров - ОТКЛЮЧЕНА */
 .filter-change .part-card,
 .filter-change .set-card,
 .filter-change .minifig-card {
-    animation: filterChange 0.05s ease-out forwards;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 
 @keyframes filterChange {
@@ -271,11 +443,13 @@ body.tab-switching .minifig-card {
 }
 */
 
-/* Анимация для изменения представления - МИНИМАЛЬНАЯ */
+/* Анимация для изменения представления - ОТКЛЮЧЕНА */
 .view-change .part-card,
 .view-change .set-card,
 .view-change .minifig-card {
-    animation: viewChange 0.05s ease-out forwards;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 
 /*
@@ -291,11 +465,13 @@ body.tab-switching .minifig-card {
 }
 */
 
-/* Анимация для изменения подпредставления - МИНИМАЛЬНАЯ */
+/* Анимация для изменения подпредставления - ОТКЛЮЧЕНА */
 .subview-change .part-card,
 .subview-change .set-card,
 .subview-change .minifig-card {
-    animation: subviewChange 0.05s ease-out forwards;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 
 /*
@@ -406,11 +582,13 @@ body.tab-switching .minifig-card {
 }
 */
 
-/* Анимация для изменения поискового запроса - МИНИМАЛЬНАЯ */
+/* Анимация для изменения поискового запроса - ОТКЛЮЧЕНА */
 .search-change .part-card,
 .search-change .set-card,
 .search-change .minifig-card {
-    animation: searchChange 0.05s ease-out forwards;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 
 /*
@@ -1003,9 +1181,13 @@ body.tab-switching .minifig-card {
   <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
   <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
-  <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[100] backdrop-blur-sm viewer-hidden">
-    <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="max-w-[90vw] max-h-[90vh] object-contain shadow-2xl rounded-lg">
-    <button id="image-viewer-close" class="absolute top-4 right-4 text-white text-opacity-80 hover:text-opacity-100 p-2 rounded-full bg-black/30 hover:bg-black/50"></button>
+  <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[100] backdrop-blur-sm viewer-hidden">
+    <div class="relative w-full h-full flex items-center justify-center p-[5%]">
+      <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out">
+    </div>
+    <button id="image-viewer-close" class="absolute top-4 right-4 text-white text-opacity-80 hover:text-opacity-100 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-all duration-200 hover:scale-110 z-[101]">
+      ${I_X("w-6 h-6")}
+    </button>
   </div>
   <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 opacity-0 pointer-events-none z-40 transform translate-y-4" aria-label="Вернуться наверх">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>
@@ -2981,7 +3163,7 @@ function renderMainContent() {
             S.hasMoreItems = t.length > S.toDisplay;
             const l = t.slice(0, S.toDisplay);
             e = `<div class="grid ${a} gap-4 p-4">
-                    ${l.map((e,t)=>{const l=o(e,true,t);return l.replace('class="part-card ',`style="${S.getAnimationDelay(t)}" class="part-card `).replace('class="set-card ',`style="${S.getAnimationDelay(t)}" class="part-card `).replace('class="minifig-card ',`style="${S.getAnimationDelay(t)}" class="minifig-card `)}).join("")}
+                    ${l.map((e,t)=>{const l=o(e,true,t);return l.replace('class="part-card ',`style="${S.getAnimationDelay(t)}" class="part-card `).replace('class="set-card ',`style="${S.getAnimationDelay(t)}" class="set-card `).replace('class="minifig-card ',`style="${S.getAnimationDelay(t)}" class="minifig-card `)}).join("")}
                 </div>`;
             
             // Добавляем кнопку "Показать еще" если есть еще элементы
@@ -5225,17 +5407,144 @@ function triggerSearch(e = !1) {
 }
 
 function openImageViewer(e) {
-    e && !e.includes("data:image/svg+xml") && (viewerImg.setAttribute("src", e), viewerEl.classList.remove("viewer-hidden"), document.body.classList.add("overflow-hidden"), requestAnimationFrame(() => {
-        viewerEl.classList.add("visible")
-    }))
+    if (!e || e.includes("data:image/svg+xml")) return;
+    
+    // Простое открытие без сложных проверок
+    viewerImg.setAttribute("src", e);
+    viewerEl.classList.remove("viewer-hidden");
+    viewerEl.classList.remove("zoomed");
+    viewerImg.classList.remove("zoomed");
+    
+    // Устанавливаем z-index
+    viewerEl.style.zIndex = "100";
+    document.body.classList.add("overflow-hidden");
+    
+    requestAnimationFrame(() => {
+        viewerEl.classList.add("visible");
+    });
+    
+    // Добавляем обработчик клика для масштабирования
+    viewerImg.onclick = function() {
+        this.classList.toggle("zoomed");
+        viewerEl.classList.toggle("zoomed");
+    };
+    
+    // Убеждаемся, что кнопка закрытия работает
+    const closeBtn = document.getElementById('image-viewer-close');
+    if (closeBtn) {
+        closeBtn.onclick = closeImageViewer;
+    }
+    
+    console.log('Image viewer opened successfully');
 }
 
 function closeImageViewer() {
-    viewerEl.classList.remove("visible"), viewerEl.addEventListener("transitionend", e => {
-        e.target === viewerEl && (viewerEl.classList.add("viewer-hidden"), viewerImg.setAttribute("src", ""), !S.selPartId && !S.selSetNum && !S.selFigNum && !S.filterOpen && !S.settingsOpen && document.body.classList.remove("overflow-hidden"))
+    // Немедленно скрываем viewer
+    viewerEl.classList.remove("visible");
+    viewerEl.classList.remove("zoomed");
+    viewerImg.classList.remove("zoomed");
+    
+    // Принудительно устанавливаем z-index ниже модальных окон
+    viewerEl.style.zIndex = "40";
+    
+    viewerEl.addEventListener("transitionend", e => {
+        if (e.target === viewerEl) {
+            viewerEl.classList.add("viewer-hidden");
+            viewerImg.setAttribute("src", "");
+            
+            // Восстанавливаем z-index
+            viewerEl.style.zIndex = "";
+            
+            // Убираем overflow-hidden только если нет других модальных окон
+            if (!S.selPartId && !S.selSetNum && !S.selFigNum && !S.filterOpen && !S.settingsOpen) {
+                document.body.classList.remove("overflow-hidden");
+            }
+            
+            // Принудительно восстанавливаем состояние модальных окон
+            restoreModalStates();
+        }
     }, {
-        once: !0
-    })
+        once: true
+    });
+}
+
+// Функция для восстановления состояния модальных окон
+function restoreModalStates() {
+    // Проверяем и восстанавливаем z-index для всех модальных окон
+    const modals = [
+        { el: partModalEl, id: 'modal-container' },
+        { el: setModalEl, id: 'set-modal-container' },
+        { el: minifigModalEl, id: 'minifig-modal-container' },
+        { el: filterModalEl, id: 'filter-modal-container' },
+        { el: settingsModalEl, id: 'settings-modal-container' }
+    ];
+    
+    modals.forEach(modal => {
+        if (modal.el && !modal.el.classList.contains('modal-hidden')) {
+            modal.el.style.zIndex = '50';
+            modal.el.style.pointerEvents = 'auto';
+        }
+    });
+    
+    // Убеждаемся, что image viewer не блокирует
+    if (viewerEl && viewerEl.classList.contains('viewer-hidden')) {
+        viewerEl.style.zIndex = '-1';
+        viewerEl.style.pointerEvents = 'none';
+    }
+    
+    // Простое восстановление без лишних вызовов
+}
+
+// Функция для восстановления обработчиков image viewer (упрощенная)
+function restoreImageViewerHandlers() {
+    if (!viewerEl) return;
+    
+    // Простое восстановление состояния
+    viewerEl.classList.remove('visible', 'zoomed');
+    viewerEl.classList.add('viewer-hidden');
+    viewerEl.style.zIndex = '-1';
+    
+    // Очищаем изображение
+    if (viewerImg) {
+        viewerImg.src = '';
+        viewerImg.classList.remove('zoomed');
+    }
+}
+
+// Функция для полного сброса состояния image viewer (упрощенная)
+function resetImageViewer() {
+    if (!viewerEl) return;
+    
+    // Простое сброс состояния
+    viewerEl.classList.remove('visible', 'zoomed');
+    viewerEl.classList.add('viewer-hidden');
+    viewerEl.style.zIndex = '-1';
+    
+    // Очищаем изображение
+    if (viewerImg) {
+        viewerImg.src = '';
+        viewerImg.classList.remove('zoomed');
+    }
+    
+    // Убираем overflow-hidden
+    document.body.classList.remove('overflow-hidden');
+}
+
+// Функция для проверки и исправления состояния image viewer (упрощенная)
+function checkImageViewerState() {
+    if (!viewerEl) return;
+    
+    // Простая проверка состояния
+    const isHidden = viewerEl.classList.contains('viewer-hidden');
+    const isVisible = viewerEl.classList.contains('visible');
+    
+    // Если есть несоответствия, сбрасываем состояние
+    if (isHidden && isVisible) {
+        resetImageViewer();
+        return true;
+    }
+    
+    return false;
 }
 
 function closeModal() {
@@ -6398,9 +6707,22 @@ document.addEventListener("beforeinput", e => {
 document.addEventListener("click", async e => {
     if (!(e.target instanceof Element)) return;
     const t = e.target;
+    
+    // Проверяем, не заблокирован ли клик image viewer
+    if (viewerEl && !viewerEl.classList.contains("viewer-hidden") && !t.closest("#image-viewer-container")) {
+        // Если image viewer открыт и клик не по нему, игнорируем
+        return;
+    }
+    
     const o = t.closest('[data-action="view-image-fullscreen"]');
     if (o?.dataset.imageUrl) return openImageViewer(o.dataset.imageUrl);
-    if ("image-viewer-container" === t.id || t.closest("#image-viewer-close")) return closeImageViewer();
+    
+    // Обработка кнопки закрытия image viewer (всегда работает)
+    if (t.closest("#image-viewer-close")) {
+        return closeImageViewer();
+    }
+    
+    if ("image-viewer-container" === t.id) return closeImageViewer();
     const l = t.closest('[data-action="toggle-favorite-category"]');
     if (l?.dataset.categoryId) {
         e.stopPropagation();
@@ -6620,7 +6942,9 @@ document.addEventListener("click", async e => {
     const u = t.closest(".minifig-card");
     if (u?.dataset.figNum) return openModalForMinifig(u.dataset.figNum);
     const g = t.closest(".set-card");
-    if (g?.dataset.setNum) return openModalForSet(g.dataset.setNum);
+    if (g?.dataset.setNum) {
+        return openModalForSet(g.dataset.setNum);
+    }
     const m = t.closest(".part-card");
     if (m?.dataset.groupId && m.dataset.partId) {
         const e = m.dataset.partId,
