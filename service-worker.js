@@ -4,7 +4,6 @@ const CACHE_NAME = 'lego-catalog-cache-v5';
 const PRECACHE_ASSETS = [
     './',
     './index.html',
-    './index.css',
     './site.webmanifest',
     './apple-touch-icon.png',
     './favicon-32x32.png',
@@ -39,50 +38,32 @@ const CSV_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-    console.log('Service Worker installing...');
     event.waitUntil(
         caches.open(CACHE_NAME)
         .then(cache => {
-            console.log('Cache opened');
-            // Add only existing files to avoid install failures
             const allAssets = [...PRECACHE_ASSETS, ...CSV_ASSETS];
             return Promise.allSettled(
                 allAssets.map(url => 
-                    cache.add(url).catch(err => {
-                        console.warn(`Failed to cache ${url}:`, err);
-                        return null;
-                    })
+                    cache.add(url).catch(() => null)
                 )
             );
         })
-        .then(() => {
-            console.log('Precache completed');
-            return self.skipWaiting();
-        })
-        .catch(error => {
-            console.error('Install failed:', error);
-            // Continue anyway to avoid blocking
-            return self.skipWaiting();
-        })
+        .then(() => self.skipWaiting())
+        .catch(() => self.skipWaiting())
     );
 });
 
 self.addEventListener('activate', event => {
-    console.log('Service Worker activating...');
     event.waitUntil(
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.map(cacheName => {
                     if (cacheName !== CACHE_NAME) {
-                        console.log('Deleting old cache:', cacheName);
                         return caches.delete(cacheName);
                     }
                 })
             );
-        }).then(() => {
-            console.log('Service Worker activated');
-            return self.clients.claim();
-        })
+        }).then(() => self.clients.claim())
     );
 });
 
@@ -115,11 +96,9 @@ function networkFirst(request) {
             });
         }
         return networkResponse;
-    }).catch(error => {
-        console.warn('Network request failed, trying cache:', request.url, error);
+    }).catch(() => {
         return caches.match(request).then(cachedResponse => {
             if (cachedResponse) {
-                console.log('Serving from cache:', request.url);
                 return cachedResponse;
             }
             // Return a custom error response if nothing in cache
@@ -190,43 +169,13 @@ self.addEventListener('fetch', event => {
 });
 
 // Handle background sync for offline actions
-self.addEventListener('sync', event => {
-    if (event.tag === 'background-sync') {
-        console.log('Background sync triggered');
-        event.waitUntil(
-            // Handle any pending offline actions
-            Promise.resolve()
-        );
-    }
-});
+// Removed background sync handler (unused)
 
 // Handle push notifications (if needed in the future)
-self.addEventListener('push', event => {
-    if (event.data) {
-        const data = event.data.json();
-        const options = {
-            body: data.body || 'New update available',
-            icon: './android-chrome-192x192.png',
-            badge: './favicon-32x32.png',
-            data: data
-        };
-
-        event.waitUntil(
-            self.registration.showNotification(data.title || 'LEGO Catalog', options)
-        );
-    }
-});
+// Removed push handler (unused)
 
 // Handle notification clicks
-self.addEventListener('notificationclick', event => {
-    event.notification.close();
-    
-    if (event.action === 'open') {
-        event.waitUntil(
-            clients.openWindow(event.notification.data.url || './')
-        );
-    }
-});
+// Removed notification click handler (unused)
 
 // Handle messages from main thread
 self.addEventListener('message', event => {
@@ -237,7 +186,6 @@ self.addEventListener('message', event => {
 
 // Handle service worker updates
 self.addEventListener('controllerchange', () => {
-    console.log('Service Worker controller changed');
     // Notify all clients to reload
     self.clients.matchAll().then(clients => {
         clients.forEach(client => {
