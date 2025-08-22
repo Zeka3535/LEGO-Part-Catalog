@@ -116,6 +116,26 @@
         opacity: 1;
     }
     
+    /* Анимация сворачивания/разворачивания панелей */
+    .collapse-panel {
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        padding: 0 !important; /* убираем паддинги, чтобы не было лишнего отступа в свернутом состоянии */
+        transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease;
+    }
+    .collapse-panel.open {
+        max-height: 1000px; /* достаточная высота для контента */
+        opacity: 1;
+        padding: 0.75rem !important; /* соответствие классу p-3 */
+    }
+    .rotate {
+        transition: transform 0.2s ease;
+    }
+    .rotate-180 {
+        transform: rotate(180deg);
+    }
+    
     /* Анимации кнопок в боковом меню */
     #sidebar-container button {
         transition: transform 0.15s ease-out, background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
@@ -4456,8 +4476,11 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Статистика загрузки</h3>
-                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-2 text-sm">
+                        <button data-action="toggle-settings-stats" class="w-full flex items-center justify-between text-left text-md font-semibold text-gray-300 mb-2">
+                            <span>Статистика загрузки</span>
+                            <span id="settings-stats-chevron" class="rotate">${I_Chev('w-5 h-5 text-gray-400')}</span>
+                        </button>
+                        <div id="settings-stats-panel" class="bg-gray-900/50 rounded-lg p-3 space-y-2 text-sm collapse-panel">
                             <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
                             ${(() => {
                                 const stats = getLoadingStats();
@@ -4501,7 +4524,7 @@ function renderSettingsModal() {
                     </div>
 
 
-                    <div>
+                    <div style="margin-top: 0.5rem !important;">
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Управление кэшем</h3>
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Управление кэшем приложения для улучшения производительности и освобождения места</p>
@@ -7438,6 +7461,16 @@ document.addEventListener("click", async e => {
         if (!e) return;
         switch (e.dataset.action) {
             case "disable-color-images":
+            case "toggle-settings-stats":
+                const panel = document.getElementById('settings-stats-panel');
+                const chevron = document.getElementById('settings-stats-chevron');
+                if (panel) {
+                    panel.classList.toggle('open');
+                }
+                if (chevron) {
+                    chevron.classList.toggle('rotate-180');
+                }
+                break;
                 const checkbox = document.getElementById('disable-color-images');
                 if (checkbox) {
                     localStorage.setItem('disableColorSpecificImages', checkbox.checked.toString());
