@@ -135,7 +135,7 @@
     
     #fullscreen-image.zoomed {
         cursor: zoom-out;
-        transform: scale(1.5);
+        /* Убираем transform, так как он теперь на обертке */
         max-width: 90%;
         max-height: 90%;
         object-fit: contain;
@@ -144,10 +144,89 @@
     /* Контейнер для изображения с отступами */
     #image-viewer-container > div {
         transition: padding 0.3s ease-out;
+        /* Убираем лишние отступы */
+        padding: 0;
     }
     
     #image-viewer-container.zoomed > div {
-        padding: 10% !important;
+        padding: 5% !important;
+    }
+    
+    /* Центрируем обертку в контейнере */
+    #image-viewer-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        /* Убираем лишние отступы */
+        padding: 0;
+        /* Предотвращаем растягивание содержимого */
+        align-content: center;
+        /* Улучшенное центрирование */
+        text-align: center;
+        /* Предотвращаем горизонтальное скроллирование */
+        overflow: hidden;
+    }
+    
+    /* Дополнительные стили для скругленных краев */
+    .image-wrapper {
+        /* Обертка точно по размеру содержимого */
+        display: inline-block;
+        /* Предотвращаем растягивание */
+        width: fit-content;
+        height: fit-content;
+        /* Скругленные края */
+        border-radius: 0.5rem;
+        /* Тень */
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        /* Переходы */
+        transition: all 0.3s ease-out;
+        /* Отступы для фона */
+        padding: 8px;
+        /* Простой белый фон без шахматки */
+        background-color: white;
+        /* Убираем лишние ограничения */
+        max-width: none;
+        max-height: none;
+        /* Улучшенное позиционирование */
+        position: relative;
+        /* Центрируем содержимое */
+        text-align: center;
+    }
+    
+    /* При увеличении улучшаем тень и масштабируем обертку */
+    .image-wrapper.zoomed {
+        box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+        transform: scale(1.5);
+        transition: transform 0.3s ease-out;
+        /* Увеличиваем отступы при масштабировании */
+        padding: 12px;
+        /* Центрируем увеличение относительно центра обертки */
+        transform-origin: center;
+        /* Сохраняем точный размер */
+        width: fit-content;
+        height: fit-content;
+        /* Предотвращаем смещение */
+        position: relative;
+    }
+    
+    #fullscreen-image {
+        /* Изображение помещается в экран */
+        max-width: 90vw;
+        max-height: 90vh;
+        width: auto;
+        height: auto;
+        /* Улучшенное качество рендеринга */
+        image-rendering: -webkit-optimize-contrast;
+        image-rendering: crisp-edges;
+        /* Убираем border-radius с изображения, так как он теперь на обертке */
+        border-radius: 0;
+        /* Объект-фит для правильного масштабирования */
+        object-fit: contain;
+        /* Предотвращаем влияние на размер обертки */
+        flex-shrink: 0;
+        /* Центрируем изображение в обертке */
+        display: block;
+        margin: 0 auto;
     }
     
     /* Гарантируем, что модальные окна всегда поверх */
@@ -157,11 +236,13 @@
     #filter-modal-container,
     #settings-modal-container {
         z-index: 50 !important;
+        pointer-events: auto !important;
     }
     
     /* Image viewer должен быть поверх модальных окон */
     #image-viewer-container:not(.viewer-hidden) {
         z-index: 100 !important;
+        pointer-events: auto !important;
     }
     
     /* Скрытый image viewer не должен блокировать клики */
@@ -173,6 +254,15 @@
     /* Кнопка закрытия всегда поверх и кликабельна */
     #image-viewer-close {
         z-index: 101 !important;
+        pointer-events: auto !important;
+    }
+    
+    /* Принудительно восстанавливаем pointer-events для модальных окон */
+    #modal-container:not(.modal-hidden),
+    #set-modal-container:not(.modal-hidden),
+    #minifig-modal-container:not(.modal-hidden),
+    #filter-modal-container:not(.modal-hidden),
+    #settings-modal-container:not(.modal-hidden) {
         pointer-events: auto !important;
     }
     
@@ -1183,7 +1273,9 @@ body.tab-switching .minifig-card {
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
   <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[100] backdrop-blur-sm viewer-hidden">
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
-      <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out">
+      <div class="image-wrapper bg-white rounded-lg shadow-2xl overflow-hidden">
+        <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out">
+      </div>
     </div>
     <button id="image-viewer-close" class="absolute top-4 right-4 text-white text-opacity-80 hover:text-opacity-100 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-all duration-200 hover:scale-110 z-[101]">
       ${I_X("w-6 h-6")}
@@ -5408,7 +5500,12 @@ function triggerSearch(e = !1) {
 
 function openImageViewer(e) {
     if (!e || e.includes("data:image/svg+xml")) return;
-    
+    // Отменяем возможный отложенный таймер закрытия
+    if (viewerEl && viewerEl._closeTimer) {
+        clearTimeout(viewerEl._closeTimer);
+        viewerEl._closeTimer = null;
+    }
+
     // Простое открытие без сложных проверок
     viewerImg.setAttribute("src", e);
     viewerEl.classList.remove("viewer-hidden");
@@ -5427,6 +5524,12 @@ function openImageViewer(e) {
     viewerImg.onclick = function() {
         this.classList.toggle("zoomed");
         viewerEl.classList.toggle("zoomed");
+        
+        // Также добавляем/убираем класс для обертки
+        const wrapper = this.closest('.image-wrapper');
+        if (wrapper) {
+            wrapper.classList.toggle("zoomed");
+        }
     };
     
     // Убеждаемся, что кнопка закрытия работает
@@ -5439,33 +5542,40 @@ function openImageViewer(e) {
 }
 
 function closeImageViewer() {
-    // Немедленно скрываем viewer
+    // Немедленно скрываем viewer визуально
     viewerEl.classList.remove("visible");
     viewerEl.classList.remove("zoomed");
     viewerImg.classList.remove("zoomed");
     
-    // Принудительно устанавливаем z-index ниже модальных окон
-    viewerEl.style.zIndex = "40";
-    
-    viewerEl.addEventListener("transitionend", e => {
-        if (e.target === viewerEl) {
+    // Мгновенно выключаем перехват кликов и отправляем слой вниз,
+    // чтобы он не блокировал модальные окна даже если transitionend не сработает
+    viewerEl.style.pointerEvents = "none";
+    viewerEl.style.zIndex = "-1";
+
+    const cleanup = () => {
+        // Защита от повторного вызова
+        if (!viewerEl.classList.contains('viewer-hidden')) {
             viewerEl.classList.add("viewer-hidden");
             viewerImg.setAttribute("src", "");
-            
-            // Восстанавливаем z-index
+            // Сбрасываем инлайн-стили, полагаемся на CSS-классы
             viewerEl.style.zIndex = "";
-            
-            // Убираем overflow-hidden только если нет других модальных окон
-            if (!S.selPartId && !S.selSetNum && !S.selFigNum && !S.filterOpen && !S.settingsOpen) {
-                document.body.classList.remove("overflow-hidden");
-            }
-            
+            viewerEl.style.pointerEvents = "";
             // Принудительно восстанавливаем состояние модальных окон
             restoreModalStates();
         }
-    }, {
-        once: true
-    });
+        if (viewerEl._closeTimer) {
+            clearTimeout(viewerEl._closeTimer);
+            viewerEl._closeTimer = null;
+        }
+    };
+
+    // Основной путь — после окончания анимации непрозрачности
+    viewerEl.addEventListener("transitionend", (e) => {
+        if (e.target === viewerEl) cleanup();
+    }, { once: true });
+
+    // Резервный путь — на случай, если transitionend не наступит
+    viewerEl._closeTimer = setTimeout(cleanup, 250);
 }
 
 // Функция для восстановления состояния модальных окон
@@ -5492,7 +5602,10 @@ function restoreModalStates() {
         viewerEl.style.pointerEvents = 'none';
     }
     
-    // Простое восстановление без лишних вызовов
+    // Убираем overflow-hidden только если нет других модальных окон
+    if (!S.selPartId && !S.selSetNum && !S.selFigNum && !S.filterOpen && !S.settingsOpen) {
+        document.body.classList.remove('overflow-hidden');
+    }
 }
 
 // Функция для восстановления обработчиков image viewer (упрощенная)
@@ -5545,6 +5658,46 @@ function checkImageViewerState() {
     }
     
     return false;
+}
+
+// Функция для принудительного восстановления всех модальных окон
+function forceRestoreAllModals() {
+    console.log('Force restoring all modals...');
+    
+    // Восстанавливаем все модальные окна
+    const modals = [
+        { el: partModalEl, id: 'modal-container', condition: S.selPartId },
+        { el: setModalEl, id: 'set-modal-container', condition: S.selSetNum },
+        { el: minifigModalEl, id: 'minifig-modal-container', condition: S.selFigNum },
+        { el: filterModalEl, id: 'filter-modal-container', condition: S.filterOpen },
+        { el: settingsModalEl, id: 'settings-modal-container', condition: S.settingsOpen }
+    ];
+    
+    modals.forEach(modal => {
+        if (modal.el && modal.condition) {
+            // Принудительно восстанавливаем z-index и pointer-events
+            modal.el.style.zIndex = '50';
+            modal.el.style.pointerEvents = 'auto';
+            modal.el.style.opacity = '1';
+            
+            // Убираем все лишние классы
+            modal.el.classList.remove('modal-hidden');
+            modal.el.classList.add('visible');
+            
+            console.log(`Restored modal: ${modal.id}`);
+        }
+    });
+    
+    // Убеждаемся, что image viewer не блокирует
+    if (viewerEl && viewerEl.classList.contains('viewer-hidden')) {
+        viewerEl.style.zIndex = '-1';
+        viewerEl.style.pointerEvents = 'none';
+    }
+    
+    // Восстанавливаем overflow-hidden для body
+    document.body.classList.add('overflow-hidden');
+    
+    console.log('All modals restored');
 }
 
 function closeModal() {
@@ -6714,6 +6867,23 @@ document.addEventListener("click", async e => {
         return;
     }
     
+    // Проверяем, не заблокированы ли модальные окна
+    if (viewerEl && viewerEl.classList.contains("viewer-hidden")) {
+        // Если image viewer закрыт, но модальные окна не работают, восстанавливаем их
+        const activeModals = [
+            { el: partModalEl, sel: S.selPartId },
+            { el: setModalEl, sel: S.selSetNum },
+            { el: minifigModalEl, sel: S.selFigNum },
+            { el: filterModalEl, sel: S.filterOpen },
+            { el: settingsModalEl, sel: S.settingsOpen }
+        ];
+        
+        const hasActiveModal = activeModals.some(modal => modal.sel);
+        if (hasActiveModal) {
+            restoreModalStates();
+        }
+    }
+    
     const o = t.closest('[data-action="view-image-fullscreen"]');
     if (o?.dataset.imageUrl) return openImageViewer(o.dataset.imageUrl);
     
@@ -7535,7 +7705,32 @@ document.addEventListener("click", async e => {
     }
 }), document.addEventListener("keydown", e => {
     const activeElement = document.activeElement;
-    "Escape" === e.key ? viewerEl.classList.contains("viewer-hidden") ? S.filterOpen ? closeFilterModal() : S.settingsOpen ? closeSettingsModal() : S.selSetNum ? closeSetModal() : S.selFigNum ? closeMinifigModal() : S.selPartId && closeModal() : closeImageViewer() : "Enter" === e.key && activeElement.id === "search-input" && triggerSearch()
+    
+    if ("Escape" === e.key) {
+        if (viewerEl.classList.contains("viewer-hidden")) {
+            if (S.filterOpen) {
+                closeFilterModal();
+            } else if (S.settingsOpen) {
+                closeSettingsModal();
+            } else if (S.selSetNum) {
+                closeSetModal();
+            } else if (S.selFigNum) {
+                closeMinifigModal();
+            } else if (S.selPartId) {
+                closeModal();
+            }
+        } else {
+            closeImageViewer();
+        }
+        
+        // Двойное нажатие Escape для принудительного восстановления модальных окон
+        if (e.repeat) {
+            console.log('Double Escape detected, force restoring modals...');
+            forceRestoreAllModals();
+        }
+    } else if ("Enter" === e.key && activeElement.id === "search-input") {
+        triggerSearch();
+    }
 }), mainEl.addEventListener("scroll", () => {
     const threshold = 300;
     const isAtBottom = mainEl.scrollHeight - mainEl.scrollTop <= mainEl.clientHeight + threshold;
