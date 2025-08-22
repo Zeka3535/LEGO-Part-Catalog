@@ -152,23 +152,23 @@
     
     /* Полноэкранный просмотр изображений */
     #image-viewer-container {
-        cursor: zoom-out;
+        cursor: default;
         z-index: 100;
     }
     
     #image-viewer-container.zoomed {
-        cursor: zoom-in;
+        cursor: default;
     }
     
     #fullscreen-image {
         transition: all 0.3s ease-out;
-        cursor: zoom-in;
+        cursor: default;
         max-width: 100%;
         max-height: 100%;
     }
     
     #fullscreen-image.zoomed {
-        cursor: zoom-out;
+        cursor: default;
         /* Убираем transform, так как он теперь на обертке */
         max-width: 90%;
         max-height: 90%;
@@ -209,7 +209,7 @@
         width: fit-content;
         height: fit-content;
         /* Скругленные края */
-        border-radius: 0.5rem;
+        border-radius: 1rem;
         /* Тень */
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         /* Переходы */
@@ -225,6 +225,15 @@
         position: relative;
         /* Центрируем содержимое */
         text-align: center;
+        /* Обрезаем содержимое по внутренним закругленным углам */
+        overflow: hidden;
+    }
+
+    /* Чуть более крупные скругления на десктопах */
+    @media (min-width: 1024px) {
+        .image-wrapper {
+            border-radius: 1.25rem;
+        }
     }
     
     /* При увеличении улучшаем тень и масштабируем обертку */
@@ -5665,17 +5674,8 @@ function openImageViewer(e) {
         viewerEl.classList.add("visible");
     });
     
-    // Добавляем обработчик клика для масштабирования
-    viewerImg.onclick = function() {
-        this.classList.toggle("zoomed");
-        viewerEl.classList.toggle("zoomed");
-        
-        // Также добавляем/убираем класс для обертки
-        const wrapper = this.closest('.image-wrapper');
-        if (wrapper) {
-            wrapper.classList.toggle("zoomed");
-        }
-    };
+    // Убираем масштабирование по клику
+    viewerImg.onclick = null;
     
     // Убеждаемся, что кнопка закрытия работает
     const closeBtn = document.getElementById('image-viewer-close');
