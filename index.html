@@ -2575,6 +2575,29 @@ async function fetchAllSetInventory(e) {
         forceSaveState();
     return t
 }
+async function loadAllSetInventoryIntoModal(e) {
+    // Показываем индикатор загрузки и очищаем текущий инвентарь
+    updateLoadingStatus("Загрузка инвентаря набора...", 75, "Загрузка списка деталей");
+    S.setModal.loading = !0;
+    S.setModal.inv = [];
+    S.setModal.invPage = 1;
+    S.setModal.hasNextInv = !1;
+    updateSetModalView();
+    try {
+        const allItems = await fetchAllSetInventory(e);
+        S.setModal.inv = allItems || [];
+        S.setModal.invPage = 1;
+        S.setModal.hasNextInv = !1;
+        // Принудительно сохраняем состояние после полной загрузки инвентаря
+        forceSaveState();
+    } catch (error) {
+        console.error(`Failed to fully load inventory for ${e}:`, error);
+    } finally {
+        S.setModal.loading = !1;
+        updateLoadingStatus("Инвентарь набора загружен", 80, `Загружено ${S.setModal.inv.length} деталей`);
+        S.selSetNum && updateSetModalView();
+    }
+}
 async function fetchSetMinifigs(e) {
     // Показываем индикатор загрузки для минифигурок набора
     updateLoadingStatus("Загрузка минифигурок набора...", 75, "Загрузка списка минифигурок");
@@ -2844,28 +2867,43 @@ function renderSidebar() {
         d = "Темы";
         let e = S.themeTree;
         let t = "";
-        if ("collection" === S.view) {
-            const o = null === S.selCollThemeId,
-                l = o ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
-            t = `
-              <li>
-                <button data-action="show-all-collection-items" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${l}">
-                  <span class="truncate">Все наборы</span>
-                </button>
-              </li>
-            `;
-            const a = new Set();
-            Object.keys(S.setColl).forEach(e => {
-                const t = SET_MAP[e];
-                if (t && t.theme_id) {
-                    let e = t.theme_id;
-                    for (; e;) {
-                        a.add(e);
-                        e = THEME_MAP[e]?.parent_id
+        if ("collection" === S.view || "catalog" === S.view) {
+            if ("collection" === S.view) {
+                const isActive = (S.selCollThemeId === null);
+                const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
+                t = `
+                  <li>
+                    <button data-action="show-all-collection-items" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${btnClass}">
+                      <span class="truncate">Все наборы</span>
+                    </button>
+                  </li>
+                `;
+            } else {
+                // Каталог: кнопка активная и переключает на полный список наборов
+                const isActive = (S.selThemeId === null);
+                const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
+                t = `
+                  <li>
+                    <button data-action="show-all-items-sets" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${btnClass}">
+                      <span class="truncate">Все наборы</span>
+                    </button>
+                  </li>
+                `;
+            }
+            if ("collection" === S.view) {
+                const a = new Set();
+                Object.keys(S.setColl).forEach(e => {
+                    const t = SET_MAP[e];
+                    if (t && t.theme_id) {
+                        let e = t.theme_id;
+                        for (; e;) {
+                            a.add(e);
+                            e = THEME_MAP[e]?.parent_id
+                        }
                     }
-                }
-            });
-            e = filterThemeTreeForCollection(S.themeTree, a)
+                });
+                e = filterThemeTreeForCollection(S.themeTree, a)
+            }
         }
         const o = (e) => {
             if (!Array.isArray(e)) return [];
@@ -2910,19 +2948,34 @@ function renderSidebar() {
         d = "Категории";
         let e = S.catTree;
         let t = "";
-        if ("collection" === S.view) {
-            const o = null === S.selCollCatId,
-                l = o ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
-            t = `
-              <li>
-                <button data-action="show-all-collection-items" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${l}">
-                  <span class="truncate">Все детали</span>
-                </button>
-              </li>
-            `;
-            const a = new Set(Object.keys(S.coll).map(e => PART_MAP[e]?.categoryId).filter(e => void 0 !== e && null !== e));
-            e = JSON.parse(JSON.stringify(S.catTree));
-            e = e.map(e => (Array.isArray(e.children) && (e.children = e.children.filter(e => a.has(e.id))), e)).filter(e => Array.isArray(e.children) && e.children.length > 0)
+        if ("collection" === S.view || "catalog" === S.view) {
+            if ("collection" === S.view) {
+                const isActive = (S.selCollCatId === null);
+                const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
+                t = `
+                  <li>
+                    <button data-action="show-all-collection-items" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${btnClass}">
+                      <span class="truncate">Все детали</span>
+                    </button>
+                  </li>
+                `;
+            } else {
+                // Каталог: кнопка активная и переключает на полный список деталей
+                const isActive = (S.selCatId === null);
+                const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
+                t = `
+                  <li>
+                    <button data-action="show-all-items-parts" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 ${btnClass}">
+                      <span class="truncate">Все детали</span>
+                    </button>
+                  </li>
+                `;
+            }
+            if ("collection" === S.view) {
+                const a = new Set(Object.keys(S.coll).map(e => PART_MAP[e]?.categoryId).filter(e => void 0 !== e && null !== e));
+                e = JSON.parse(JSON.stringify(S.catTree));
+                e = e.map(e => (Array.isArray(e.children) && (e.children = e.children.filter(e => a.has(e.id))), e)).filter(e => Array.isArray(e.children) && e.children.length > 0)
+            }
         }
         S.sidebarLoading ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : "collection" === S.view && Object.keys(S.coll).length > 0 && 0 === e.length ? c = '<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>' : (e.forEach(e => {
             Array.isArray(e.children) && e.children.sort((e, t) => {
@@ -3855,11 +3908,7 @@ function renderSetInventory() {
             </div>
         `).join("");
     let s = "";
-    return t ? s = '<div class="flex justify-center p-4 flex-shrink-0"><div class="loader !w-8 !h-8"></div></div>' : o && (s = `<div class="pt-4 text-center flex-shrink-0">
-                <button data-action="load-more-inventory" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">
-                    Загрузить ещё
-                </button>
-            </div>`), `
+    return t ? s = '<div class="flex justify-center p-4 flex-shrink-0"><div class="loader !w-8 !h-8"></div></div>' : s = "", `
             <div class="space-y-6">
                 ${i?`
                     <div>
@@ -6033,8 +6082,8 @@ function openModalForSet(e) {
         
         // Убеждаемся, что у набора есть изображение, загружаем если отсутствует
         fetchImagesForViewedItems().catch(console.error);
-        
-        fetchSetInventory(e);
+        // Автоматически загружаем весь инвентарь набора
+        loadAllSetInventoryIntoModal(e);
         fetchSetMinifigs(e);
     }
 }
@@ -7279,14 +7328,44 @@ document.addEventListener("click", async e => {
         setupScrollListener();
         return;
     }
-    if (t.closest('[data-action="show-all-collection-items"]')) {
-        // Отключаем анимации при быстрой навигации по коллекции для улучшения производительности
-        document.body.classList.add('collection-view');
-        setTimeout(() => {
-            document.body.classList.remove('collection-view');
-        }, 800);
-        
-        return "parts" === S.subView && (S.selCollCatId = null), "sets" === S.subView && (S.selCollThemeId = null), S.gridStale = !0, void updateUI();
+    if (t.closest('[data-action="show-all-collection-items"]') || t.closest('[data-action="show-all-items-parts"]')) {
+        // Сброс фильтров "все детали" и перерисовка
+        if (S.view === 'collection') {
+            document.body.classList.add('collection-view');
+            setTimeout(() => document.body.classList.remove('collection-view'), 800);
+            if (S.subView === 'parts') S.selCollCatId = null;
+            if (S.subView === 'sets') S.selCollThemeId = null;
+            S.gridStale = true;
+            updateUI();
+        } else {
+            document.body.classList.add('catalog-view');
+            setTimeout(() => document.body.classList.remove('catalog-view'), 800);
+            // Показать все детали в каталоге
+            S.view = 'catalog';
+            S.subView = 'parts';
+            S.selCatId = null;
+            S.q = '';
+            try {
+                const allParts = Object.values(PART_MAP).filter(Boolean);
+                S.searchGroups = groupParts(allParts);
+            } catch (err) {
+                console.warn('Failed to build all parts groups, falling back to UI update only', err);
+                S.searchGroups = {};
+            }
+            S.gridStale = true;
+            updateUI();
+        }
+        return;
+    }
+    if (t.closest('[data-action="show-all-items-sets"]')) {
+        // В каталоге: показать все наборы
+        S.view = 'catalog';
+        S.subView = 'sets';
+        S.selThemeId = null;
+        S.q = '';
+        S.gridStale = true;
+        fetchSets();
+        return;
     }
     const r = t.closest("[data-theme-id]");
     if (r?.dataset.themeId) {
