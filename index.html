@@ -7092,6 +7092,13 @@ document.addEventListener("click", async e => {
     const o = t.closest('[data-action="view-image-fullscreen"]');
     if (o?.dataset.imageUrl) return openImageViewer(o.dataset.imageUrl);
     
+    // Кнопка "Мне повезёт!"
+    if (t.closest('#feeling-lucky-button')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return handleFeelingLucky();
+    }
+    
     // Открытие модалки детали из инвентаря набора/минифигурки
     const invPartEl = t.closest('[data-action="open-part-from-inventory"]');
     const clickedActionEl = t.closest('[data-action]');
@@ -8884,6 +8891,9 @@ function hideLoadingIndicator() {
             if (loadingContainer.parentNode) {
                 loadingContainer.parentNode.removeChild(loadingContainer);
             }
+            // После скрытия индикатора рендерим основной контент,
+            // чтобы избежать пустой страницы при первом открытии
+            try { updateUI(); } catch (e) { console.error('Failed to update UI after loading hide:', e); }
         }, 500);
     }
 }
