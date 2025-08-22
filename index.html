@@ -281,6 +281,8 @@
         z-index: 50 !important;
         pointer-events: auto !important;
     }
+    /* Модалка деталей должна быть поверх инвентарей наборов/минифигурок */
+    #modal-container { z-index: 60 !important; }
     
     /* Image viewer должен быть поверх модальных окон */
     #image-viewer-container:not(.viewer-hidden) {
@@ -3721,7 +3723,7 @@ function renderSetModal(e = !1) {
     if (!t) return void closeSetModal();
     const o = e ? "modal-content-enter" : "",
         l = "inventory" === S.setModal.view;
-    e && (document.body.classList.add("overflow-hidden"), setModalEl.classList.remove("modal-hidden"), requestAnimationFrame(() => setModalEl.classList.add("visible"))), setModalEl.innerHTML = `
+    e && (document.body.classList.add("overflow-hidden"), setModalEl.classList.remove("modal-hidden"), setModalEl.style.zIndex = '50', requestAnimationFrame(() => setModalEl.classList.add("visible"))), setModalEl.innerHTML = `
         <div id="set-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] ${l?"max-w-6xl":"max-w-4xl"} flex flex-col ${l?"h-[calc(100vh-4rem)]":"max-h-[calc(100vh-2rem)]"} ${o} transition-all duration-300">
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${t.name}</h2>
@@ -3757,7 +3759,11 @@ function renderSetInventory() {
                             </button>
                         </div>
                     ` : (e.parts || []).map((e) => `
-                                <div class="flex items-center p-1.5 rounded-md gap-2 text-xs">
+                                <div class="flex items-center p-1.5 rounded-md gap-2 text-xs cursor-pointer hover:bg-gray-700/50"
+                                     data-action="open-part-from-inventory"
+                                     data-part-id="${e.part.part_num}"
+                                     data-color-id="${e.color.id}"
+                                     data-quantity="${e.quantity}">
                                     <div class="w-8 h-8 bg-white rounded flex items-center justify-center flex-shrink-0">
                                         <img ${getPartImageUrl(e.part.part_img_url)} alt="${e.part.name}" class="w-full h-full object-contain p-0.5">
                                     </div>
@@ -3773,8 +3779,9 @@ function renderSetInventory() {
                             `).join("") || (e.parts && 0 === e.parts.length ? '<p class="text-xs text-gray-400 text-center p-2">Детали не найдены.</p>' : "");
         return `
                     <div class="bg-gray-700/50 rounded-lg overflow-hidden">
-                        <div class="flex items-center p-2 gap-3 text-sm">
-                            <div data-action="view-image-fullscreen" data-image-url="${e.minifig_img_url||e.set_img_url||""}" class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0 cursor-pointer group relative">
+                        <div class="flex items-center p-2 gap-3 text-sm cursor-pointer hover:bg-gray-700/50"
+                             data-action="open-minifig-from-inventory" data-fig-num="${t}">
+                            <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0 group relative">
                                 <img ${getPartImageUrl(e.minifig_img_url || e.set_img_url)} alt="${l}" class="w-full h-full object-contain p-1">
                                 <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                     ${I_Search("w-5 h-5 text-white")}
@@ -3809,7 +3816,11 @@ function renderSetInventory() {
                 `
     }).join(""));
     const r = e.map(e => `
-            <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm">
+            <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm cursor-pointer hover:bg-gray-700/70"
+                 data-action="open-part-from-inventory"
+                 data-part-id="${e.part.part_num}"
+                 data-color-id="${e.color.id}"
+                 data-quantity="${e.quantity}">
                 <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0">
                         <img ${getPartImageUrl(e.part.part_img_url)} alt="${e.part.name}" class="w-full h-full object-contain p-1">
                 </div>
@@ -3884,7 +3895,7 @@ function renderModal() {
                         </div>
                     </div>
                 </div>
-            `), document.body.classList.add("overflow-hidden"), partModalEl.classList.remove("modal-hidden"), requestAnimationFrame(() => {
+            `), document.body.classList.add("overflow-hidden"), partModalEl.classList.remove("modal-hidden"), partModalEl.style.zIndex = '60', requestAnimationFrame(() => {
         partModalEl.classList.add("visible")
     }), partModalEl.innerHTML = `
         <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-lg lg:max-w-4xl flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter">
@@ -4625,7 +4636,7 @@ function renderMinifigModal(e = !1) {
     if (!t) return void closeMinifigModal();
     const o = e ? "modal-content-enter" : "",
         l = "inventory" === S.minifigModal.view;
-    e && (document.body.classList.add("overflow-hidden"), minifigModalEl.classList.remove("modal-hidden"), requestAnimationFrame(() => minifigModalEl.classList.add("visible"))), minifigModalEl.innerHTML = `
+    e && (document.body.classList.add("overflow-hidden"), minifigModalEl.classList.remove("modal-hidden"), minifigModalEl.style.zIndex = '50', requestAnimationFrame(() => minifigModalEl.classList.add("visible"))), minifigModalEl.innerHTML = `
         <div id="minifig-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] ${l?"max-w-2xl":"max-w-4xl"} flex flex-col ${l?"h-[calc(100vh-4rem)]":"max-h-[calc(100vh-2rem)]"} ${o} transition-all duration-300">
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${t.name}</h2>
@@ -4746,7 +4757,11 @@ function renderMinifigModalInventoryView() {
             r = `<p class="text-gray-400 text-center p-4">Инвентарь для этой минифигурки не найден.</p>`;
         } else {
             const t = e.map(e => `
-                <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm">
+                <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm cursor-pointer hover:bg-gray-700/70"
+                     data-action="open-part-from-inventory"
+                     data-part-id="${e.part.part_num}"
+                     data-color-id="${e.color.id}"
+                     data-quantity="${e.quantity}">
                     <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0">
                         <img ${getPartImageUrl(e.part.part_img_url)} alt="${e.part.name}" class="w-full h-full object-contain p-1">
                     </div>
@@ -5757,7 +5772,7 @@ function restoreModalStates() {
     
     modals.forEach(modal => {
         if (modal.el && !modal.el.classList.contains('modal-hidden')) {
-            modal.el.style.zIndex = '50';
+            modal.el.style.zIndex = modal.id === 'modal-container' ? '60' : '50';
             modal.el.style.pointerEvents = 'auto';
         }
     });
@@ -7052,6 +7067,36 @@ document.addEventListener("click", async e => {
     
     const o = t.closest('[data-action="view-image-fullscreen"]');
     if (o?.dataset.imageUrl) return openImageViewer(o.dataset.imageUrl);
+    
+    // Открытие модалки детали из инвентаря набора/минифигурки
+    const invPartEl = t.closest('[data-action="open-part-from-inventory"]');
+    if (invPartEl) {
+        const pid = invPartEl.getAttribute('data-part-id');
+        const cid = invPartEl.getAttribute('data-color-id');
+        const qty = parseInt(invPartEl.getAttribute('data-quantity') || '0');
+        if (pid && cid) {
+            const part = PART_MAP[pid] || PART_MAP[String(pid)];
+            if (part) {
+                const groupId = getGroupId(part.part_num || pid);
+                openModalForPart(part.id || part.part_num || pid, groupId, [part]);
+                S.partModal.selColorId = String(cid);
+                S.partModal.qty = S.coll[part.id]?.[S.partModal.selColorId] || 0;
+                updateModalPartially({ controls: !0, image: !0 });
+                fetchPartColorSpecifics(part.id, S.partModal.selColorId);
+            }
+        }
+        return;
+    }
+    
+    // Открытие модалки минифигурки из инвентаря набора
+    const invFigEl = t.closest('[data-action="open-minifig-from-inventory"]');
+    if (invFigEl) {
+        const figNum = invFigEl.getAttribute('data-fig-num');
+        if (figNum) {
+            openModalForMinifig(figNum);
+        }
+        return;
+    }
     
     // Обработка кнопки закрытия image viewer (всегда работает)
     if (t.closest("#image-viewer-close")) {
