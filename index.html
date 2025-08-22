@@ -116,6 +116,40 @@
         opacity: 1;
     }
     
+    /* Анимации кнопок в боковом меню */
+    #sidebar-container button {
+        transition: transform 0.15s ease-out, background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+        will-change: transform;
+    }
+    #sidebar-container button:hover {
+        transform: translateY(-1px);
+    }
+    #sidebar-container button:active {
+        transform: translateY(0) scale(0.98);
+    }
+    #sidebar-container button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+    }
+    /* Легкая анимация для иконок избранного в боковом меню */
+    #sidebar-container [data-action="toggle-favorite-theme"],
+    #sidebar-container [data-action="toggle-favorite-category"] {
+        transition: transform 0.15s ease;
+    }
+    #sidebar-container [data-action="toggle-favorite-theme"]:active,
+    #sidebar-container [data-action="toggle-favorite-category"]:active {
+        transform: scale(0.9);
+    }
+
+    /* Анимации боковой панели */
+    #sidebar-container {
+        transition: transform 0.25s ease-in-out;
+        will-change: transform;
+    }
+    #sidebar-backdrop {
+        transition: opacity 0.2s ease-in-out;
+    }
+    
     /* Полноэкранный просмотр изображений */
     #image-viewer-container {
         cursor: zoom-out;
@@ -396,13 +430,30 @@ body.tab-switching .minifig-card {
     opacity: 1 !important;
 }
 
-/* ВРЕМЕННО ОТКЛЮЧЕНО: Дополнительные эффекты для карточек */
+/* Эффекты для карточек: базовые переходы для hover-анимации */
 .part-card,
 .set-card,
 .minifig-card {
-    /* transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); */
-    /* will-change: transform, opacity; */
-    transition: none !important;
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out !important;
+    will-change: transform;
+}
+
+/* Легкое поднятие карточки при наведении */
+.part-card:hover,
+.set-card:hover,
+.minifig-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.6);
+}
+
+/* Форсируем hover-поднятие на десктопах, если не идет активная навигация */
+@media (pointer: fine) and (min-width: 769px) {
+    body:not(.scrolling):not(.resizing):not(.tab-switching):not(.searching):not(.filtering):not(.sorting) .part-card:hover,
+    body:not(.scrolling):not(.resizing):not(.tab-switching):not(.searching):not(.filtering):not(.sorting) .set-card:hover,
+    body:not(.scrolling):not(.resizing):not(.tab-switching):not(.searching):not(.filtering):not(.sorting) .minifig-card:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.6) !important;
+    }
 }
 
 /* Отключение анимаций при прокрутке для предотвращения моргания */
@@ -453,13 +504,22 @@ body.tab-switching .minifig-card {
 .part-card[data-collection-change="added"],
 .set-card[data-collection-change="added"],
 .minifig-card[data-collection-change="added"] {
-    animation: collectionAdd 0.1s ease-out forwards;
+    animation: collectionAdd 0.2s ease-out forwards !important;
+    will-change: box-shadow, transform, opacity;
+}
+
+/* Мягкое появление при добавлении через класс */
+.part-card.collection-added,
+.set-card.collection-added,
+.minifig-card.collection-added {
+    animation: collectionAdd 0.25s ease-out forwards !important;
+    will-change: box-shadow, transform, opacity;
 }
 
 .part-card[data-collection-change="removed"],
 .set-card[data-collection-change="removed"],
 .minifig-card[data-collection-change="removed"] {
-    animation: collectionRemove 0.1s ease-out forwards;
+    animation: collectionRemove 0.12s ease-in forwards;
 }
 
 @keyframes collectionAdd {
@@ -476,11 +536,11 @@ body.tab-switching .minifig-card {
 @keyframes collectionRemove {
     from {
         opacity: 1;
-        transform: scale(1);
+        transform: translateY(0) scale(1);
     }
     to {
         opacity: 0;
-        transform: scale(0.99);
+        transform: translateY(2px) scale(0.98);
     }
 }
 
@@ -721,7 +781,6 @@ body.tab-switching .minifig-card {
     animation: settingsChange 0.2s ease-out forwards;
 }
 
-/*
 @keyframes settingsChange {
     from {
         opacity: 0;
@@ -732,7 +791,6 @@ body.tab-switching .minifig-card {
         transform: translateY(0) scale(1);
     }
 }
-*/
 
 /* Анимация для изменения языка - ОПТИМИЗИРОВАННАЯ */
 .language-change .part-card,
@@ -1088,8 +1146,8 @@ body.tab-switching .minifig-card {
 .part-card:hover,
 .set-card:hover,
 .minifig-card:hover {
-    transform: translateY(-6px) scale(1.03);
-    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08);
+    transform: translateY(-6px) scale(1.03) !important;
+    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Hover эффекты на больших экранах */
@@ -1097,8 +1155,8 @@ body.tab-switching .minifig-card {
     .part-card:hover,
     .set-card:hover,
     .minifig-card:hover {
-        transform: translateY(-6px) scale(1.03);
-        box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08);
+        transform: translateY(-6px) scale(1.03) !important;
+        box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08) !important;
     }
 }
   
@@ -2981,7 +3039,11 @@ function renderSetCard(e, t, o = 0) {
         i = S.setColl[e.set_num] ? S.setColl[e.set_num].qty : 0;
     return `
             <div data-set-num="${e.set_num}" style="${a}" class="set-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
-                ${i>0?`<div class="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
+                ${S.view==="collection"?`
+                <button aria-label="Удалить ${e.name}" data-action="delete-set-from-collection" data-set-num="${e.set_num}" class="absolute top-3 right-3 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                    ${I_Trash("w-4 h-4")}
+                </button>`:""}
+                ${i>0?`<div class="absolute top-3 ${S.view==="collection"?"left-3":"right-3"} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
                         <img ${getPartImageUrl(e.set_img_url && e.set_img_url.startsWith('http') ? e.set_img_url : null)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
@@ -3015,7 +3077,11 @@ function renderMinifigCard(e, t, o = 0) {
         i = S.minifigColl[e.set_num] ? S.minifigColl[e.set_num].qty : 0;
     return `
             <div data-fig-num="${e.set_num}" style="${a}" class="minifig-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
-                ${i>0?`<div class="absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
+                ${S.view==="collection"?`
+                <button aria-label="Удалить ${e.name || e.set_num}" data-action="delete-minifig-from-collection" data-fig-num="${e.set_num}" class="absolute top-3 right-3 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                    ${I_Trash("w-4 h-4")}
+                </button>`:""}
+                ${i>0?`<div class="absolute top-3 ${S.view==="collection"?"left-3":"right-3"} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
                         <img ${getPartImageUrl((e.minifig_img_url && e.minifig_img_url.startsWith('http')) || (e.set_img_url && e.set_img_url.startsWith('http')) ? (e.minifig_img_url || e.set_img_url) : null)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
@@ -4260,7 +4326,15 @@ function renderFilterModal() {
 
 function renderSettingsModal() {
     if (!S.settingsOpen) return void closeSettingsModal();
-    document.body.classList.add("overflow-hidden"), settingsModalEl.classList.remove("modal-hidden"), requestAnimationFrame(() => settingsModalEl.classList.add("visible"));
+    const isFirstOpen = settingsModalEl.classList.contains('modal-hidden');
+    // Сохраняем позицию прокрутки содержимого, чтобы избежать дергания
+    const prevScrollTop = settingsModalEl.querySelector('#settings-modal-scroll')?.scrollTop || 0;
+    
+    document.body.classList.add("overflow-hidden");
+    if (isFirstOpen) {
+        settingsModalEl.classList.remove("modal-hidden");
+        requestAnimationFrame(() => settingsModalEl.classList.add("visible"));
+    }
     const {
         delConfirm: e,
         status: t,
@@ -4305,13 +4379,14 @@ function renderSettingsModal() {
                     <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление ВСЕГО</button>
                 </div>` : `<button data-action="delete-all-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===i?"opacity-50 cursor-not-allowed":""}" ${0===i?"disabled":""}>${I_Trash("w-5 h-5 mr-2")} Удалить все минифигурки</button>`;
     const c = "error" === o ? "bg-red-900/50 text-red-300" : "success" === o ? "bg-green-900/50 text-green-300" : "bg-blue-900/50 text-blue-300";
+    const enterClass = isFirstOpen ? 'modal-content-enter' : '';
     settingsModalEl.innerHTML = `
-             <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter">
+             <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${enterClass}">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Настройки</h2>
                      <button id="settings-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
                 </div>
-                <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
+                <div id="settings-modal-scroll" class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
                      <div>
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Импорт и экспорт CSV</h3>
                          ${t?`<div id="import-export-status" class="mb-2 p-2 text-sm rounded-md ${c}">${t}</div>`:'<div id="import-export-status" class="mb-2"></div>'}
@@ -4413,6 +4488,11 @@ function renderSettingsModal() {
                 </div>
             </div>
         `
+    // Восстанавливаем позицию прокрутки при повторном рендере
+    if (!isFirstOpen) {
+        const scrollEl = document.getElementById('settings-modal-scroll');
+        if (scrollEl) scrollEl.scrollTop = prevScrollTop;
+    }
 }
 
 function updateFilterModalUI() {
@@ -5261,7 +5341,13 @@ async function processCsvData(content) {
 
 async function handleUpdateCollection(e, t, o) {
     S.coll[e] || (S.coll[e] = {});
-    o > 0 ? S.coll[e][t] = o : (delete S.coll[e][t], 0 === Object.keys(S.coll[e]).length && delete S.coll[e]), o > 0 && !PART_MAP[e]?.colorImages && await fetchColorDetailsForPart(e), saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), mainEl.querySelector(`.part-card[data-part-id="${e}"]`)?.prepend(function() {
+    o > 0 ? S.coll[e][t] = o : (delete S.coll[e][t], 0 === Object.keys(S.coll[e]).length && delete S.coll[e]), o > 0 && !PART_MAP[e]?.colorImages && await fetchColorDetailsForPart(e), saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), (function(){
+        const card = mainEl.querySelector(`.part-card[data-part-id="${e}"]`);
+        if (card && o > 0) {
+            card.classList.add('collection-added');
+            setTimeout(() => card.classList.remove('collection-added'), 250);
+        }
+    })(), mainEl.querySelector(`.part-card[data-part-id="${e}"]`)?.prepend(function() {
         const total = Object.values(S.coll[e] || {}).reduce((sum, qty) => sum + qty, 0);
         if (total > 0) {
             let el = document.createElement("div");
@@ -5271,6 +5357,14 @@ async function handleUpdateCollection(e, t, o) {
         }
         return document.createDocumentFragment();
     }()));
+    // Кроме модалки: если мы в каталоге и карточка существует — ставим data-атрибут для CSS-анимации
+    if (o > 0) {
+        const card = mainEl.querySelector(`.part-card[data-part-id="${e}"]`);
+        if (card) {
+            card.setAttribute('data-collection-change', 'added');
+            setTimeout(() => card.removeAttribute('data-collection-change'), 300);
+        }
+    }
     
     // Если деталь была добавлена и у неё нет изображения, загружаем его автоматически
     if (o > 0 && !PART_MAP[e]?.part_img_url) {
@@ -5291,6 +5385,22 @@ async function handleUpdateCollection(e, t, o) {
             }
         }
     }
+
+    // Анимация мягкого появления в режиме коллекции (после перерисовки)
+    if (S.view === 'collection' && o > 0) {
+        setTimeout(() => {
+            const card = mainEl.querySelector(`.part-card[data-part-id="${e}"][data-color-id="${t}"]`) ||
+                          mainEl.querySelector(`.part-card[data-part-id="${e}"]`);
+            if (card) {
+                card.classList.add('collection-added');
+                card.setAttribute('data-collection-change', 'added');
+                setTimeout(() => {
+                    card.classList.remove('collection-added');
+                    card.removeAttribute('data-collection-change');
+                }, 300);
+            }
+        }, 0);
+    }
 }
 
 function handleUpdateSetCollection(e, t) {
@@ -5303,7 +5413,32 @@ function handleUpdateSetCollection(e, t) {
             return o.className = "absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md", o.textContent = String(t), o
         }
         return document.createDocumentFragment()
-    }())), S.selSetNum === e && updateSetModalControlsState()
+    }())), (function(){
+        const card = mainEl.querySelector(`.set-card[data-set-num="${e}"]`);
+        if (card && t > 0) {
+            card.classList.add('collection-added');
+            card.setAttribute('data-collection-change', 'added');
+            setTimeout(() => {
+                card.classList.remove('collection-added');
+                card.removeAttribute('data-collection-change');
+            }, 300);
+        }
+    })(), S.selSetNum === e && updateSetModalControlsState()
+
+    // В режиме коллекции (после updateUI) — гарантируем анимацию на карточке набора
+    if (S.view === 'collection' && t > 0) {
+        setTimeout(() => {
+            const card = mainEl.querySelector(`.set-card[data-set-num="${e}"]`);
+            if (card) {
+                card.classList.add('collection-added');
+                card.setAttribute('data-collection-change', 'added');
+                setTimeout(() => {
+                    card.classList.remove('collection-added');
+                    card.removeAttribute('data-collection-change');
+                }, 300);
+            }
+        }, 0);
+    }
     
     // Если набор был добавлен и у него нет изображения, загружаем его автоматически
     if (t > 0 && !SET_MAP[e]?.set_img_url) {
@@ -5329,7 +5464,17 @@ async function handleUpdateMinifigCollection(e, t, o = !0) {
     }
     t > 0 ? (S.minifigColl[e] = {
         qty: t
-    }, o && !MINIFIG_MAP[e]?.name && await fetchMinifigDetails(e)) : delete S.minifigColl[e], saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), mainEl.querySelector(`.minifig-card[data-fig-num="${e}"]`)?.prepend(function() {
+    }, o && !MINIFIG_MAP[e]?.name && await fetchMinifigDetails(e)) : delete S.minifigColl[e], saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), (function(){
+        const card = mainEl.querySelector(`.minifig-card[data-fig-num="${e}"]`);
+        if (card && t > 0) {
+            card.classList.add('collection-added');
+            card.setAttribute('data-collection-change', 'added');
+            setTimeout(() => {
+                card.classList.remove('collection-added');
+                card.removeAttribute('data-collection-change');
+            }, 300);
+        }
+    })(), mainEl.querySelector(`.minifig-card[data-fig-num="${e}"]`)?.prepend(function() {
         if (t > 0) {
             let t = document.createElement("div");
             t.className = "absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md", t.textContent = String(e), t
@@ -7110,9 +7255,23 @@ document.addEventListener("click", async e => {
     const d = t.closest('[data-action="delete-from-collection"]');
     if (d?.dataset.partId && d.dataset.colorId) return await handleUpdateCollection(d.dataset.partId, d.dataset.colorId, 0);
     const u = t.closest(".minifig-card");
-    if (u?.dataset.figNum) return openModalForMinifig(u.dataset.figNum);
+    if (u?.dataset.figNum) {
+        const delFigBtn = t.closest('[data-action="delete-minifig-from-collection"]');
+        if (delFigBtn) {
+            const num = delFigBtn.dataset.figNum;
+            if (num) handleUpdateMinifigCollection(num, 0, false);
+            return;
+        }
+        return openModalForMinifig(u.dataset.figNum);
+    }
     const g = t.closest(".set-card");
     if (g?.dataset.setNum) {
+        const delSetBtn = t.closest('[data-action="delete-set-from-collection"]');
+        if (delSetBtn) {
+            const num = delSetBtn.dataset.setNum;
+            if (num) handleUpdateSetCollection(num, 0);
+            return;
+        }
         return openModalForSet(g.dataset.setNum);
     }
     const m = t.closest(".part-card");
