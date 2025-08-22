@@ -3793,10 +3793,10 @@ function renderSetInventory() {
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
                                 <span class="text-gray-300 w-8 text-right font-semibold">${e.quantity}x</span>
-                                <button data-action="add-minifig-to-collection" data-fig-num="${t}" data-quantity="${e.quantity}" class="p-2 rounded-full text-white transition-colors ${o>0?"bg-green-600":"bg-blue-600 hover:bg-blue-700"}" title="${o>0?`В коллекции: ${o}`:`Добавить ${e.quantity} в коллекцию минифигурок`}">
+                                <button data-action="add-minifig-to-collection" data-fig-num="${t}" data-quantity="${e.quantity}" class="z-10 relative p-2 rounded-full text-white transition-colors ${o>0?"bg-green-600":"bg-blue-600 hover:bg-blue-700"}" title="${o>0?`В коллекции: ${o}`:`Добавить ${e.quantity} в коллекцию минифигурок`}">
                                     ${I_Minifig("w-5 h-5")}
                                 </button>
-                                <button data-action="toggle-minifig-parts" data-fig-num="${t}" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors" title="Показать/скрыть детали">
+                                <button data-action="toggle-minifig-parts" data-fig-num="${t}" class="z-10 relative p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors" title="Показать/скрыть детали">
                                     ${I_Chev(`w-5 h-5 transform transition-transform duration-200 ${e.isExpanded?"rotate-180":""}`)}
                                 </button>
                             </div>
@@ -4339,13 +4339,14 @@ function renderFilterModal() {
                      <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтр по цвету</h3>
                      <div class="bg-gray-900/50 rounded-lg p-3">
                         <button data-action="modal-set-color" data-color-id="null" class="w-full mb-3 py-2 text-sm rounded-md transition-colors ${0===tempFilters.filters.colorIds.length?"bg-blue-600 text-white font-semibold":"bg-gray-600 hover:bg-gray-500 text-gray-200"}">Все цвета</button>
-                        <div class="relative">
-                            <div class="max-h-48 overflow-y-auto no-scrollbar pr-2">
-                                <div class="grid grid-cols-[repeat(auto-fill,minmax(36px,1fr))] gap-3">
-                                    ${l}
-                                </div>
+                        <div class="max-h-60 overflow-y-auto no-scrollbar pr-1">
+                            <div class="grid gap-2" style="grid-template-columns: repeat(auto-fill,minmax(180px,1fr));">
+                                ${Object.keys(COLOR_MAP).sort((a,b)=>COLOR_MAP[a].name.localeCompare(COLOR_MAP[b].name,'en')).map(id=>{const c=COLOR_MAP[id];const sel=tempFilters.filters.colorIds.includes(id);return `
+                                    <button data-action="modal-set-color" data-color-id="${id}" class="flex items-center gap-3 p-2 rounded-md border ${sel?"border-blue-500 bg-blue-900/30":"border-gray-700 hover:border-gray-500"}">
+                                        <span class="w-6 h-6 rounded-full border ${c.isTransparent?"checkerboard border-gray-500":"border-gray-500"}" style="background-color:${c.hex}"></span>
+                                        <span class="text-sm text-gray-200 truncate">${c.name}</span>
+                                    </button>`}).join("")}
                             </div>
-                            <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-gray-900 to-transparent pointer-events-none"></div>
                         </div>
                      </div>
                 </div>`
@@ -4557,7 +4558,7 @@ function updateFilterModalUI() {
             if (t && "null" !== t) {
                 const o = tempFilters.filters.colorIds.includes(t),
                     l = COLOR_MAP[t];
-                l && (e.className = `w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${l.isTransparent?"checkerboard":""} ${o?"border-blue-500 scale-110":"border-gray-600 hover:border-gray-400"}`)
+                l && (e.className = `flex items-center gap-3 p-2 rounded-md border ${o?"border-blue-500 bg-blue-900/30":"border-gray-700 hover:border-gray-500"}`)
             }
         })
     }
@@ -7070,7 +7071,9 @@ document.addEventListener("click", async e => {
     
     // Открытие модалки детали из инвентаря набора/минифигурки
     const invPartEl = t.closest('[data-action="open-part-from-inventory"]');
-    if (invPartEl) {
+    const clickedActionEl = t.closest('[data-action]');
+    const clickedAction = clickedActionEl?.dataset.action;
+    if (invPartEl && (!clickedAction || clickedAction === 'open-part-from-inventory')) {
         const pid = invPartEl.getAttribute('data-part-id');
         const cid = invPartEl.getAttribute('data-color-id');
         const qty = parseInt(invPartEl.getAttribute('data-quantity') || '0');
@@ -7090,7 +7093,7 @@ document.addEventListener("click", async e => {
     
     // Открытие модалки минифигурки из инвентаря набора
     const invFigEl = t.closest('[data-action="open-minifig-from-inventory"]');
-    if (invFigEl) {
+    if (invFigEl && (!clickedAction || clickedAction === 'open-minifig-from-inventory')) {
         const figNum = invFigEl.getAttribute('data-fig-num');
         if (figNum) {
             openModalForMinifig(figNum);
@@ -7624,6 +7627,7 @@ document.addEventListener("click", async e => {
                 break
         }
     } else if (setModalEl?.contains(t)) {
+        // Если клик пришел по вкладке минифигурки целиком, не перехватываем клики на внутренних кнопках
         const e = t.closest("[data-action]");
         if (!e) return;
         const {
