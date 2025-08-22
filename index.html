@@ -4455,26 +4455,26 @@ function renderSettingsModal() {
     const i = Object.keys(S.minifigColl).length;
     let n = "";
     n = "parts" === e ? `
-                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо.</p>
+                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
                 <div class="flex gap-2">
                     <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
                     <button data-action="confirm-delete-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
                 </div>` : "all" === e ? `
-                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо и удалит ВСЕ данные.</p>
+                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо и удалит ВСЕ данные в коллекции</p>
                 <div class="flex gap-2">
                     <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
                     <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление ВСЕГО</button>
                 </div>` : `<button data-action="delete-all-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===l?"opacity-50 cursor-not-allowed":""}" ${0===l?"disabled":""}>${I_Trash("w-5 h-5 mr-2")} Удалить все детали</button>`;
     let r = "";
     r = "sets" === e ? `
-                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо.</p>
+                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
                 <div class="flex gap-2">
                     <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
                     <button data-action="confirm-delete-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
                 </div>` : `<button data-action="delete-all-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===a?"opacity-50 cursor-not-allowed":""}" ${0===a?"disabled":""}>${I_Trash("w-5 h-5 mr-2")} Удалить все наборы</button>`;
     let s = "";
     s = "minifigs" === e ? `
-                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо.</p>
+                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
                 <div class="flex gap-2">
                     <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
                     <button data-action="confirm-delete-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
@@ -4492,7 +4492,7 @@ function renderSettingsModal() {
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Импорт и экспорт CSV</h3>
                          ${t?`<div id="import-export-status" class="mb-2 p-2 text-sm rounded-md ${c}">${t}</div>`:'<div id="import-export-status" class="mb-2"></div>'}
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
-                            <p class="text-xs text-gray-400">Импорт и экспорт вашей коллекции в формате CSV. Импорт объединит данные с вашей текущей коллекцией.</p>
+                            <p class="text-xs text-gray-400">Импорт и экспорт вашей коллекции в формате CSV. Импорт объединит данные с вашей текущей коллекцией</p>
                             <div class="flex gap-3">
                                 <button data-action="import-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-purple-600 hover:bg-purple-700 text-white">
                                     ${I_Up("w-5 h-5 mr-2")} Импорт (.csv)
@@ -4511,7 +4511,7 @@ function renderSettingsModal() {
                            </button>` : ""}
                            ${"all"===e ? `
                                <div class="bg-red-900/30 border border-red-700/50 rounded-md p-3">
-                                   <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо и удалит ВСЕ данные.</p>
+                                   <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо и удалит ВСЕ данные в коллекции</p>
                                    <div class="flex gap-2">
                                        <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
                                        <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление ВСЕГО</button>
@@ -4520,7 +4520,7 @@ function renderSettingsModal() {
                            ` : `${n}${r}${s}`}
                         </div>
                     </div>
-                    <div style="margin-top: 0.5rem !important;">
+                    <div>
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Управление кэшем</h3>
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Управление кэшем приложения для улучшения производительности и освобождения места</p>
@@ -4583,11 +4583,25 @@ function renderSettingsModal() {
                         <h3 class="text-md font-semibold text-gray-300 mb-2">О сайте</h3>
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3 text-sm text-gray-400">
                            <p>
-                               <strong>Избранное:</strong> Чтобы добавить категорию или тему в избранное для быстрого доступа, наведите на нее курсор в боковом меню и нажмите на появившееся сердечко. Избранные элементы всегда будут отображаться вверху своих списков.
+                               Одностраничное веб‑приложение для локального просмотра и ведения собственной коллекции LEGO
                            </p>
-                           <p class="pt-3 border-t border-gray-700/50">
-                               Этот сайт использует <a href="https://rebrickable.com/api/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">Rebrickable API</a>, но не поддерживается и не утверждается Rebrickable.
-                           </p>
+                           <ul class="list-disc list-outside pl-5 space-y-1">
+                               <li>Каталог деталей/наборов/минифигурок</li>
+                               <li>Фильтры, сортировки, поиск</li>
+                               <li>Модальные карточки с изображениями, цветами и количеством в коллекции</li>
+                               <li>Коллекция пользователя (детали, наборы, минифигурки)</li>
+                               <li>Полноэкранный просмотр изображений</li>
+                               <li>Импорт/экспорт коллекции в CSV</li>
+                           </ul>
+                           <div class="pt-3 border-t border-gray-700/50 flex flex-col items-center justify-center gap-3 text-center">
+                               <a href="https://github.com/Zeka3535/LEGO-Part-Catalog" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white transition-colors">
+                                   <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 .5C5.73.5.98 5.24.98 11.5c0 4.85 3.15 8.96 7.52 10.41.55.1.75-.24.75-.53 0-.26-.01-1.13-.02-2.05-3.06.66-3.71-1.3-3.71-1.3-.5-1.26-1.22-1.6-1.22-1.6-1-.69.08-.68.08-.68 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.58 1.2 3.2.92.1-.71.38-1.2.69-1.48-2.44-.28-5-1.22-5-5.43 0-1.2.43-2.19 1.13-2.96-.11-.28-.49-1.41.11-2.94 0 0 .92-.29 3.02 1.13.88-.24 1.82-.36 2.76-.36.94 0 1.88.12 2.76.36 2.1-1.42 3.02-1.13 3.02-1.13.6 1.53.22 2.66.11 2.94.7.77 1.13 1.76 1.13 2.96 0 4.22-2.56 5.15-5 5.43.4.34.73 1.01.73 2.04 0 1.47-.01 2.65-.01 3.01 0 .29.2.64.75.53 4.37-1.45 7.52-5.56 7.52-10.41C23.02 5.24 18.27.5 12 .5z"/></svg>
+                                   <span class="font-semibold">GitHub проекта</span>
+                               </a>
+                               <p class="text-gray-400 text-xs">
+                               Этот сайт использует <a href="https://rebrickable.com/api/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">Rebrickable API</a> и его базу данных CSV
+                               </p>
+                           </div>
                         </div>
                     </div>
                 </div>
