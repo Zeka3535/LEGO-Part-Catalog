@@ -3423,6 +3423,27 @@ function renderMainContent() {
                 sets = sets.filter(set => set && allowedThemeIds.includes(set.theme_id));
             }
             i && (sets = sets.filter(e => e.name.toLowerCase().includes(i) || e.set_num.toLowerCase().includes(i)));
+
+            // Применяем фильтры по годам и количеству деталей для наборов в коллекции
+            if (S.setFilters) {
+                const { minYear, maxYear, minParts, maxParts } = S.setFilters;
+                if (minYear && minYear.trim() !== '') {
+                    const v = parseInt(minYear);
+                    if (!isNaN(v)) sets = sets.filter(s => s.year && s.year >= v);
+                }
+                if (maxYear && maxYear.trim() !== '') {
+                    const v = parseInt(maxYear);
+                    if (!isNaN(v)) sets = sets.filter(s => s.year && s.year <= v);
+                }
+                if (minParts && minParts.trim() !== '') {
+                    const v = parseInt(minParts);
+                    if (!isNaN(v)) sets = sets.filter(s => s.num_parts && s.num_parts >= v);
+                }
+                if (maxParts && maxParts.trim() !== '') {
+                    const v = parseInt(maxParts);
+                    if (!isNaN(v)) sets = sets.filter(s => s.num_parts && s.num_parts <= v);
+                }
+            }
             t = sets;
             switch (S.sortBy) {
                 case "alpha_asc":
