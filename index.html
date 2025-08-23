@@ -2794,40 +2794,51 @@ async function fetchMissingMinifigPartImages(minifigParts) {
 async function handleFeelingLucky() {
     S.loading = !0, S.err = null, S.gridStale = !0, updateUI();
     try {
-        let e;
         if ("parts" === S.subView) {
-            if (flatCategories.length === 0) throw new Error("Категории еще не загружены.");
-            const t = flatCategories[Math.floor(Math.random() * flatCategories.length)],
-                o = await apiFetchPaginated(`/parts/?part_cat_id=${t.id}&page_size=100`);
-            if (o.length === 0) return handleFeelingLucky();
-            e = o[Math.floor(Math.random() * o.length)];
-            const l = procPart(e);
-            if (!l) throw new Error("Не удалось выбрать случайную деталь.");
-            const a = getGroupId(l.part_num);
-            openModalForPart(l.id, a, [l])
-        } else if ("sets" === S.subView) {
-            const t = Object.keys(THEME_MAP);
-            if (t.length === 0) throw new Error("Темы еще не загружены.");
-            let o = 0;
-            for (; o < 10;) {
-                const l = t[Math.floor(Math.random() * t.length)],
-                    a = await apiFetchPaginated(`/sets/?theme_id=${l}&page_size=100`);
-                if (a.length > 0) {
-                    e = a[Math.floor(Math.random() * a.length)];
-                    SET_MAP[e.set_num] = e;
-                    openModalForSet(e.set_num);
-                    S.loading = !1;
-                    return void updateUI();
+            const hasCats = Array.isArray(flatCategories) && flatCategories.length > 0;
+            let pool = [];
+            if (hasCats) {
+                const tries = Math.min(10, flatCategories.length);
+                for (let i = 0; i < tries && pool.length === 0; i++) {
+                    const randomCat = flatCategories[Math.floor(Math.random() * flatCategories.length)];
+                    pool = Object.values(PART_MAP).filter(p => p && p.categoryId === randomCat.id);
                 }
-                o++
             }
-            throw new Error("Не удалось найти случайный набор.")
+            if (pool.length === 0) {
+                pool = Object.values(PART_MAP).filter(Boolean);
+            }
+            if (pool.length === 0) throw new Error("Детали еще не загружены.");
+            const randomPart = pool[Math.floor(Math.random() * pool.length)];
+            const partId = randomPart.id || randomPart.part_num;
+            if (!partId) throw new Error("Некорректные данные детали.");
+            const groupId = getGroupId(partId);
+            let variants = Object.values(PART_MAP).filter(v => v && (v.id || v.part_num) && getGroupId(v.id || v.part_num) === groupId);
+            if (typeof partCmp === 'function') variants = variants.sort(partCmp);
+            openModalForPart(partId, groupId, variants.length ? variants : [randomPart]);
+        } else if ("sets" === S.subView) {
+            let setPool = Object.values(SET_MAP).filter(Boolean);
+            if (setPool.length === 0) throw new Error("Наборы еще не загружены.");
+            const themeIds = Object.keys(THEME_MAP || {});
+            if (themeIds.length) {
+                const tries = Math.min(10, themeIds.length);
+                for (let i = 0; i < tries; i++) {
+                    const themeId = parseInt(themeIds[Math.floor(Math.random() * themeIds.length)], 10);
+                    const themed = setPool.filter(s => s && s.theme_id === themeId);
+                    if (themed.length) { setPool = themed; break; }
+                }
+            }
+            const randomSet = setPool[Math.floor(Math.random() * setPool.length)];
+            if (!randomSet || !randomSet.set_num) throw new Error("Некорректные данные набора.");
+            SET_MAP[randomSet.set_num] = randomSet;
+            openModalForSet(randomSet.set_num);
+            S.loading = !1;
+            return void updateUI();
         } else {
-            const t = await apiFetchPaginated("/minifigs/?page_size=200");
-            if (t.length === 0) throw new Error("Не удалось загрузить минифигурки.");
-            e = t[Math.floor(Math.random() * t.length)];
-            MINIFIG_MAP[e.set_num] = e;
-            openModalForMinifig(e.set_num)
+            let figs = Object.values(MINIFIG_MAP).filter(Boolean);
+            if (figs.length === 0) throw new Error("Минифигурки еще не загружены.");
+            const randomFig = figs[Math.floor(Math.random() * figs.length)];
+            MINIFIG_MAP[randomFig.set_num] = randomFig;
+            openModalForMinifig(randomFig.set_num)
         }
     } catch (e) {
         console.error("Feeling lucky failed:", e), S.err = `Не удалось совершить чудо: ${e.message}`
