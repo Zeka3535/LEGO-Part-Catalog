@@ -3098,8 +3098,14 @@ function renderSidebar() {
                   </li>
                 `;
             } else {
-                // Каталог: кнопка активная и переключает на полный список наборов
-                const isActive = (S.selThemeId === null);
+                // Каталог: кнопка активна только когда действительно открыт и загружен полный список наборов
+                const isActive = (
+                  S.view === "catalog" &&
+                  S.subView === "sets" &&
+                  S.selThemeId === null &&
+                  (S.q ?? "") === "" &&
+                  Array.isArray(S.setRes) && S.setRes.length > 0
+                );
                 const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
                 t = `
                   <li>
@@ -3179,8 +3185,14 @@ function renderSidebar() {
                   </li>
                 `;
             } else {
-                // Каталог: кнопка активная и переключает на полный список деталей
-                const isActive = (S.selCatId === null);
+                // Каталог: кнопка активна только когда действительно открыт и сформирован полный список деталей
+                const isActive = (
+                  S.view === "catalog" &&
+                  S.subView === "parts" &&
+                  S.selCatId === null &&
+                  (S.q ?? "") === "" &&
+                  S.searchGroups && Object.keys(S.searchGroups || {}).length > 0
+                );
                 const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
                 t = `
                   <li>
@@ -3653,18 +3665,7 @@ function renderMainContent() {
                     ${l.map((e,t)=>{const l=o(e,true,t);return l.replace('class="part-card ',`style="${S.getAnimationDelay(t)}" class="part-card `).replace('class="set-card ',`style="${S.getAnimationDelay(t)}" class="set-card `).replace('class="minifig-card ',`style="${S.getAnimationDelay(t)}" class="minifig-card `)}).join("")}
                 </div>`;
             
-            // Для минифигурок кнопку не показываем, используем авто-догрузку
-            if (S.hasMoreItems && S.subView !== 'minifigs') {
-                const remainingCount = t.length - S.toDisplay;
-                const nextBatchSize = Math.min(S.increment, remainingCount);
-                e += `
-                    <div class="flex justify-center p-4">
-                        <button id="load-more-button-catalog" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold">
-                            Показать еще ${nextBatchSize} из ${remainingCount} (всего: ${t.length})
-                        </button>
-                    </div>
-                `;
-            }
+            // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
         }
     } else {
         let t, o, l = `В вашей коллекции нет ${"parts"===S.subView?"деталей":"sets"===S.subView?"наборов":"минифигурок"}`,
@@ -3835,18 +3836,7 @@ function renderMainContent() {
                     ${l.map((e,t)=>o(e,true,t)).join("")}
                 </div>`;
             
-            // Для минифигурок кнопку не показываем, используем авто-догрузку
-            if (S.hasMoreItems && !(S.view === 'collection' && S.subView === 'minifigs')) {
-                const remainingCount = t.length - S.toDisplay;
-                const nextBatchSize = Math.min(S.increment, remainingCount);
-                e += `
-                    <div class="flex justify-center p-4">
-                        <button id="load-more-button-collection" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
-                            Показать еще ${nextBatchSize} из ${remainingCount} (всего: ${t.length})
-                        </button>
-                    </div>
-                `;
-            }
+            // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
         }
     }
     mainEl.innerHTML = renderAppliedFilters() + e;
@@ -7648,25 +7638,7 @@ document.addEventListener("click", async e => {
         updateUI();
     }
     
-    // Обработчик кнопок "Показать еще"
-    if (t.id === "load-more-button-catalog" || t.id === "load-more-button-collection") {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (!S.loading && S.hasMoreItems) {
-            console.log('Load more button clicked:', {
-                buttonId: t.id,
-                current: S.toDisplay,
-                increment: S.increment,
-                hasMore: S.hasMoreItems
-            });
-            
-            S.toDisplay += S.increment;
-            S.gridStale = true;
-            updateUI();
-        }
-        return;
-    }
+    // Кнопки "Показать еще" удалены — обработчик не нужен
     const i = t.closest("[data-view]");
     if (i?.dataset.view) {
         const e = i.dataset.view;
