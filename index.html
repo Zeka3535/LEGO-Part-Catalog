@@ -90,6 +90,15 @@
         from { opacity: 1; transform: scale(1); }
         to { opacity: 0; transform: scale(0.95); }
     }
+    /* Анимация панели мультивыбора */
+    @keyframes msSlideFadeIn {
+        from { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes msSlideFadeOut {
+        from { opacity: 1; transform: translateY(0); }
+        to { opacity: 0; transform: translateY(-8px); }
+    }
     
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(0.1rem) scale(0.995); }
@@ -486,7 +495,6 @@
     opacity: 1 !important;
     transform: none !important;
 }
-
 /* Анимации при переключении вкладок */
 body.tab-switching .part-card,
 body.tab-switching .set-card,
@@ -986,7 +994,6 @@ body.tab-switching .minifig-card {
     }
 }
 */
-
 /* Анимация для изменения сетки - ОПТИМИЗИРОВАННАЯ */
 .grid-change .part-card,
 .grid-change .set-card,
@@ -1485,7 +1492,6 @@ if (!DEBUG) {
     console.debug = () => {};
     console.warn = () => {};
 }
-
 const REBRICKABLE_API_URL = 'https://rebrickable.com/api/v3/lego';
 const REBRICKABLE_API_KEYS = ['20c78cc607d6059c8d2a61338d851590', '04a7405ad41f1dd484a562f6e0c57312', 'd93f5c0989f63afa9b1c29ef8ad66002', 'b4179c1b8bd3c022ec9fc0e713e96b77', 'd32527bc33b575b8825a0ba04ba4add5'];
 let currentApiKeyIndex = 0;
@@ -1539,6 +1545,9 @@ const I_Arch = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" view
 const I_Other = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
 const I_Filter = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>`;
 const I_Theme = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
+// Иконки для мультивыбора
+const I_Circle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle></svg>`;
+const I_CheckCircle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l2.5 2.5L16 9"></path></svg>`;
 const I_Settings = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
 const I_Heart = (c, f = !1) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const I_Refresh = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>`;
@@ -1638,7 +1647,13 @@ let S = {
         minParts: '',
         maxParts: ''
     },
-    sortBy: 'popularity'
+    sortBy: 'popularity',
+    // Мультивыбор (смешанный)
+    multiSelect: {
+        active: !1,
+        items: new Set, // ключи вида: 'sets:1234', 'minifigs:fig-01', 'parts:3001:15' (последнее число — colorId)
+        justActivated: !1
+    }
 };
 let tempFilters = {
     filters: { colorIds: [], inCollectionOnly: false },
@@ -1976,7 +1991,6 @@ async function loadPartsForCategory(e) {
         updateUI();
     }
 }
-
 function getRelevanceScore(e, t) {
     const o = t.toLowerCase(),
         l = e.name ? e.name.toLowerCase() : '',
@@ -2461,7 +2475,6 @@ async function fetchColorDetailsForCollectionParts() {
         forceSaveState();
     }
 }
-
 // Функция для принудительного обновления изображений деталей в представлении коллекции
 async function forceRefreshPartImages() {
     if (S.view !== 'collection' || S.subView !== 'parts') return;
@@ -2959,8 +2972,6 @@ window.onPartImgError = (partId, imgEl) => {
         imgEl.src = fallback;
     } catch {}
 };
-
-
 // Специальные атрибуты изображения для набора с обработкой ошибки загрузки
 function getSetImageAttrs(setNum, url) {
     const fallback = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
@@ -3370,6 +3381,16 @@ function renderHeader() {
     let t = "Поиск по ID или названию...";
     "sets" === e && (t = "Поиск по наборам..."), "minifigs" === e && (t = "Поиск по минифигуркам...");
     
+    const selCount = S.multiSelect.items?.size || 0;
+    const selBar = S.multiSelect.active ? `
+        <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .2s ease-out both;' : ''}">
+            <div class="flex items-center gap-3">
+                <button data-action="cancel-multiselect" class="text-gray-300 hover:text-white">${I_X('w-5 h-5')}</button>
+                <span class="text-sm text-gray-300">Выбрано: <strong>${selCount}</strong></span>
+            </div>
+            <button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-1.5 rounded-md">${I_Trash('w-4 h-4')} Удалить</button>
+        </div>
+    ` : '';
     headerEl.innerHTML = `
             <div class="flex justify-between items-center gap-4">
                 <div class="flex items-center">
@@ -3392,6 +3413,7 @@ function renderHeader() {
 
                 </div>
             </div>
+            ${selBar}
         `
 }
 
@@ -3425,14 +3447,19 @@ function renderSetCard(e, t, o = 0) {
     }
     return `
             <div data-set-num="${e.set_num}" style="${a}" class="set-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
-                ${S.view==="collection"?`
-                <button aria-label="Удалить ${e.name}" data-action="delete-set-from-collection" data-set-num="${e.set_num}" class="absolute top-3 right-3 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                    ${I_Trash("w-4 h-4")}
-                </button>`:""}
-                ${i>0?`<div class="absolute top-3 ${S.view==="collection"?"left-3":"right-3"} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
+                ${i>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
-                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
+                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getSetImageAttrs(e.set_num, e.set_img_url)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                        ${S.view==="collection"?`
+                        <button data-action="toggle-select" data-item-type="set" data-item-id="${e.set_num}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`sets:${e.set_num}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
+                            ${S.multiSelect.active && S.multiSelect.items.has(`sets:${e.set_num}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
+                        </button>
+                        `:""}
+                        ${S.view==="collection"?`
+                        <button aria-label="Удалить ${e.name}" data-action="delete-set-from-collection" data-set-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                            ${I_Trash("w-4 h-4")}
+                        </button>`:""}
                     </div>
                 </div>
                 <div class="p-4 space-y-1">
@@ -3442,7 +3469,6 @@ function renderSetCard(e, t, o = 0) {
             </div>
         `
 }
-
 function renderMinifigCard(e, t, o = 0) {
     if (!e) return `
         <div class="minifig-card relative bg-gray-800 rounded-lg overflow-hidden group p-4 flex flex-col items-center justify-center" style="min-height: 180px;">
@@ -3463,14 +3489,20 @@ function renderMinifigCard(e, t, o = 0) {
         i = S.minifigColl[e.set_num] ? S.minifigColl[e.set_num].qty : 0;
     return `
             <div data-fig-num="${e.set_num}" style="${a}" class="minifig-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
-                ${S.view==="collection"?`
-                <button aria-label="Удалить ${e.name || e.set_num}" data-action="delete-minifig-from-collection" data-fig-num="${e.set_num}" class="absolute top-3 right-3 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                    ${I_Trash("w-4 h-4")}
-                </button>`:""}
-                ${i>0?`<div class="absolute top-3 ${S.view==="collection"?"left-3":"right-3"} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
+                ${S.view==="collection"?"":""}
+                ${i>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
-                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
+                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getPartImageUrl((e.minifig_img_url && e.minifig_img_url.startsWith('http')) || (e.set_img_url && e.set_img_url.startsWith('http')) ? (e.minifig_img_url || e.set_img_url) : null)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                        ${S.view==="collection"?`
+                        <button data-action="toggle-select" data-item-type="minifig" data-item-id="${e.set_num}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`minifigs:${e.set_num}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
+                            ${S.multiSelect.active && S.multiSelect.items.has(`minifigs:${e.set_num}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
+                        </button>
+                        `:""}
+                        ${S.view==="collection"?`
+                        <button aria-label="Удалить ${e.name || e.set_num}" data-action="delete-minifig-from-collection" data-fig-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                            ${I_Trash("w-4 h-4")}
+                        </button>`:""}
                     </div>
                 </div>
                 <div class="p-4 space-y-1">
@@ -3489,7 +3521,7 @@ function renderPartCard(e, t, o, l, a = 0) {
         r = "", // ВРЕМЕННО ОТКЛЮЧЕНО: l ? "animate-in" : "",
         s = ""; // ВРЕМЕННО ОТКЛЮЧЕНО: l ? S.getAnimationDelay(a) : "";
     let c = "";
-    o > 0 && (c = `<div class="absolute top-3 ${i?"left-3":"right-3"} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${o}</div>`);
+    o > 0 && (c = `<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${o}</div>`);
             // ИСПРАВЛЕНО: Теперь правильно использует part_img_url из inventory_parts.csv как основной источник изображения
     let d = e.part_img_url || e.rebrickable_img_url;
     
@@ -3527,15 +3559,21 @@ function renderPartCard(e, t, o, l, a = 0) {
     ` : "";
     return `
             <div data-group-id="${n}" data-part-id="${e.id}" ${i && t ?`data-color-id="${t.id}"`:""} style="${s}" class="part-card ${r} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
-                ${i && t ?`
-                                            <button aria-label="Удалить ${e.name} (${t.name})" data-action="delete-from-collection" data-part-id="${e.id}" data-color-id="${t.id}" class="absolute top-3 right-3 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                        ${I_Trash("w-4 h-4")}
-                    </button>
-                `:""}
+                ${i && t ?"" :""}
                 ${c}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
-                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
+                    <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getPartImageAttrs(e.id, d)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                        ${S.view==="collection"?`
+                        <button data-action="toggle-select" data-item-type="part" data-item-id="${e.id}" data-color-id="${t?.id || ''}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`parts:${e.id}:${t?.id || ''}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
+                            ${S.multiSelect.active && S.multiSelect.items.has(`parts:${e.id}:${t?.id || ''}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
+                        </button>
+                        `: ''}
+                        ${i && t ?`
+                        <button aria-label="Удалить ${e.name} (${t.name})" data-action="delete-from-collection" data-part-id="${e.id}" data-color-id="${t.id}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                            ${I_Trash("w-4 h-4")}
+                        </button>
+                        `:""}
                     </div>
                 </div>
                 <div class="p-4 space-y-1">
@@ -3926,7 +3964,6 @@ function renderMainContent() {
     
     // Убрана автоматическая загрузка изображений для предотвращения постоянных обновлений UI
 }
-
 // Добавляем слушатель события прокрутки для автоматической загрузки дополнительных элементов
 function setupScrollListener() {
     if (mainEl.hasAttribute('data-scroll-listener')) {
@@ -4327,7 +4364,6 @@ function updateSetModalControlsState() {
     const e = document.getElementById("set-modal-controls-container");
     e && (e.innerHTML = renderSetCollectionControls() + renderSetBulkPartsControls())
 }
-
 function renderModal() {
     if (!S.selPartId) return void(partModalEl.classList.contains("modal-hidden") || closeModal());
     const e = PART_MAP[S.selPartId];
@@ -4826,7 +4862,6 @@ function renderFilterModal() {
             </div>
         `
 }
-
 function renderSettingsModal() {
     if (!S.settingsOpen) return void closeSettingsModal();
     const isFirstOpen = settingsModalEl.classList.contains('modal-hidden');
@@ -5284,7 +5319,6 @@ function renderMinifigModalInventoryView() {
             ${r}
         </div>`;
 }
-
 function updateUI() {
     // Проверяем, продолжается ли загрузка
     const loadingContainer = document.getElementById('loading-container');
@@ -5757,7 +5791,6 @@ function updateUI() {
         });
     }
 }
-
 function generateCsvData() {
     const t = (t) => {
         if (null == t) return "";
@@ -6168,8 +6201,8 @@ async function handleBulkAddMinifigParts(e) {
         (o || []).forEach(e => {
             const t = e.part.part_num,
                 o = String(e.color.id),
-                a = e.quantity * l;
-            S.coll[t] || (S.coll[t] = {}), S.coll[t][o] = (S.coll[t][o] || 0) + a
+                l = e.quantity * l;
+            S.coll[t] || (S.coll[t] = {}), S.coll[t][o] = (S.coll[t][o] || 0) + l
         }), saveState(), forceSaveState(), await Promise.all([fetchMissingCollectionPartDetails(), ensureBasicPartImagesForCollection(), fetchColorDetailsForCollectionParts()]);
         const a = `Детали из "${t.name}" (${o.length} видов) добавлены.`;
         S.setModal.status = a, S.setModal.statusType = "success", setTimeout(() => {
@@ -6253,7 +6286,6 @@ function triggerSearch(e = !1) {
         searchRebrickableParts(S.q.trim());
     }
 }
-
 function openImageViewer(e) {
     if (!e || e.includes("data:image/svg+xml")) return;
     // Отменяем возможный отложенный таймер закрытия
@@ -6754,7 +6786,6 @@ document.addEventListener("drop", e => {
         }
     }
 });
-
 // Обработчик события compositionend для полей ввода в модальном окне фильтров
 document.addEventListener("compositionend", e => {
     if (!(e.target instanceof Element)) return;
@@ -7251,7 +7282,6 @@ document.addEventListener("paste", e => {
         }
     }
 });
-
 // Обработчик события drop для всех полей ввода в модальном окне фильтров
 document.addEventListener("drop", e => {
     if (!(e.target instanceof Element)) return;
@@ -7615,10 +7645,26 @@ document.addEventListener("beforeinput", e => {
         }
     }
 });
-
 document.addEventListener("click", async e => {
     if (!(e.target instanceof Element)) return;
     const t = e.target;
+    // Мультивыбор: переключение
+    const selBtn = t.closest('[data-action="toggle-select"]');
+    if (selBtn) {
+        const type = selBtn.dataset.itemType;
+        const id = selBtn.dataset.itemId;
+        const colorId = selBtn.dataset.colorId || '';
+        if (!type || !id) return;
+        if (!S.multiSelect.active) { S.multiSelect.active = !0; S.multiSelect.justActivated = !0; }
+        const key = type === 'part' ? `parts:${id}:${colorId}` : (type === 'set' ? `sets:${id}` : `minifigs:${id}`);
+        if (S.multiSelect.items.has(key)) S.multiSelect.items.delete(key); else S.multiSelect.items.add(key);
+        if (S.multiSelect.items.size === 0) { S.multiSelect.active = !1; S.multiSelect.justActivated = !1; }
+        renderHeader();
+        // Сбрасываем флаг первой анимации после рендера, чтобы не анимировать при добавлении второй и далее
+        queueMicrotask(() => { S.multiSelect.justActivated = !1; });
+        updateUI();
+        return;
+    }
     
     // Проверяем, не заблокирован ли клик image viewer
     if (viewerEl && !viewerEl.classList.contains("viewer-hidden") && !t.closest("#image-viewer-container")) {
@@ -7927,6 +7973,8 @@ document.addEventListener("click", async e => {
             if (num) handleUpdateMinifigCollection(num, 0, false);
             return;
         }
+        const selFigBtn = t.closest('[data-action="toggle-select"]');
+        if (selFigBtn) return; // обработано выше
         return openModalForMinifig(u.dataset.figNum);
     }
     const g = t.closest(".set-card");
@@ -7937,6 +7985,8 @@ document.addEventListener("click", async e => {
             if (num) handleUpdateSetCollection(num, 0);
             return;
         }
+        const selSetBtn = t.closest('[data-action="toggle-select"]');
+        if (selSetBtn) return; // обработано выше
         return openModalForSet(g.dataset.setNum);
     }
     const m = t.closest(".part-card");
@@ -7956,6 +8006,8 @@ document.addEventListener("click", async e => {
                 l = [o];
             }
         }
+        const selPartBtn = t.closest('[data-action="toggle-select"]');
+        if (selPartBtn) return; // обработано выше
         openModalForPart(e, t, l);
         if ("collection" === S.view && m.dataset.colorId) {
             S.partModal.selColorId = m.dataset.colorId;
@@ -7977,6 +8029,36 @@ document.addEventListener("click", async e => {
         S.q = "";
         document.getElementById("search-input")?.focus();
         return void triggerSearch()
+    }
+    // Панель мультивыбора
+    if (t.closest('[data-action="cancel-multiselect"]')) {
+        const bar = document.getElementById('multiselect-bar');
+        if (bar) {
+            bar.style.animation = 'msSlideFadeOut .18s ease-in both';
+            setTimeout(() => { S.multiSelect.active = !1; S.multiSelect.items = new Set; renderHeader(); updateUI(); }, 160);
+        } else {
+            S.multiSelect.active = !1; S.multiSelect.items = new Set; renderHeader(); updateUI();
+        }
+        return;
+    }
+    if (t.closest('[data-action="delete-multiselect"]')) {
+        if (!S.multiSelect.active || S.multiSelect.items.size === 0) return;
+        const keys = Array.from(S.multiSelect.items);
+        for (const key of keys) {
+            if (key.startsWith('sets:')) {
+                const id = key.split(':')[1];
+                handleUpdateSetCollection(id, 0);
+            } else if (key.startsWith('minifigs:')) {
+                const id = key.split(':')[1];
+                await handleUpdateMinifigCollection(id, 0, false);
+            } else if (key.startsWith('parts:')) {
+                const [, id, colorId] = key.split(':');
+                await handleUpdateCollection(id, colorId, 0);
+            }
+        }
+        S.multiSelect.active = !1; S.multiSelect.items = new Set;
+        renderHeader(); updateUI();
+        return;
     }
     if (t.closest("#filter-button")) {
         S.filterOpen = !0;
@@ -8893,7 +8975,6 @@ async function loadColorsFromCSV() {
         throw error;
     }
 }
-
 // Функция для загрузки категорий из CSV
 async function loadCategoriesFromCSV() {
     try {
@@ -9375,7 +9456,6 @@ async function loadInventoriesFromCSV() {
         // Не выбрасываем ошибку для инвентаря, так как это не критично
     }
 }
-
 // Функция для получения статистики загрузки
 function getLoadingStats() {
     const stats = {
@@ -9860,7 +9940,6 @@ function getColorImageUrl(partNum, colorId, fallbackUrl = null) {
     
     return `src="${colorImageUrl}" onerror="this.onerror=null; this.src='${fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`}'; handleColorImageLoadError(this, '${partNum}', '${colorId}', '${colorImageUrl}');"`
 }
-
 // Function to handle color image load errors and fetch from API
 async function handleColorImageLoadError(imgElement, partNum, colorId, originalUrl) {
     try {
