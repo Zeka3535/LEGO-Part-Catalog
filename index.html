@@ -3384,14 +3384,14 @@ function renderHeader() {
     
     const selCount = S.multiSelect.items?.size || 0;
     const selBar = S.multiSelect.active ? `
-        <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .36s cubic-bezier(.22,.61,.36,1) both;' : ''}">
-            <div class="flex items-center gap-3">
+        <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between gap-2 flex-nowrap overflow-x-auto no-scrollbar" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .36s cubic-bezier(.22,.61,.36,1) both;' : ''}">
+            <div class="flex items-center gap-3 flex-shrink-0">
                 <button data-action="cancel-multiselect" class="text-gray-300 hover:text-white">${I_X('w-5 h-5')}</button>
                 <span class="text-sm text-gray-300">Выбрано: <strong>${selCount}</strong></span>
             </div>
-            <div class="flex items-center gap-2">
-                <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-1.5 rounded-md">${I_Share('w-4 h-4')} Поделиться</button>
-                <button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-1.5 rounded-md">${I_Trash('w-4 h-4')} Удалить</button>
+            <div class="flex items-center gap-2 flex-nowrap flex-shrink-0">
+                <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded-md">${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span></button>
+                <button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-md">${I_Trash('w-5 h-5')} <span class="hidden sm:inline">Удалить</span></button>
             </div>
         </div>
     ` : '';
@@ -3451,7 +3451,7 @@ function renderSetCard(e, t, o = 0) {
     }
     return `
             <div data-set-num="${e.set_num}" style="${a}" class="set-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
-                ${i>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
+                ${i>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md pointer-events-none">${i}</div>`:""}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getSetImageAttrs(e.set_num, e.set_img_url)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
@@ -3494,7 +3494,7 @@ function renderMinifigCard(e, t, o = 0) {
     return `
             <div data-fig-num="${e.set_num}" style="${a}" class="minifig-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
                 ${S.view==="collection"?"":""}
-                ${i>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
+                ${i>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md pointer-events-none">${i}</div>`:""}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getPartImageUrl((e.minifig_img_url && e.minifig_img_url.startsWith('http')) || (e.set_img_url && e.set_img_url.startsWith('http')) ? (e.minifig_img_url || e.set_img_url) : null)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
@@ -3525,7 +3525,7 @@ function renderPartCard(e, t, o, l, a = 0) {
         r = "", // ВРЕМЕННО ОТКЛЮЧЕНО: l ? "animate-in" : "",
         s = ""; // ВРЕМЕННО ОТКЛЮЧЕНО: l ? S.getAnimationDelay(a) : "";
     let c = "";
-    o > 0 && (c = `<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${o}</div>`);
+    o > 0 && (c = `<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md pointer-events-none">${o}</div>`);
             // ИСПРАВЛЕНО: Теперь правильно использует part_img_url из inventory_parts.csv как основной источник изображения
     let d = e.part_img_url || e.rebrickable_img_url;
     
@@ -3622,7 +3622,7 @@ function renderAppliedFilters() {
                     <span class="mr-2">Сортировка: ${s[S.sortBy]}</span>
                 </div>
             `;
-        e = [d, r].filter(Boolean).join(""), o = !t || !t || !((l && l.trim() !== '') || (a && a.trim() !== '') || (i && i.trim() !== '') || (n && n.trim() !== ''))
+        e = [d, r].filter(Boolean).join(""), o = (!t) || ((l && l.trim() !== '') || (a && a.trim() !== '') || (i && i.trim() !== '') || (n && n.trim() !== ''))
     } else if ("minifigs" === S.subView) {
         const l = {
             name_asc: "Алфавит (А-Я)",
@@ -7980,31 +7980,31 @@ document.addEventListener("click", async e => {
     }
     const m = t.closest(".part-card");
     if (m?.dataset.groupId && m.dataset.partId) {
-        const e = m.dataset.partId,
-            t = m.dataset.groupId,
-            o = PART_MAP[e];
-        if (!o) return;
-        let l = [o];
+        const partId = m.dataset.partId,
+            groupId = m.dataset.groupId,
+            part = PART_MAP[partId];
+        if (!part) return;
+        let groupPartsArr = [part];
         if ("catalog" === S.view) {
-            const e = S.searchGroups || S.catGroups;
-            l = e && e[t] ? e[t] : [o]
+            const groups = S.searchGroups || S.catGroups;
+            groupPartsArr = groups && groups[groupId] ? groups[groupId] : [part]
         } else {
-            const e = Object.values(PART_MAP);
-            (l = e.filter(p => p && getGroupId(p.part_num) === t).sort(partCmp));
-            if (l.length === 0) {
-                l = [o];
+            const allParts = Object.values(PART_MAP);
+            (groupPartsArr = allParts.filter(p => p && getGroupId(p.part_num) === groupId).sort(partCmp));
+            if (groupPartsArr.length === 0) {
+                groupPartsArr = [part];
             }
         }
         const selPartBtn = t.closest('[data-action="toggle-select"]');
         if (selPartBtn) return; // обработано выше
-        openModalForPart(e, t, l);
+        openModalForPart(partId, groupId, groupPartsArr);
         if ("collection" === S.view && m.dataset.colorId) {
             S.partModal.selColorId = m.dataset.colorId;
-            S.partModal.qty = S.coll[e]?.[S.partModal.selColorId] || 0;
+            S.partModal.qty = S.coll[partId]?.[S.partModal.selColorId] || 0;
             updateModalPartially({
                 controls: !0
             });
-            fetchPartColorSpecifics(e, S.partModal.selColorId);
+            fetchPartColorSpecifics(partId, S.partModal.selColorId);
         }
         return;
     }
