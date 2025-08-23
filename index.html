@@ -1748,6 +1748,24 @@ function groupParts(e) {
     }), t
 }
 
+// Выбирает лучшую вариацию детали для отображения карточки каталога:
+// 1) с валидным изображением (part_img_url или rebrickable_img_url)
+// 2) если у нескольких есть изображения – оставляем порядок сортировки
+// 3) иначе – первый элемент группы
+function pickBestPartVariantForCard(variants) {
+    try {
+        if (!Array.isArray(variants) || variants.length === 0) return null;
+        const hasImg = (v) => {
+            const url = v?.part_img_url || v?.rebrickable_img_url;
+            return typeof url === 'string' && url.startsWith('http');
+        };
+        const withImg = variants.find(hasImg);
+        return withImg || variants[0];
+    } catch {
+        return Array.isArray(variants) && variants[0] ? variants[0] : null;
+    }
+}
+
 function buildCategoryTree(e) {
     const t = {
             'Bricks': ["brick"],
@@ -1987,7 +2005,11 @@ async function searchRebrickableParts(e) {
         });
         i = {};
         a.forEach(e => {
-            e.bestScore > 0 && (i[e.groupId] = e.partList)
+            if (e.bestScore > 0) {
+                // Для карточки-заместителя используем лучшую вариацию с изображением
+                const bestForCard = pickBestPartVariantForCard(e.partList);
+                i[e.groupId] = bestForCard ? [bestForCard, ...e.partList] : e.partList;
+            }
         }), S.searchGroups = i;
         
         console.log('Final search groups:', Object.keys(i).length, 'groups');
@@ -2840,6 +2862,45 @@ function getPartImageUrl(e) {
     return `src="${trimmedUrl}" onerror="this.onerror=null; this.src='${t}';"`
 }
 
+// Специальные атрибуты изображения для детали с авто-подбором вариации при ошибке
+function getPartImageAttrs(partId, url) {
+    const fallback = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
+    const u = (url || '').trim();
+    if (u && (u.startsWith('http') || u.startsWith('./') || u.startsWith('/'))) {
+        return `src="${u}" onerror="window.onPartImgError && window.onPartImgError('${partId}', this)"`;
+    }
+    return `src="${fallback}"`;
+}
+
+// При ошибке загрузки картинки детали пытаемся найти другую вариацию с изображением
+window.onPartImgError = (partId, imgEl) => {
+    try {
+        if (!partId || !imgEl) return;
+        const fallback = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
+        const tried = (imgEl.getAttribute('data-tried-ids') || '').split(',').filter(Boolean);
+        const gid = getGroupId(partId);
+        const variants = Object.values(PART_MAP).filter(v => {
+            const vid = v.id || v.part_num;
+            return vid && getGroupId(vid) === gid;
+        });
+        const hasImg = v => {
+            const u = (v.part_img_url || v.rebrickable_img_url || '').trim();
+            return u.startsWith('http');
+        };
+        const next = variants.find(v => hasImg(v) && !tried.includes(v.id));
+        if (next) {
+            tried.push(partId, next.id);
+            imgEl.setAttribute('data-tried-ids', tried.join(','));
+            imgEl.onerror = () => window.onPartImgError(next.id, imgEl);
+            imgEl.src = next.part_img_url || next.rebrickable_img_url;
+            return;
+        }
+        // Не нашли подходящую вариацию – ставим заглушку
+        imgEl.onerror = null;
+        imgEl.src = fallback;
+    } catch {}
+};
+
 
 // Специальные атрибуты изображения для набора с обработкой ошибки загрузки
 function getSetImageAttrs(setNum, url) {
@@ -3403,7 +3464,7 @@ function renderPartCard(e, t, o, l, a = 0) {
                 ${c}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
-                        <img ${getPartImageUrl(d)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                        <img ${getPartImageAttrs(e.id, d)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
                     </div>
                 </div>
                 <div class="p-4 space-y-1">
@@ -3551,7 +3612,7 @@ function renderMainContent() {
             }
             i = groupParts(n);
             const r = i ? Object.keys(i) : [];
-            t = r.map(e => i[e][0]);
+            t = r.map(gid => pickBestPartVariantForCard(i[gid])).filter(Boolean);
             o = e => {
                 const t = Object.values(S.coll[e.id] || {}).reduce((e, t) => e + t, 0);
                 return renderPartCard(e, null, t, S.gridStale)
@@ -4187,17 +4248,17 @@ function renderModal() {
                     <label for="variation-select" class="block text-sm font-medium text-gray-400 mb-2">Вариация</label>
                     <div class="relative variation-select-container">
                         <button id="variation-select-button" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer pr-10 text-left flex justify-between items-center hover:bg-gray-600 transition-colors duration-200">
-                            <span id="variation-select-text" class="truncate flex-1">${o.find(e => e.id === S.selPartId)?.name || o[0]?.name || ''}</span>
+                            <span id="variation-select-text" class="truncate flex-1">${o.find(e => e.id === S.selPartId)?.name || (o[0]?.name || '')}</span>
                             <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                             </svg>
                         </button>
                         <div id="variation-dropdown" class="absolute bg-gray-700 border border-gray-600 rounded-md shadow-lg z-[99999] max-h-60 overflow-y-auto" style="display: none; background-color: #374151; border: 1px solid #4B5563; border-radius: 6px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); min-width: 200px;">
-                            ${o.map(e=>`
+                            ${(() => { const seen = new Set(); return o.filter(v=>{const id=v?.id; if(!id||seen.has(id)) return false; seen.add(id); return true;}).map(e=>`
                                 <div data-value="${e.id}" class="variation-option px-3 py-2 text-white hover:bg-gray-600 cursor-pointer transition-colors duration-150 ${e.id===S.selPartId?'selected':''}">
                                     <span class="truncate block">${e.name}</span>
                                 </div>
-                            `).join("")}
+                            `).join("") })()}
                         </div>
                     </div>
                 </div>
@@ -6369,10 +6430,22 @@ function closeSettingsModal() {
 function openModalForPart(e, t, o) {
     const l = PART_MAP[e];
     if (l) {
+        // Удаляем дубликаты вариаций и гарантируем кликабельность
+        let variants = Array.isArray(o) ? o : [];
+        const seen = new Set();
+        variants = variants.filter(v => {
+            const id = v?.id || v?.part_num;
+            if (!id || seen.has(id)) return false;
+            seen.add(id);
+            return true;
+        });
+        // Если текущая деталь отсутствует среди вариаций, добавим её в начало
+        const currId = l.id || l.part_num;
+        if (currId && !seen.has(currId)) variants.unshift(l);
         S.selPartId = e;
         S.partModal = {
             groupId: t,
-            variants: o,
+            variants,
             selColorId: null,
             qty: 0,
             loadingColors: !1,
