@@ -3642,8 +3642,8 @@ function renderMainContent() {
                     ${l.map((e,t)=>{const l=o(e,true,t);return l.replace('class="part-card ',`style="${S.getAnimationDelay(t)}" class="part-card `).replace('class="set-card ',`style="${S.getAnimationDelay(t)}" class="set-card `).replace('class="minifig-card ',`style="${S.getAnimationDelay(t)}" class="minifig-card `)}).join("")}
                 </div>`;
             
-            // Добавляем кнопку "Показать еще" если есть еще элементы
-            if (S.hasMoreItems) {
+            // Для минифигурок кнопку не показываем, используем авто-догрузку
+            if (S.hasMoreItems && S.subView !== 'minifigs') {
                 const remainingCount = t.length - S.toDisplay;
                 const nextBatchSize = Math.min(S.increment, remainingCount);
                 e += `
@@ -3824,8 +3824,8 @@ function renderMainContent() {
                     ${l.map((e,t)=>o(e,true,t)).join("")}
                 </div>`;
             
-            // Добавляем кнопку "Показать еще" если есть еще элементы
-            if (S.hasMoreItems) {
+            // Для минифигурок кнопку не показываем, используем авто-догрузку
+            if (S.hasMoreItems && !(S.view === 'collection' && S.subView === 'minifigs')) {
                 const remainingCount = t.length - S.toDisplay;
                 const nextBatchSize = Math.min(S.increment, remainingCount);
                 e += `
@@ -7699,7 +7699,7 @@ document.addEventListener("click", async e => {
         S.subView = e;
         S.q = "";
         S.err = null;
-        S.increment = "minifigs" === e ? 20 : 48;
+        S.increment = "minifigs" === e ? 36 : 48;
         S.toDisplay = S.increment;
         S.gridStale = !0;
         S.filters = { colorIds: [], inCollectionOnly: !1 };
