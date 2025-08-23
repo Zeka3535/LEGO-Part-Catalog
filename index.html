@@ -1458,6 +1458,10 @@ let COLOR_MAP = {},
 
 // Кэш для URL изображений цветов, чтобы избежать повторных вызовов API
 const COLOR_IMAGE_CACHE = new Map();
+// Fetch de-duplication and waiters for set images
+const SET_IMAGE_FETCHING = new Set();
+const SET_IMAGE_PENDING = new Map(); // set_num -> Promise<string|undefined>
+const SET_IMAGE_WAITERS = new Map(); // set_num -> HTMLElement[]
 const API_REQUEST_DELAY = 200; // 200мс задержка между запросами API
 let lastApiRequestTime = 0;
 const I_Cat = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`;
@@ -2814,20 +2818,20 @@ function getPartImageUrl(e) {
     const t = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
     
     // Debug: Log the URL being processed
-    console.log('getPartImageUrl called with:', e);
+    // console.debug('getPartImageUrl:', e);
     
     if (!e || typeof e !== 'string' || e.trim() === '') {
-        console.log('Empty or invalid URL, using fallback');
+        // console.debug('Empty or invalid URL, using fallback');
         return `src="${t}"`;
     }
     
     // Принимаем различные типы URL изображений
     const trimmedUrl = e.trim();
-    console.log('Trimmed URL:', trimmedUrl);
+    // console.debug('Trimmed URL:', trimmedUrl);
     
     // Принимаем HTTP URL, data URL и относительные пути
     if (trimmedUrl.startsWith('http') || trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('./') || trimmedUrl.startsWith('/')) {
-        console.log('Valid URL format detected, using:', trimmedUrl);
+        // console.debug('Valid URL format detected, using:', trimmedUrl);
         return `src="${trimmedUrl}" onerror="this.onerror=null; this.src='${t}';"`
     }
     
@@ -2835,6 +2839,92 @@ function getPartImageUrl(e) {
     console.warn('Potentially invalid image URL detected:', trimmedUrl);
     return `src="${trimmedUrl}" onerror="this.onerror=null; this.src='${t}';"`
 }
+
+
+// Специальные атрибуты изображения для набора с обработкой ошибки загрузки
+function getSetImageAttrs(setNum, url) {
+    const fallback = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
+    const u = (url || '').trim();
+    if (u && (u.startsWith('http') || u.startsWith('./') || u.startsWith('/'))) {
+        return `src="${u}" onerror="window.onSetImgError && window.onSetImgError('${setNum}', this)"`;
+    }
+    return `src="${fallback}"`;
+}
+
+// Глобальный обработчик ошибки загрузки изображения набора
+window.onSetImgError = async (setNum, imgEl) => {
+    try {
+        if (!setNum) return;
+        // Если уже в процессе — просто запомним imgEl как ждущий и выходим
+        if (SET_IMAGE_PENDING.has(setNum)) {
+            if (imgEl) {
+                const waiters = SET_IMAGE_WAITERS.get(setNum) || [];
+                waiters.push(imgEl);
+                SET_IMAGE_WAITERS.set(setNum, waiters);
+            }
+            return;
+        }
+        // Создаём единый запрос и расшариваем результат между всеми карточками
+        const pending = (async () => {
+            SET_IMAGE_FETCHING.add(setNum);
+            try {
+                const resp = await fetch(`${REBRICKABLE_API_URL}/sets/${setNum}/`, {
+                    headers: { Authorization: `key ${getApiKey()}` }
+                });
+                if (!resp.ok) return undefined;
+                const data = await resp.json();
+                return data?.set_img_url || undefined;
+            } catch {
+                return undefined;
+            } finally {
+                SET_IMAGE_FETCHING.delete(setNum);
+            }
+        })();
+        SET_IMAGE_PENDING.set(setNum, pending);
+        const url = await pending;
+        SET_IMAGE_PENDING.delete(setNum);
+        const allWaiters = [imgEl, ...(SET_IMAGE_WAITERS.get(setNum) || [])].filter(Boolean);
+        SET_IMAGE_WAITERS.delete(setNum);
+        if (!SET_MAP[setNum]) SET_MAP[setNum] = { set_num: setNum };
+        if (!url) {
+            // Нет изображения в API – ставим стандартную заглушку и запоминаем отсутствие
+            SET_MAP[setNum].set_img_url = '';
+            saveState();
+            const fallback = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
+            allWaiters.forEach(el => {
+                try {
+                    el.onerror = null;
+                    el.src = fallback;
+                    const parent = el.closest('[data-action="view-image-fullscreen"]');
+                    if (parent) parent.setAttribute('data-image-url', '');
+                } catch {}
+            });
+            return;
+        }
+        // Успешно получили URL
+        SET_MAP[setNum].set_img_url = url;
+        updateApiLoadingStats('images', 1);
+        saveState();
+        allWaiters.forEach(el => {
+            try {
+                el.onerror = null;
+                el.src = url;
+                const parent = el.closest('[data-action="view-image-fullscreen"]');
+                if (parent) parent.setAttribute('data-image-url', url || '');
+            } catch {}
+        });
+        // Мягкое обновление списка без полного мигания
+        if (S.view === 'catalog') {
+            requestAnimationFrame(() => { S.gridStale = false; });
+        } else {
+            S.gridStale = true; updateUI();
+        }
+    } catch (err) {
+        console.warn('onSetImgError: failed to recover image for set', setNum, err);
+    } finally {
+        // no-op, очищается выше
+    }
+};
 
 
         
@@ -3178,6 +3268,29 @@ function renderSetCard(e, t, o = 0) {
     const l = "", // ВРЕМЕННО ОТКЛЮЧЕНО: t ? "animate-in" : "",
         a = "", // ВРЕМЕННО ОТКЛЮЧЕНО: t ? S.getAnimationDelay(o) : "",
         i = S.setColl[e.set_num] ? S.setColl[e.set_num].qty : 0;
+    // Если у набора нет корректного изображения — пробуем получить его через API один раз
+    if ((!e.set_img_url || !String(e.set_img_url).startsWith('http')) && e.set_num && !SET_IMAGE_FETCHING.has(e.set_num)) {
+        SET_IMAGE_FETCHING.add(e.set_num);
+        (async () => {
+            try {
+                const resp = await fetch(`${REBRICKABLE_API_URL}/sets/${e.set_num}/`, { headers: { Authorization: `key ${getApiKey()}` }});
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (data && data.set_img_url) {
+                        e.set_img_url = data.set_img_url;
+                        SET_MAP[e.set_num] = { ...SET_MAP[e.set_num], set_img_url: data.set_img_url };
+                        updateApiLoadingStats('images', 1);
+                        saveState();
+                        S.gridStale = true; updateUI();
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch set image via API:', e.set_num, err);
+            } finally {
+                SET_IMAGE_FETCHING.delete(e.set_num);
+            }
+        })();
+    }
     return `
             <div data-set-num="${e.set_num}" style="${a}" class="set-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
                 ${S.view==="collection"?`
@@ -3187,7 +3300,7 @@ function renderSetCard(e, t, o = 0) {
                 ${i>0?`<div class="absolute top-3 ${S.view==="collection"?"left-3":"right-3"} bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md">${i}</div>`:""}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner">
-                        <img ${getPartImageUrl(e.set_img_url && e.set_img_url.startsWith('http') ? e.set_img_url : null)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                        <img ${getSetImageAttrs(e.set_num, e.set_img_url)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
                     </div>
                 </div>
                 <div class="p-4 space-y-1">
@@ -3819,7 +3932,7 @@ function renderSetModalDetailsView() {
         <div class="flex flex-col lg:flex-row">
             <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
                  <div data-action="view-image-fullscreen" data-image-url="${e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm-h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
-                    <img ${getPartImageUrl(e.set_img_url)} alt="${e.name}" class="max-w-full max-h-full object-contain">
+                    <img ${getSetImageAttrs(e.set_num, e.set_img_url)} alt="${e.name}" class="max-w-full max-h-full object-contain">
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         ${I_Search("w-10 h-10 text-white")}
                     </div>
@@ -7870,6 +7983,28 @@ document.addEventListener("click", async e => {
                     const success = await window.clearAppCache();
                     if (success) {
                         updateSettingsModalStatus("Кэш приложения очищен успешно!", "success");
+                        // Обновляем информацию об использовании памяти/кэша сразу после очистки
+                        try {
+                            if (navigator.storage && navigator.storage.estimate) {
+                                const est = await navigator.storage.estimate();
+                                const used = typeof est.usage === 'number' ? est.usage : 0;
+                                const quota = typeof est.quota === 'number' ? est.quota : 0;
+                                const usedMb = (used / (1024 * 1024)).toFixed(2);
+                                const quotaMb = quota ? (quota / (1024 * 1024)).toFixed(0) : '—';
+                                const cacheUsageEl = document.getElementById('cache-usage');
+                                if (cacheUsageEl) {
+                                    cacheUsageEl.textContent = `Использование хранилища: ${usedMb} МБ${quota ? ` из ~${quotaMb} МБ` : ''}`;
+                                }
+                            }
+                            if (window.getCacheInfo) {
+                                const info = await window.getCacheInfo();
+                                const totalFiles = Object.values(info || {}).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0);
+                                const cacheUsageEl = document.getElementById('cache-usage');
+                                if (cacheUsageEl) {
+                                    cacheUsageEl.textContent += `${totalFiles ? `, файлов в кэше: ${totalFiles}` : ''}`;
+                                }
+                            }
+                        } catch {}
                     } else {
                         updateSettingsModalStatus("Ошибка очистки кэша", "error");
                     }
