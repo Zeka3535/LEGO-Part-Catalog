@@ -300,6 +300,7 @@
     #settings-modal-container {
         z-index: 50 !important;
         pointer-events: auto !important;
+        overflow: hidden; /* Клипуем содержимое при анимации скрытия */
     }
     /* Модалка деталей должна быть поверх инвентарей наборов/минифигурок */
     #modal-container { z-index: 60 !important; }
@@ -307,7 +308,7 @@
     /* Прогресс прокрутки (вертикальный индикатор) */
     #scroll-progress {
         position: fixed;
-        right: 6px;
+        right: 2px;
         top: 12px;
         bottom: 12px;
         width: 5px;
@@ -326,7 +327,7 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 24px; /* размер маркера */
+        height: 48px; /* размер маркера */
         background: linear-gradient(180deg, #60a5fa, #3b82f6);
         box-shadow: 0 0 10px rgba(59,130,246,.35);
         border-radius: inherit;
@@ -335,7 +336,7 @@
     /* Индикатор в модальном окне набора */
     #set-scroll-progress {
         position: absolute;
-        right: 6px;
+        right: 2px;
         top: 12px; /* будет скорректирован скриптом под высоту шапки модалки */
         bottom: 12px;
         width: 5px;
@@ -354,7 +355,36 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 24px;
+        height: 48px;
+        background: linear-gradient(180deg, #60a5fa, #3b82f6);
+        box-shadow: 0 0 10px rgba(59,130,246,.35);
+        border-radius: inherit;
+        transform: translateY(0);
+    }
+
+    /* Индикатор в модальном окне минифигурки */
+    #minifig-scroll-progress {
+        position: absolute;
+        right: 2px;
+        top: 12px; /* будет скорректирован скриптом под высоту шапки модалки */
+        bottom: 12px;
+        width: 5px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 9999px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateX(8px);
+        transition: opacity .2s ease, transform .2s ease;
+        z-index: 15;
+        pointer-events: none;
+    }
+    #minifig-scroll-progress.visible { opacity: .9; transform: translateX(0); }
+    #minifig-scroll-progress .bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 48px; /* размер маркера */
         background: linear-gradient(180deg, #60a5fa, #3b82f6);
         box-shadow: 0 0 10px rgba(59,130,246,.35);
         border-radius: inherit;
@@ -395,6 +425,24 @@
     
     .modal-content-leave {
         animation: scaleOut 0.2s ease-out forwards;
+    }
+
+    /* Клип контента и корректное происхождение трансформации при анимациях модалок */
+    #modal-content,
+    #set-modal-content,
+    #minifig-modal-content,
+    #filter-modal-content,
+    #settings-modal-content {
+        overflow: hidden;            /* чтобы содержимое не выходило за скругления */
+        will-change: transform, opacity;
+        contain: paint;              /* изоляция слоя для предотвращения артефактов */
+    }
+    .modal-content-enter,
+    .modal-content-leave {
+        transform-origin: center;
+    }
+    .modal-content-leave {
+        box-shadow: none !important; /* убираем тень при скрытии, чтобы не выпирала */
     }
     
     .part-card.animate-in,
@@ -4089,6 +4137,51 @@ function updateSetModalView() {
     })();
 }
 
+// Прогресс прокрутки в модалке минифигурки
+;(function(){
+    const setupMinifigScrollProgress = () => {
+        const track = document.getElementById('minifig-scroll-progress');
+        const content = document.getElementById('minifig-modal-content');
+        if (track && content) {
+            const header = content.querySelector('.border-b');
+            const headerH = header?.offsetHeight || 0;
+            const top = Math.max(12, headerH + 8);
+            track.style.top = top + 'px';
+            track.style.bottom = '12px';
+        }
+        const scrollArea = document.getElementById('minifig-modal-view-container');
+        const bar = track?.querySelector('.bar');
+        const update = () => {
+            if (!track || !bar || !scrollArea) return;
+            const max = scrollArea.scrollHeight - scrollArea.clientHeight;
+            const percent = max <= 0 ? 100 : Math.min(100, Math.max(0, (scrollArea.scrollTop / max) * 100));
+            const containerH = track.clientHeight || 0;
+            const barH = bar.clientHeight || 24;
+            const maxOffset = Math.max(0, containerH - barH);
+            const translatePx = (percent / 100) * maxOffset;
+            bar.style.transform = `translateY(${translatePx}px)`;
+        };
+        update();
+        let to;
+        const onScroll = () => {
+            track?.classList.add('visible');
+            update();
+            clearTimeout(to);
+            to = setTimeout(() => track?.classList.remove('visible'), 200);
+        };
+        scrollArea?.addEventListener('scroll', onScroll, { passive: true });
+        const obs = new MutationObserver(update);
+        scrollArea && obs.observe(scrollArea, { childList: true, subtree: true });
+        window.addEventListener('resize', () => { update(); }, { passive: true });
+    };
+    // Инициализация после каждого рендера модалки минифигурки
+    const _updateMinifigModalView = updateMinifigModalView;
+    updateMinifigModalView = function() {
+        _updateMinifigModalView();
+        setupMinifigScrollProgress();
+    };
+})();
+
 function renderSetModal(e = !1) {
     if (!S.selSetNum) return void closeSetModal();
     const t = SET_MAP[S.selSetNum];
@@ -5041,6 +5134,7 @@ function renderMinifigModal(e = !1) {
                     <button id="minifig-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
                  </div>
             </div>
+            <div id="minifig-scroll-progress"><div class="bar"></div></div>
             <div id="minifig-modal-view-container" class="flex-grow overflow-y-auto no-scrollbar" style="min-height: 0;">
             </div>
         </div>
