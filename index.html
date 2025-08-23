@@ -92,12 +92,12 @@
     }
     /* Анимация панели мультивыбора */
     @keyframes msSlideFadeIn {
-        from { opacity: 0; transform: translateY(-8px); }
+        from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
     }
     @keyframes msSlideFadeOut {
         from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-8px); }
+        to { opacity: 0; transform: translateY(-10px); }
     }
     
     @keyframes fadeInUp {
@@ -1548,6 +1548,7 @@ const I_Theme = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 // Иконки для мультивыбора
 const I_Circle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle></svg>`;
 const I_CheckCircle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l2.5 2.5L16 9"></path></svg>`;
+const I_Share = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.59 13.51l6.83 3.98"></path><path d="M15.41 6.51L8.59 10.49"></path></svg>`;
 const I_Settings = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
 const I_Heart = (c, f = !1) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const I_Refresh = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>`;
@@ -3383,12 +3384,15 @@ function renderHeader() {
     
     const selCount = S.multiSelect.items?.size || 0;
     const selBar = S.multiSelect.active ? `
-        <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .2s ease-out both;' : ''}">
+        <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .36s cubic-bezier(.22,.61,.36,1) both;' : ''}">
             <div class="flex items-center gap-3">
                 <button data-action="cancel-multiselect" class="text-gray-300 hover:text-white">${I_X('w-5 h-5')}</button>
                 <span class="text-sm text-gray-300">Выбрано: <strong>${selCount}</strong></span>
             </div>
-            <button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-1.5 rounded-md">${I_Trash('w-4 h-4')} Удалить</button>
+            <div class="flex items-center gap-2">
+                <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-1.5 rounded-md">${I_Share('w-4 h-4')} Поделиться</button>
+                <button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-1.5 rounded-md">${I_Trash('w-4 h-4')} Удалить</button>
+            </div>
         </div>
     ` : '';
     headerEl.innerHTML = `
@@ -3618,7 +3622,7 @@ function renderAppliedFilters() {
                     <span class="mr-2">Сортировка: ${s[S.sortBy]}</span>
                 </div>
             `;
-        e = [d, r].filter(Boolean).join(""), o = !t || !!((l && l.trim() !== '') || (a && a.trim() !== '') || (i && i.trim() !== '') || (n && n.trim() !== ''))
+        e = [d, r].filter(Boolean).join(""), o = !t || !t || !((l && l.trim() !== '') || (a && a.trim() !== '') || (i && i.trim() !== '') || (n && n.trim() !== ''))
     } else if ("minifigs" === S.subView) {
         const l = {
             name_asc: "Алфавит (А-Я)",
@@ -5502,21 +5506,6 @@ function updateUI() {
         
         // Применяем оптимизацию при каждом вызове updateUI
         disableAnimationsOnTabSwitch();
-    }
-    
-    // Оптимизация: отключаем анимации при быстрой навигации по коллекции
-    if (S.view === 'collection' && S.subView === 'parts' && Object.keys(S.coll).length > 100) {
-        document.body.classList.add('large-collection');
-    } else {
-        document.body.classList.remove('large-collection');
-    }
-    
-    // Дополнительная оптимизация: отключаем анимации при быстром переключении
-    if (S.gridStale && (S.view === 'catalog' || S.view === 'collection')) {
-        document.body.classList.add('tab-switching');
-        setTimeout(() => {
-            document.body.classList.remove('tab-switching');
-        }, 800);
     }
     
     // Оптимизация: отключаем анимации при быстром поиске
@@ -8034,8 +8023,8 @@ document.addEventListener("click", async e => {
     if (t.closest('[data-action="cancel-multiselect"]')) {
         const bar = document.getElementById('multiselect-bar');
         if (bar) {
-            bar.style.animation = 'msSlideFadeOut .18s ease-in both';
-            setTimeout(() => { S.multiSelect.active = !1; S.multiSelect.items = new Set; renderHeader(); updateUI(); }, 160);
+            bar.style.animation = 'msSlideFadeOut .28s ease-in both';
+            setTimeout(() => { S.multiSelect.active = !1; S.multiSelect.items = new Set; renderHeader(); updateUI(); }, 260);
         } else {
             S.multiSelect.active = !1; S.multiSelect.items = new Set; renderHeader(); updateUI();
         }
@@ -8058,6 +8047,122 @@ document.addEventListener("click", async e => {
         }
         S.multiSelect.active = !1; S.multiSelect.items = new Set;
         renderHeader(); updateUI();
+        return;
+    }
+    if (t.closest('[data-action="share-multiselect"]')) {
+        if (!S.multiSelect.active || S.multiSelect.items.size === 0) return;
+        const tEsc = (v) => {
+            if (v === null || v === undefined) return '';
+            const s = String(v);
+            return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g,'""') + '"' : s;
+        };
+        const headers = [
+            'type','id','quantity','name',
+            'part_cat_id','part_cat_name',
+            'color_id','color_name',
+            'set_theme_id','set_theme_name','set_year','set_num_parts',
+            'minifig_num_parts'
+        ];
+        const rows = [headers];
+        for (const key of S.multiSelect.items) {
+            if (key.startsWith('sets:')) {
+                const id = key.split(':')[1];
+                const set = SET_MAP[id];
+                const qty = S.setColl[id]?.qty || 1;
+                const theme = set ? THEME_MAP[set.theme_id] : null;
+                rows.push([
+                    'set', id, qty, set?.name || '',
+                    '', '',
+                    '', '',
+                    set?.theme_id ?? '', theme?.name || '', set?.year ?? '', set?.num_parts ?? '',
+                    ''
+                ]);
+            } else if (key.startsWith('minifigs:')) {
+                const id = key.split(':')[1];
+                const fig = MINIFIG_MAP[id];
+                const qty = S.minifigColl[id]?.qty || 1;
+                rows.push([
+                    'minifig', id, qty, fig?.name || '',
+                    '', '',
+                    '', '',
+                    '', '', '', '',
+                    fig?.num_parts ?? ''
+                ]);
+            } else if (key.startsWith('parts:')) {
+                const [, id, colorId] = key.split(':');
+                const part = PART_MAP[id];
+                const qty = (S.coll[id] && S.coll[id][colorId]) ? S.coll[id][colorId] : 1;
+                const color = COLOR_MAP[colorId];
+                const category = part ? (typeof flatCategories !== 'undefined' ? flatCategories.find(cat => cat.id === part.categoryId) : null) : null;
+                rows.push([
+                    'part', id, qty, part?.name || '',
+                    part?.categoryId ?? '', category?.name || '',
+                    colorId || '', color?.name || '',
+                    '', '', '', '',
+                    ''
+                ]);
+            }
+        }
+        const csv = rows.map(r => r.map(tEsc).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
+        const url = URL.createObjectURL(blob);
+        const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
+        const siteText = `Собрал подборку в LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок. Сайт: ${siteUrl}`;
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'text/csv' })] })) {
+            const file = new File([blob], fileName, { type: 'text/csv' });
+            navigator.share({ files: [file], title: 'Выбранные элементы LEGO', text: siteText }).catch(()=>{});
+        } else if (navigator.share) {
+            navigator.share({ title: 'Выбранные элементы LEGO', text: siteText + '\n\n' + csv, url: siteUrl }).catch(()=>{});
+        } else {
+            const a = document.createElement('a');
+            a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+            // Дополнительно открываем сайт в новой вкладке как справочную ссылку
+            window.open(siteUrl, '_blank');
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        return;
+    }
+    if (t.closest('[data-action="share-multiselect"]')) {
+        if (!S.multiSelect.active || S.multiSelect.items.size === 0) return;
+        const keys = Array.from(S.multiSelect.items);
+        const parts = [];
+        const sets = [];
+        const minifigs = [];
+        for (const key of keys) {
+            if (key.startsWith('sets:')) {
+                const id = key.split(':')[1];
+                sets.push(id);
+            } else if (key.startsWith('minifigs:')) {
+                const id = key.split(':')[1];
+                minifigs.push(id);
+            } else if (key.startsWith('parts:')) {
+                const [, id, colorId] = key.split(':');
+                parts.push({ id, colorId });
+            }
+        }
+        const shareData = {
+            parts,
+            sets,
+            minifigs
+        };
+        const shareUrl = `${window.location.origin}/share.html?data=${encodeURIComponent(JSON.stringify(shareData))}`;
+        const shareText = `Поделиться выбранными элементами: ${shareUrl}`;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Поделиться выбранными элементами',
+                text: shareText,
+                url: shareUrl
+            }).catch(console.error);
+        } else {
+            const tempInput = document.createElement('textarea');
+            tempInput.value = shareText;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            alert('Ссылка скопирована в буфер обмена');
+        }
         return;
     }
     if (t.closest("#filter-button")) {
