@@ -1478,7 +1478,7 @@ body.tab-switching .minifig-card {
           <div class="loader mx-auto mb-4"></div>
           <h2 class="text-2xl font-bold text-gray-200 mb-2">Загрузка каталога LEGO</h2>
           <p id="loading-status" class="text-gray-400 mb-4">Подготовка к загрузке...</p>
-          <div class="w-64 bg-gray-700 rounded-full h-2 mb-4">
+          <div class="w-64 bg-gray-700 rounded-full h-2 mb-4 mx-auto">
             <div id="loading-progress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
           </div>
           <div id="loading-details" class="text-sm text-gray-500"></div>
@@ -10016,10 +10016,14 @@ async function fetchTextWithProgress(url, statusText, label) {
             try {
                 const approxBytes = text.length; // приблизительно (UTF-16 -> меньшее число)
                 window.CSV_MB_PROGRESS.totalBytes += approxBytes;
-                const overall = window.CSV_MB_PROGRESS.totalExpected
-                    ? `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} / ${formatMb(window.CSV_MB_PROGRESS.totalExpected)} MB`
+                const expected = window.CSV_MB_PROGRESS.totalExpected;
+                const overall = expected
+                    ? `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} / ${formatMb(expected)} MB`
                     : `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} MB`;
-                updateLoadingStatus(statusText, null, `${label}: ${formatMb(approxBytes)} MB • ${overall}`);
+                const remaining = expected ? `Осталось: ${formatMb(Math.max(0, expected - window.CSV_MB_PROGRESS.totalBytes))} MB` : '';
+                const progressPercent = expected ? Math.min(99, Math.floor((window.CSV_MB_PROGRESS.totalBytes / expected) * 100)) : null;
+                const details = `Загружается: ${label} • Файл: ${formatMb(approxBytes)} MB • ${overall}${remaining ? ' • ' + remaining : ''}`;
+                updateLoadingStatus(statusText, progressPercent, details);
             } catch {}
             return text;
         }
@@ -10033,12 +10037,16 @@ async function fetchTextWithProgress(url, statusText, label) {
             window.CSV_MB_PROGRESS.totalBytes += value.length;
             text += decoder.decode(value, { stream: true });
             const current = totalForFile
-                ? `${label}: ${formatMb(received)} / ${formatMb(totalForFile)} MB`
-                : `${label}: ${formatMb(received)} MB`;
-            const overall = window.CSV_MB_PROGRESS.totalExpected
-                ? `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} / ${formatMb(window.CSV_MB_PROGRESS.totalExpected)} MB`
+                ? `Файл: ${formatMb(received)} / ${formatMb(totalForFile)} MB`
+                : `Файл: ${formatMb(received)} MB`;
+            const expected = window.CSV_MB_PROGRESS.totalExpected;
+            const overall = expected
+                ? `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} / ${formatMb(expected)} MB`
                 : `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} MB`;
-            updateLoadingStatus(statusText, null, `${current} • ${overall}`);
+            const remaining = expected ? `Осталось: ${formatMb(Math.max(0, expected - window.CSV_MB_PROGRESS.totalBytes))} MB` : '';
+            const progressPercent = expected ? Math.min(99, Math.floor((window.CSV_MB_PROGRESS.totalBytes / expected) * 100)) : null;
+            const details = `Загружается: ${label} • ${current} • ${overall}${remaining ? ' • ' + remaining : ''}`;
+            updateLoadingStatus(statusText, progressPercent, details);
         }
         text += decoder.decode();
         return text;
