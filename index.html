@@ -8177,17 +8177,72 @@ document.addEventListener("click", async e => {
             const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
             const fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
             const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
-            const prettyText = [
-                'Мой подбор из LEGO Part Catalog',
-                `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`,
-                `Сайт: ${siteUrl}`
-            ].join('\n');
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'text/csv' })] })) {
-                const file = new File([blob], fileName, { type: 'text/csv' });
-                await navigator.share({ files: [file], title: 'Подбор LEGO (CSV)', text: prettyText });
-            } else if (navigator.share) {
-                await navigator.share({ title: 'Подбор LEGO (CSV)', text: prettyText + '\n\n' + csvData, url: siteUrl });
+            const totalSelected = parts.length + sets.length + minifigs.length;
+            let prettyText = '';
+            let files = [];
+            const csvFile = new File([blob], fileName, { type: 'text/csv' });
+            // Подготовка красивого текста и, при единственном выборе, попытка приложить изображение
+            if (totalSelected === 1) {
+                // Определяем единственный элемент и заполняем подробности
+                let titleLine = 'Выбранный элемент из LEGO Part Catalog';
+                let detailsLine = '';
+                let imageUrl = '';
+                if (sets.length === 1) {
+                    const sId = sets[0];
+                    const s = SET_MAP[sId] || {};
+                    const pcs = (s?.num_parts ? `${s.num_parts} pcs` : '');
+                    const year = (s?.year ? `${s.year}` : '');
+                    detailsLine = `${s?.name || 'Набор'} (#${sId})${pcs ? ' • ' + pcs : ''}${year ? ' • ' + year : ''}`;
+                    imageUrl = (s?.set_img_url && s.set_img_url.startsWith('http')) ? s.set_img_url : '';
+                } else if (minifigs.length === 1) {
+                    const mId = minifigs[0];
+                    const m = MINIFIG_MAP[mId] || {};
+                    const pcs = (m?.num_parts ? `${m.num_parts} pcs` : '');
+                    detailsLine = `${m?.name || 'Минифигурка'} (${mId})${pcs ? ' • ' + pcs : ''}`;
+                    imageUrl = (m?.minifig_img_url && m.minifig_img_url.startsWith('http')) ? m.minifig_img_url : (m?.set_img_url || '');
+                } else if (parts.length === 1) {
+                    const { id: pId, colorId } = parts[0];
+                    const p = PART_MAP[pId] || {};
+                    const colorName = (COLOR_MAP[colorId]?.name || '');
+                    detailsLine = `${p?.name || 'Деталь'} (${pId})${colorName ? ' • ' + colorName : ''}`;
+                    // Предпочтительно берём цветоспецифичную картинку
+                    const colorImg = (p?.colorImages && p.colorImages[colorId]) ? p.colorImages[colorId] : '';
+                    imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || '');
+                }
+                prettyText = [titleLine, detailsLine, '', `Сайт: ${siteUrl}`].join('\n');
+                // Пытаемся загрузить изображение и приложить к шарингу
+                let imageFile = null;
+                if (imageUrl && imageUrl.startsWith('http')) {
+                    try {
+                        const resp = await fetch(imageUrl);
+                        if (resp.ok) {
+                            const imgBlob = await resp.blob();
+                            const ext = (imgBlob.type && imgBlob.type.includes('png')) ? 'png' : (imgBlob.type && imgBlob.type.includes('webp')) ? 'webp' : 'jpg';
+                            imageFile = new File([imgBlob], `lego-item.${ext}`, { type: imgBlob.type || 'image/jpeg' });
+                        }
+                    } catch (e) {
+                        console.warn('Image fetch failed for share:', e);
+                    }
+                }
+                files = imageFile ? [csvFile, imageFile] : [csvFile];
             } else {
+                prettyText = [
+                    'Мой подбор из LEGO Part Catalog',
+                    `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`,
+                    `Сайт: ${siteUrl}`
+                ].join('\n');
+                files = [csvFile];
+            }
+            if (navigator.share) {
+                // Сначала пытаемся с файлами (если поддерживается)
+                if (navigator.canShare && navigator.canShare({ files })) {
+                    await navigator.share({ files, title: 'Подбор LEGO', text: prettyText });
+                } else {
+                    // Файлы не поддерживаются — делимся текстом + CSV в тексте
+                    await navigator.share({ title: 'Подбор LEGO', text: prettyText + (csvData ? '\n\n' + csvData : ''), url: siteUrl });
+                }
+            } else {
+                // Фолбэк: скачиваем CSV и открываем сайт; изображение не прикладываем
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
