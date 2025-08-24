@@ -5855,6 +5855,54 @@ function generateCsvData() {
     }
     return o;
 }
+// Генерация CSV только для выбранных элементов (мультивыбор)
+function generateCsvDataForSelection(selection) {
+    const quote = (val) => {
+        if (val == null) return "";
+        const s = String(val);
+        return s.includes(",") || s.includes('"') || s.includes("\n") ? `"${s.replace(/"/g,'""')}"` : s;
+    };
+    const headers = [
+        "type", "id", "quantity", "name",
+        "part_cat_id", "part_cat_name",
+        "color_id", "color_name",
+        "set_theme_id", "set_theme_name", "set_year", "set_num_parts",
+        "minifig_num_parts"
+    ];
+    let csv = headers.join(",") + "\n";
+    // Детали (цветоспецифично)
+    for (const { id: partNum, colorId } of selection.parts || []) {
+        const part = PART_MAP[partNum];
+        const color = COLOR_MAP[colorId];
+        const category = part ? flatCategories.find(cat => cat.id === part.categoryId) : null;
+        csv += [
+            quote("part"), quote(partNum), quote(1), quote(part?.name),
+            quote(part?.categoryId), quote(category?.name),
+            quote(colorId), quote(color?.name),
+            "", "", "", "", ""
+        ].join(",") + "\n";
+    }
+    // Наборы
+    for (const setNum of selection.sets || []) {
+        const set = SET_MAP[setNum];
+        const theme = set ? THEME_MAP[set.theme_id] : null;
+        csv += [
+            quote("set"), quote(setNum), quote(1), quote(set?.name),
+            "", "", "", "",
+            quote(set?.theme_id), quote(theme?.name), quote(set?.year), quote(set?.num_parts), ""
+        ].join(",") + "\n";
+    }
+    // Минифигурки
+    for (const figNum of selection.minifigs || []) {
+        const minifig = MINIFIG_MAP[figNum];
+        csv += [
+            quote("minifig"), quote(figNum), quote(1), quote(minifig?.name),
+            "", "", "", "", "", "", "", "",
+            quote(minifig?.num_parts)
+        ].join(",") + "\n";
+    }
+    return csv;
+}
 // Функция для экспорта коллекции в CSV
 function exportCollectionToCSV() {
     try {
@@ -8123,27 +8171,31 @@ document.addEventListener("click", async e => {
                 parts.push({ id, colorId });
             }
         }
-        const shareData = {
-            parts,
-            sets,
-            minifigs
-        };
-        const shareUrl = `${window.location.origin}/share.html?data=${encodeURIComponent(JSON.stringify(shareData))}`;
-        const shareText = `Поделиться выбранными элементами: ${shareUrl}`;
-        if (navigator.share) {
-            navigator.share({
-                title: 'Поделиться выбранными элементами',
-                text: shareText,
-                url: shareUrl
-            }).catch(console.error);
-        } else {
-            const tempInput = document.createElement('textarea');
-            tempInput.value = shareText;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-            alert('Ссылка скопирована в буфер обмена');
+        const selection = { parts, sets, minifigs };
+        try {
+            const csvData = generateCsvDataForSelection(selection);
+            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+            const fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
+            const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
+            const prettyText = [
+                'Мой подбор из LEGO Part Catalog',
+                `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`,
+                `Сайт: ${siteUrl}`
+            ].join('\n');
+            if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'text/csv' })] })) {
+                const file = new File([blob], fileName, { type: 'text/csv' });
+                await navigator.share({ files: [file], title: 'Подбор LEGO (CSV)', text: prettyText });
+            } else if (navigator.share) {
+                await navigator.share({ title: 'Подбор LEGO (CSV)', text: prettyText + '\n\n' + csvData, url: siteUrl });
+            } else {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 5000);
+                window.open(siteUrl, '_blank');
+            }
+        } catch (err) {
+            console.error('Share selection failed:', err);
         }
         return;
     }
