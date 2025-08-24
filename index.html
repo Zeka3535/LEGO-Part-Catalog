@@ -691,7 +691,6 @@ body.tab-switching .minifig-card {
 .loading-state {
     animation: loadingPulse 1.5s ease-in-out infinite;
 }
-
 .error-state {
     animation: errorShake 0.5s ease-in-out;
 }
@@ -1040,7 +1039,6 @@ body.tab-switching .minifig-card {
 .pagination-change .minifig-card {
     animation: paginationChange 0.2s ease-out forwards;
 }
-
 /*
 @keyframes paginationChange {
     from {
@@ -1391,7 +1389,6 @@ body.tab-switching .minifig-card {
     .variation-option.selected:hover {
         background-color: #2563EB !important;
     }
-    
     /* Стили для контейнера */
     .variation-select-container {
         position: relative !important;
@@ -2982,7 +2979,6 @@ function getSetImageAttrs(setNum, url) {
     }
     return `src="${fallback}"`;
 }
-
 // Глобальный обработчик ошибки загрузки изображения набора
 window.onSetImgError = async (setNum, imgEl) => {
     try {
@@ -4616,7 +4612,6 @@ function renderColorSelector() {
             </div>
         `
 }
-
 function renderModalControls() {
     const {
         selColorId: e,
@@ -4924,12 +4919,15 @@ function renderSettingsModal() {
                          ${t?`<div id="import-export-status" class="mb-2 p-2 text-sm rounded-md ${c}">${t}</div>`:'<div id="import-export-status" class="mb-2"></div>'}
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Импорт и экспорт вашей коллекции в формате CSV. Импорт объединит данные с вашей текущей коллекцией</p>
-                            <div class="flex gap-3">
+                            <div class="grid grid-cols-2 gap-3">
                                 <button data-action="import-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-purple-600 hover:bg-purple-700 text-white">
                                     ${I_Up("w-5 h-5 mr-2")} Импорт (.csv)
                                 </button>
                                 <button data-action="export-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-700 text-white">
                                     ${I_Down("w-5 h-5 mr-2")} Экспорт (.csv)
+                                </button>
+                                <button data-action="share-collection" class="col-span-2 w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">
+                                    ${I_Share("w-5 h-5 mr-2")} Передать в соцсети
                                 </button>
                             </div>
                         </div>
@@ -5262,7 +5260,6 @@ function renderMinifigModalDetailsView() {
             </div>
         </div>`
 }
-
 function renderMinifigModalInventoryView() {
     const {
         inv: e,
@@ -5609,7 +5606,6 @@ function updateUI() {
     } else {
         document.body.classList.remove('collection-minifigs-view');
     }
-    
     // Оптимизация: отключаем анимации при быстрой навигации по каталогу деталей
     if (S.view === 'catalog' && S.subView === 'parts') {
         document.body.classList.add('catalog-parts-view');
@@ -6613,7 +6609,6 @@ function openModalForSet(e) {
         fetchSetMinifigs(e);
     }
 }
-
 function openModalForMinifig(e) {
     if (MINIFIG_MAP[e]) {
         S.selFigNum = e;
@@ -6945,7 +6940,6 @@ document.addEventListener("compositionend", e => {
         }
     }
 });
-
 // Обработчик события beforeinput для всех типов полей ввода в модальном окне фильтров
 document.addEventListener("beforeinput", e => {
     if (!(e.target instanceof Element)) return;
@@ -7289,7 +7283,6 @@ document.addEventListener("drop", e => {
         }
     }
 });
-
 // Обработчик события compositionend для всех полей ввода в модальном окне фильтров (поддержка языков с композицией)
 document.addEventListener("compositionend", e => {
     if (!(e.target instanceof Element)) return;
@@ -8242,6 +8235,39 @@ document.addEventListener("click", async e => {
                     renderSettingsModal();
                 }
                 break;
+            case "share-collection": {
+                (async () => {
+                    try {
+                        const csvData = generateCsvData();
+                        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                        const fileName = `lego-collection-${new Date().toISOString().slice(0,10)}.csv`;
+                        const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
+                        const siteText = `Моя коллекция из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок. Сайт: ${siteUrl}`;
+                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'text/csv' })] })) {
+                            const file = new File([blob], fileName, { type: 'text/csv' });
+                            await navigator.share({ files: [file], title: 'Коллекция LEGO (CSV)', text: siteText });
+                        } else if (navigator.share) {
+                            await navigator.share({ title: 'Коллекция LEGO (CSV)', text: siteText + '\n\n' + csvData, url: siteUrl });
+                        } else {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
+                            setTimeout(() => URL.revokeObjectURL(url), 5000);
+                            window.open(siteUrl, '_blank');
+                        }
+                        S.settingsModal.status = 'Коллекция подготовлена и передана.'; S.settingsModal.statusType = 'success';
+                        renderSettingsModal();
+                        // Автоочистка статуса через 2.5с
+                        setTimeout(() => { if (S.settingsOpen && S.settingsModal.status === 'Коллекция подготовлена и передана.') { S.settingsModal.status = ''; renderSettingsModal(); } }, 2500);
+                    } catch (err) {
+                        console.error('Share collection failed:', err);
+                        S.settingsModal.status = 'Не удалось передать коллекцию.'; S.settingsModal.statusType = 'error';
+                        renderSettingsModal();
+                        setTimeout(() => { if (S.settingsOpen && S.settingsModal.status === 'Не удалось передать коллекцию.') { S.settingsModal.status = ''; renderSettingsModal(); } }, 3000);
+                    }
+                })();
+                return;
+            }
             case "delete-all-parts":
                 S.settingsModal.delConfirm = "parts", renderSettingsModal();
                 break;
@@ -8273,10 +8299,12 @@ document.addEventListener("click", async e => {
                 updateSettingsModalStatus("Обновление данных минифигурок...", "info");
                 try {
                     await refreshMinifigData();
-                    updateSettingsModalStatus("Данные минифигурок обновлены успешно!", "success");
-                } catch (error) {
-                    updateSettingsModalStatus(`Ошибка обновления: ${error.message}`, "error");
+                    S.settingsModal.status = "Данные минифигурок обновлены", S.settingsModal.statusType = "success";
+                } catch (err) {
+                    console.error(err);
+                    S.settingsModal.status = "Не удалось обновить минифигурки", S.settingsModal.statusType = "error";
                 }
+                renderSettingsModal();
                 break;
             case "reload-csv-data":
                 updateSettingsModalStatus("Перезагрузка данных из CSV...", "info");
@@ -8634,7 +8662,6 @@ document.addEventListener("click", async e => {
                 if (dropdown) {
                     dropdown.style.display = 'none';
                 }
-                
                 // Обновляем данные модального окна детали для новой вариации
                 const newPart = PART_MAP[selectedVariationId];
                 if (newPart) {
@@ -8969,7 +8996,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
-
 // Функция для загрузки данных из CSV файлов с приоритетной загрузкой
 async function loadDataFromCSV() {
     try {
@@ -9295,7 +9321,6 @@ async function loadMinifigsFromCSV() {
         throw error;
     }
 }
-
 // Функция для загрузки отсутствующих URL изображений минифигурок из API
 async function fetchMissingMinifigImages() {
     const minifigsWithoutImages = Object.values(MINIFIG_MAP).filter(m => !m.minifig_img_url);
@@ -9634,7 +9659,6 @@ function updateLoadingStatus(status, progress = null, details = null) {
         detailsElement.textContent = details;
     }
 }
-
 function hideLoadingIndicator() {
     const loadingContainer = document.getElementById('loading-container');
     if (loadingContainer) {
@@ -9966,7 +9990,6 @@ async function refreshMinifigData() {
         console.error('Failed to refresh minifig data:', error);
     }
 }
-
 // Function to force refresh image cache for better performance
 async function refreshImageCache() {
     try {
