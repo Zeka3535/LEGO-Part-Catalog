@@ -1,0 +1,15 @@
+Файл разбит на 7 частей
+Исходный файл: ./Data/inventory_parts.csv
+Размер исходного файла: 114.82 MB
+Строк в исходном файле: 1,409,460
+Максимальный размер части: 20 MB
+Строк на часть: 220,954
+
+Список частей:
+inventory_parts_part_001.csv: 17.56 MB
+inventory_parts_part_002.csv: 17.69 MB
+inventory_parts_part_003.csv: 18.03 MB
+inventory_parts_part_004.csv: 18.28 MB
+inventory_parts_part_005.csv: 18.24 MB
+inventory_parts_part_006.csv: 18.17 MB
+inventory_parts_part_007.csv: 6.85 MB
