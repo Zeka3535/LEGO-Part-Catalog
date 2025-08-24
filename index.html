@@ -3161,7 +3161,7 @@ function renderSidebar() {
         const l = t;
         const i = l >= 1e3 ? "text-[10px] px-1" : "text-xs px-1.5";
         const a = `absolute top-1 right-1 ${i} py-0.5 rounded-full font-bold ${S.subView===e?"bg-blue-200 text-blue-800":"bg-gray-600 text-gray-200"}`;
-        return `<span class="${a}">${l.toLocaleString("ru-RU")}</span>`
+        return `<span class="${a}">${String(l)}</span>`
     };
     let c = "",
         d = "";
@@ -3377,15 +3377,15 @@ function renderSidebar() {
                   <div class="space-y-1">
                       <div class="flex justify-between items-center text-sm text-gray-400">
                           <span>${I_Brick("inline-block w-4 h-4 mr-1")} Детали</span>
-                          <span class="font-semibold text-white">${t.toLocaleString("ru-RU")} уник. / ${e.toLocaleString("ru-RU")} всего</span>
+                          <span class="font-semibold text-white">${String(t)} уник. / ${String(e)} всего</span>
                       </div>
                       <div class="flex justify-between items-center text-sm text-gray-400">
                           <span>${I_Set("inline-block w-4 h-4 mr-1")} Наборы</span>
-                          <span class="font-semibold text-white">${l.toLocaleString("ru-RU")} уник. / ${o.toLocaleString("ru-RU")} всего</span>
+                          <span class="font-semibold text-white">${String(l)} уник. / ${String(o)} всего</span>
                       </div>
                        <div class="flex justify-between items-center text-sm text-gray-400">
                           <span>${I_Minifig("inline-block w-4 h-4 mr-1")} Минифигурки</span>
-                          <span class="font-semibold text-white">${i.toLocaleString("ru-RU")} уник. / ${a.toLocaleString("ru-RU")} всего</span>
+                          <span class="font-semibold text-white">${String(i)} уник. / ${String(a)} всего</span>
                       </div>
                   </div>
                 `}
