@@ -5933,6 +5933,57 @@ async function createSharePreviewImage(title, subtitle) {
         return null;
     }
 }
+// Растровое превью PNG для более широкой совместимости Android Share
+async function createRasterPreviewImage(title, subtitle) {
+    try {
+        const width = 1024, height = 576;
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        // Фон
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(0, 0, width, height);
+        // Заголовок
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '700 56px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.textBaseline = 'top';
+        const padX = 48, padY = 80;
+        const maxTitleWidth = width - padX * 2;
+        const drawText = (text, x, y, maxWidth, font) => {
+            ctx.font = font;
+            const words = String(text).split(' ');
+            let line = '', yPos = y, lineHeight = /700\s+56px/.test(font) ? 64 : 44;
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + (line ? ' ' : '') + words[n];
+                const metrics = ctx.measureText(testLine);
+                if (metrics.width > maxWidth && n > 0) {
+                    ctx.fillText(line, x, yPos);
+                    line = words[n];
+                    yPos += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            if (line) ctx.fillText(line, x, yPos);
+            return yPos + lineHeight;
+        };
+        let nextY = drawText(title || 'LEGO Item', padX, padY, maxTitleWidth, ctx.font);
+        // Подзаголовок
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        nextY = drawText(subtitle || 'Подбор из LEGO Part Catalog', padX, nextY + 8, maxTitleWidth, '400 36px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif');
+        // Нижняя подпись
+        ctx.fillStyle = '#60a5fa';
+        ctx.font = '500 28px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillText('LEGO Part Catalog · zeka3535.github.io/LEGO-Part-Catalog', padX, height - 64);
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
+        if (!blob) return null;
+        return new File([blob], 'lego-item.png', { type: 'image/png' });
+    } catch (e) {
+        console.warn('Failed to build raster preview:', e);
+        return null;
+    }
+}
 // Функция для экспорта коллекции в CSV
 function exportCollectionToCSV() {
     try {
@@ -8264,14 +8315,28 @@ document.addEventListener("click", async e => {
                 let imageFile = null;
                 if (imageUrl && imageUrl.startsWith('http')) {
                     try {
-                        const resp = await fetch(imageUrl, { mode: 'cors' });
-                        if (resp.ok) {
+                        // Пытаемся выиграть в CORS ограничениях: сначала no-cors (opaque)
+                        let resp = await fetch(imageUrl, { mode: 'no-cors' });
+                        if (!resp || !(resp.ok || resp.type === 'opaque')) {
+                            // затем обычный CORS
+                            resp = await fetch(imageUrl, { mode: 'cors' });
+                        }
+                        if (resp && (resp.ok || resp.type === 'opaque')) {
                             const imgBlob = await resp.blob();
                             const ext = (imgBlob.type && imgBlob.type.includes('png')) ? 'png' : (imgBlob.type && imgBlob.type.includes('webp')) ? 'webp' : 'jpg';
                             imageFile = new File([imgBlob], `lego-item.${ext}`, { type: imgBlob.type || 'image/jpeg' });
                         }
                     } catch (e) {
                         console.warn('Image fetch failed for share:', e);
+                    }
+                }
+                // Если не удалось получить настоящую картинку — пробуем SVG, затем PNG-превью
+                if (!imageFile) {
+                    const fallbackTitle = detailsLine.split(' • ')[0] || 'LEGO Item';
+                    const fallbackSub = 'Подбор из LEGO Part Catalog';
+                    imageFile = await createSharePreviewImage(fallbackTitle, fallbackSub);
+                    if (!imageFile) {
+                        imageFile = await createRasterPreviewImage(fallbackTitle, fallbackSub);
                     }
                 }
                 files = imageFile ? [csvFile, imageFile] : [csvFile];
