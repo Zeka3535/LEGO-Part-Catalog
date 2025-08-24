@@ -9162,9 +9162,8 @@ async function initializeApp() {
     
     loadState();
     
-    // Определяем, это ли первая загрузка CSV (покажем прогресс в МБ только при первой загрузке)
+    // Инициализируем агрегатор прогресса загрузки CSV
     try {
-        window.IS_FIRST_CSV_LOAD = (localStorage.getItem('csvLoadedOnce') !== 'true');
         window.CSV_MB_PROGRESS = { totalBytes: 0, totalExpected: 0 };
     } catch {}
 
@@ -9411,9 +9410,6 @@ async function loadDataFromCSV() {
         // Обновляем UI
         S.gridStale = true;
         updateUI();
-        
-        // Отмечаем, что CSV были загружены хотя бы один раз
-        try { localStorage.setItem('csvLoadedOnce', 'true'); } catch {}
         
         // Скрываем индикатор загрузки
         updateLoadingStatus("Загрузка завершена!", 100, "Каталог готов к использованию");
@@ -9998,11 +9994,6 @@ function formatMb(bytes) {
 }
 async function fetchTextWithProgress(url, statusText, label) {
     try {
-        // Показываем прогресс в МБ только при первой загрузке CSV
-        if (!window.IS_FIRST_CSV_LOAD) {
-            const resp = await fetch(url);
-            return await resp.text();
-        }
         const resp = await fetch(url);
         // Если поток недоступен, используем обычное чтение
         const reader = resp && resp.body && resp.body.getReader ? resp.body.getReader() : null;
