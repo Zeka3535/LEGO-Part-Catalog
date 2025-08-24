@@ -1767,13 +1767,6 @@ async function apiFetchPaginated(e) {
             a = `${REBRICKABLE_API_URL}${e}${l}page=${o}&page_size=800`;
         
         console.log(`API call: ${a}`);
-        // Обновляем статистику по типу запроса
-        try {
-            if (e.startsWith('/colors')) updateApiLoadingStats('colors', 0);
-            else if (e.startsWith('/parts')) updateApiLoadingStats('parts', 0);
-            else if (e.startsWith('/sets')) updateApiLoadingStats('sets', 0);
-            else if (e.startsWith('/minifigs')) updateApiLoadingStats('minifigs', 0);
-        } catch {}
         
         const i = await fetch(a, {
             headers: {
@@ -1962,12 +1955,9 @@ async function fetchAllColors() {
                 rgb: e.rgb,
                 is_trans: e.is_trans
             }
+            // Учитываем цвет один раз на уникальный id
+            try { markApiStatOnce('colors', t); } catch {}
         })
-        
-        // Обновляем статистику загрузки API
-        if (colorsCount > 0) {
-            updateApiLoadingStats('colors', colorsCount);
-        }
         
         // Принудительно сохраняем состояние после загрузки цветов для сохранения всех данных цветов
         forceSaveState();
@@ -2424,16 +2414,11 @@ async function fetchColorDetailsForPart(e) {
                     // Кэшируем отдельные URL изображений цветов
                     const cacheKey = `${e}-${colorData.color_id}`;
                     COLOR_IMAGE_CACHE.set(cacheKey, colorData.part_img_url);
+                    // Счетчик изображений увеличиваем только при загрузке карточек, не в модалке
                 }
             });
         }
         PART_MAP[e].colorImages = o;
-        
-        // Обновляем статистику загрузки API для изображений
-        imageCount = Object.keys(o).length;
-        if (imageCount > 0) {
-            updateApiLoadingStats('images', imageCount);
-        }
         
         // Принудительно сохраняем состояние после загрузки деталей цвета для немедленного сохранения данных цвета
         forceSaveState();
@@ -2569,10 +2554,8 @@ async function fetchMissingCollectionPartDetails() {
                 
                 if (parts && Array.isArray(parts)) {
                     const processedParts = parts.map(procPart).filter(Boolean);
-                    // Обновляем статистику загрузки API
-                    if (processedParts.length > 0) {
-                        updateApiLoadingStats('parts', processedParts.length);
-                    }
+                    // Обновляем статистику загрузки API: по одному разу на элемент
+                    processedParts.forEach(p => { try { markApiStatOnce('parts', p.id || p.part_num); } catch {} });
                 }
             } catch (l) {
                 console.error(`Could not fetch details for batch starting with part ${o[0]}:`, l);
@@ -2610,11 +2593,8 @@ async function fetchMissingCollectionSetDetails() {
                             SET_MAP[set.set_num] = { ...SET_MAP[set.set_num], ...set };
                         }
                     });
-                    
-                    // Обновляем статистику загрузки API
-                    if (validSets.length > 0) {
-                        updateApiLoadingStats('sets', validSets.length);
-                    }
+                    // Обновляем статистику загрузки API: по одному разу на элемент
+                    validSets.forEach(set => { try { markApiStatOnce('sets', set.set_num); } catch {} });
                 }
                 // Сохраняем обновленный кэш деталей наборов для офлайн рендеринга
                 saveState();
@@ -2641,8 +2621,8 @@ async function fetchMinifigDetails(e) {
         const o = await t.json();
         MINIFIG_MAP[e] = o
         
-        // Обновляем статистику загрузки API
-        updateApiLoadingStats('minifigs', 1);
+        // Обновляем статистику загрузки API: один раз на минифиг с данным id
+        markApiStatOnce('minifigs', e);
         
         // Принудительно сохраняем состояние после загрузки деталей минифигурки для немедленного сохранения данных минифигурки
         saveState();
@@ -2869,7 +2849,7 @@ async function fetchMissingMinifigPartImages(minifigParts) {
             }
             
             lastApiRequestTime = Date.now();
-            try { updateApiLoadingStats('parts', 0); } catch {}
+            
             const response = await fetch(`${REBRICKABLE_API_URL}/parts/${partInfo.part.part_num}/?key=${getApiKey()}`);
             
             if (response.status === 429) {
@@ -2882,8 +2862,8 @@ async function fetchMissingMinifigPartImages(minifigParts) {
                 if (data.results && data.results[0] && data.results[0].part_img_url) {
                     partInfo.part.part_img_url = data.results[0].part_img_url;
                     try {
-                        updateApiLoadingStats('images', 1);
-                        updateApiLoadingStats('parts', 1);
+                        markApiStatOnce('images', `part:${partInfo.part.part_num}`);
+                        markApiStatOnce('parts', partInfo.part.part_num);
                     } catch {}
 
                 }
@@ -3042,7 +3022,7 @@ window.onSetImgError = async (setNum, imgEl) => {
         const pending = (async () => {
             SET_IMAGE_FETCHING.add(setNum);
             try {
-                try { updateApiLoadingStats('sets', 0); } catch {}
+                
                 const resp = await fetch(`${REBRICKABLE_API_URL}/sets/${setNum}/`, {
                     headers: { Authorization: `key ${getApiKey()}` }
                 });
@@ -3078,8 +3058,8 @@ window.onSetImgError = async (setNum, imgEl) => {
         }
         // Успешно получили URL
         SET_MAP[setNum].set_img_url = url;
-        updateApiLoadingStats('images', 1);
-        updateApiLoadingStats('sets', 1);
+        markApiStatOnce('images', `set:${setNum}`);
+        markApiStatOnce('sets', setNum);
         saveState();
         allWaiters.forEach(el => {
             try {
@@ -3480,15 +3460,15 @@ function renderSetCard(e, t, o = 0) {
         (async () => {
             try {
                 API_IMAGE_FETCH_COUNT++;
-                try { updateApiLoadingStats('sets', 0); } catch {}
+                
                 const resp = await fetch(`${REBRICKABLE_API_URL}/sets/${e.set_num}/`, { headers: { Authorization: `key ${getApiKey()}` }});
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data && data.set_img_url) {
                         e.set_img_url = data.set_img_url;
                         SET_MAP[e.set_num] = { ...SET_MAP[e.set_num], set_img_url: data.set_img_url };
-                        updateApiLoadingStats('images', 1);
-                        updateApiLoadingStats('sets', 1);
+                        markApiStatOnce('images', `set:${e.set_num}`);
+                        markApiStatOnce('sets', e.set_num);
                         saveState();
                         S.gridStale = true; updateUI();
                     } else {
@@ -6065,14 +6045,15 @@ async function createCompositePreviewImage(imageUrl, title, subtitle, options = 
         ctx.fillText('zeka3535.github.io/LEGO-Part-Catalog', textX, height - pad - 32);
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
         if (!blob) return null;
-        return new File([blob], 'lego-item.png', { type: 'image/png' });
+        const fname = (options && options.fileName) ? options.fileName : 'lego-item.png';
+        return new File([blob], fname, { type: 'image/png' });
     } catch (e) {
         console.warn('Failed to build composite image:', e);
         return null;
     }
 }
 // Растровое превью PNG (текстовая заглушка), если не удалось собрать композит
-async function createRasterPreviewImage(title, subtitle) {
+async function createRasterPreviewImage(title, subtitle, options = {}) {
     try {
         const width = 1024, height = 576;
         const canvas = document.createElement('canvas');
@@ -6116,7 +6097,8 @@ async function createRasterPreviewImage(title, subtitle) {
 
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
         if (!blob) return null;
-        return new File([blob], 'lego-item.png', { type: 'image/png' });
+        const fname = (options && options.fileName) ? options.fileName : 'lego-item.png';
+        return new File([blob], fname, { type: 'image/png' });
     } catch (e) {
         console.warn('Failed to build raster preview:', e);
         return null;
@@ -8394,12 +8376,12 @@ document.addEventListener("click", async e => {
         try {
             const csvData = generateCsvDataForSelection(selection);
             const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-            const fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
+            let fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
             const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
             const totalSelected = parts.length + sets.length + minifigs.length;
             let prettyText = '';
             let files = [];
-            const csvFile = new File([blob], fileName, { type: 'text/csv' });
+            let csvFile = null;
             // Подготовка красивого текста и, при единственном выборе, попытка приложить изображение
             if (totalSelected === 1) {
                 // Определяем единственный элемент и заполняем подробности
@@ -8426,6 +8408,7 @@ document.addEventListener("click", async e => {
                     return `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`;
                 })();
                 let imageUrl = '';
+                let selectedName = '';
                 if (sets.length === 1) {
                     const sId = sets[0];
                     const s = SET_MAP[sId] || {};
@@ -8433,12 +8416,14 @@ document.addEventListener("click", async e => {
                     const year = (s?.year ? `${s.year}` : '');
                     detailsLine = `${s?.name || 'Набор'} (#${sId})${pcs ? ' • ' + pcs : ''}${year ? ' • ' + year : ''}`;
                     imageUrl = (s?.set_img_url && s.set_img_url.startsWith('http')) ? s.set_img_url : '';
+                    selectedName = s?.name || `set-${sId}`;
                 } else if (minifigs.length === 1) {
                     const mId = minifigs[0];
                     const m = MINIFIG_MAP[mId] || {};
                     const pcs = (m?.num_parts ? `${m.num_parts} pcs` : '');
                     detailsLine = `${m?.name || 'Минифигурка'} (${mId})${pcs ? ' • ' + pcs : ''}`;
                     imageUrl = (m?.minifig_img_url && m.minifig_img_url.startsWith('http')) ? m.minifig_img_url : (m?.set_img_url || '');
+                    selectedName = m?.name || `minifig-${mId}`;
                 } else if (parts.length === 1) {
                     const { id: pId, colorId } = parts[0];
                     const p = PART_MAP[pId] || {};
@@ -8447,6 +8432,7 @@ document.addEventListener("click", async e => {
                     // Предпочтительно берём цветоспецифичную картинку
                     const colorImg = (p?.colorImages && p.colorImages[colorId]) ? p.colorImages[colorId] : '';
                     imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || '');
+                    selectedName = p?.name || `part-${pId}`;
                 }
                 prettyText = [titleLine, detailsLine, countsLine, '', `Сайт: ${siteUrl}`].join('\n');
                 // Пытаемся собрать композит с реальным изображением; затем фолбэки SVG/PNG
@@ -8463,19 +8449,41 @@ document.addEventListener("click", async e => {
                         }
                     }
                     // Добавим строку метаданных (кол-во, год, детали и т.д.)
-                    opts.meta = countsLine.replace(/^—\s?/, '');
+                    let metaExtra = '';
+                    if (sets.length === 1) {
+                        const s = SET_MAP[sets[0]] || {};
+                        const piecesInfo = s?.num_parts ? `деталей в наборе: ${s.num_parts}` : '';
+                        const yearInfo = s?.year ? `год: ${s.year}` : '';
+                        metaExtra = [piecesInfo, yearInfo].filter(Boolean).join(', ');
+                    } else if (minifigs.length === 1) {
+                        const m = MINIFIG_MAP[minifigs[0]] || {};
+                        const piecesInfo = m?.num_parts ? `деталей в инвентаре: ${m.num_parts}` : '';
+                        metaExtra = [piecesInfo].filter(Boolean).join(', ');
+                    }
+                    const baseMeta = countsLine.replace(/^—\s?/, '');
+                    opts.meta = [baseMeta, metaExtra].filter(Boolean).join(' • ');
+                    // Имя файла изображения по выбранному элементу
+                    const safe = String(selectedName || 'item').replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
+                    opts.fileName = `lego-${safe}.png`;
                     imageFile = await createCompositePreviewImage(
                         imageUrl,
                         detailsLine.split(' • ')[0] || 'LEGO Item',
-                        'Включает:',
+                        'CSV включает:',
                         opts
                     );
                 }
                 if (!imageFile) {
                     const fallbackTitle = detailsLine.split(' • ')[0] || 'LEGO Item';
-                    const fallbackSub = 'Включает:';
-                    imageFile = await createRasterPreviewImage(fallbackTitle, fallbackSub);
+                    const fallbackSub = 'CSV включает:';
+                    const safe = String(selectedName || 'item').replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
+                    imageFile = await createRasterPreviewImage(fallbackTitle, fallbackSub, { fileName: `lego-${safe}.png` });
                 }
+                if (selectedName) {
+                    const safeCsv = String(selectedName).replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
+                    fileName = `lego-selection-${safeCsv}.csv`;
+                }
+                // Создаём CSV-файл с актуальным именем
+                csvFile = new File([blob], fileName, { type: 'text/csv' });
                 files = imageFile ? [csvFile, imageFile] : [csvFile];
             } else {
                 prettyText = [
@@ -8483,6 +8491,8 @@ document.addEventListener("click", async e => {
                     `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`,
                     `Сайт: ${siteUrl}`
                 ].join('\n');
+                // Для множественного выбора используем дефолтное имя, создаём CSV сейчас
+                csvFile = new File([blob], fileName, { type: 'text/csv' });
                 files = [csvFile];
             }
             if (navigator.share) {
@@ -9726,13 +9736,12 @@ async function fetchMissingMinifigImages() {
         }
         
         try {
-            try { updateApiLoadingStats('minifigs', 0); } catch {}
             const response = await fetch(`${REBRICKABLE_API_URL}/minifigs/${minifig.set_num}/?key=${getApiKey()}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.results && data.results[0] && data.results[0].set_img_url) {
                     minifig.minifig_img_url = data.results[0].set_img_url;
-                    try { updateApiLoadingStats('images', 1); } catch {}
+                    try { markApiStatOnce('images', `minifig:${minifig.set_num}`); } catch {}
                 }
             }
             // Добавляем задержку, чтобы избежать ограничения частоты запросов
@@ -10038,6 +10047,47 @@ function updateApiLoadingStats(type, count = 1) {
         }
     } catch (error) {
         console.error('Failed to update API stats:', error);
+    }
+}
+
+// Обновление статистики API один раз на уникальный элемент
+function markApiStatOnce(type, id) {
+    try {
+        if (!['colors','parts','sets','minifigs','images'].includes(type)) return;
+        if (id === undefined || id === null) return;
+        const idStr = String(id);
+
+        // Текущие значения счетчиков
+        const current = JSON.parse(localStorage.getItem('legoApiStats') || '{}');
+        const apiStats = {
+            colors: Number(current.colors) || 0,
+            parts: Number(current.parts) || 0,
+            sets: Number(current.sets) || 0,
+            minifigs: Number(current.minifigs) || 0,
+            images: Number(current.images) || 0,
+            lastUpdate: current.lastUpdate || null
+        };
+
+        // Набор уже учтенных элементов
+        let seen = {};
+        try { seen = JSON.parse(localStorage.getItem('legoApiSeen') || '{}') || {}; } catch {}
+        if (!seen[type]) seen[type] = {};
+
+        // Если еще не учитывали — увеличиваем счетчик и помечаем как учтенный
+        if (!seen[type][idStr]) {
+            apiStats[type] = Number(apiStats[type] || 0) + 1;
+            apiStats.lastUpdate = new Date().toISOString();
+            seen[type][idStr] = true;
+            localStorage.setItem('legoApiStats', JSON.stringify(apiStats));
+            localStorage.setItem('legoApiSeen', JSON.stringify(seen));
+            try { console.debug('[API stats] +1', type, idStr, apiStats[type]); } catch {}
+            window.API_STATS = apiStats;
+            if (S.settingsOpen) {
+                try { refreshSettingsStatsPanel(); } catch {}
+            }
+        }
+    } catch (error) {
+        console.error('Failed to mark API stat once:', error);
     }
 }
 
@@ -10580,11 +10630,8 @@ async function handleColorImageLoadError(imgElement, partNum, colorId, originalU
                 PART_MAP[partNum].colorImages[colorId] = colorDetails.part_img_url;
                 forceSaveState();
             }
-            // Update API stats
-            try {
-                updateApiLoadingStats('images', 1);
-                updateApiLoadingStats('parts', 1);
-            } catch {}
+            // Счетчик изображений увеличиваем только при загрузке карточек, не в модалке
+            try { markApiStatOnce('parts', partNum); } catch {}
             
 
             return;
@@ -10619,9 +10666,6 @@ async function fetchPartColorDetailsFromAPI(partNum, colorId) {
         
         if (response.ok) {
             const data = await response.json();
-            if (data && data.part_img_url) {
-                try { updateApiLoadingStats('images', 1); } catch {}
-            }
             return data;
         }
     } catch (error) {
@@ -10729,11 +10773,7 @@ async function fetchMissingCollectionMinifigDetails() {
                 // Save state after each batch to avoid data loss
                 saveState();
                 
-                // Update API loading statistics for minifigs
-                const successfulFetches = results.filter(result => result !== undefined).length;
-                if (successfulFetches > 0) {
-                    updateApiLoadingStats('minifigs', successfulFetches);
-                }
+                // Счетчики обновляются внутри fetchMinifigDetails по одному на элемент
             } catch (error) {
                 console.error(`Failed to fetch batch ${i}-${i + batchSize}:`, error);
             }
