@@ -3149,6 +3149,8 @@ function filterThemeTreeForCollection(e, t) {
 }
 
 function renderSidebar() {
+    // Сохраняем позицию прокрутки списка, чтобы избежать подпрыгивания при перерисовке
+    const prevScrollTop = sidebarEl.querySelector('#sidebar-scroll-container')?.scrollTop || 0;
     const e = Object.values(S.coll).reduce((e, t) => e + Object.values(t).reduce((e, t) => e + t, 0), 0);
     const t = Object.keys(S.coll).reduce((e, t) => e + Object.keys(S.coll[t]).length, 0);
     const o = Object.values(S.setColl).reduce((e, t) => e + t.qty, 0);
@@ -3397,6 +3399,9 @@ function renderSidebar() {
             </button>
         </div>
       `
+    // Восстанавливаем позицию прокрутки после перерисовки
+    const scrollEl = document.getElementById('sidebar-scroll-container');
+    if (scrollEl) scrollEl.scrollTop = prevScrollTop;
 }
 
 function renderHeader() {
