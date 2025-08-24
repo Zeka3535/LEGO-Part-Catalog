@@ -3744,19 +3744,42 @@ function renderMainContent() {
             let i = {};
             l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском.", S.filters.colorIds?.length > 1 ? l = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".' : null !== S.searchGroups ? (i = S.searchGroups, l = "По вашему запросу ничего не найдено.") : null !== S.selCatId && (i = S.catGroups, l = "В этой категории нет деталей.");
             let n = Object.values(i).flat();
-            switch (S.sortBy) {
-                case "alpha_asc":
-                    n.sort((e, t) => e.name.localeCompare(t.name, 'en'));
-                    break;
-                case "alpha_desc":
-                    n.sort((e, t) => t.name.localeCompare(e.name, 'en'));
-                    break;
-                case "popularity":
-                    n.sort((e, t) => t.num_sets - e.num_sets)
+            // Фильтры для каталога «Все детали»
+            if (S.filters) {
+                // Только элементы, присутствующие в коллекции
+                if (S.filters.inCollectionOnly) {
+                    n = n.filter(p => S.coll[p.id] && Object.keys(S.coll[p.id]).length > 0);
+                }
+                // Фильтр по цвету (поддерживается только один цвет в каталоге)
+                if (S.filters.colorIds && S.filters.colorIds.length === 1) {
+                    const colorSet = getPartsWithColorSet(S.filters.colorIds[0]);
+                    if (colorSet.size > 0) {
+                        n = n.filter(p => colorSet.has(String(p.id)));
+                    } else {
+                        n = [];
+                    }
+                } else if (S.filters.colorIds && S.filters.colorIds.length > 1) {
+                    n = [];
+                }
             }
+            // Удаляем дубликаты и группируем вариации
             i = groupParts(n);
             const r = i ? Object.keys(i) : [];
             t = r.map(gid => pickBestPartVariantForCard(i[gid])).filter(Boolean);
+            // Применяем сортировку к карточкам после выбора лучшей вариации
+            if (S.sortBy) {
+                switch (S.sortBy) {
+                    case "alpha_asc":
+                        t.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'en'));
+                        break;
+                    case "alpha_desc":
+                        t.sort((a, b) => (b.name || '').localeCompare(a.name || '', 'en'));
+                        break;
+                    case "popularity":
+                        t.sort((a, b) => (b.num_sets || 0) - (a.num_sets || 0));
+                        break;
+                }
+            }
             o = e => {
                 const t = Object.values(S.coll[e.id] || {}).reduce((e, t) => e + t, 0);
                 return renderPartCard(e, null, t, S.gridStale)
