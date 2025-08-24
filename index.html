@@ -5984,6 +5984,83 @@ async function createRasterPreviewImage(title, subtitle) {
         return null;
     }
 }
+// Композиционное превью PNG: изображение элемента + текст
+async function createCompositePreviewImage(imageUrl, title, subtitle) {
+    try {
+        if (!imageUrl || !imageUrl.startsWith('http')) return null;
+        // Загружаем исходное изображение как Blob (обход CORS)
+        let resp = await fetch(imageUrl, { mode: 'no-cors' });
+        if (!resp || !(resp.ok || resp.type === 'opaque')) {
+            resp = await fetch(imageUrl, { mode: 'cors' });
+        }
+        if (!resp || !(resp.ok || resp.type === 'opaque')) return null;
+        const imgBlob = await resp.blob();
+        const imgUrl = URL.createObjectURL(imgBlob);
+        const img = await new Promise((resolve, reject) => {
+            const i = new Image();
+            i.onload = () => resolve(i);
+            i.onerror = reject;
+            i.src = imgUrl;
+        });
+        // Рисуем композицию
+        const width = 1024, height = 576;
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        // Фон
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(0, 0, width, height);
+        // Плашка под изображение
+        const pad = 40;
+        const imgArea = { x: pad, y: pad, w: Math.floor(width * 0.5) - pad * 1.2, h: height - pad * 2 };
+        // Вписываем картинку в область с сохранением пропорций
+        const scale = Math.min(imgArea.w / img.width, imgArea.h / img.height);
+        const dw = Math.max(1, Math.floor(img.width * scale));
+        const dh = Math.max(1, Math.floor(img.height * scale));
+        const dx = Math.floor(imgArea.x + (imgArea.w - dw) / 2);
+        const dy = Math.floor(imgArea.y + (imgArea.h - dh) / 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(imgArea.x - 8, imgArea.y - 8, imgArea.w + 16, imgArea.h + 16);
+        ctx.drawImage(img, dx, dy, dw, dh);
+        // Текст справа
+        const textX = Math.floor(width * 0.5) + pad;
+        const textW = width - textX - pad;
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'top';
+        const drawText = (text, x, y, maxWidth, font, color = '#ffffff', lh = 0) => {
+            ctx.font = font; ctx.fillStyle = color;
+            const words = String(text || '').split(' ');
+            let line = '', yPos = y, lineHeight = lh || (/700\s+48px/.test(font) ? 56 : 40);
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + (line ? ' ' : '') + words[n];
+                if (ctx.measureText(testLine).width > maxWidth && n > 0) {
+                    ctx.fillText(line, x, yPos);
+                    line = words[n];
+                    yPos += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            if (line) ctx.fillText(line, x, yPos);
+            return yPos + lineHeight;
+        };
+        let y = pad + 8;
+        y = drawText(title || 'LEGO Item', textX, y, textW, '700 48px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', '#ffffff', 56);
+        y = drawText(subtitle || 'Подбор из LEGO Part Catalog', textX, y + 6, textW, '400 32px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', 'rgba(255,255,255,0.9)', 44);
+        // Нижняя подпись
+        ctx.font = '500 26px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillStyle = '#60a5fa';
+        ctx.fillText('LEGO Part Catalog · zeka3535.github.io/LEGO-Part-Catalog', textX, height - pad - 28);
+        // Экспорт
+        const outBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
+        URL.revokeObjectURL(imgUrl);
+        if (!outBlob) return null;
+        return new File([outBlob], 'lego-item.png', { type: 'image/png' });
+    } catch (e) {
+        console.warn('Failed to build composite preview:', e);
+        return null;
+    }
+}
 // Функция для экспорта коллекции в CSV
 function exportCollectionToCSV() {
     try {
@@ -8311,10 +8388,16 @@ document.addEventListener("click", async e => {
                     imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || '');
                 }
                 prettyText = [titleLine, detailsLine, countsLine, '', `Сайт: ${siteUrl}`].join('\n');
-                // Не используем оригинальные jpg/webp — сразу формируем PNG-превью для совместимости мессенджеров
-                const fallbackTitle = detailsLine.split(' • ')[0] || 'LEGO Item';
+                // Формируем композиционное PNG: изображение элемента + текст. Если не удалось — простой PNG с текстом
+                const fallbackTitle = (detailsLine.split(' • ')[0] || 'LEGO Item').slice(0, 80);
                 const fallbackSub = 'Подбор из LEGO Part Catalog';
-                const imageFile = await createRasterPreviewImage(fallbackTitle, fallbackSub);
+                let imageFile = null;
+                if (imageUrl) {
+                    imageFile = await createCompositePreviewImage(imageUrl, fallbackTitle, detailsLine);
+                }
+                if (!imageFile) {
+                    imageFile = await createRasterPreviewImage(fallbackTitle, detailsLine);
+                }
                 files = imageFile ? [csvFile, imageFile] : [csvFile];
             } else {
                 prettyText = [
