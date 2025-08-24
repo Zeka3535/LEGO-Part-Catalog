@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lego-catalog-cache-v5';
+const CACHE_NAME = 'lego-catalog-cache-v6';
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
@@ -23,14 +23,7 @@ const CSV_ASSETS = [
     './Data/elements.csv',
     './Data/inventories.csv',
     './Data/inventory_minifigs.csv',
-    // inventory_parts.csv is now split into multiple files
-    './Data/inventory_parts_split/inventory_parts_part_001.csv',
-    './Data/inventory_parts_split/inventory_parts_part_002.csv',
-    './Data/inventory_parts_split/inventory_parts_part_003.csv',
-    './Data/inventory_parts_split/inventory_parts_part_004.csv',
-    './Data/inventory_parts_split/inventory_parts_part_005.csv',
-    './Data/inventory_parts_split/inventory_parts_part_006.csv',
-    './Data/inventory_parts_split/inventory_parts_part_007.csv',
+    // inventory_parts.csv split files will be discovered dynamically in install step
     './Data/inventory_sets.csv',
     './Data/part_categories.csv',
     './Data/part_relationships.csv',
@@ -38,19 +31,38 @@ const CSV_ASSETS = [
 ];
 
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-        .then(cache => {
+    event.waitUntil((async () => {
+        try {
+            const cache = await caches.open(CACHE_NAME);
             const allAssets = [...PRECACHE_ASSETS, ...CSV_ASSETS];
-            return Promise.allSettled(
-                allAssets.map(url => 
-                    cache.add(url).catch(() => null)
-                )
-            );
-        })
-        .then(() => self.skipWaiting())
-        .catch(() => self.skipWaiting())
-    );
+            // Try to discover split files via parts_info.txt
+            const dynamicSplitFiles = await (async () => {
+                try {
+                    const infoUrl = './Data/inventory_parts_split/parts_info.txt';
+                    const resp = await fetch(infoUrl, { cache: 'no-cache' });
+                    if (!resp.ok) throw new Error('no parts_info');
+                    const text = await resp.text();
+                    const names = Array.from(text.matchAll(/inventory_parts_part_\d{3}\.csv/g)).map(m => m[0]);
+                    return names.map(n => `./Data/inventory_parts_split/${n}`);
+                } catch {
+                    // fallback: probe sequentially until a miss
+                    const found = [];
+                    for (let i = 1; i <= 50; i++) {
+                        const name = `./Data/inventory_parts_split/inventory_parts_part_${String(i).padStart(3, '0')}.csv`;
+                        try {
+                            const head = await fetch(name, { method: 'HEAD' });
+                            if (head.ok) found.push(name); else break;
+                        } catch { break; }
+                    }
+                    return found;
+                }
+            })();
+            const assets = [...allAssets, ...dynamicSplitFiles];
+            await Promise.allSettled(assets.map(url => cache.add(url).catch(() => null)));
+        } finally {
+            await self.skipWaiting();
+        }
+    })());
 });
 
 self.addEventListener('activate', event => {

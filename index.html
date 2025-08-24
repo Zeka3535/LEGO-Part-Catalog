@@ -9859,39 +9859,71 @@ async function loadElementsFromCSV() {
         // Не выбрасываем ошибку для элементов, так как это не критично
     }
 }
+// Вспомогательная функция: получить список файлов inventory_parts_part_XXX из parts_info.txt
+async function discoverInventoryPartFiles() {
+    const baseDir = './Data/inventory_parts_split/';
+    const infoUrl = baseDir + 'parts_info.txt';
+    try {
+        const resp = await fetch(infoUrl, { cache: 'no-cache' });
+        if (!resp.ok) throw new Error('parts_info not found');
+        const text = await resp.text();
+        const files = [];
+        const lines = text.split('\n');
+        const re = /inventory_parts_part_\d{3}\.csv/;
+        for (const line of lines) {
+            const m = line.match(re);
+            if (m) files.push(m[0]);
+        }
+        if (files.length > 0) return files.map(name => baseDir + name);
+    } catch (e) {
+        // fall through to heuristic
+    }
+    // Fallback: пробуем до 50 частей и берём только существующие
+    const discovered = [];
+    for (let partNum = 1; partNum <= 50; partNum++) {
+        const name = `inventory_parts_part_${partNum.toString().padStart(3, '0')}.csv`;
+        const url = baseDir + name;
+        try {
+            const head = await fetch(url, { method: 'HEAD' });
+            if (head.ok) discovered.push(url); else break;
+        } catch {
+            break;
+        }
+    }
+    return discovered;
+}
+
 // Функция для загрузки инвентарей из CSV
 async function loadInventoriesFromCSV() {
     try {
-        // Загружаем inventory_parts из нескольких разделенных файлов
+        // Загружаем inventory_parts из динамически обнаруженных файлов
         const inventoryPartsLines = [];
-        
-        // Пытаемся загрузить все 7 частей (на основе результатов разделения)
-        const maxParts = 7;
+        const partFiles = await discoverInventoryPartFiles();
+        const maxParts = partFiles.length || 1;
+        // Обновляем план прогресса с учётом фактического количества частей
+        try {
+            window.DYNAMIC_PARTS_COUNT = maxParts;
+            window.CSV_PROGRESS_PLAN = null;
+            initCsvProgressPlan();
+        } catch {}
         let loadedParts = 0;
-        
-        for (let partNum = 1; partNum <= maxParts; partNum++) {
-            const partFileName = `./Data/inventory_parts_split/inventory_parts_part_${partNum.toString().padStart(3, '0')}.csv`;
+        for (let idx = 0; idx < partFiles.length; idx++) {
+            const url = partFiles[idx];
+            const label = url.substring(url.lastIndexOf('/') + 1);
             try {
-                const csvText = await fetchTextWithProgress(partFileName, 'Загрузка инвентарей деталей...', `inventory_parts_part_${partNum.toString().padStart(3, '0')}.csv`);
-                
+                const csvText = await fetchTextWithProgress(url, 'Загрузка инвентарей деталей...', label);
                 const lines = csvText.split('\n');
-                
-                // Пропускаем заголовок для всех частей, кроме первой
-                const linesToAdd = partNum === 1 ? lines.slice(1) : lines.slice(1);
-                
-                // Используем цикл for, чтобы избежать переполнения стека при работе с большими массивами
+                const linesToAdd = idx === 0 ? lines.slice(1) : lines.slice(1);
                 for (let i = 0; i < linesToAdd.length; i++) {
                     inventoryPartsLines.push(linesToAdd[i]);
                 }
                 loadedParts++;
-                
-                // Обновляем статус загрузки
                 if (S.settingsOpen) {
-                    S.settingsModal.status = `Загрузка инвентарей (часть ${partNum}/${maxParts})...`;
+                    S.settingsModal.status = `Загрузка инвентарей (часть ${idx + 1}/${maxParts})...`;
                     renderSettingsModal();
                 }
             } catch (error) {
-                console.error(`Failed to load part ${partNum}:`, error);
+                console.error(`Failed to load part ${label}:`, error);
                 break;
             }
         }
@@ -10298,6 +10330,7 @@ async function fetchTextWithProgress(url, statusText, label) {
 // План этапов загрузки CSV с весами для корректного индикатора прогресса
 function initCsvProgressPlan() {
     try {
+        const dynamicParts = (typeof window !== 'undefined' && window.DYNAMIC_PARTS_COUNT) ? window.DYNAMIC_PARTS_COUNT : 7;
         const plan = [
             { type: 'single', match: 'part_categories.csv', weight: 3 },
             { type: 'single', match: 'themes.csv', weight: 3 },
@@ -10306,7 +10339,7 @@ function initCsvProgressPlan() {
             { type: 'single', match: 'sets.csv', weight: 8 },
             { type: 'single', match: 'minifigs.csv', weight: 6 },
             { type: 'single', match: 'elements.csv', weight: 8 },
-            { type: 'group', prefix: 'inventory_parts_part_', count: 7, weight: 40 },
+            { type: 'group', prefix: 'inventory_parts_part_', count: dynamicParts, weight: 40 },
             { type: 'single', match: 'inventory_sets.csv', weight: 9 },
             { type: 'single', match: 'inventory_minifigs.csv', weight: 10 }
         ];
