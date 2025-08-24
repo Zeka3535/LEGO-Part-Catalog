@@ -9162,6 +9162,12 @@ async function initializeApp() {
     
     loadState();
     
+    // Определяем, это ли первая загрузка CSV (покажем прогресс в МБ только при первой загрузке)
+    try {
+        window.IS_FIRST_CSV_LOAD = (localStorage.getItem('csvLoadedOnce') !== 'true');
+        window.CSV_MB_PROGRESS = { totalBytes: 0, totalExpected: 0 };
+    } catch {}
+
     S.sidebarLoading = true;
     updateUI();
 
@@ -9406,6 +9412,9 @@ async function loadDataFromCSV() {
         S.gridStale = true;
         updateUI();
         
+        // Отмечаем, что CSV были загружены хотя бы один раз
+        try { localStorage.setItem('csvLoadedOnce', 'true'); } catch {}
+        
         // Скрываем индикатор загрузки
         updateLoadingStatus("Загрузка завершена!", 100, "Каталог готов к использованию");
         setTimeout(() => {
@@ -9437,8 +9446,7 @@ async function loadDataFromCSV() {
 // Функция для загрузки цветов из CSV
 async function loadColorsFromCSV() {
     try {
-        const response = await fetch('./Data/colors.csv');
-        const csvText = await response.text();
+        const csvText = await fetchTextWithProgress('./Data/colors.csv', 'Загрузка цветов...', 'colors.csv');
         const lines = csvText.split('\n').slice(1); // Пропускаем заголовок
         
         lines.forEach(line => {
@@ -9467,8 +9475,7 @@ async function loadColorsFromCSV() {
 // Функция для загрузки категорий из CSV
 async function loadCategoriesFromCSV() {
     try {
-        const response = await fetch('./Data/part_categories.csv');
-        const csvText = await response.text();
+        const csvText = await fetchTextWithProgress('./Data/part_categories.csv', 'Загрузка категорий деталей...', 'part_categories.csv');
         const lines = csvText.split('\n').slice(1); // Пропускаем заголовок
         
         lines.forEach(line => {
@@ -9498,8 +9505,7 @@ async function loadCategoriesFromCSV() {
 // Функция для загрузки тем из CSV
 async function loadThemesFromCSV() {
     try {
-        const response = await fetch('./Data/themes.csv');
-        const csvText = await response.text();
+        const csvText = await fetchTextWithProgress('./Data/themes.csv', 'Загрузка тем наборов...', 'themes.csv');
         const lines = csvText.split('\n').slice(1); // Пропускаем заголовок
         
         const themeMap = {};
@@ -9543,8 +9549,7 @@ async function loadThemesFromCSV() {
 // Функция для загрузки деталей из CSV
 async function loadPartsFromCSV() {
     try {
-        const response = await fetch('./Data/parts.csv');
-        const csvText = await response.text();
+        const csvText = await fetchTextWithProgress('./Data/parts.csv', 'Загрузка деталей...', 'parts.csv');
         const lines = csvText.split('\n').slice(1); // Пропускаем заголовок
         
         lines.forEach(line => {
@@ -9583,8 +9588,7 @@ async function loadPartsFromCSV() {
 // Функция для загрузки наборов из CSV
 async function loadSetsFromCSV() {
     try {
-        const response = await fetch('./Data/sets.csv');
-        const csvText = await response.text();
+        const csvText = await fetchTextWithProgress('./Data/sets.csv', 'Загрузка наборов...', 'sets.csv');
         const lines = csvText.split('\n').slice(1); // Пропускаем заголовок
         
         lines.forEach(line => {
@@ -9635,8 +9639,7 @@ async function loadSetsFromCSV() {
 // ИСПРАВЛЕНО: Теперь правильно считывает поле img_url из CSV и использует правильный запасной URL
 async function loadMinifigsFromCSV() {
     try {
-        const response = await fetch('./Data/minifigs.csv');
-        const csvText = await response.text();
+        const csvText = await fetchTextWithProgress('./Data/minifigs.csv', 'Загрузка минифигурок...', 'minifigs.csv');
         const lines = csvText.split('\n').slice(1); // Пропускаем заголовок
         
         lines.forEach(line => {
@@ -9710,8 +9713,7 @@ async function fetchMissingMinifigImages() {
 // Функция для загрузки элементов из CSV
 async function loadElementsFromCSV() {
     try {
-        const response = await fetch('./Data/elements.csv');
-        const csvText = await response.text();
+        const csvText = await fetchTextWithProgress('./Data/elements.csv', 'Загрузка элементов...', 'elements.csv');
         const lines = csvText.split('\n').slice(1); // Пропускаем заголовок
         
         lines.forEach(line => {
@@ -9749,11 +9751,7 @@ async function loadInventoriesFromCSV() {
         for (let partNum = 1; partNum <= maxParts; partNum++) {
             const partFileName = `./Data/inventory_parts_split/inventory_parts_part_${partNum.toString().padStart(3, '0')}.csv`;
             try {
-                const response = await fetch(partFileName);
-                if (!response.ok) {
-                    break;
-                }
-                const csvText = await response.text();
+                const csvText = await fetchTextWithProgress(partFileName, 'Загрузка инвентарей деталей...', `inventory_parts_part_${partNum.toString().padStart(3, '0')}.csv`);
                 
                 const lines = csvText.split('\n');
                 
@@ -9880,8 +9878,7 @@ async function loadInventoriesFromCSV() {
 
         
         // Загружаем inventory_sets
-        const setResponse = await fetch('./Data/inventory_sets.csv');
-        const setCsvText = await setResponse.text();
+        const setCsvText = await fetchTextWithProgress('./Data/inventory_sets.csv', 'Загрузка инвентаря наборов...', 'inventory_sets.csv');
         const setLines = setCsvText.split('\n').slice(1);
         
         setLines.forEach(line => {
@@ -9901,8 +9898,7 @@ async function loadInventoriesFromCSV() {
         });
         
         // Загружаем inventory_minifigs
-        const minifigResponse = await fetch('./Data/inventory_minifigs.csv');
-        const minifigCsvText = await minifigResponse.text();
+        const minifigCsvText = await fetchTextWithProgress('./Data/inventory_minifigs.csv', 'Загрузка инвентаря минифигурок...', 'inventory_minifigs.csv');
         const minifigLines = minifigCsvText.split('\n').slice(1);
         
         minifigLines.forEach(line => {
@@ -9992,6 +9988,64 @@ function updateApiLoadingStats(type, count = 1) {
         localStorage.setItem('legoApiStats', JSON.stringify(apiStats));
     } catch (error) {
         console.error('Failed to update API stats:', error);
+    }
+}
+
+// ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ: прогресс скачивания CSV в мегабайтах (только при первой загрузке)
+function formatMb(bytes) {
+    if (!bytes || isNaN(bytes)) return '0.00';
+    return (bytes / (1024 * 1024)).toFixed(2);
+}
+async function fetchTextWithProgress(url, statusText, label) {
+    try {
+        // Показываем прогресс в МБ только при первой загрузке CSV
+        if (!window.IS_FIRST_CSV_LOAD) {
+            const resp = await fetch(url);
+            return await resp.text();
+        }
+        const resp = await fetch(url);
+        // Если поток недоступен, используем обычное чтение
+        const reader = resp && resp.body && resp.body.getReader ? resp.body.getReader() : null;
+        const contentLengthHeader = resp && resp.headers ? resp.headers.get('content-length') : null;
+        const totalForFile = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+        if (!window.CSV_MB_PROGRESS) window.CSV_MB_PROGRESS = { totalBytes: 0, totalExpected: 0 };
+        if (totalForFile > 0) window.CSV_MB_PROGRESS.totalExpected += totalForFile;
+        if (!reader) {
+            const text = await resp.text();
+            // Обновим общий прогресс хотя бы по размеру текста (приближенно)
+            try {
+                const approxBytes = text.length; // приблизительно (UTF-16 -> меньшее число)
+                window.CSV_MB_PROGRESS.totalBytes += approxBytes;
+                const overall = window.CSV_MB_PROGRESS.totalExpected
+                    ? `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} / ${formatMb(window.CSV_MB_PROGRESS.totalExpected)} MB`
+                    : `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} MB`;
+                updateLoadingStatus(statusText, null, `${label}: ${formatMb(approxBytes)} MB • ${overall}`);
+            } catch {}
+            return text;
+        }
+        const decoder = new TextDecoder();
+        let received = 0;
+        let text = '';
+        for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            received += value.length;
+            window.CSV_MB_PROGRESS.totalBytes += value.length;
+            text += decoder.decode(value, { stream: true });
+            const current = totalForFile
+                ? `${label}: ${formatMb(received)} / ${formatMb(totalForFile)} MB`
+                : `${label}: ${formatMb(received)} MB`;
+            const overall = window.CSV_MB_PROGRESS.totalExpected
+                ? `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} / ${formatMb(window.CSV_MB_PROGRESS.totalExpected)} MB`
+                : `Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} MB`;
+            updateLoadingStatus(statusText, null, `${current} • ${overall}`);
+        }
+        text += decoder.decode();
+        return text;
+    } catch (e) {
+        // В случае любых проблем просто читаем как текст
+        const resp = await fetch(url);
+        return await resp.text();
     }
 }
 
