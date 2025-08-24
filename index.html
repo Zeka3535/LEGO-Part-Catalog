@@ -1470,7 +1470,7 @@ body.tab-switching .minifig-card {
   <aside id="sidebar-container" class="w-80 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 lg:translate-x-0 -translate-x-full"></aside>
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden lg:hidden"></div>
   <div class="lg:ml-80 flex flex-col h-screen">
-    <header id="header-container" class="bg-gray-800 sticky top-0 z-20 p-4 border-b border-gray-700"></header>
+    <header id="header-container" class="bg-gray-800/50 backdrop-blur-sm sticky top-0 z-20 p-4 border-b border-gray-700"></header>
     <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar">
       
       <div id="loading-container" class="flex flex-col items-center justify-center h-full p-8">
@@ -3406,7 +3406,7 @@ function renderHeader() {
     const selCount = S.multiSelect.items?.size || 0;
     const showMultiselectBar = S.multiSelect.active && !((S.view === 'collection') && !S.collectionMultiSelectEnabled);
     const selBar = showMultiselectBar ? `
-        <div id="multiselect-bar" class="mt-3 bg-gray-800 border border-gray-700 rounded-lg p-2 flex items-center justify-between gap-2 flex-nowrap overflow-x-auto no-scrollbar" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .36s cubic-bezier(.22,.61,.36,1) both;' : ''}">
+        <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between gap-2 flex-nowrap overflow-x-auto no-scrollbar" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .36s cubic-bezier(.22,.61,.36,1) both;' : ''}">
             <div class="flex items-center gap-3 flex-shrink-0">
                 <button data-action="cancel-multiselect" class="text-gray-300 hover:text-white">${I_X('w-5 h-5')}</button>
                 <span class="text-sm text-gray-300">Выбрано: <strong>${selCount}</strong></span>
@@ -3481,10 +3481,10 @@ function renderSetCard(e, t, o = 0) {
                             ${S.multiSelect.active && S.multiSelect.items.has(`sets:${e.set_num}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
                         </button>
                         `:""}
-                        ${S.view==="collection"?`
+                ${S.view==="collection"?`
                         <button aria-label="Удалить ${e.name}" data-action="delete-set-from-collection" data-set-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                            ${I_Trash("w-4 h-4")}
-                        </button>`:""}
+                    ${I_Trash("w-4 h-4")}
+                </button>`:""}
                     </div>
                 </div>
                 <div class="p-4 space-y-1">
@@ -3524,10 +3524,10 @@ function renderMinifigCard(e, t, o = 0) {
                             ${S.multiSelect.active && S.multiSelect.items.has(`minifigs:${e.set_num}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
                         </button>
                         `:""}
-                        ${S.view==="collection"?`
+                ${S.view==="collection"?`
                         <button aria-label="Удалить ${e.name || e.set_num}" data-action="delete-minifig-from-collection" data-fig-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                            ${I_Trash("w-4 h-4")}
-                        </button>`:""}
+                    ${I_Trash("w-4 h-4")}
+                </button>`:""}
                     </div>
                 </div>
                 <div class="p-4 space-y-1">
@@ -3594,11 +3594,11 @@ function renderPartCard(e, t, o, l, a = 0) {
                             ${S.multiSelect.active && S.multiSelect.items.has(`parts:${e.id}:${t?.id || ''}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
                         </button>
                         `: ''}
-                        ${i && t ?`
+                ${i && t ?`
                         <button aria-label="Удалить ${e.name} (${t.name})" data-action="delete-from-collection" data-part-id="${e.id}" data-color-id="${t.id}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
-                            ${I_Trash("w-4 h-4")}
-                        </button>
-                        `:""}
+                        ${I_Trash("w-4 h-4")}
+                    </button>
+                `:""}
                     </div>
                 </div>
                 <div class="p-4 space-y-1">
@@ -5907,33 +5907,136 @@ function generateCsvDataForSelection(selection) {
     }
     return csv;
 }
-// Создание простого превью-изображения (SVG) с названием и подзаголовком
-async function createSharePreviewImage(title, subtitle) {
+// Композитное превью PNG: слева — изображение карточки, справа — текст
+async function createCompositePreviewImage(imageUrl, title, subtitle, options = {}) {
     try {
+        if (!imageUrl || !imageUrl.startsWith('http')) return null;
+        // Сначала пробуем через CORS-прокси (почти всегда разрешает рисовать на canvas)
+        const proxiedUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&w=800&output=png`;
+        const tryLoad = (url) => new Promise((resolve, reject) => {
+            const i = new Image();
+            i.crossOrigin = 'anonymous';
+            i.onload = () => resolve(i);
+            i.onerror = reject;
+            i.src = url;
+        });
+        let img = await tryLoad(proxiedUrl).catch(() => null);
+        if (!img) img = await tryLoad(imageUrl).catch(() => null);
+        if (!img) return null;
+        // Рисуем композицию (горизонтальная)
         const width = 1024, height = 576;
-        const bg = '#111827';
-        const fg = '#ffffff';
-        const accent = '#60a5fa';
-        const fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
-        const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-  <rect width="100%" height="100%" fill="${bg}"/>
-  <text x="64" y="196" fill="${fg}" font-family="${fontFamily}" font-size="56" font-weight="700">${title.replace(/[&<>]/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))}</text>
-  <text x="64" y="268" fill="${fg}" opacity="0.9" font-family="${fontFamily}" font-size="36">${subtitle.replace(/[&<>]/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))}</text>
-  <text x="64" y="520" fill="${accent}" font-family="${fontFamily}" font-size="28">LEGO Part Catalog · zeka3535.github.io/LEGO-Part-Catalog</text>
-  <circle cx="940" cy="84" r="22" fill="${accent}" />
-  <circle cx="896" cy="84" r="22" fill="#34d399" />
-  <circle cx="852" cy="84" r="22" fill="#f87171" />
-</svg>`;
-        const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
-        // Отдаём как SVG-файл — широкий набор приложений принимает SVG
-        return new File([svgBlob], 'lego-item.svg', { type: 'image/svg+xml' });
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        // Фон
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(0, 0, width, height);
+        // Левая область под изображение
+        const pad = 40;
+        const imgArea = { x: pad, y: pad, w: Math.floor(width * 0.5) - Math.floor(pad * 1.2), h: height - pad * 2 };
+        // Белая плашка с мягкими углами
+        const radius = 16;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(imgArea.x - 8 + radius, imgArea.y - 8);
+        ctx.lineTo(imgArea.x - 8 + imgArea.w + 16 - radius, imgArea.y - 8);
+        ctx.quadraticCurveTo(imgArea.x - 8 + imgArea.w + 16, imgArea.y - 8, imgArea.x - 8 + imgArea.w + 16, imgArea.y - 8 + radius);
+        ctx.lineTo(imgArea.x - 8 + imgArea.w + 16, imgArea.y - 8 + imgArea.h + 16 - radius);
+        ctx.quadraticCurveTo(imgArea.x - 8 + imgArea.w + 16, imgArea.y - 8 + imgArea.h + 16, imgArea.x - 8 + imgArea.w + 16 - radius, imgArea.y - 8 + imgArea.h + 16);
+        ctx.lineTo(imgArea.x - 8 + radius, imgArea.y - 8 + imgArea.h + 16);
+        ctx.quadraticCurveTo(imgArea.x - 8, imgArea.y - 8 + imgArea.h + 16, imgArea.x - 8, imgArea.y - 8 + imgArea.h + 16 - radius);
+        ctx.lineTo(imgArea.x - 8, imgArea.y - 8 + radius);
+        ctx.quadraticCurveTo(imgArea.x - 8, imgArea.y - 8, imgArea.x - 8 + radius, imgArea.y - 8);
+        ctx.closePath();
+        ctx.fill();
+        // Вписываем картинку с сохранением пропорций
+        const src = img;
+        const scale = Math.min(imgArea.w / src.width, imgArea.h / src.height);
+        const dw = Math.max(1, Math.floor(src.width * scale));
+        const dh = Math.max(1, Math.floor(src.height * scale));
+        const dx = Math.floor(imgArea.x + (imgArea.w - dw) / 2);
+        const dy = Math.floor(imgArea.y + (imgArea.h - dh) / 2);
+        ctx.drawImage(src, dx, dy, dw, dh);
+        // Текст справа
+        const textX = Math.floor(width * 0.5) + pad;
+        const textW = width - textX - pad;
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'top';
+        const drawText = (text, x, y, maxWidth, font, color = '#ffffff', lh = 0) => {
+            ctx.font = font; ctx.fillStyle = color;
+            const words = String(text || '').split(' ');
+            let line = '', yPos = y, lineHeight = lh || (/700\s+48px/.test(font) ? 56 : 40);
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + (line ? ' ' : '') + words[n];
+                if (ctx.measureText(testLine).width > maxWidth && n > 0) {
+                    ctx.fillText(line, x, yPos);
+                    line = words[n];
+                    yPos += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            if (line) ctx.fillText(line, x, yPos);
+            return yPos + lineHeight;
+        };
+        let nextY = drawText(title || 'LEGO Item', textX, pad, textW, '700 48px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif');
+        nextY = drawText(subtitle || 'Включает:', textX, nextY + 10, textW, '400 32px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', 'rgba(255,255,255,0.9)');
+        // Цветная круглая иконка и название цвета (если передан цвет)
+        if (options && options.colorHex) {
+            const circleY = nextY + 14;
+            const circleX = textX + 6 + 14;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(circleX, circleY, 14, 0, Math.PI * 2);
+            ctx.closePath();
+            ctx.clip();
+            if (options.isTransparent) {
+                // Небольшая шахматка под прозрачные цвета
+                const s = 4;
+                for (let yy = circleY - 16; yy < circleY + 16; yy += s) {
+                    for (let xx = circleX - 16; xx < circleX + 16; xx += s) {
+                        const on = ((xx + yy) / s) % 2 === 0;
+                        ctx.fillStyle = on ? '#cbd5e1' : '#94a3b8';
+                        ctx.fillRect(xx, yy, s, s);
+                    }
+                }
+            }
+            ctx.fillStyle = options.colorHex;
+            ctx.globalAlpha = 1;
+            ctx.beginPath();
+            ctx.arc(circleX, circleY, 14, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            // Обводка круга
+            ctx.strokeStyle = '#1f2937';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(circleX, circleY, 14, 0, Math.PI * 2);
+            ctx.stroke();
+            // Подпись цвета
+            ctx.font = '400 24px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+            ctx.fillStyle = 'rgba(255,255,255,0.95)';
+            const colorLabel = options.colorName ? String(options.colorName) : 'Color';
+            ctx.fillText(colorLabel, circleX + 22, circleY - 12);
+            nextY = Math.max(nextY, circleY + 14);
+        }
+        // Дополнительная мета-информация (например, количество)
+        if (options && options.meta) {
+            nextY = drawText(String(options.meta), textX, nextY + 12, textW, '400 24px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', 'rgba(255,255,255,0.8)');
+        }
+        // Подпись сайта
+        ctx.fillStyle = '#60a5fa';
+        ctx.font = '500 24px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillText('zeka3535.github.io/LEGO-Part-Catalog', textX, height - pad - 32);
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
+        if (!blob) return null;
+        return new File([blob], 'lego-item.png', { type: 'image/png' });
     } catch (e) {
-        console.warn('Failed to build preview image:', e);
+        console.warn('Failed to build composite image:', e);
         return null;
     }
 }
-// Растровое превью PNG для более широкой совместимости Android Share
+// Растровое превью PNG (текстовая заглушка), если не удалось собрать композит
 async function createRasterPreviewImage(title, subtitle) {
     try {
         const width = 1024, height = 576;
@@ -5970,94 +6073,17 @@ async function createRasterPreviewImage(title, subtitle) {
         let nextY = drawText(title || 'LEGO Item', padX, padY, maxTitleWidth, ctx.font);
         // Подзаголовок
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        nextY = drawText(subtitle || 'Подбор из LEGO Part Catalog', padX, nextY + 8, maxTitleWidth, '400 36px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif');
+        nextY = drawText(subtitle || 'Включает:', padX, nextY + 8, maxTitleWidth, '400 36px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif');
         // Нижняя подпись
         ctx.fillStyle = '#60a5fa';
         ctx.font = '500 28px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
-        ctx.fillText('LEGO Part Catalog · zeka3535.github.io/LEGO-Part-Catalog', padX, height - 64);
+        ctx.fillText('zeka3535.github.io/LEGO-Part-Catalog', padX, height - 64);
 
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
         if (!blob) return null;
         return new File([blob], 'lego-item.png', { type: 'image/png' });
     } catch (e) {
         console.warn('Failed to build raster preview:', e);
-        return null;
-    }
-}
-// Композиционное превью PNG: изображение элемента + текст
-async function createCompositePreviewImage(imageUrl, title, subtitle) {
-    try {
-        if (!imageUrl || !imageUrl.startsWith('http')) return null;
-        // Загружаем исходное изображение как Blob (обход CORS)
-        let resp = await fetch(imageUrl, { mode: 'no-cors' });
-        if (!resp || !(resp.ok || resp.type === 'opaque')) {
-            resp = await fetch(imageUrl, { mode: 'cors' });
-        }
-        if (!resp || !(resp.ok || resp.type === 'opaque')) return null;
-        const imgBlob = await resp.blob();
-        const imgUrl = URL.createObjectURL(imgBlob);
-        const img = await new Promise((resolve, reject) => {
-            const i = new Image();
-            i.onload = () => resolve(i);
-            i.onerror = reject;
-            i.src = imgUrl;
-        });
-        // Рисуем композицию
-        const width = 1024, height = 576;
-        const canvas = document.createElement('canvas');
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        // Фон
-        ctx.fillStyle = '#111827';
-        ctx.fillRect(0, 0, width, height);
-        // Плашка под изображение
-        const pad = 40;
-        const imgArea = { x: pad, y: pad, w: Math.floor(width * 0.5) - pad * 1.2, h: height - pad * 2 };
-        // Вписываем картинку в область с сохранением пропорций
-        const scale = Math.min(imgArea.w / img.width, imgArea.h / img.height);
-        const dw = Math.max(1, Math.floor(img.width * scale));
-        const dh = Math.max(1, Math.floor(img.height * scale));
-        const dx = Math.floor(imgArea.x + (imgArea.w - dw) / 2);
-        const dy = Math.floor(imgArea.y + (imgArea.h - dh) / 2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(imgArea.x - 8, imgArea.y - 8, imgArea.w + 16, imgArea.h + 16);
-        ctx.drawImage(img, dx, dy, dw, dh);
-        // Текст справа
-        const textX = Math.floor(width * 0.5) + pad;
-        const textW = width - textX - pad;
-        ctx.fillStyle = '#ffffff';
-        ctx.textBaseline = 'top';
-        const drawText = (text, x, y, maxWidth, font, color = '#ffffff', lh = 0) => {
-            ctx.font = font; ctx.fillStyle = color;
-            const words = String(text || '').split(' ');
-            let line = '', yPos = y, lineHeight = lh || (/700\s+48px/.test(font) ? 56 : 40);
-            for (let n = 0; n < words.length; n++) {
-                const testLine = line + (line ? ' ' : '') + words[n];
-                if (ctx.measureText(testLine).width > maxWidth && n > 0) {
-                    ctx.fillText(line, x, yPos);
-                    line = words[n];
-                    yPos += lineHeight;
-                } else {
-                    line = testLine;
-                }
-            }
-            if (line) ctx.fillText(line, x, yPos);
-            return yPos + lineHeight;
-        };
-        let y = pad + 8;
-        y = drawText(title || 'LEGO Item', textX, y, textW, '700 48px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', '#ffffff', 56);
-        y = drawText(subtitle || 'Подбор из LEGO Part Catalog', textX, y + 6, textW, '400 32px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', 'rgba(255,255,255,0.9)', 44);
-        // Нижняя подпись
-        ctx.font = '500 26px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
-        ctx.fillStyle = '#60a5fa';
-        ctx.fillText('LEGO Part Catalog · zeka3535.github.io/LEGO-Part-Catalog', textX, height - pad - 28);
-        // Экспорт
-        const outBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
-        URL.revokeObjectURL(imgUrl);
-        if (!outBlob) return null;
-        return new File([outBlob], 'lego-item.png', { type: 'image/png' });
-    } catch (e) {
-        console.warn('Failed to build composite preview:', e);
         return null;
     }
 }
@@ -8388,15 +8414,32 @@ document.addEventListener("click", async e => {
                     imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || '');
                 }
                 prettyText = [titleLine, detailsLine, countsLine, '', `Сайт: ${siteUrl}`].join('\n');
-                // Формируем композиционное PNG: изображение элемента + текст. Если не удалось — простой PNG с текстом
-                const fallbackTitle = (detailsLine.split(' • ')[0] || 'LEGO Item').slice(0, 80);
-                const fallbackSub = 'Подбор из LEGO Part Catalog';
+                // Пытаемся собрать композит с реальным изображением; затем фолбэки SVG/PNG
                 let imageFile = null;
-                if (imageUrl) {
-                    imageFile = await createCompositePreviewImage(imageUrl, fallbackTitle, detailsLine);
+                if (imageUrl && imageUrl.startsWith('http')) {
+                    const opts = {};
+                    if (parts.length === 1) {
+                        const { colorId } = parts[0];
+                        const c = COLOR_MAP[colorId];
+                        if (c) {
+                            opts.colorHex = c.hex || '#000000';
+                            opts.colorName = c.name || '';
+                            opts.isTransparent = !!c.isTransparent;
+                        }
+                    }
+                    // Добавим строку метаданных (кол-во, год, детали и т.д.)
+                    opts.meta = countsLine.replace(/^—\s?/, '');
+                    imageFile = await createCompositePreviewImage(
+                        imageUrl,
+                        detailsLine.split(' • ')[0] || 'LEGO Item',
+                        'Включает:',
+                        opts
+                    );
                 }
                 if (!imageFile) {
-                    imageFile = await createRasterPreviewImage(fallbackTitle, detailsLine);
+                    const fallbackTitle = detailsLine.split(' • ')[0] || 'LEGO Item';
+                    const fallbackSub = 'Включает:';
+                    imageFile = await createRasterPreviewImage(fallbackTitle, fallbackSub);
                 }
                 files = imageFile ? [csvFile, imageFile] : [csvFile];
             } else {
