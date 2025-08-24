@@ -5870,13 +5870,15 @@ function generateCsvDataForSelection(selection) {
         "minifig_num_parts"
     ];
     let csv = headers.join(",") + "\n";
+    const fromCollection = (S.view === 'collection');
     // Детали (цветоспецифично)
     for (const { id: partNum, colorId } of selection.parts || []) {
         const part = PART_MAP[partNum];
         const color = COLOR_MAP[colorId];
         const category = part ? flatCategories.find(cat => cat.id === part.categoryId) : null;
+        const qty = fromCollection ? ((S.coll?.[partNum]?.[colorId]) || 0) : 1;
         csv += [
-            quote("part"), quote(partNum), quote(1), quote(part?.name),
+            quote("part"), quote(partNum), quote(qty), quote(part?.name),
             quote(part?.categoryId), quote(category?.name),
             quote(colorId), quote(color?.name),
             "", "", "", "", ""
@@ -5886,8 +5888,9 @@ function generateCsvDataForSelection(selection) {
     for (const setNum of selection.sets || []) {
         const set = SET_MAP[setNum];
         const theme = set ? THEME_MAP[set.theme_id] : null;
+        const qty = fromCollection ? ((S.setColl?.[setNum]?.qty) || 0) : 1;
         csv += [
-            quote("set"), quote(setNum), quote(1), quote(set?.name),
+            quote("set"), quote(setNum), quote(qty), quote(set?.name),
             "", "", "", "",
             quote(set?.theme_id), quote(theme?.name), quote(set?.year), quote(set?.num_parts), ""
         ].join(",") + "\n";
@@ -5895,13 +5898,40 @@ function generateCsvDataForSelection(selection) {
     // Минифигурки
     for (const figNum of selection.minifigs || []) {
         const minifig = MINIFIG_MAP[figNum];
+        const qty = fromCollection ? ((S.minifigColl?.[figNum]?.qty) || 0) : 1;
         csv += [
-            quote("minifig"), quote(figNum), quote(1), quote(minifig?.name),
+            quote("minifig"), quote(figNum), quote(qty), quote(minifig?.name),
             "", "", "", "", "", "", "", "",
             quote(minifig?.num_parts)
         ].join(",") + "\n";
     }
     return csv;
+}
+// Создание простого превью-изображения (SVG) с названием и подзаголовком
+async function createSharePreviewImage(title, subtitle) {
+    try {
+        const width = 1024, height = 576;
+        const bg = '#111827';
+        const fg = '#ffffff';
+        const accent = '#60a5fa';
+        const fontFamily = 'system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+  <rect width="100%" height="100%" fill="${bg}"/>
+  <text x="64" y="196" fill="${fg}" font-family="${fontFamily}" font-size="56" font-weight="700">${title.replace(/[&<>]/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))}</text>
+  <text x="64" y="268" fill="${fg}" opacity="0.9" font-family="${fontFamily}" font-size="36">${subtitle.replace(/[&<>]/g, s=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[s]))}</text>
+  <text x="64" y="520" fill="${accent}" font-family="${fontFamily}" font-size="28">LEGO Part Catalog · zeka3535.github.io/LEGO-Part-Catalog</text>
+  <circle cx="940" cy="84" r="22" fill="${accent}" />
+  <circle cx="896" cy="84" r="22" fill="#34d399" />
+  <circle cx="852" cy="84" r="22" fill="#f87171" />
+</svg>`;
+        const svgBlob = new Blob([svg], { type: 'image/svg+xml' });
+        // Отдаём как SVG-файл — широкий набор приложений принимает SVG
+        return new File([svgBlob], 'lego-item.svg', { type: 'image/svg+xml' });
+    } catch (e) {
+        console.warn('Failed to build preview image:', e);
+        return null;
+    }
 }
 // Функция для экспорта коллекции в CSV
 function exportCollectionToCSV() {
@@ -8186,7 +8216,26 @@ document.addEventListener("click", async e => {
                 // Определяем единственный элемент и заполняем подробности
                 let titleLine = 'Выбранный элемент из LEGO Part Catalog';
                 let detailsLine = '';
-                const countsLine = `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`;
+                const countsLine = (() => {
+                    // Если один элемент, показываем его количество из коллекции (если есть)
+                    if (sets.length === 1) {
+                        const sId = sets[0];
+                        const qty = (S.view === 'collection') ? (S.setColl?.[sId]?.qty || 1) : 1;
+                        return `— наборов: 1 (qty ${qty})`;
+                    }
+                    if (minifigs.length === 1) {
+                        const mId = minifigs[0];
+                        const qty = (S.view === 'collection') ? (S.minifigColl?.[mId]?.qty || 1) : 1;
+                        return `— минифигурок: 1 (qty ${qty})`;
+                    }
+                    if (parts.length === 1) {
+                        const { id: pId, colorId } = parts[0];
+                        const qty = (S.view === 'collection') ? (S.coll?.[pId]?.[colorId] || 1) : 1;
+                        const colorName = (COLOR_MAP[colorId]?.name || '');
+                        return `— деталей: 1 (qty ${qty})${colorName ? `, цвет: ${colorName}` : ''}`;
+                    }
+                    return `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`;
+                })();
                 let imageUrl = '';
                 if (sets.length === 1) {
                     const sId = sets[0];
