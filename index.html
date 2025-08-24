@@ -1987,17 +1987,12 @@ async function loadPartsForCategory(e) {
         // Загружаем детали из данных CSV вместо API
         o = Object.values(PART_MAP).filter(part => part.categoryId === e);
         
-        // Применяем фильтр цвета, если указан
+        // Применяем фильтр цвета, если указан (оптимизировано)
         if (S.filters.colorIds?.length === 1) {
-            o = o.filter(part => {
-                // Проверяем, есть ли у детали этот цвет в данных инвентаря
-                if (window.INVENTORY_DATA && window.INVENTORY_DATA.parts) {
-                    return Object.values(window.INVENTORY_DATA.parts).some(inventory => 
-                        inventory.some(item => item.part_num === part.id && item.color_id === S.filters.colorIds[0])
-                    );
-                }
-                return true; // Если нет данных инвентаря, показываем все детали
-            });
+            const colorSet = getPartsWithColorSet(S.filters.colorIds[0]);
+            if (colorSet.size > 0) {
+                o = o.filter(part => colorSet.has(String(part.id)));
+            }
         }
         
         l = o;
@@ -2066,17 +2061,12 @@ async function searchRebrickableParts(e) {
         // Ищем в данных CSV вместо API
         o = searchInCSVData(e, 'parts');
         
-        // Применяем фильтр цвета, если указан
+        // Применяем фильтр цвета, если указан (оптимизировано)
         if (S.filters.colorIds?.length === 1) {
-            o = o.filter(part => {
-                // Проверяем, есть ли у детали этот цвет в данных инвентаря
-                if (window.INVENTORY_DATA && window.INVENTORY_DATA.parts) {
-                    return Object.values(window.INVENTORY_DATA.parts).some(inventory => 
-                        inventory.some(item => item.part_num === part.id && item.color_id === S.filters.colorIds[0])
-                    );
-                }
-                return true; // Если нет данных инвентаря, показываем все детали
-            });
+            const colorSet = getPartsWithColorSet(S.filters.colorIds[0]);
+            if (colorSet.size > 0) {
+                o = o.filter(part => colorSet.has(String(part.id)));
+            }
         }
         
         // Применяем фильтр коллекции, если указан
@@ -10040,6 +10030,29 @@ function getApiLoadingStats() {
         apiImages: Number(apiStats.images) || 0,
         lastApiUpdate: apiStats.lastUpdate || null
     };
+}
+
+// Кэш для ускорения фильтрации деталей по цвету в каталоге
+window.PARTS_BY_COLOR_CACHE = window.PARTS_BY_COLOR_CACHE || {};
+function getPartsWithColorSet(colorId) {
+    try {
+        if (colorId === undefined || colorId === null) return new Set();
+        const id = String(colorId);
+        if (window.PARTS_BY_COLOR_CACHE[id]) return window.PARTS_BY_COLOR_CACHE[id];
+        const set = new Set();
+        const invParts = (window.INVENTORY_DATA && window.INVENTORY_DATA.parts) ? Object.values(window.INVENTORY_DATA.parts) : [];
+        for (const inventory of invParts) {
+            if (!Array.isArray(inventory)) continue;
+            for (const item of inventory) {
+                if (!item) continue;
+                if (String(item.color_id) === id && item.part_num) set.add(String(item.part_num));
+            }
+        }
+        window.PARTS_BY_COLOR_CACHE[id] = set;
+        return set;
+    } catch {
+        return new Set();
+    }
 }
 
 // Функция для обновления статистики загрузки API
