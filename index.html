@@ -8506,6 +8506,83 @@ document.addEventListener("click", async e => {
     }
 
     if (t.closest("#settings-button")) return S.settingsOpen = !0, void renderSettingsModal();
+
+    // Взаимодействия внутри модального окна фильтров
+    if (filterModalEl?.contains(t)) {
+        // Нажатие по пунктам сортировки (метка), переключателю коллекции, цветам и кнопкам Сбросить/Применить
+        const actionEl = t.closest('[data-action]');
+        // Клик по варианту сортировки через label → находим вложенный input
+        const sortLabel = t.closest('label');
+        if (sortLabel) {
+            const input = sortLabel.querySelector('input[name="sort"][data-action="modal-set-sort"]');
+            if (input) {
+                tempFilters.sortBy = input.value;
+                updateFilterModalUI();
+                return;
+            }
+        }
+        if (actionEl) {
+            switch (actionEl.dataset.action) {
+                case 'modal-set-sort': {
+                    const input = actionEl.tagName === 'INPUT' ? actionEl : actionEl.querySelector('input[name="sort"]');
+                    if (input) tempFilters.sortBy = input.value;
+                    updateFilterModalUI();
+                    return;
+                }
+                case 'modal-toggle-collection': {
+                    const input = actionEl.tagName === 'INPUT' ? actionEl : actionEl.querySelector('input');
+                    if (input && tempFilters.filters) tempFilters.filters.inCollectionOnly = !!input.checked;
+                    updateFilterModalUI();
+                    return;
+                }
+                case 'modal-set-color': {
+                    const colorId = actionEl.dataset.colorId;
+                    if (colorId === 'null') {
+                        tempFilters.filters.colorIds = [];
+                    } else if (colorId) {
+                        const list = tempFilters.filters.colorIds || [];
+                        const idx = list.indexOf(colorId);
+                        if (idx >= 0) list.splice(idx, 1); else list.push(colorId);
+                        tempFilters.filters.colorIds = list;
+                    }
+                    updateFilterModalUI();
+                    return;
+                }
+                case 'modal-reset-filters': {
+                    if (S.subView === 'sets') {
+                        tempFilters.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+                        tempFilters.sortBy = S.q ? 'relevance' : 'year_desc';
+                    } else if (S.subView === 'minifigs') {
+                        tempFilters.sortBy = S.q ? 'relevance' : 'name_asc';
+                    } else {
+                        tempFilters.filters = { colorIds: [], inCollectionOnly: false };
+                        tempFilters.sortBy = S.q ? 'relevance' : 'popularity';
+                    }
+                    updateFilterModalUI();
+                    return;
+                }
+                case 'modal-apply-filters': {
+                    // Предотвращаем двойные срабатывания
+                    e.preventDefault();
+                    if (S.filterApplying) return;
+                    S.filterApplying = true;
+                    if (S.subView === 'sets') {
+                        S.setFilters = { ...tempFilters.setFilters };
+                        S.sortBy = tempFilters.sortBy;
+                    } else if (S.subView === 'minifigs') {
+                        S.sortBy = tempFilters.sortBy;
+                    } else {
+                        S.filters = { ...tempFilters.filters };
+                        S.sortBy = tempFilters.sortBy;
+                    }
+                    // Закрываем модалку корректно с анимацией
+                    closeFilterModal();
+                    try { refreshWithNewFilters(); } finally { setTimeout(() => { S.filterApplying = false; }, 0); }
+                    return;
+                }
+            }
+        }
+    }
     const h = t.closest('[data-action="remove-filter"]');
     if (h) {
         const e = h.dataset.filterType;
