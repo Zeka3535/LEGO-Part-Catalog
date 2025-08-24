@@ -8186,6 +8186,7 @@ document.addEventListener("click", async e => {
                 // Определяем единственный элемент и заполняем подробности
                 let titleLine = 'Выбранный элемент из LEGO Part Catalog';
                 let detailsLine = '';
+                const countsLine = `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`;
                 let imageUrl = '';
                 if (sets.length === 1) {
                     const sId = sets[0];
@@ -8209,12 +8210,12 @@ document.addEventListener("click", async e => {
                     const colorImg = (p?.colorImages && p.colorImages[colorId]) ? p.colorImages[colorId] : '';
                     imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || '');
                 }
-                prettyText = [titleLine, detailsLine, '', `Сайт: ${siteUrl}`].join('\n');
+                prettyText = [titleLine, detailsLine, countsLine, '', `Сайт: ${siteUrl}`].join('\n');
                 // Пытаемся загрузить изображение и приложить к шарингу
                 let imageFile = null;
                 if (imageUrl && imageUrl.startsWith('http')) {
                     try {
-                        const resp = await fetch(imageUrl);
+                        const resp = await fetch(imageUrl, { mode: 'cors' });
                         if (resp.ok) {
                             const imgBlob = await resp.blob();
                             const ext = (imgBlob.type && imgBlob.type.includes('png')) ? 'png' : (imgBlob.type && imgBlob.type.includes('webp')) ? 'webp' : 'jpg';
@@ -8234,10 +8235,26 @@ document.addEventListener("click", async e => {
                 files = [csvFile];
             }
             if (navigator.share) {
-                // Сначала пытаемся с файлами (если поддерживается)
-                if (navigator.canShare && navigator.canShare({ files })) {
-                    await navigator.share({ files, title: 'Подбор LEGO', text: prettyText });
-                } else {
+                let shared = false;
+                if (navigator.canShare) {
+                    // Пробуем оба файла (CSV + изображение)
+                    if (!shared && files.length === 2 && navigator.canShare({ files })) {
+                        await navigator.share({ files, title: 'Подбор LEGO', text: prettyText });
+                        shared = true;
+                    }
+                    // Если нельзя оба файла — пробуем только изображение
+                    const imageOnly = files.find(f => f.type && f.type.startsWith('image/'));
+                    if (!shared && imageOnly && navigator.canShare({ files: [imageOnly] })) {
+                        await navigator.share({ files: [imageOnly], title: 'Подбор LEGO', text: prettyText });
+                        shared = true;
+                    }
+                    // Если нельзя изображение — пробуем только CSV
+                    if (!shared && navigator.canShare({ files: [csvFile] })) {
+                        await navigator.share({ files: [csvFile], title: 'Подбор LEGO (CSV)', text: prettyText });
+                        shared = true;
+                    }
+                }
+                if (!shared) {
                     // Файлы не поддерживаются — делимся текстом + CSV в тексте
                     await navigator.share({ title: 'Подбор LEGO', text: prettyText + (csvData ? '\n\n' + csvData : ''), url: siteUrl });
                 }
