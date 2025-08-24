@@ -5025,6 +5025,7 @@ function renderSettingsModal() {
                             ${(() => {
                                 const stats = getLoadingStats();
                                 const lastUpdate = stats.lastApiUpdate ? new Date(stats.lastApiUpdate).toLocaleString('ru-RU') : 'Никогда';
+                                const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
                                 return `
                                     <div class="grid grid-cols-2 gap-2 text-xs">
                                         <div class="text-gray-400">Цвета:</div>
@@ -5040,23 +5041,26 @@ function renderSettingsModal() {
                                         <div class="text-gray-400">Минифигурки:</div>
                                         <div class="text-white">${stats.minifigs} (${stats.minifigsWithImages} с изображениями)</div>
                                     </div>
-                                    <div class="text-yellow-400 text-xs mt-3 pt-2 border-t border-gray-700/50">
-                                        <strong>Данные через API:</strong>
-                                    </div>
-                                    <div class="grid grid-cols-2 gap-2 text-xs text-yellow-300">
-                                        <div class="text-gray-400">Цвета:</div>
-                                        <div class="text-white">${stats.apiColors}</div>
-                                        <div class="text-gray-400">Детали:</div>
-                                        <div class="text-white">${stats.apiParts}</div>
-                                        <div class="text-gray-400">Наборы:</div>
-                                        <div class="text-white">${stats.apiSets}</div>
-                                        <div class="text-gray-400">Минифигурки:</div>
-                                        <div class="text-white">${stats.apiMinifigs}</div>
-                                        <div class="text-gray-400">Изображения:</div>
-                                        <div class="text-white">${stats.apiImages}</div>
-                                    </div>
-                                    <div class="text-blue-400 text-xs mt-2">
-                                        Последнее обновление API: ${lastUpdate}
+                                    <button data-action="toggle-api-stats" class="w-full flex items-center justify-between text-left text-xs font-semibold text-yellow-300 mt-3 pt-2 border-t border-gray-700/50">
+                                        <span>Данные через API</span>
+                                        <span id="api-stats-chevron" class="${apiOpen ? 'rotate-180' : ''}">${I_Chev('w-4 h-4 text-yellow-300')}</span>
+                                    </button>
+                                    <div id="api-stats-panel" class="${apiOpen ? 'open ' : ''}collapse-panel">
+                                        <div class="grid grid-cols-2 gap-2 text-xs text-yellow-300 mt-1">
+                                            <div class="text-gray-400">Цвета:</div>
+                                            <div class="text-white">${stats.apiColors}</div>
+                                            <div class="text-gray-400">Детали:</div>
+                                            <div class="text-white">${stats.apiParts}</div>
+                                            <div class="text-gray-400">Наборы:</div>
+                                            <div class="text-white">${stats.apiSets}</div>
+                                            <div class="text-gray-400">Минифигурки:</div>
+                                            <div class="text-white">${stats.apiMinifigs}</div>
+                                            <div class="text-gray-400">Изображения:</div>
+                                            <div class="text-white">${stats.apiImages}</div>
+                                        </div>
+                                        <div class="text-blue-400 text-xs mt-2">
+                                            Последнее обновление API: ${lastUpdate}
+                                        </div>
                                     </div>
                                 `;
                             })()}
@@ -8680,6 +8684,18 @@ document.addEventListener("click", async e => {
                     chevron.classList.toggle('rotate-180');
                 }
                 break;
+            case "toggle-api-stats":
+                const apiPanel = document.getElementById('api-stats-panel');
+                const apiChevron = document.getElementById('api-stats-chevron');
+                if (apiPanel) {
+                    apiPanel.classList.toggle('open');
+                    const isOpen = apiPanel.classList.contains('open');
+                    try { localStorage.setItem('apiStatsOpen', String(isOpen)); } catch {}
+                }
+                if (apiChevron) {
+                    apiChevron.classList.toggle('rotate-180');
+                }
+                break;
                 const checkbox = document.getElementById('disable-color-images');
                 if (checkbox) {
                     localStorage.setItem('disableColorSpecificImages', checkbox.checked.toString());
@@ -10102,6 +10118,7 @@ function refreshSettingsStatsPanel() {
     if (!panel) return;
     const stats = getLoadingStats();
     const lastUpdate = stats.lastApiUpdate ? new Date(stats.lastApiUpdate).toLocaleString('ru-RU') : 'Никогда';
+    const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
     panel.innerHTML = `
         <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
         <div class="grid grid-cols-2 gap-2 text-xs">
@@ -10118,23 +10135,26 @@ function refreshSettingsStatsPanel() {
             <div class="text-gray-400">Минифигурки:</div>
             <div class="text-white">${stats.minifigs} (${stats.minifigsWithImages} с изображениями)</div>
         </div>
-        <div class="text-yellow-400 text-xs mt-3 pt-2 border-t border-gray-700/50">
-            <strong>Данные через API:</strong>
-        </div>
-        <div class="grid grid-cols-2 gap-2 text-xs text-yellow-300">
-            <div class="text-gray-400">Цвета:</div>
-            <div class="text-white">${stats.apiColors}</div>
-            <div class="text-gray-400">Детали:</div>
-            <div class="text-white">${stats.apiParts}</div>
-            <div class="text-gray-400">Наборы:</div>
-            <div class="text-white">${stats.apiSets}</div>
-            <div class="text-gray-400">Минифигурки:</div>
-            <div class="text-white">${stats.apiMinifigs}</div>
-            <div class="text-gray-400">Изображения:</div>
-            <div class="text-white">${stats.apiImages}</div>
-        </div>
-        <div class="text-blue-400 text-xs mt-2">
-            Последнее обновление API: ${lastUpdate}
+        <button data-action="toggle-api-stats" class="w-full flex items-center justify-between text-left text-xs font-semibold text-yellow-300 mt-3 pt-2 border-t border-gray-700/50">
+            <span>Данные через API</span>
+            <span id="api-stats-chevron" class="${apiOpen ? 'rotate-180' : ''}">${I_Chev('w-4 h-4 text-yellow-300')}</span>
+        </button>
+        <div id="api-stats-panel" class="${apiOpen ? 'open ' : ''}collapse-panel">
+            <div class="grid grid-cols-2 gap-2 text-xs text-yellow-300 mt-1">
+                <div class="text-gray-400">Цвета:</div>
+                <div class="text-white">${stats.apiColors}</div>
+                <div class="text-gray-400">Детали:</div>
+                <div class="text-white">${stats.apiParts}</div>
+                <div class="text-gray-400">Наборы:</div>
+                <div class="text-white">${stats.apiSets}</div>
+                <div class="text-gray-400">Минифигурки:</div>
+                <div class="text-white">${stats.apiMinifigs}</div>
+                <div class="text-gray-400">Изображения:</div>
+                <div class="text-white">${stats.apiImages}</div>
+            </div>
+            <div class="text-blue-400 text-xs mt-2">
+                Последнее обновление API: ${lastUpdate}
+            </div>
         </div>
     `;
 }
