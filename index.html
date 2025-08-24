@@ -90,6 +90,29 @@
         from { opacity: 1; transform: scale(1); }
         to { opacity: 0; transform: scale(0.95); }
     }
+    /* Тумблеры (анимированный слайдер) */
+    .toggle-switch {
+        position: relative;
+        width: 42px;
+        height: 22px;
+        border-radius: 9999px;
+        background: #4b5563; /* gray-600 */
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08);
+        transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+        outline: none;
+    }
+    .toggle-switch .knob {
+        position: absolute;
+        top: 2px; left: 2px;
+        width: 18px; height: 18px;
+        border-radius: 9999px;
+        background: #ffffff;
+        box-shadow: 0 2px 6px rgba(0,0,0,.35);
+        transition: transform .2s ease;
+    }
+    .toggle-switch.on { background: #2563eb; /* blue-600 */ }
+    .toggle-switch.on .knob { transform: translateX(20px); }
+    .toggle-switch:focus-visible { box-shadow: 0 0 0 3px rgba(59,130,246,.45); }
     /* Анимация панели мультивыбора */
     @keyframes msSlideFadeIn {
         from { opacity: 0; transform: translateY(-10px); }
@@ -1651,7 +1674,9 @@ let S = {
         active: !1,
         items: new Set, // ключи вида: 'sets:1234', 'minifigs:fig-01', 'parts:3001:15' (последнее число — colorId)
         justActivated: !1
-    }
+    },
+    catalogMultiSelectEnabled: (localStorage.getItem('catalogMultiSelectEnabled') === 'true'),
+    collectionMultiSelectEnabled: (localStorage.getItem('collectionMultiSelectEnabled') !== 'false')
 };
 let tempFilters = {
     filters: { colorIds: [], inCollectionOnly: false },
@@ -3379,7 +3404,8 @@ function renderHeader() {
     "sets" === e && (t = "Поиск по наборам..."), "minifigs" === e && (t = "Поиск по минифигуркам...");
     
     const selCount = S.multiSelect.items?.size || 0;
-    const selBar = S.multiSelect.active ? `
+    const showMultiselectBar = S.multiSelect.active && !((S.view === 'collection') && !S.collectionMultiSelectEnabled);
+    const selBar = showMultiselectBar ? `
         <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between gap-2 flex-nowrap overflow-x-auto no-scrollbar" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .36s cubic-bezier(.22,.61,.36,1) both;' : ''}">
             <div class="flex items-center gap-3 flex-shrink-0">
                 <button data-action="cancel-multiselect" class="text-gray-300 hover:text-white">${I_X('w-5 h-5')}</button>
@@ -3387,7 +3413,7 @@ function renderHeader() {
             </div>
             <div class="flex items-center gap-2 flex-nowrap flex-shrink-0">
                 <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded-md">${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span></button>
-                <button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-md">${I_Trash('w-5 h-5')} <span class="hidden sm:inline">Удалить</span></button>
+                ${S.view==='catalog' ? `<button data-action="add-multiselect-to-collection" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-2 rounded-md">+ В коллекцию</button>` : `<button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-md">${I_Trash('w-5 h-5')} <span class=\"hidden sm:inline\">Удалить</span></button>`}
             </div>
         </div>
     ` : '';
@@ -3416,7 +3442,6 @@ function renderHeader() {
             ${selBar}
         `
 }
-
 function renderSetCard(e, t, o = 0) {
     if (!e) return "";
     const l = "", // ВРЕМЕННО ОТКЛЮЧЕНО: t ? "animate-in" : "",
@@ -3451,7 +3476,7 @@ function renderSetCard(e, t, o = 0) {
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getSetImageAttrs(e.set_num, e.set_img_url)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
-                        ${S.view==="collection"?`
+                        ${((S.view==="collection" && S.collectionMultiSelectEnabled) || (S.view==="catalog" && S.catalogMultiSelectEnabled))?`
                         <button data-action="toggle-select" data-item-type="set" data-item-id="${e.set_num}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`sets:${e.set_num}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
                             ${S.multiSelect.active && S.multiSelect.items.has(`sets:${e.set_num}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
                         </button>
@@ -3494,7 +3519,7 @@ function renderMinifigCard(e, t, o = 0) {
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getPartImageUrl((e.minifig_img_url && e.minifig_img_url.startsWith('http')) || (e.set_img_url && e.set_img_url.startsWith('http')) ? (e.minifig_img_url || e.set_img_url) : null)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
-                        ${S.view==="collection"?`
+                        ${((S.view==="collection" && S.collectionMultiSelectEnabled) || (S.view==="catalog" && S.catalogMultiSelectEnabled))?`
                         <button data-action="toggle-select" data-item-type="minifig" data-item-id="${e.set_num}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`minifigs:${e.set_num}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
                             ${S.multiSelect.active && S.multiSelect.items.has(`minifigs:${e.set_num}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
                         </button>
@@ -3564,7 +3589,7 @@ function renderPartCard(e, t, o, l, a = 0) {
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getPartImageAttrs(e.id, d)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
-                        ${S.view==="collection"?`
+                        ${(S.view==="collection" && S.collectionMultiSelectEnabled)?`
                         <button data-action="toggle-select" data-item-type="part" data-item-id="${e.id}" data-color-id="${t?.id || ''}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`parts:${e.id}:${t?.id || ''}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
                             ${S.multiSelect.active && S.multiSelect.items.has(`parts:${e.id}:${t?.id || ''}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
                         </button>
@@ -3736,7 +3761,7 @@ function renderMainContent() {
                             </div>
                         ` : ''}
                         <p class="text-gray-400 max-w-sm mb-6">${l}</p>
-                        <button id="feeling-lucky-button" class="flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                        <button id="feeling-lucky-button" class="relative z-10 pointer-events-auto flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
                             ${I_Dice("w-6 h-6")} Мне повезёт!
                         </button>
                     </div>`;
@@ -3895,7 +3920,7 @@ function renderMainContent() {
                     t.sort((e, t) => t.num_parts - e.num_parts);
                     break;
                 case "num_parts_asc":
-                    t.sort((e, t) => e.num_parts - t.num_parts)
+                    t.sort((e, t) => e.num_parts - e.num_parts)
             }
             o = (e, t, o) => renderMinifigCard(e, t, o);
         }
@@ -4239,7 +4264,6 @@ function renderSetModal(e = !1) {
         </div>
         `, updateSetModalView()
 }
-
 function renderSetInventory() {
     const {
         inv: e,
@@ -4283,11 +4307,8 @@ function renderSetInventory() {
                     <div class="bg-gray-700/50 rounded-lg overflow-hidden">
                         <div class="flex items-center p-2 gap-3 text-sm cursor-pointer hover:bg-gray-700/50"
                              data-action="open-minifig-from-inventory" data-fig-num="${t}">
-                            <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0 group relative">
+                            <div class="w-12 h-12 bg-white rounded-md flex items-center justify-center flex-shrink-0">
                                 <img ${getPartImageUrl(e.minifig_img_url || e.set_img_url)} alt="${l}" class="w-full h-full object-contain p-1">
-                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    ${I_Search("w-5 h-5 text-white")}
-                                </div>
                             </div>
                             <div class="flex-grow truncate">
                                 <p class="text-white font-semibold truncate">${l}</p>
@@ -4646,7 +4667,6 @@ function renderModalControls() {
             </div>
         `
 }
-
 function renderFilterModal() {
     if (!S.filterOpen) return void closeFilterModal();
     
@@ -4929,6 +4949,20 @@ function renderSettingsModal() {
                                 <button data-action="share-collection" class="col-span-2 w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">
                                     ${I_Share("w-5 h-5 mr-2")} Передать в соцсети
                                 </button>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">Мультивыбор</h3>
+                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Cat('w-4 h-4 text-gray-300')} Каталог</span>
+                                <button data-action="toggle-catalog-multiselect" class="toggle-switch ${S.catalogMultiSelectEnabled? 'on' : ''}" aria-pressed="${S.catalogMultiSelectEnabled}"><span class="knob"></span></button>
+                            </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Coll('w-4 h-4 text-gray-300')} Коллекция</span>
+                                <button data-action="toggle-collection-multiselect" class="toggle-switch ${S.collectionMultiSelectEnabled? 'on' : ''}" aria-pressed="${S.collectionMultiSelectEnabled}"><span class="knob"></span></button>
                             </div>
                         </div>
                     </div>
@@ -5017,10 +5051,12 @@ function renderSettingsModal() {
                            <ul class="list-disc list-outside pl-5 space-y-1">
                                <li>Каталог деталей/наборов/минифигурок</li>
                                <li>Фильтры, сортировки, поиск</li>
-                               <li>Модальные карточки с изображениями, цветами и количеством в коллекции</li>
                                <li>Коллекция пользователя (детали, наборы, минифигурки)</li>
                                <li>Полноэкранный просмотр изображений</li>
-                               <li>Импорт/экспорт коллекции в CSV</li>
+                               <li>Модальные карточки: изображения, цвета, количество в коллекции</li>
+                               <li>Инвентари наборов и минифигурок (клики по элементам открывают карточки)</li>
+                               <li>Панель мультивыбора (удаление в коллекции, добавление в каталоге)</li>
+                               <li>Импорт/экспорт коллекции в CSV и «Поделиться» CSV в соцсети</li>
                            </ul>
                            <div class="pt-3 border-t border-gray-700/50 flex flex-col items-center justify-center gap-3 text-center">
                                <a href="https://github.com/Zeka3535/LEGO-Part-Catalog" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white transition-colors">
@@ -5139,7 +5175,6 @@ function updateModalPartially(e) {
         e && (e.innerHTML = renderModalControls())
     }
 }
-
 function updateModalControlsState() {
     if (!S.selPartId || !S.partModal.selColorId) return;
     const e = S.coll[S.selPartId]?.[S.partModal.selColorId] || 0,
@@ -5525,7 +5560,7 @@ function updateUI() {
         document.body.classList.remove('filtering');
     }
     
-    // Дополнительная оптимизация: отключаем анимации при изменении фильтров наборов
+    // Дополнительная оптимизация: отключаем анимации при фильтрации наборов
     if (S.setFilters && (S.setFilters.minYear || S.setFilters.maxYear || S.setFilters.minParts || S.setFilters.maxParts)) {
         document.body.classList.add('filtering');
     }
@@ -5578,7 +5613,6 @@ function updateUI() {
     } else {
         document.body.classList.remove('sets-view');
     }
-    
     // Оптимизация: отключаем анимации при быстрой навигации по деталям
     if (S.subView === 'parts') {
         document.body.classList.add('parts-view');
@@ -5640,7 +5674,6 @@ function updateUI() {
     } else {
         document.body.classList.remove('collection-parts-category-filtered');
     }
-    
     // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по поиску
     if (S.view === 'collection' && S.subView === 'parts' && S.q && S.q.length > 0) {
         document.body.classList.add('collection-parts-search-filtered');
@@ -5822,8 +5855,6 @@ function generateCsvData() {
     }
     return o;
 }
-
-
 // Функция для экспорта коллекции в CSV
 function exportCollectionToCSV() {
     try {
@@ -6223,7 +6254,6 @@ async function handleBulkAddMinifigPartsFromModal(e) {
         S.minifigModal.bulkUpdate = !1, S.selFigNum && renderMinifigModal(!1), "collection" === S.view && "parts" === S.subView ? (S.gridStale = !0, updateUI()) : renderSidebar()
     }
 }
-
 function triggerSearch(e = !1) {
     console.log('triggerSearch called with:', { e, S_q: S.q, S_subView: S.subView, S_view: S.view });
     
@@ -6304,12 +6334,10 @@ function openImageViewer(e) {
     
     console.log('Image viewer opened successfully');
 }
-
 function closeImageViewer() {
     // Немедленно скрываем viewer визуально
     viewerEl.classList.remove("visible");
     viewerEl.classList.remove("zoomed");
-    viewerImg.classList.remove("zoomed");
     
     // Мгновенно выключаем перехват кликов и отправляем слой вниз,
     // чтобы он не блокировал модальные окна даже если transitionend не сработает
@@ -6538,7 +6566,6 @@ function closeSettingsModal() {
         once: !0
     }))
 }
-
 function openModalForPart(e, t, o) {
     const l = PART_MAP[e];
     if (l) {
@@ -6786,7 +6813,6 @@ document.addEventListener("compositionend", e => {
         }
     }
 });
-
 // Обработчик события beforeinput для полей ввода в модальном окне фильтров
 document.addEventListener("beforeinput", e => {
     if (!(e.target instanceof Element)) return;
@@ -6806,7 +6832,6 @@ document.addEventListener("beforeinput", e => {
         }
     }
 });
-
 // Обработчик события input для всех типов полей ввода в модальном окне фильтров
 document.addEventListener("input", e => {
     if (!(e.target instanceof Element)) return;
@@ -6885,7 +6910,6 @@ document.addEventListener("keyup", e => {
         }
     }
 });
-
 // Обработчик события paste для всех типов полей ввода в модальном окне фильтров
 document.addEventListener("paste", e => {
     if (!(e.target instanceof Element)) return;
@@ -7093,7 +7117,6 @@ document.addEventListener("compositionend", e => {
         }
     }
 });
-
 // Обработчик события beforeinput для всех типов полей ввода в модальном окне фильтров (финальный)
 document.addEventListener("beforeinput", e => {
     if (!(e.target instanceof Element)) return;
@@ -7218,7 +7241,6 @@ document.addEventListener("blur", e => {
         }
     }
 }, true); // Используем capture для обработки события на фазе захвата
-
 // Обработчик события keyup для всех полей ввода в модальном окне фильтров
 document.addEventListener("keyup", e => {
     if (!(e.target instanceof Element)) return;
@@ -7299,7 +7321,6 @@ document.addEventListener("compositionend", e => {
         }
     }
 });
-
 // Обработчик события beforeinput для всех полей ввода в модальном окне фильтров
 document.addEventListener("beforeinput", e => {
     if (!(e.target instanceof Element)) return;
@@ -7571,7 +7592,6 @@ document.addEventListener("paste", e => {
         }
     }
 });
-
 // Обработчик события drop для всех полей ввода в модальном окне фильтров (основной - все типы)
 document.addEventListener("drop", e => {
     if (!(e.target instanceof Element)) return;
@@ -7590,7 +7610,6 @@ document.addEventListener("drop", e => {
         }
     }
 });
-
 // Обработчик события compositionend для всех полей ввода в модальном окне фильтров (основной - все типы)
 document.addEventListener("compositionend", e => {
     if (!(e.target instanceof Element)) return;
@@ -7644,6 +7663,23 @@ document.addEventListener("click", async e => {
         renderHeader();
         // Сбрасываем флаг первой анимации после рендера, чтобы не анимировать при добавлении второй и далее
         queueMicrotask(() => { S.multiSelect.justActivated = !1; });
+        updateUI();
+        return;
+    }
+    if (t.closest('#toggle-catalog-multiselect')) {
+        S.catalogMultiSelectEnabled = !S.catalogMultiSelectEnabled;
+        localStorage.setItem('catalogMultiSelectEnabled', String(S.catalogMultiSelectEnabled));
+        // При выключении скрываем панель мультивыбора и сбрасываем выбранные элементы
+        if (!S.catalogMultiSelectEnabled) { S.multiSelect.active = false; S.multiSelect.items = new Set(); }
+        renderHeader();
+        updateUI();
+        return;
+    }
+    if (t.closest('#toggle-collection-multiselect')) {
+        S.collectionMultiSelectEnabled = !S.collectionMultiSelectEnabled;
+        localStorage.setItem('collectionMultiSelectEnabled', String(S.collectionMultiSelectEnabled));
+        if (!S.collectionMultiSelectEnabled) { S.multiSelect.active = false; S.multiSelect.items = new Set(); }
+        renderHeader();
         updateUI();
         return;
     }
@@ -7778,6 +7814,9 @@ document.addEventListener("click", async e => {
         setTimeout(() => {
             document.body.classList.remove('tab-switching');
         }, 1000);
+        
+        // Сбрасываем мультивыбор только при переключении Каталог/Коллекция
+        S.multiSelect.active = false; S.multiSelect.items = new Set();
         
         return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener()))
     }
@@ -7932,7 +7971,7 @@ document.addEventListener("click", async e => {
         }, 800);
         
         return S.q = "", "collection" === S.view ? (() => {
-            // Отключаем анимации при навигации по коллекции категорий для улучшения производительности
+            // Отключаем анимации при навигании по коллекции категорий для улучшения производительности
             document.body.classList.add('collection-view');
             setTimeout(() => {
                 document.body.classList.remove('collection-view');
@@ -7944,7 +7983,7 @@ document.addEventListener("click", async e => {
             inCollectionOnly: !1
         }, S.sortBy = "popularity", loadPartsForCategory(e)), void 0
     }
-    if (t.closest("#feeling-lucky-button")) return handleFeelingLucky();
+    
     const d = t.closest('[data-action="delete-from-collection"]');
     if (d?.dataset.partId && d.dataset.colorId) return await handleUpdateCollection(d.dataset.partId, d.dataset.colorId, 0);
     const u = t.closest(".minifig-card");
@@ -8042,78 +8081,28 @@ document.addEventListener("click", async e => {
         renderHeader(); updateUI();
         return;
     }
-    if (t.closest('[data-action="share-multiselect"]')) {
+    if (t.closest('[data-action="add-multiselect-to-collection"]')) {
         if (!S.multiSelect.active || S.multiSelect.items.size === 0) return;
-        const tEsc = (v) => {
-            if (v === null || v === undefined) return '';
-            const s = String(v);
-            return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g,'""') + '"' : s;
-        };
-        const headers = [
-            'type','id','quantity','name',
-            'part_cat_id','part_cat_name',
-            'color_id','color_name',
-            'set_theme_id','set_theme_name','set_year','set_num_parts',
-            'minifig_num_parts'
-        ];
-        const rows = [headers];
-        for (const key of S.multiSelect.items) {
+        const keys = Array.from(S.multiSelect.items);
+        for (const key of keys) {
             if (key.startsWith('sets:')) {
                 const id = key.split(':')[1];
-                const set = SET_MAP[id];
-                const qty = S.setColl[id]?.qty || 1;
-                const theme = set ? THEME_MAP[set.theme_id] : null;
-                rows.push([
-                    'set', id, qty, set?.name || '',
-                    '', '',
-                    '', '',
-                    set?.theme_id ?? '', theme?.name || '', set?.year ?? '', set?.num_parts ?? '',
-                    ''
-                ]);
+                // Добавляем набор и весь его инвентарь
+                handleUpdateSetCollection(id, (S.setColl[id]?.qty || 0) + 1);
+                handleBulkUpdatePartsFromSet(id, 'add');
             } else if (key.startsWith('minifigs:')) {
                 const id = key.split(':')[1];
-                const fig = MINIFIG_MAP[id];
-                const qty = S.minifigColl[id]?.qty || 1;
-                rows.push([
-                    'minifig', id, qty, fig?.name || '',
-                    '', '',
-                    '', '',
-                    '', '', '', '',
-                    fig?.num_parts ?? ''
-                ]);
+                S.minifigColl[id] = { qty: (S.minifigColl[id]?.qty || 0) + 1 };
+                await handleBulkAddMinifigParts(id);
             } else if (key.startsWith('parts:')) {
                 const [, id, colorId] = key.split(':');
-                const part = PART_MAP[id];
-                const qty = (S.coll[id] && S.coll[id][colorId]) ? S.coll[id][colorId] : 1;
-                const color = COLOR_MAP[colorId];
-                const category = part ? (typeof flatCategories !== 'undefined' ? flatCategories.find(cat => cat.id === part.categoryId) : null) : null;
-                rows.push([
-                    'part', id, qty, part?.name || '',
-                    part?.categoryId ?? '', category?.name || '',
-                    colorId || '', color?.name || '',
-                    '', '', '', '',
-                    ''
-                ]);
+                const qty = (S.coll[id]?.[colorId] || 0) + 1;
+                await handleUpdateCollection(id, colorId, qty);
             }
         }
-        const csv = rows.map(r => r.map(tEsc).join(',')).join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
-        const url = URL.createObjectURL(blob);
-        const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
-        const siteText = `Собрал подборку в LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок. Сайт: ${siteUrl}`;
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'text/csv' })] })) {
-            const file = new File([blob], fileName, { type: 'text/csv' });
-            navigator.share({ files: [file], title: 'Выбранные элементы LEGO', text: siteText }).catch(()=>{});
-        } else if (navigator.share) {
-            navigator.share({ title: 'Выбранные элементы LEGO', text: siteText + '\n\n' + csv, url: siteUrl }).catch(()=>{});
-        } else {
-            const a = document.createElement('a');
-            a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
-            // Дополнительно открываем сайт в новой вкладке как справочную ссылку
-            window.open(siteUrl, '_blank');
-        }
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        saveState(); forceSaveState();
+        S.multiSelect.active = !1; S.multiSelect.items = new Set;
+        renderHeader(); updateUI();
         return;
     }
     if (t.closest('[data-action="share-multiselect"]')) {
@@ -8268,6 +8257,35 @@ document.addEventListener("click", async e => {
                 })();
                 return;
             }
+            case "toggle-catalog-multiselect":
+                S.catalogMultiSelectEnabled = !S.catalogMultiSelectEnabled;
+                localStorage.setItem('catalogMultiSelectEnabled', String(S.catalogMultiSelectEnabled));
+                // При выключении скрываем панель мультивыбора и сбрасываем выбранные элементы
+                if (!S.catalogMultiSelectEnabled) { S.multiSelect.active = false; S.multiSelect.items = new Set(); }
+                // Обновляем только сам тумблер без перерисовки модалки
+                (function(){
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-catalog-multiselect"]');
+                    if (btn) {
+                        if (S.catalogMultiSelectEnabled) btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.catalogMultiSelectEnabled));
+                    }
+                })();
+                S.gridStale = true; updateUI();
+                return;
+            case "toggle-collection-multiselect":
+                S.collectionMultiSelectEnabled = !S.collectionMultiSelectEnabled;
+                localStorage.setItem('collectionMultiSelectEnabled', String(S.collectionMultiSelectEnabled));
+                if (!S.collectionMultiSelectEnabled) { S.multiSelect.active = false; S.multiSelect.items = new Set(); }
+                // Обновляем только тумблер, не трогая остальной контент
+                (function(){
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-collection-multiselect"]');
+                    if (btn) {
+                        if (S.collectionMultiSelectEnabled) btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.collectionMultiSelectEnabled));
+                    }
+                })();
+                S.gridStale = true; updateUI();
+                return;
             case "delete-all-parts":
                 S.settingsModal.delConfirm = "parts", renderSettingsModal();
                 break;
@@ -8479,7 +8497,7 @@ document.addEventListener("click", async e => {
                 S.selSetNum && (handleUpdateSetCollection(S.selSetNum, 0), S.setModal.qty = 0);
                 break;
             case "go-to-theme":
-                l && (closeSetModal(), S.view = "catalog", S.subView = "sets", S.selThemeId = parseInt(l, 10), fetchSets());
+                l && (closeSetModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "sets", S.selThemeId = parseInt(l, 10), fetchSets());
                 break;
             case "bulk-add-parts":
                 S.selSetNum && handleBulkUpdatePartsFromSet(S.selSetNum, "add");
@@ -8536,82 +8554,6 @@ document.addEventListener("click", async e => {
                 break;
             case "add-minifig-parts-to-collection":
                 a && handleBulkAddMinifigParts(a)
-        }
-    } else if (filterModalEl?.contains(t)) {
-        const e = t.closest("[data-action]");
-        if (!e) return;
-        const {
-            action: o,
-            colorId: l,
-            filterKey: filterKey
-        } = e.dataset;
-        switch (o) {
-            case "modal-set-color":
-                if ("null" === l) {
-                    tempFilters.filters.colorIds = [];
-                } else if (l) {
-                    if (tempFilters.filters.colorIds.includes(l)) {
-                        tempFilters.filters.colorIds.splice(tempFilters.filters.colorIds.indexOf(l), 1);
-                    } else {
-                        tempFilters.filters.colorIds.push(l);
-                    }
-                }
-                updateFilterModalUI();
-                break;
-            case "modal-set-filter":
-                if (filterKey && e.value !== undefined) {
-                    tempFilters.setFilters[filterKey] = e.value;
-                    console.log('Filter updated:', filterKey, '=', e.value);
-                    console.log('Current tempFilters.setFilters:', tempFilters.setFilters);
-                }
-                break;
-            case "modal-toggle-collection":
-                tempFilters.filters.inCollectionOnly = e.checked;
-                break;
-            case "modal-set-sort":
-                tempFilters.sortBy = e.value;
-                break;
-            case "modal-reset-filters":
-                if ("sets" === S.subView) {
-                    tempFilters.sortBy = S.q ? "relevance" : "year_desc";
-                    tempFilters.setFilters = {
-                        minYear: "",
-                        maxYear: "",
-                        minParts: "",
-                        maxParts: ""
-                    };
-                    console.log('Reset set filters:', tempFilters.setFilters);
-                } else if ("minifigs" === S.subView) {
-                    tempFilters.sortBy = S.q ? "relevance" : "name_asc";
-                } else {
-                    tempFilters.sortBy = S.q ? "relevance" : "popularity";
-                    tempFilters.filters = {
-                        colorIds: [],
-                        inCollectionOnly: !1
-                    };
-                }
-                renderFilterModal();
-                break;
-            case "modal-apply-filters":
-                // Отключаем анимации при применении фильтров для улучшения производительности
-                document.body.classList.add('filtering');
-                setTimeout(() => {
-                    document.body.classList.remove('filtering');
-                }, 800);
-                
-                S.filters = tempFilters.filters;
-                S.setFilters = tempFilters.setFilters;
-                S.sortBy = tempFilters.sortBy;
-                
-                console.log('Applied filters:', {
-                    filters: S.filters,
-                    setFilters: S.setFilters,
-                    sortBy: S.sortBy
-                });
-                
-                closeFilterModal();
-                refreshWithNewFilters();
-                break;
         }
     } else if (partModalEl?.contains(t)) {
         // Обрабатываем клик по кнопке селектора пользовательских вариаций
@@ -8717,7 +8659,7 @@ document.addEventListener("click", async e => {
                     S.selPartId && S.partModal.selColorId && (await handleUpdateCollection(S.selPartId, S.partModal.selColorId, 0), S.partModal.qty = 0);
                     break;
                 case "go-to-category":
-                    o && (closeModal(), S.view = "catalog", S.subView = "parts", S.selCatId = parseInt(o, 10), loadPartsForCategory(S.selCatId));
+                    o && (closeModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "parts", S.selCatId = parseInt(o, 10), loadPartsForCategory(S.selCatId));
                     break;
                 case "retry-fetch-colors":
                     S.selPartId && fetchPartColors(S.selPartId)
@@ -8915,7 +8857,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!window.isSecureContext && location.hostname !== 'localhost') {
                 console.warn('Service Worker требует безопасный контекст (https или localhost). Сейчас: ', location.protocol);
             }
-            
             // Проверяем обновления Service Worker
             navigator.serviceWorker.register('./service-worker.js', { scope: './' })
                 .then(registration => {
@@ -9222,7 +9163,6 @@ async function loadPartsFromCSV() {
         throw error;
     }
 }
-
 // Функция для загрузки наборов из CSV
 async function loadSetsFromCSV() {
     try {
@@ -9379,7 +9319,6 @@ async function loadElementsFromCSV() {
         // Не выбрасываем ошибку для элементов, так как это не критично
     }
 }
-
 // Функция для загрузки инвентарей из CSV
 async function loadInventoriesFromCSV() {
     try {
@@ -9571,7 +9510,6 @@ async function loadInventoriesFromCSV() {
             sets: inventorySetsMap,
             minifigs: inventoryMinifigsMap
         };
-        
         console.log('Inventory data loaded:');
         console.log('- Parts:', Object.keys(inventoryPartsMap).length);
         console.log('- Sets:', Object.keys(inventorySetsMap).length);
@@ -9608,7 +9546,6 @@ function getLoadingStats() {
         ...apiStats
     };
 }
-
 // Функция для получения статистики загрузки API
 function getApiLoadingStats() {
     const apiStats = JSON.parse(localStorage.getItem('legoApiStats') || '{}');
@@ -9795,9 +9732,7 @@ function calculateSearchScore(item, searchTerm) {
     
     return score;
 }
-
 // (Removed) Background data check/download functions kept for future use
-
 // Function to fetch missing images from CSV data
 async function fetchMissingImagesFromCSV() {
     try {
@@ -9924,7 +9859,6 @@ async function checkForNewDataInBackground() {
         return Promise.resolve();
     }
 }
-
 // Function to check what data is missing and needs API calls
 function checkMissingData() {
     const missing = {
@@ -10094,7 +10028,6 @@ async function handleColorImageLoadError(imgElement, partNum, colorId, originalU
         console.error('Error handling color image load error:', error);
     }
 }
-
 // Helper function to fetch part color details from API
 async function fetchPartColorDetailsFromAPI(partNum, colorId) {
     try {
@@ -10113,7 +10046,6 @@ async function fetchPartColorDetailsFromAPI(partNum, colorId) {
     }
     return null;
 }
-
 // Function to check for missing images in collection
 async function fetchMissingImagesForCollection() {
     try {
