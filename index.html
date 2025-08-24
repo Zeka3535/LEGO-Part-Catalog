@@ -1644,6 +1644,13 @@ let S = {
         status: '',
         statusType: ''
     },
+    // Защита от случайной перезагрузки/закрытия вкладки (включена по умолчанию, читаем из кэша)
+    preventAccidentalExit: (function(){
+        try {
+            const v = localStorage.getItem('preventAccidentalExit');
+            return v === null ? true : v === 'true';
+        } catch { return true; }
+    })(),
     filterOpen: !1,
     settingsOpen: !1,
     settingsModal: {
@@ -4997,6 +5004,16 @@ function renderSettingsModal() {
                                 <span class="text-sm text-gray-300 flex items-center gap-2">${I_Coll('w-4 h-4 text-gray-300')} Коллекция</span>
                                 <button data-action="toggle-collection-multiselect" class="toggle-switch ${S.collectionMultiSelectEnabled? 'on' : ''}" aria-pressed="${S.collectionMultiSelectEnabled}"><span class="knob"></span></button>
                             </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">Защита от случайного выхода</h3>
+                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm text-gray-300 flex items-center gap-2">Подтверждать перезагрузку/закрытие</span>
+                                <button data-action="toggle-prevent-exit" class="toggle-switch ${S.preventAccidentalExit? 'on' : ''}" aria-pressed="${S.preventAccidentalExit}"><span class="knob"></span></button>
+                            </div>
+                            <p class="text-xs text-gray-400">Рекомендуется для мобильных устройств: предотвратит потерю незаписанных изменений при случайном свайпе назад или обновлении.</p>
                         </div>
                     </div>
                      <div>
@@ -8782,6 +8799,23 @@ document.addEventListener("click", async e => {
                 })();
                 S.gridStale = true; updateUI();
                 return;
+            case "toggle-prevent-exit":
+                S.preventAccidentalExit = !S.preventAccidentalExit;
+                try { localStorage.setItem('preventAccidentalExit', String(S.preventAccidentalExit)); } catch {}
+                // Обновляем только тумблер без полной перерисовки
+                (function(){
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-prevent-exit"]');
+                    if (btn) {
+                        if (S.preventAccidentalExit) btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.preventAccidentalExit));
+                    }
+                })();
+                S.settingsModal.status = S.preventAccidentalExit ? "Подтверждение выхода включено" : "Подтверждение выхода отключено";
+                S.settingsModal.statusType = "success";
+                // Перерисовывать весь модал не нужно, достаточно обновить тумблер и статус
+                renderSettingsModal();
+                setTimeout(()=>{ if (S.settingsOpen) { S.settingsModal.status=''; renderSettingsModal(); } }, 2000);
+                return;
             case "delete-all-parts":
                 S.settingsModal.delConfirm = "parts", renderSettingsModal();
                 break;
@@ -9352,6 +9386,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     
     initializeApp();
+
+    // S.preventAccidentalExit уже инициализирован из localStorage при создании S
+
+    // Защита от случайной перезагрузки/закрытия вкладки
+    window.addEventListener('beforeunload', (event) => {
+        try {
+            if (!S || !S.preventAccidentalExit) return;
+            event.preventDefault();
+            event.returnValue = '';
+        } catch {}
+    });
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
