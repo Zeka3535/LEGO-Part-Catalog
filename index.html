@@ -1536,7 +1536,16 @@ const COLOR_IMAGE_CACHE = new Map();
 const SET_IMAGE_FETCHING = new Set();
 const SET_IMAGE_PENDING = new Map(); // set_num -> Promise<string|undefined>
 const SET_IMAGE_WAITERS = new Map(); // set_num -> HTMLElement[]
-const API_REQUEST_DELAY = 200; // 200мс задержка между запросами API
+const SET_IMAGE_FAILED = new Set(); // set_num, где получение изображения по API уже провалилось
+let API_IMAGE_FETCH_COUNT = 0;
+const API_IMAGE_FETCH_LIMIT = 50; // предохранитель на сессию от избыточных запросов
+// Ускоряем загрузку ~в 3 раза: 200мс -> ~66мс
+const API_REQUEST_DELAY = 66;
+// Ограничения для подгрузки изображений деталей по цветам
+const PART_COLOR_FETCHING = new Set(); // key: `${partNum}:${colorId}`
+const PART_COLOR_FAILED = new Set();   // key: `${partNum}:${colorId}`
+let API_PART_COLOR_FETCH_COUNT = 0;
+const API_PART_COLOR_FETCH_LIMIT = 100;
 let lastApiRequestTime = 0;
 const I_Cat = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`;
 const I_Coll = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polygon points="2 17 12 22 22 17"></polygon><polygon points="2 12 12 17 22 12"></polygon></svg>`;
@@ -1758,6 +1767,13 @@ async function apiFetchPaginated(e) {
             a = `${REBRICKABLE_API_URL}${e}${l}page=${o}&page_size=800`;
         
         console.log(`API call: ${a}`);
+        // Обновляем статистику по типу запроса
+        try {
+            if (e.startsWith('/colors')) updateApiLoadingStats('colors', 0);
+            else if (e.startsWith('/parts')) updateApiLoadingStats('parts', 0);
+            else if (e.startsWith('/sets')) updateApiLoadingStats('sets', 0);
+            else if (e.startsWith('/minifigs')) updateApiLoadingStats('minifigs', 0);
+        } catch {}
         
         const i = await fetch(a, {
             headers: {
@@ -2853,6 +2869,7 @@ async function fetchMissingMinifigPartImages(minifigParts) {
             }
             
             lastApiRequestTime = Date.now();
+            try { updateApiLoadingStats('parts', 0); } catch {}
             const response = await fetch(`${REBRICKABLE_API_URL}/parts/${partInfo.part.part_num}/?key=${getApiKey()}`);
             
             if (response.status === 429) {
@@ -2864,6 +2881,10 @@ async function fetchMissingMinifigPartImages(minifigParts) {
                 const data = await response.json();
                 if (data.results && data.results[0] && data.results[0].part_img_url) {
                     partInfo.part.part_img_url = data.results[0].part_img_url;
+                    try {
+                        updateApiLoadingStats('images', 1);
+                        updateApiLoadingStats('parts', 1);
+                    } catch {}
 
                 }
             }
@@ -3021,6 +3042,7 @@ window.onSetImgError = async (setNum, imgEl) => {
         const pending = (async () => {
             SET_IMAGE_FETCHING.add(setNum);
             try {
+                try { updateApiLoadingStats('sets', 0); } catch {}
                 const resp = await fetch(`${REBRICKABLE_API_URL}/sets/${setNum}/`, {
                     headers: { Authorization: `key ${getApiKey()}` }
                 });
@@ -3057,6 +3079,7 @@ window.onSetImgError = async (setNum, imgEl) => {
         // Успешно получили URL
         SET_MAP[setNum].set_img_url = url;
         updateApiLoadingStats('images', 1);
+        updateApiLoadingStats('sets', 1);
         saveState();
         allWaiters.forEach(el => {
             try {
@@ -3448,10 +3471,16 @@ function renderSetCard(e, t, o = 0) {
         a = "", // ВРЕМЕННО ОТКЛЮЧЕНО: t ? S.getAnimationDelay(o) : "",
         i = S.setColl[e.set_num] ? S.setColl[e.set_num].qty : 0;
     // Если у набора нет корректного изображения — пробуем получить его через API один раз
-    if ((!e.set_img_url || !String(e.set_img_url).startsWith('http')) && e.set_num && !SET_IMAGE_FETCHING.has(e.set_num)) {
+    if ((!e.set_img_url || !String(e.set_img_url).startsWith('http')) && e.set_num && !SET_IMAGE_FETCHING.has(e.set_num) && !SET_IMAGE_FAILED.has(e.set_num)) {
+        if (API_IMAGE_FETCH_COUNT >= API_IMAGE_FETCH_LIMIT) {
+            // Достигли лимита запросов на сессию — больше не пытаемся
+            SET_IMAGE_FAILED.add(e.set_num);
+        } else {
         SET_IMAGE_FETCHING.add(e.set_num);
         (async () => {
             try {
+                API_IMAGE_FETCH_COUNT++;
+                try { updateApiLoadingStats('sets', 0); } catch {}
                 const resp = await fetch(`${REBRICKABLE_API_URL}/sets/${e.set_num}/`, { headers: { Authorization: `key ${getApiKey()}` }});
                 if (resp.ok) {
                     const data = await resp.json();
@@ -3459,16 +3488,22 @@ function renderSetCard(e, t, o = 0) {
                         e.set_img_url = data.set_img_url;
                         SET_MAP[e.set_num] = { ...SET_MAP[e.set_num], set_img_url: data.set_img_url };
                         updateApiLoadingStats('images', 1);
+                        updateApiLoadingStats('sets', 1);
                         saveState();
                         S.gridStale = true; updateUI();
+                    } else {
+                        // Нет изображения — помечаем как неудачную попытку, чтобы не дергать API бесконечно
+                        SET_IMAGE_FAILED.add(e.set_num);
                     }
                 }
             } catch (err) {
                 console.error('Failed to fetch set image via API:', e.set_num, err);
+                SET_IMAGE_FAILED.add(e.set_num);
             } finally {
                 SET_IMAGE_FETCHING.delete(e.set_num);
             }
         })();
+        }
     }
     return `
             <div data-set-num="${e.set_num}" style="${a}" class="set-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
@@ -9691,11 +9726,13 @@ async function fetchMissingMinifigImages() {
         }
         
         try {
+            try { updateApiLoadingStats('minifigs', 0); } catch {}
             const response = await fetch(`${REBRICKABLE_API_URL}/minifigs/${minifig.set_num}/?key=${getApiKey()}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.results && data.results[0] && data.results[0].set_img_url) {
                     minifig.minifig_img_url = data.results[0].set_img_url;
+                    try { updateApiLoadingStats('images', 1); } catch {}
                 }
             }
             // Добавляем задержку, чтобы избежать ограничения частоты запросов
@@ -9957,14 +9994,20 @@ function getLoadingStats() {
 }
 // Функция для получения статистики загрузки API
 function getApiLoadingStats() {
-    const apiStats = JSON.parse(localStorage.getItem('legoApiStats') || '{}');
-    
+    let apiStats = {};
+    try {
+        apiStats = JSON.parse(localStorage.getItem('legoApiStats') || '{}');
+    } catch {}
+    // Fallback на оперативные данные, если localStorage пуст
+    if ((!apiStats || Object.keys(apiStats).length === 0) && window.API_STATS) {
+        apiStats = window.API_STATS;
+    }
     return {
-        apiColors: apiStats.colors || 0,
-        apiParts: apiStats.parts || 0,
-        apiSets: apiStats.sets || 0,
-        apiMinifigs: apiStats.minifigs || 0,
-        apiImages: apiStats.images || 0,
+        apiColors: Number(apiStats.colors) || 0,
+        apiParts: Number(apiStats.parts) || 0,
+        apiSets: Number(apiStats.sets) || 0,
+        apiMinifigs: Number(apiStats.minifigs) || 0,
+        apiImages: Number(apiStats.images) || 0,
         lastApiUpdate: apiStats.lastUpdate || null
     };
 }
@@ -9972,19 +10015,73 @@ function getApiLoadingStats() {
 // Функция для обновления статистики загрузки API
 function updateApiLoadingStats(type, count = 1) {
     try {
-        const apiStats = JSON.parse(localStorage.getItem('legoApiStats') || '{}');
-        
-        if (!apiStats[type]) {
-            apiStats[type] = 0;
+        const current = JSON.parse(localStorage.getItem('legoApiStats') || '{}');
+        const apiStats = {
+            colors: Number(current.colors) || 0,
+            parts: Number(current.parts) || 0,
+            sets: Number(current.sets) || 0,
+            minifigs: Number(current.minifigs) || 0,
+            images: Number(current.images) || 0,
+            lastUpdate: current.lastUpdate || null
+        };
+        const n = Number(count) || 0;
+        if (['colors','parts','sets','minifigs','images'].includes(type)) {
+            apiStats[type] += n;
         }
-        
-        apiStats[type] += count;
         apiStats.lastUpdate = new Date().toISOString();
-        
         localStorage.setItem('legoApiStats', JSON.stringify(apiStats));
+        // Дублируем в оперативное состояние для моментального доступа
+        window.API_STATS = apiStats;
+        // Если открыт модал настроек, обновим панель статистики (без полной перерисовки)
+        if (S.settingsOpen) {
+            try { refreshSettingsStatsPanel(); } catch {}
+        }
     } catch (error) {
         console.error('Failed to update API stats:', error);
     }
+}
+
+// Локальное обновление панели статистики в настройках без полной перерисовки модала
+function refreshSettingsStatsPanel() {
+    const panel = document.getElementById('settings-stats-panel');
+    if (!panel) return;
+    const stats = getLoadingStats();
+    const lastUpdate = stats.lastApiUpdate ? new Date(stats.lastApiUpdate).toLocaleString('ru-RU') : 'Никогда';
+    panel.innerHTML = `
+        <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="text-gray-400">Цвета:</div>
+            <div class="text-white">${stats.colors}</div>
+            <div class="text-gray-400">Категории:</div>
+            <div class="text-white">${stats.categories}</div>
+            <div class="text-gray-400">Темы:</div>
+            <div class="text-white">${stats.themes}</div>
+            <div class="text-gray-400">Детали:</div>
+            <div class="text-white">${stats.parts} (${stats.partsWithImages} с изображениями)</div>
+            <div class="text-gray-400">Наборы:</div>
+            <div class="text-white">${stats.sets} (${stats.setsWithImages} с изображениями)</div>
+            <div class="text-gray-400">Минифигурки:</div>
+            <div class="text-white">${stats.minifigs} (${stats.minifigsWithImages} с изображениями)</div>
+        </div>
+        <div class="text-yellow-400 text-xs mt-3 pt-2 border-t border-gray-700/50">
+            <strong>Данные через API:</strong>
+        </div>
+        <div class="grid grid-cols-2 gap-2 text-xs text-yellow-300">
+            <div class="text-gray-400">Цвета:</div>
+            <div class="text-white">${stats.apiColors}</div>
+            <div class="text-gray-400">Детали:</div>
+            <div class="text-white">${stats.apiParts}</div>
+            <div class="text-gray-400">Наборы:</div>
+            <div class="text-white">${stats.apiSets}</div>
+            <div class="text-gray-400">Минифигурки:</div>
+            <div class="text-white">${stats.apiMinifigs}</div>
+            <div class="text-gray-400">Изображения:</div>
+            <div class="text-white">${stats.apiImages}</div>
+        </div>
+        <div class="text-blue-400 text-xs mt-2">
+            Последнее обновление API: ${lastUpdate}
+        </div>
+    `;
 }
 
 // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ: прогресс скачивания CSV в мегабайтах (только при первой загрузке)
@@ -10465,8 +10562,13 @@ function getColorImageUrl(partNum, colorId, fallbackUrl = null) {
 // Function to handle color image load errors and fetch from API
 async function handleColorImageLoadError(imgElement, partNum, colorId, originalUrl) {
     try {
+        const key = `${partNum}:${colorId}`;
+        if (PART_COLOR_FAILED.has(key)) return; // уже проваливалось — не спамим
+        if (PART_COLOR_FETCHING.has(key)) return; // уже в процессе
+        if (API_PART_COLOR_FETCH_COUNT >= API_PART_COLOR_FETCH_LIMIT) return; // общий лимит
+        PART_COLOR_FETCHING.add(key);
+        API_PART_COLOR_FETCH_COUNT++;
 
-        
         // Fetch color details from API to get fresh image URL
         const colorDetails = await fetchPartColorDetailsFromAPI(partNum, colorId);
         if (colorDetails && colorDetails.part_img_url) {
@@ -10478,19 +10580,37 @@ async function handleColorImageLoadError(imgElement, partNum, colorId, originalU
                 PART_MAP[partNum].colorImages[colorId] = colorDetails.part_img_url;
                 forceSaveState();
             }
+            // Update API stats
+            try {
+                updateApiLoadingStats('images', 1);
+                updateApiLoadingStats('parts', 1);
+            } catch {}
             
 
             return;
         }
         
         console.warn(`Could not fetch color image for part ${partNum} color ${colorId}`);
+        PART_COLOR_FAILED.add(key);
     } catch (error) {
         console.error('Error handling color image load error:', error);
+        const key = `${partNum}:${colorId}`;
+        PART_COLOR_FAILED.add(key);
+    } finally {
+        const key = `${partNum}:${colorId}`;
+        PART_COLOR_FETCHING.delete(key);
     }
 }
 // Helper function to fetch part color details from API
 async function fetchPartColorDetailsFromAPI(partNum, colorId) {
     try {
+        // Глобальный троттлинг
+        const now = Date.now();
+        const since = now - lastApiRequestTime;
+        if (since < API_REQUEST_DELAY) {
+            await new Promise(r => setTimeout(r, API_REQUEST_DELAY - since));
+        }
+        lastApiRequestTime = Date.now();
         const response = await fetch(`${REBRICKABLE_API_URL}/parts/${partNum}/colors/${colorId}/`, {
             headers: {
                 Authorization: `key ${getApiKey()}`
@@ -10499,6 +10619,9 @@ async function fetchPartColorDetailsFromAPI(partNum, colorId) {
         
         if (response.ok) {
             const data = await response.json();
+            if (data && data.part_img_url) {
+                try { updateApiLoadingStats('images', 1); } catch {}
+            }
             return data;
         }
     } catch (error) {
