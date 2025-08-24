@@ -10152,17 +10152,19 @@ async function fetchTextWithProgress(url, statusText, label) {
         const contentLengthHeader = resp && resp.headers ? resp.headers.get('content-length') : null;
         const totalForFile = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
         if (!window.CSV_MB_PROGRESS) window.CSV_MB_PROGRESS = { totalBytes: 0, totalExpected: 0 };
-        if (totalForFile > 0) window.CSV_MB_PROGRESS.totalExpected += totalForFile;
+        if (!window.CSV_PROGRESS_PLAN) initCsvProgressPlan();
+        if (!window.CSV_PROGRESS_STATE) window.CSV_PROGRESS_STATE = { completed: new Set() };
         if (!reader) {
             const text = await resp.text();
             // Обновим общий прогресс хотя бы по размеру текста (приближенно)
             try {
                 const approxBytes = text.length; // приблизительно (UTF-16 -> меньшее число)
                 window.CSV_MB_PROGRESS.totalBytes += approxBytes;
-                const expected = window.CSV_MB_PROGRESS.totalExpected;
-                const progressPercent = expected ? Math.min(99, Math.floor((window.CSV_MB_PROGRESS.totalBytes / expected) * 100)) : null;
+                // Плановая шкала прогресса по этапам/файлам
+                const progressPercent = calcPlannedProgress(label, 1);
                 const details = `Загружается: ${label} • Файл: ${formatMb(approxBytes)} MB • Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} MB`;
                 updateLoadingStatus(statusText, progressPercent, details);
+                window.CSV_PROGRESS_STATE.completed.add(label);
             } catch {}
             return text;
         }
@@ -10176,18 +10178,90 @@ async function fetchTextWithProgress(url, statusText, label) {
             window.CSV_MB_PROGRESS.totalBytes += value.length;
             text += decoder.decode(value, { stream: true });
             const current = `Файл: ${formatMb(received)} MB`;
-            const expected = window.CSV_MB_PROGRESS.totalExpected;
-            const progressPercent = expected ? Math.min(99, Math.floor((window.CSV_MB_PROGRESS.totalBytes / expected) * 100)) : null;
+            // Плановая шкала прогресса по этапам/файлам
+            const fileFraction = totalForFile > 0 ? Math.max(0, Math.min(1, received / totalForFile)) : null;
+            const progressPercent = calcPlannedProgress(label, fileFraction);
             const details = `Загружается: ${label} • ${current} • Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} MB`;
             updateLoadingStatus(statusText, progressPercent, details);
         }
         text += decoder.decode();
+        try { window.CSV_PROGRESS_STATE.completed.add(label); } catch {}
         return text;
     } catch (e) {
         // В случае любых проблем просто читаем как текст
         const resp = await fetch(url);
         return await resp.text();
     }
+}
+
+// План этапов загрузки CSV с весами для корректного индикатора прогресса
+function initCsvProgressPlan() {
+    try {
+        const plan = [
+            { type: 'single', match: 'part_categories.csv', weight: 3 },
+            { type: 'single', match: 'themes.csv', weight: 3 },
+            { type: 'single', match: 'colors.csv', weight: 3 },
+            { type: 'single', match: 'parts.csv', weight: 10 },
+            { type: 'single', match: 'sets.csv', weight: 8 },
+            { type: 'single', match: 'minifigs.csv', weight: 6 },
+            { type: 'single', match: 'elements.csv', weight: 8 },
+            { type: 'group', prefix: 'inventory_parts_part_', count: 7, weight: 40 },
+            { type: 'single', match: 'inventory_sets.csv', weight: 9 },
+            { type: 'single', match: 'inventory_minifigs.csv', weight: 10 }
+        ];
+        const totalWeight = plan.reduce((sum, p) => sum + p.weight, 0) || 100;
+        // Нормализуем к 100
+        plan.forEach(p => p.norm = (p.weight / totalWeight) * 100);
+        window.CSV_PROGRESS_PLAN = plan;
+        if (!window.CSV_PROGRESS_STATE) window.CSV_PROGRESS_STATE = { completed: new Set() };
+    } catch {}
+}
+
+function matchPlanEntry(label) {
+    if (!window.CSV_PROGRESS_PLAN) initCsvProgressPlan();
+    for (const entry of window.CSV_PROGRESS_PLAN) {
+        if (entry.type === 'single' && label === entry.match) return entry;
+        if (entry.type === 'group' && label.startsWith(entry.prefix)) return entry;
+    }
+    return null;
+}
+
+function calcPlannedProgress(label, fileFraction) {
+    if (!window.CSV_PROGRESS_PLAN) initCsvProgressPlan();
+    if (!window.CSV_PROGRESS_STATE) window.CSV_PROGRESS_STATE = { completed: new Set() };
+    // Суммируем полные веса завершенных этапов до текущего
+    let progress = 0;
+    for (const entry of window.CSV_PROGRESS_PLAN) {
+        const isCurrent = (entry.type === 'single' && label === entry.match) || (entry.type === 'group' && label.startsWith(entry.prefix));
+        if (isCurrent) {
+            // Добавляем долю текущего этапа
+            if (entry.type === 'single') {
+                const frac = (fileFraction != null) ? fileFraction : 0.2; // без длины — даём небольшой прирост
+                progress += entry.norm * Math.max(0, Math.min(1, frac));
+            } else {
+                // Группа файлов с равномерным распределением
+                const completedInGroup = Array.from(window.CSV_PROGRESS_STATE.completed || []).filter(l => l.startsWith(entry.prefix)).length;
+                const frac = (fileFraction != null) ? fileFraction : 0.05; // без длины — очень маленький шаг
+                const perFile = entry.norm / (entry.count || 1);
+                progress += perFile * (completedInGroup + Math.max(0, Math.min(1, frac)));
+            }
+            break;
+        } else {
+            // Если этап полностью завершён — учитываем его полностью
+            if (entry.type === 'single') {
+                if (window.CSV_PROGRESS_STATE.completed && window.CSV_PROGRESS_STATE.completed.has(entry.match)) {
+                    progress += entry.norm;
+                }
+            } else {
+                const completedInGroup = Array.from(window.CSV_PROGRESS_STATE.completed || []).filter(l => l.startsWith(entry.prefix)).length;
+                const total = entry.count || 1;
+                const perFile = entry.norm / total;
+                progress += perFile * Math.max(0, Math.min(total, completedInGroup));
+            }
+        }
+    }
+    // Никогда не возвращаем 100 до финального шага скрытия индикатора
+    return Math.min(99, Math.floor(progress));
 }
 
 // Функции для управления индикатором загрузки
