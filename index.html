@@ -4296,6 +4296,7 @@ function renderSetModal(e = !1) {
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${t.name}</h2>
                  <div class="flex items-center gap-2 flex-shrink-0">
                     ${renderSetModalToggleButton()}
+                    <button data-action="share-set" class="text-gray-300 hover:text-white transition-colors" title="Поделиться">${I_Share("w-6 h-6")}</button>
                     <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
                  </div>
             </div>
@@ -4459,8 +4460,11 @@ function renderModal() {
         <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-lg lg:max-w-4xl flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter">
             
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
-                 <h2 class="text-xl lg:text-2xl font-bold text-white lg:truncate pr-8">${e.name}</h2>
-                 <button id="modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-8">${e.name}</h2>
+                 <div class="flex items-center gap-2">
+                    <button data-action="share-part" class="text-gray-300 hover:text-white transition-colors" title="Поделиться">${I_Share("w-6 h-6")}</button>
+                    <button id="modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+                 </div>
             </div>
             
             <div id="modal-scroll-area" class="flex-grow flex flex-col lg:flex-row overflow-y-auto no-scrollbar">
@@ -5257,6 +5261,7 @@ function renderMinifigModal(e = !1) {
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${t.name}</h2>
                  <div class="flex items-center gap-2 flex-shrink-0">
                     ${renderMinifigModalToggleButton()}
+                    <button data-action="share-minifig" class="text-gray-300 hover:text-white transition-colors" title="Поделиться">${I_Share("w-6 h-6")}</button>
                     <button id="minifig-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
                  </div>
             </div>
@@ -8571,6 +8576,146 @@ document.addEventListener("click", async e => {
         }
         return;
     }
+    // Share buttons in modals
+    if (t.closest('[data-action="share-part"]')) {
+        (async () => {
+            try {
+                const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
+                const partId = S.selPartId;
+                if (!partId) return;
+                const colorId = S.partModal?.selColorId || '';
+                const qty = S.partModal?.qty || 0;
+                const includeCsv = (qty > 0) && !!colorId;
+                const p = PART_MAP[partId] || {};
+                const color = COLOR_MAP[colorId];
+                const title = `${p?.name || 'Деталь'} (${partId})`;
+                const subtitle = includeCsv ? 'CSV включает:' : '';
+                const colorImg = (p?.colorImages && colorId && p.colorImages[colorId]) ? p.colorImages[colorId] : '';
+                const imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || S.partModal?.imgUrl || '');
+                const opts = {};
+                if (color) {
+                    opts.colorHex = color.hex || '#000000';
+                    opts.colorName = color.name || '';
+                    opts.isTransparent = !!color.isTransparent;
+                }
+                if (qty > 0) {
+                    opts.meta = `количество: ${qty}`;
+                }
+                const safeBase = String(p?.name || `part-${partId}`).replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
+                opts.fileName = `lego-${safeBase}.png`;
+                let imageFile = await createCompositePreviewImage(imageUrl, title, subtitle, opts);
+                if (!imageFile) {
+                    const fallbackSub = qty > 0 ? `количество: ${qty}` : '';
+                    imageFile = await createRasterPreviewImage(title, fallbackSub, { fileName: `lego-${safeBase}.png` });
+                }
+                let files = [imageFile];
+                let csvData = '';
+                let csvFile = null;
+                if (includeCsv) {
+                    csvData = generateCsvDataForSelection({ parts: [{ id: partId, colorId }] });
+                    const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                    const csvName = `lego-selection-${partId}${colorId?'-'+colorId:''}.csv`;
+                    csvFile = new File([csvBlob], csvName, { type: 'text/csv' });
+                    files = [csvFile, imageFile];
+                }
+                if (navigator.share) {
+                    let shared = false;
+                    if (navigator.canShare) {
+                        if (!shared && files.length === 2 && navigator.canShare({ files })) { await navigator.share({ files, title, text: `Сайт: ${siteUrl}` }); shared = true; }
+                        if (!shared && navigator.canShare({ files: [imageFile] })) { await navigator.share({ files: [imageFile], title, text: `Сайт: ${siteUrl}` }); shared = true; }
+                        if (!shared && csvFile && navigator.canShare({ files: [csvFile] })) { await navigator.share({ files: [csvFile], title: title + ' (CSV)', text: `Сайт: ${siteUrl}` }); shared = true; }
+                    }
+                    if (!shared) {
+                        await navigator.share({ title, text: `Сайт: ${siteUrl}` + (includeCsv ? ('\n\n' + csvData) : '') , url: siteUrl });
+                    }
+                } else {
+                    // Fallback: download files
+                    const urlImg = URL.createObjectURL(imageFile); const a1 = document.createElement('a'); a1.href = urlImg; a1.download = imageFile.name || 'lego-part.png'; document.body.appendChild(a1); a1.click(); a1.remove(); setTimeout(() => URL.revokeObjectURL(urlImg), 5000);
+                    if (csvFile) { const urlCsv = URL.createObjectURL(csvFile); const a2 = document.createElement('a'); a2.href = urlCsv; a2.download = csvFile.name; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(urlCsv), 5000); }
+                    window.open(siteUrl, '_blank');
+                }
+            } catch (err) { console.error('Share part failed:', err); }
+        })();
+        return;
+    }
+    if (t.closest('[data-action="share-set"]')) {
+        (async () => {
+            try {
+                const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
+                const setNum = S.selSetNum; if (!setNum) return;
+                const s = SET_MAP[setNum] || {};
+                const qty = S.setModal?.qty || 0;
+                const title = `${s?.name || 'Набор'}`;
+                const subtitle = 'CSV включает:';
+                const imageUrl = (s?.set_img_url && String(s.set_img_url).startsWith('http')) ? s.set_img_url : '';
+                const opts = { fileName: `lego-set-${setNum}.png` };
+                const theme = s?.theme_id ? THEME_MAP[s.theme_id] : null;
+                const piecesInfo = s?.num_parts ? `деталей: ${s.num_parts}` : '';
+                const yearInfo = s?.year ? `год: ${s.year}` : '';
+                const idInfo = `ID: ${setNum}`;
+                const extras = [piecesInfo, yearInfo, idInfo].filter(Boolean).join(' • ');
+                if (extras) opts.meta = extras;
+                let imageFile = await createCompositePreviewImage(imageUrl, title, subtitle, opts);
+                if (!imageFile) imageFile = await createRasterPreviewImage(title, qty>0?`количество: ${qty}`:'' , { fileName: `lego-set-${setNum}.png` });
+                const csvData = generateCsvDataForSelection({ sets: [setNum] });
+                const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                const csvFile = new File([csvBlob], `lego-selection-set-${setNum}.csv`, { type: 'text/csv' });
+                if (navigator.share) {
+                    let shared = false;
+                    const files = [csvFile, imageFile];
+                    if (navigator.canShare) {
+                        if (!shared && navigator.canShare({ files })) { await navigator.share({ files, title, text: `Сайт: ${siteUrl}` }); shared = true; }
+                        if (!shared && navigator.canShare({ files: [imageFile] })) { await navigator.share({ files: [imageFile], title, text: `Сайт: ${siteUrl}` }); shared = true; }
+                        if (!shared && navigator.canShare({ files: [csvFile] })) { await navigator.share({ files: [csvFile], title: title + ' (CSV)', text: `Сайт: ${siteUrl}` }); shared = true; }
+                    }
+                    if (!shared) { await navigator.share({ title, text: `Сайт: ${siteUrl}\n\n` + csvData, url: siteUrl }); }
+                } else {
+                    const urlImg = URL.createObjectURL(imageFile); const a1 = document.createElement('a'); a1.href = urlImg; a1.download = imageFile.name || 'lego-set.png'; document.body.appendChild(a1); a1.click(); a1.remove(); setTimeout(() => URL.revokeObjectURL(urlImg), 5000);
+                    const urlCsv = URL.createObjectURL(csvBlob); const a2 = document.createElement('a'); a2.href = urlCsv; a2.download = csvFile.name; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(urlCsv), 5000);
+                    window.open(siteUrl, '_blank');
+                }
+            } catch (err) { console.error('Share set failed:', err); }
+        })();
+        return;
+    }
+    if (t.closest('[data-action="share-minifig"]')) {
+        (async () => {
+            try {
+                const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
+                const figNum = S.selFigNum; if (!figNum) return;
+                const m = MINIFIG_MAP[figNum] || {};
+                const qty = S.minifigModal?.qty || 0;
+                const title = `${m?.name || 'Минифигурка'}`;
+                const subtitle = 'CSV включает:';
+                const imageUrl = (m?.minifig_img_url && String(m.minifig_img_url).startsWith('http')) ? m.minifig_img_url : (m?.set_img_url || '');
+                const opts = { fileName: `lego-minifig-${figNum}.png` };
+                const piecesInfo = m?.num_parts ? `деталей: ${m.num_parts}` : '';
+                const idInfo = `ID: ${figNum}`;
+                const extras = [piecesInfo, idInfo].filter(Boolean).join(' • ');
+                if (extras) opts.meta = extras;
+                let imageFile = await createCompositePreviewImage(imageUrl, title, subtitle, opts);
+                if (!imageFile) imageFile = await createRasterPreviewImage(title, qty>0?`количество: ${qty}`:'' , { fileName: `lego-minifig-${figNum}.png` });
+                const csvData = generateCsvDataForSelection({ minifigs: [figNum] });
+                const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                const csvFile = new File([csvBlob], `lego-selection-minifig-${figNum}.csv`, { type: 'text/csv' });
+                if (navigator.share) {
+                    let shared = false;
+                    const files = [csvFile, imageFile];
+                    if (navigator.canShare) {
+                        if (!shared && navigator.canShare({ files })) { await navigator.share({ files, title, text: `Сайт: ${siteUrl}` }); shared = true; }
+                        if (!shared && navigator.canShare({ files: [imageFile] })) { await navigator.share({ files: [imageFile], title, text: `Сайт: ${siteUrl}` }); shared = true; }
+                        if (!shared && navigator.canShare({ files: [csvFile] })) { await navigator.share({ files: [csvFile], title: title + ' (CSV)', text: `Сайт: ${siteUrl}` }); shared = true; }
+                    }
+                    if (!shared) { await navigator.share({ title, text: `Сайт: ${siteUrl}\n\n` + csvData, url: siteUrl }); }
+                } else {
+                    const urlImg = URL.createObjectURL(imageFile); const a1 = document.createElement('a'); a1.href = urlImg; a1.download = imageFile.name || 'lego-minifig.png'; document.body.appendChild(a1); a1.click(); a1.remove(); setTimeout(() => URL.revokeObjectURL(urlImg), 5000);
+                    const urlCsv = URL.createObjectURL(csvBlob); const a2 = document.createElement('a'); a2.href = urlCsv; a2.download = csvFile.name; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(urlCsv), 5000);
+                    window.open(siteUrl, '_blank');
+                }
+            } catch (err) { console.error('Share minifig failed:', err); }
+        })();
+        return;
+    }
     if (t.closest("#filter-button")) {
         S.filterOpen = !0;
         // Убеждаемся, что фильтры правильно инициализированы
@@ -8958,25 +9103,28 @@ document.addEventListener("click", async e => {
                 if ("inventory" === S.minifigModal.view && !S.minifigModal.inv) {
                     // Показываем индикатор загрузки для инвентаря минифигурки
                     updateLoadingStatus("Загрузка инвентаря минифигурки...", 75, "Загрузка списка деталей");
-                    
-                    S.minifigModal.loadingInv = !0, S.minifigModal.invError = !1, updateMinifigModalView();
+                    S.minifigModal.loadingInv = !0; S.minifigModal.invError = !1;
+                    // Перерисовываем всю модалку, чтобы обновить заголовок и кнопку-переключатель
+                    renderMinifigModal(false);
                     try {
                         S.minifigModal.inv = await fetchMinifigParts(S.selFigNum)
                     } catch (t) {
                         S.minifigModal.invError = !0
                     } finally {
                         S.minifigModal.loadingInv = !1;
-                        
                         // Обновляем статус загрузки для инвентаря минифигурки
                         if (S.minifigModal.inv && S.minifigModal.inv.length > 0) {
                             updateLoadingStatus("Инвентарь минифигурки загружен", 80, `Загружено ${S.minifigModal.inv.length} деталей`);
                         } else {
                             updateLoadingStatus("Инвентарь минифигурки пуст", 80, "Детали не найдены");
                         }
-                        
-                        updateMinifigModalView();
+                        // Перерисовываем модалку после загрузки
+                        renderMinifigModal(false);
                     }
-                } else updateMinifigModalView();
+                } else {
+                    // Простое переключение — перерисовываем всю модалку как у наборов
+                    renderMinifigModal(false);
+                }
                 break;
             case "add-minifig-parts-modal":
                 S.selFigNum && handleBulkAddMinifigPartsFromModal(S.selFigNum);
