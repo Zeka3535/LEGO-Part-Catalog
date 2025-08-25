@@ -9630,6 +9630,74 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
         });
     }
+
+    // PWA install prompt (приглашение установить как приложение)
+    (function(){
+        let deferredInstallPrompt = null;
+        let pwaPromptShown = false;
+        let loadTimestamp = null;
+        try {
+            pwaPromptShown = localStorage.getItem('pwaPromptShown') === 'true';
+        } catch {}
+        window.addEventListener('load', () => { loadTimestamp = Date.now(); });
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Блокируем авто-показ системного баннера
+            e.preventDefault();
+            deferredInstallPrompt = e;
+            if (!pwaPromptShown) {
+                const now = Date.now();
+                const base = loadTimestamp || now;
+                const delay = Math.max(0, 3000 - (now - base));
+                setTimeout(() => {
+                    showPwaInstallNotice();
+                    try { localStorage.setItem('pwaPromptShown', 'true'); } catch {}
+                }, delay);
+                pwaPromptShown = true;
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            try { localStorage.setItem('pwaPromptShown', 'true'); } catch {}
+        });
+
+        function showPwaInstallNotice() {
+            // Баннер в стиле блоков настроек только для мобильных устройств
+            const bar = document.createElement('div');
+            bar.setAttribute('role', 'dialog');
+            bar.className = 'fixed inset-0 z-[70] pointer-events-none sm:hidden';
+            bar.innerHTML = `
+                <div class="flex justify-end p-4">
+                    <div class="pointer-events-auto w-full max-w-md bg-gray-900/80 backdrop-blur-md rounded-lg p-4 border border-gray-700 shadow-xl mb-4">
+                        <div class="flex flex-col items-start gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm font-semibold text-gray-300 mb-1">Установите LEGO Catalog как приложение</div>
+                                <div class="text-xs text-gray-400">Быстрый доступ, офлайн-режим и нативный интерфейс</div>
+                            </div>
+                            <div class="flex items-center gap-2 w-full justify-center">
+                                <button id="pwa-install-btn" class="flex-1 px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-blue-600 hover:bg-blue-700 text-white">Установить</button>
+                                <button id="pwa-install-dismiss" class="flex-1 px-3 py-2 text-sm rounded-md text-gray-300 hover:text-white hover:bg-gray-700/60">Позже</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            document.body.appendChild(bar);
+
+            const onDismiss = () => { bar.remove(); };
+            const onInstall = async () => {
+                if (!deferredInstallPrompt) { onDismiss(); return; }
+                try {
+                    deferredInstallPrompt.prompt();
+                    await deferredInstallPrompt.userChoice;
+                } catch {}
+                deferredInstallPrompt = null;
+                onDismiss();
+            };
+            document.getElementById('pwa-install-dismiss')?.addEventListener('click', onDismiss, { once: true });
+            document.getElementById('pwa-install-btn')?.addEventListener('click', onInstall, { once: true });
+        }
+    })();
 });
 // Функция для загрузки данных из CSV файлов с приоритетной загрузкой
 async function loadDataFromCSV() {
