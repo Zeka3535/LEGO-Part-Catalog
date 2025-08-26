@@ -205,7 +205,6 @@
     /* Полноэкранный просмотр изображений */
     #image-viewer-container {
         cursor: default;
-        z-index: 100;
     }
     
     #image-viewer-container.zoomed {
@@ -336,6 +335,8 @@
     }
     /* Модалка деталей должна быть поверх инвентарей наборов/минифигурок */
     #modal-container { z-index: 60 !important; }
+    /* Модалка набора должна быть поверх связанных наборов */
+    /* z-index управляется ModalManager */
     
     /* Прогресс прокрутки (вертикальный индикатор) */
     #scroll-progress {
@@ -422,21 +423,50 @@
         border-radius: inherit;
         transform: translateY(0);
     }
+
+    /* Индикатор в модальном окне связанных наборов */
+    #related-sets-scroll-progress {
+        position: absolute;
+        right: 2px;
+        top: 12px; /* будет скорректирован скриптом под высоту шапки модалки */
+        bottom: 12px;
+        width: 5px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 9999px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateX(8px);
+        transition: opacity .2s ease, transform .2s ease;
+        z-index: 15;
+        pointer-events: none;
+    }
+    #related-sets-scroll-progress.visible { opacity: .9; transform: translateX(0); }
+    #related-sets-scroll-progress .bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 48px;
+        background: linear-gradient(180deg, #60a5fa, #3b82f6);
+        box-shadow: 0 0 10px rgba(59,130,246,.35);
+        border-radius: inherit;
+        transform: translateY(0);
+    }
     /* Image viewer должен быть поверх модальных окон */
-    #image-viewer-container:not(.viewer-hidden) {
-        z-index: 100 !important;
+    #image-viewer-container.visible {
         pointer-events: auto !important;
+        opacity: 1 !important;
     }
     
     /* Скрытый image viewer не должен блокировать клики */
     #image-viewer-container.viewer-hidden {
         z-index: -1 !important;
         pointer-events: none !important;
+        opacity: 0 !important;
     }
     
     /* Кнопка закрытия всегда поверх и кликабельна */
     #image-viewer-close {
-        z-index: 101 !important;
         pointer-events: auto !important;
     }
     
@@ -1486,13 +1516,14 @@ body.tab-switching .minifig-card {
       </div>
     </main>
   </div>
-  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
-  <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
-  <div id="minifig-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
-  <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
-  <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm modal-hidden"></div>
+  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
+          <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
+  <div id="minifig-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
+  <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
+  <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
+  <div id="related-sets-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
-  <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[100] backdrop-blur-sm viewer-hidden">
+  <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center backdrop-blur-sm viewer-hidden">
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
       <div class="image-wrapper bg-white rounded-lg shadow-2xl overflow-hidden">
         <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out">
@@ -1521,7 +1552,7 @@ function getApiKey() {
     currentApiKeyIndex = (currentApiKeyIndex + 1) % REBRICKABLE_API_KEYS.length;
     return key;
 }
-const CACHE_NAME = 'lego-catalog-cache-v5';
+const CACHE_NAME = 'lego-catalog-cache-v6';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -1581,6 +1612,155 @@ const I_Share = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 const I_Settings = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
 const I_Heart = (c, f = !1) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const I_Refresh = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>`;
+
+// Класс для управления модальными окнами
+class ModalManager {
+    constructor() {
+        this.openModals = [];
+        this.baseZIndex = 200; // Увеличиваем базовый z-index
+    }
+    
+    openModal(modalId, modalElement) {
+        console.log(`ModalManager.openModal: Opening ${modalId}`);
+        // Убираем класс modal-hidden или viewer-hidden
+        modalElement.classList.remove('modal-hidden', 'viewer-hidden');
+        
+        // Находим максимальный z-index среди всех открытых модальных окон
+        let maxZIndex = this.baseZIndex;
+        if (this.openModals.length > 0) {
+            maxZIndex = Math.max(...this.openModals.map(modal => modal.zIndex));
+        }
+        
+        // Для image viewer устанавливаем z-index еще выше
+        let zIndex;
+        if (modalId === 'image-viewer-container') {
+            zIndex = maxZIndex + 50; // Image viewer всегда поверх всех
+        } else {
+            zIndex = maxZIndex + 10; // Обычные модальные окна
+        }
+        
+        console.log(`ModalManager.openModal: Setting z-index ${zIndex} for ${modalId} (max was ${maxZIndex})`);
+        modalElement.style.zIndex = zIndex.toString();
+        
+        // Добавляем в список открытых модальных окон
+        this.openModals.push({ id: modalId, element: modalElement, zIndex });
+        
+        // Показываем модальное окно
+        requestAnimationFrame(() => {
+            modalElement.classList.add('visible');
+        });
+        
+        // Блокируем прокрутку body
+        document.body.classList.add('overflow-hidden');
+        
+        console.log(`ModalManager.openModal: After opening ${modalId}, current z-indexes:`);
+        this.debugZIndexes();
+    }
+    
+    closeModal(modalId) {
+        const modalIndex = this.openModals.findIndex(modal => modal.id === modalId);
+        if (modalIndex === -1) return;
+        
+        const modal = this.openModals[modalIndex];
+        
+        // Скрываем модальное окно
+        modal.element.classList.remove('visible');
+        
+        // Добавляем правильный класс скрытия в зависимости от типа модального окна
+        if (modalId === 'image-viewer-container') {
+            modal.element.classList.add('viewer-hidden');
+        } else {
+            modal.element.classList.add('modal-hidden');
+        }
+        
+        // Убираем из списка открытых модальных окон
+        this.openModals.splice(modalIndex, 1);
+        
+        // Убираем overflow-hidden только если нет других открытых модальных окон
+        if (this.openModals.length === 0) {
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+
+    }
+    
+    closeLastModal() {
+        if (this.openModals.length === 0) return;
+        
+        const lastModal = this.openModals[this.openModals.length - 1];
+        this.closeModal(lastModal.id);
+    }
+    
+    getOpenModalsCount() {
+        return this.openModals.length;
+    }
+    
+    getTopModal() {
+        if (this.openModals.length === 0) return null;
+        return this.openModals[this.openModals.length - 1];
+    }
+    
+    // Закрывает все открытые модальные окна
+    closeAllModals() {
+        console.log(`ModalManager.closeAllModals: Closing ${this.openModals.length} modals`);
+        
+        // Создаем копию массива, чтобы избежать проблем при итерации
+        const modalsToClose = [...this.openModals];
+        
+        modalsToClose.forEach(modal => {
+            this.closeModal(modal.id);
+        });
+        
+        // Убираем overflow-hidden
+        document.body.classList.remove('overflow-hidden');
+        
+        console.log('ModalManager.closeAllModals: All modals closed');
+    }
+    
+    getMaxZIndex() {
+        if (this.openModals.length === 0) return this.baseZIndex;
+        return Math.max(...this.openModals.map(modal => modal.zIndex));
+    }
+    
+    debugZIndexes() {
+        console.log('Current modal z-indexes:');
+        this.openModals.forEach(modal => {
+            console.log(`  ${modal.id}: ${modal.zIndex}`);
+        });
+        console.log(`Max z-index: ${this.getMaxZIndex()}`);
+    }
+    
+    // Временно поднимает модальное окно на самый верх
+    bringToFront(modalId) {
+        console.log(`ModalManager.bringToFront: Bringing ${modalId} to front`);
+        const modalIndex = this.openModals.findIndex(modal => modal.id === modalId);
+        if (modalIndex === -1) {
+            console.log(`ModalManager.bringToFront: Modal ${modalId} not found in openModals`);
+            return;
+        }
+        
+        const modal = this.openModals[modalIndex];
+        
+        // Находим текущий максимальный z-index
+        const currentMaxZIndex = this.getMaxZIndex();
+        
+        // Устанавливаем z-index выше всех остальных
+        const newZIndex = currentMaxZIndex + 20;
+        modal.zIndex = newZIndex;
+        console.log(`ModalManager.bringToFront: Setting z-index ${newZIndex} for ${modalId} (was ${modal.element.style.zIndex})`);
+        modal.element.style.zIndex = newZIndex.toString();
+        
+        // Перемещаем модальное окно в конец массива (последним открытым)
+        this.openModals.splice(modalIndex, 1);
+        this.openModals.push(modal);
+        
+        console.log(`ModalManager.bringToFront: After bringing ${modalId} to front:`);
+        this.debugZIndexes();
+    }
+}
+
+// Создаем экземпляр ModalManager
+const modalManager = new ModalManager();
 
 let S = {
     view: 'catalog',
@@ -1761,6 +1941,7 @@ const sidebarEl = document.getElementById('sidebar-container'),
     minifigModalEl = document.getElementById('minifig-modal-container'),
     filterModalEl = document.getElementById('filter-modal-container'),
     settingsModalEl = document.getElementById('settings-modal-container'),
+    relatedSetsModalEl = document.getElementById('related-sets-modal-container'),
     toTopBtn = document.getElementById('scroll-to-top-btn'),
     viewerEl = document.getElementById('image-viewer-container'),
     viewerImg = document.getElementById('fullscreen-image'),
@@ -1986,7 +2167,7 @@ async function loadPartsForCategory(e) {
     // Показываем индикатор загрузки для загрузки категории
     updateLoadingStatus("Загрузка деталей категории...", 65, "Загрузка данных из CSV");
     
-    if (S.selCatId = e, S.loading = !0, S.err = null, S.searchGroups = null, S.q = '', S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.catGroups = {}, S.loading = !1, void updateUI();
+    if (S.selCatId = e, S.selFigNum = null, S.loading = !0, S.err = null, S.searchGroups = null, S.q = '', S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.catGroups = {}, S.loading = !1, void updateUI();
     
     let o = []; // Объявляем o в начале функции
     let l = []; // Объявляем l в начале функции
@@ -2056,8 +2237,8 @@ async function searchRebrickableParts(e) {
         document.body.classList.remove('catalog-parts-view');
     }, 800);
     
-    if (!e || e.trim().length === 0) return S.searchGroups = null, S.loading = !1, S.selCatId = null, S.gridStale = !0, void updateUI();
-    if (S.loading = !0, S.err = null, S.selCatId = null, S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.searchGroups = {}, S.loading = !1, void updateUI();
+    if (!e || e.trim().length === 0) return S.searchGroups = null, S.loading = !1, S.selCatId = null, S.selFigNum = null, S.gridStale = !0, void updateUI();
+    if (S.loading = !0, S.err = null, S.selCatId = null, S.selFigNum = null, S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.searchGroups = {}, S.loading = !1, void updateUI();
     
     let o = []; // Объявляем o в начале функции
     let l = {}; // Объявляем l в начале функции
@@ -3350,10 +3531,11 @@ function renderSidebar() {
                 <span class="mt-1">Детали</span>
                 ${s("parts",e,t)}
             </button>
-            <button data-sub-view="sets" class="${r("sets")}">
+            <button data-sub-view="sets" class="${r("sets")} relative">
                 ${I_Set("w-5 h-5")}
                 <span class="mt-1">Наборы</span>
                 ${s("sets",o,l)}
+                ${S.view === "catalog" && S.selFigNum ? `<div class="absolute top-1 right-1 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold">${I_Minifig("w-3 h-3")}</div>` : ''}
             </button>
             <button data-sub-view="minifigs" class="${r("minifigs")}">
                 ${I_Minifig("w-5 h-5")}
@@ -3428,7 +3610,11 @@ function renderHeader() {
                     <button id="sidebar-toggle" class="lg:hidden text-gray-300 hover:text-white mr-4 -ml-1 p-1">
                         ${I_Menu("w-6 h-6")}
                     </button>
-                    <h1 class="text-xl font-bold text-white hidden sm:block">LEGO® Catalog</h1>
+                    <h1 class="text-xl font-bold text-white hidden sm:block">
+                        LEGO® Catalog
+                        ${S.view === "catalog" && S.subView === "sets" && S.selFigNum ? 
+                            `<span class="text-sm font-normal text-blue-400 ml-2">• Связанные наборы</span>` : ''}
+                    </h1>
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
@@ -3719,7 +3905,7 @@ function renderAppliedFilters() {
                     <button data-action="remove-filter" data-filter-type="sortBy" class="text-gray-200 hover:bg-gray-500/50 rounded-full p-0.5">${I_X("w-4 h-4")}</button>
                 </div>
             `;
-        e = [c, i, n].filter(Boolean).join(""), o = !t || l.length > 0 || (a && "catalog" === S.view)
+        e = [c, i, n].filter(Boolean).join(""), o = (!t && S.sortBy !== "popularity" && !S.selFigNum) || l.length > 0 || (a && "catalog" === S.view && a === true)
     }
     return o ? `
             <div class="px-4 pt-2 pb-0">
@@ -3791,7 +3977,37 @@ function renderMainContent() {
                 const t = Object.values(S.coll[e.id] || {}).reduce((e, t) => e + t, 0);
                 return renderPartCard(e, null, t, S.gridStale)
             }, a = "grid-cols-[repeat(auto-fill,minmax(130px,1fr))]";
-        } else "sets" === S.subView ? (t = S.q ? S.searchSetRes : S.setRes, o = e => renderSetCard(e, S.gridStale), l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов.") : (t = S.q ? S.searchMinifigRes : S.minifigRes, o = e => renderMinifigCard(e, S.gridStale), l = S.q ? "По вашему запросу ничего не найдено." : "catalog" === S.view && !S.q ? "Используйте поиск для нахождения минифигурок." : "В коллекции нет минифигурок.");
+        } else if ("sets" === S.subView) {
+            console.log('Sets subview, selFigNum:', S.selFigNum, 'q:', S.q, 'view:', S.view);
+            // Проверяем, есть ли выбранная минифигурка для показа связанных наборов
+            if (S.selFigNum && !S.q) {
+                // Показываем связанные наборы для выбранной минифигурки
+                const relatedSets = getRelatedSetsForMinifig(S.selFigNum);
+                console.log('Related sets for minifig:', S.selFigNum, ':', relatedSets);
+                if (relatedSets && relatedSets.length > 0) {
+                    t = relatedSets;
+                    o = e => renderSetCard(e, S.gridStale);
+                    l = `Связанные наборы для минифигурки "${MINIFIG_MAP[S.selFigNum]?.name || S.selFigNum}" (${relatedSets.length})`;
+                    console.log('Setting t to relatedSets:', t);
+                } else {
+                    t = S.q ? S.searchSetRes : S.setRes;
+                    o = e => renderSetCard(e, S.gridStale);
+                    l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов.";
+                    console.log('No related sets found, using default sets');
+                }
+            } else {
+                // Обычное отображение наборов
+                t = S.q ? S.searchSetRes : S.setRes;
+                o = e => renderSetCard(e, S.gridStale);
+                l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов.";
+                console.log('Using default sets display');
+            }
+            console.log('Final t value for sets:', t);
+        } else {
+            t = S.q ? S.searchMinifigRes : S.minifigRes;
+            o = e => renderMinifigCard(e, S.gridStale);
+            l = S.q ? "По вашему запросу ничего не найдено." : "catalog" === S.view && !S.q ? "Используйте поиск для нахождения минифигурок." : "В коллекции нет минифигурок.";
+        }
         if (!t || 0 === t.length) e = `
                     <div class="flex flex-col items-center justify-center h-full p-4 text-center">
                         ${S.sidebarLoading ? `
@@ -3812,7 +4028,25 @@ function renderMainContent() {
             S.totalItems = t.length;
             const l = t.slice(0, S.toDisplay);
             S.loadedItems = l.length;
-            e = `<div class="grid ${a} gap-4 p-4">
+            console.log('Rendering sets:', t.length, 'total,', l.length, 'displayed');
+            console.log('First few sets:', l.slice(0, 3));
+            // Добавляем заголовок для связанных наборов, если они отображаются
+            const headerHtml = (S.subView === "sets" && S.selFigNum && !S.q) ? `
+                <div class="px-4 pt-4 pb-2">
+                    <div class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                        <div class="flex items-center gap-3">
+                            <span class="text-blue-400">${I_Minifig("w-5 h-5")}</span>
+                            <div>
+                                <h2 class="text-lg font-semibold text-white">Связанные наборы</h2>
+                                <p class="text-sm text-gray-400">Для минифигурки "${MINIFIG_MAP[S.selFigNum]?.name || S.selFigNum}"</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            ` : '';
+            
+            e = `${headerHtml}<div class="grid ${a} gap-4 p-4">
                     ${l.map((e,t)=>{const l=o(e,true,t);return l.replace('class="part-card ',`style="${S.getAnimationDelay(t)}" class="part-card `).replace('class="set-card ',`style="${S.getAnimationDelay(t)}" class="set-card `).replace('class="minifig-card ',`style="${S.getAnimationDelay(t)}" class="minifig-card `)}).join("")}
                 </div>`;
             
@@ -4200,6 +4434,16 @@ function updateSetModalView() {
     } else {
         e.innerHTML = renderSetModalInventoryView();
     }
+    
+    // НЕ проверяем и не восстанавливаем z-index - ModalManager сам управляет этим
+    // if (setModalEl) {
+    //     console.log('Set modal z-index after view update:', setModalEl.style.zIndex);
+    //     // Принудительно восстанавливаем z-index если он сбросился
+    //     if (setModalEl.style.zIndex !== '95') {
+    //         setModalEl.style.zIndex = '95';
+    //         console.log('Set modal z-index restored to 95');
+    //     }
+    // }
     // Трек прокрутки фиксирован относительно контента модалки и создаётся при рендере модалки
     // После рендера вида обновляем границы и прогресс индикатора в модалке
     (function(){
@@ -4290,7 +4534,7 @@ function renderSetModal(e = !1) {
     if (!t) return void closeSetModal();
     const o = e ? "modal-content-enter" : "",
         l = "inventory" === S.setModal.view;
-    e && (document.body.classList.add("overflow-hidden"), setModalEl.classList.remove("modal-hidden"), setModalEl.style.zIndex = '50', requestAnimationFrame(() => setModalEl.classList.add("visible"))), setModalEl.innerHTML = `
+            e && (document.body.classList.add("overflow-hidden"), setModalEl.classList.remove("modal-hidden"), requestAnimationFrame(() => setModalEl.classList.add("visible"))), setModalEl.innerHTML = `
         <div id="set-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] ${l?"max-w-6xl":"max-w-4xl"} flex flex-col ${l?"h-[calc(100vh-4rem)]":"max-h-[calc(100vh-2rem)]"} ${o} transition-all duration-300 relative">
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${t.name}</h2>
@@ -4303,7 +4547,13 @@ function renderSetModal(e = !1) {
             <div id="set-scroll-progress"><div class="bar"></div></div>
             <div id="set-modal-view-container" class="flex-grow overflow-y-auto no-scrollbar" style="min-height: 0;"></div>
         </div>
-        `, updateSetModalView()
+        `, updateSetModalView();
+        
+        // НЕ устанавливаем z-index принудительно - ModalManager сам управляет этим
+        // if (setModalEl) {
+        //     setModalEl.style.zIndex = '95';
+        //     console.log('Set modal z-index forced to 95 after render');
+        // }
 }
 function renderSetInventory() {
     const {
@@ -4911,7 +5161,9 @@ function renderFilterModal() {
                      </div>
                 </div>`
     }
-    document.body.classList.add("overflow-hidden"), filterModalEl.classList.remove("modal-hidden"), requestAnimationFrame(() => filterModalEl.classList.add("visible")), filterModalEl.innerHTML = `
+    S.filterOpen = true;
+    modalManager.openModal('filter-modal-container', filterModalEl);
+    filterModalEl.innerHTML = `
             <div id="filter-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Фильтры и сортировка</h2>
@@ -4931,10 +5183,9 @@ function renderSettingsModal() {
     // Сохраняем позицию прокрутки содержимого, чтобы избежать дергания
     const prevScrollTop = settingsModalEl.querySelector('#settings-modal-scroll')?.scrollTop || 0;
     
-    document.body.classList.add("overflow-hidden");
+    S.settingsOpen = true;
     if (isFirstOpen) {
-        settingsModalEl.classList.remove("modal-hidden");
-        requestAnimationFrame(() => settingsModalEl.classList.add("visible"));
+        modalManager.openModal('settings-modal-container', settingsModalEl);
     }
     const {
         delConfirm: e,
@@ -5290,6 +5541,127 @@ function renderMinifigModalToggleButton() {
             </button>` : ""
 }
 
+// Функция для получения связанных наборов минифигурки
+function getRelatedSetsForMinifig(figNum) {
+    if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.minifigs) {
+        return [];
+    }
+    
+    const relatedSets = [];
+    const inventoryMinifigs = window.INVENTORY_DATA.minifigs;
+    
+    // Проходим по всем инвентарям, где есть эта минифигурка
+    Object.keys(inventoryMinifigs).forEach(inventoryId => {
+        const minifigs = inventoryMinifigs[inventoryId];
+        const hasMinifig = minifigs.some(m => m.fig_num === figNum);
+        
+        if (hasMinifig) {
+            // Находим соответствующий набор для этого инвентаря
+            if (window.INVENTORY_DATA.sets && window.INVENTORY_DATA.sets[inventoryId]) {
+                const sets = window.INVENTORY_DATA.sets[inventoryId];
+                sets.forEach(set => {
+                    if (SET_MAP[set.set_num]) {
+                        // Возвращаем полный объект набора для корректного отображения
+                        relatedSets.push(SET_MAP[set.set_num]);
+                    }
+                });
+            }
+        }
+    });
+    
+    // Убираем дубликаты и сортируем по году
+    const uniqueSets = relatedSets.filter((set, index, self) => 
+        index === self.findIndex(s => s.set_num === set.set_num)
+    ).sort((a, b) => (b.year || 0) - (a.year || 0));
+    
+    return uniqueSets;
+}
+
+// Функция для отображения модального окна связанных наборов
+function showRelatedSetsModal(relatedSets, minifigName) {
+    if (!relatedSets || relatedSets.length === 0) return;
+    
+    modalManager.openModal('related-sets-modal-container', relatedSetsModalEl);
+    
+    const setsList = relatedSets.map(set => `
+        <div class="flex items-center bg-gray-700/50 p-3 rounded-md gap-3 hover:bg-gray-700/70 transition-colors cursor-pointer"
+             data-action="open-set-from-related"
+             data-set-num="${set.set_num}">
+            <div class="w-16 h-16 bg-white rounded-md flex items-center justify-center flex-shrink-0">
+                <img ${getPartImageUrl(SET_MAP[set.set_num]?.set_img_url || '')} alt="${set.name}" class="w-full h-full object-contain p-1">
+            </div>
+            <div class="flex-grow min-w-0">
+                <p class="text-white font-semibold truncate">${set.name}</p>
+                <p class="text-gray-400 text-sm">${set.set_num}</p>
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    ${set.year ? `<span>${set.year}</span>` : ''}
+                    ${set.theme_name ? `<span>• ${set.theme_name}</span>` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    relatedSetsModalEl.innerHTML = `
+        <div class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-2xl flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter relative">
+            <div id="related-sets-scroll-progress"><div class="bar"></div></div>
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white">Наборы с минифигуркой "${minifigName}"</h2>
+                <button id="related-sets-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+            </div>
+            <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-3">
+                ${setsList}
+            </div>
+        </div>
+    `;
+    
+    // Настраиваем скролл-прогресс для модального окна связанных наборов
+    setupRelatedSetsScrollProgress();
+}
+
+// Функция для настройки скролл-прогресса в модальном окне связанных наборов
+function setupRelatedSetsScrollProgress() {
+    const track = document.getElementById('related-sets-scroll-progress');
+    const content = relatedSetsModalEl.querySelector('.bg-gray-800');
+    if (track && content) {
+        const header = content.querySelector('.border-b');
+        const headerH = header?.offsetHeight || 0;
+        const top = Math.max(12, headerH + 8);
+        track.style.top = top + 'px';
+        track.style.bottom = '12px';
+    }
+    
+    const scrollArea = content?.querySelector('.overflow-y-auto');
+    const bar = track?.querySelector('.bar');
+    
+    const update = () => {
+        if (!track || !bar || !scrollArea) return;
+        const max = scrollArea.scrollHeight - scrollArea.clientHeight;
+        const percent = max <= 0 ? 100 : Math.min(100, Math.max(0, (scrollArea.scrollTop / max) * 100));
+        const containerH = track.clientHeight || 0;
+        const barH = bar.clientHeight || 24;
+        const maxOffset = Math.max(0, containerH - barH);
+        const translatePx = (percent / 100) * maxOffset;
+        bar.style.transform = `translateY(${translatePx}px)`;
+    };
+    
+    update();
+    
+    let to;
+    const onScroll = () => {
+        track?.classList.add('visible');
+        update();
+        clearTimeout(to);
+        to = setTimeout(() => track?.classList.remove('visible'), 200);
+    };
+    
+    scrollArea?.addEventListener('scroll', onScroll, { passive: true });
+    
+    const obs = new MutationObserver(update);
+    scrollArea && obs.observe(scrollArea, { childList: true, subtree: true });
+    
+    window.addEventListener('resize', () => { update(); }, { passive: true });
+}
+
 function renderMinifigModalDetailsView() {
     if (!S.selFigNum) return "";
     const e = MINIFIG_MAP[S.selFigNum];
@@ -5347,6 +5719,18 @@ function renderMinifigModalDetailsView() {
                             <p><span class="font-semibold text-gray-300">Название:</span> ${e.name}</p>
                             <p>ID: ${e.set_num}</p>
                             <p>Кол-во деталей: ${e.num_parts}</p>
+                            ${(() => {
+                                const relatedSets = getRelatedSetsForMinifig(S.selFigNum);
+                                console.log('Related sets for', S.selFigNum, ':', relatedSets);
+                                if (relatedSets.length > 0) {
+                                    return `<p class="mt-2">
+                                        <button data-action="show-related-sets" class="text-blue-400 hover:text-blue-300 underline text-sm">
+                                            Связанные наборы (${relatedSets.length})
+                                        </button>
+                                    </p>`;
+                                }
+                                return '';
+                            })()}
                         </div>
                     </div>
                     ${l}
@@ -5745,13 +6129,6 @@ function updateUI() {
         document.body.classList.add('collection-parts-sort-filtered');
     } else {
         document.body.classList.remove('collection-parts-sort-filtered');
-    }
-    
-    // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по количеству
-    if (S.view === 'collection' && S.subView === 'parts' && S.sortBy && (S.sortBy === 'quantity_desc' || S.sortBy === 'quantity_asc')) {
-        document.body.classList.add('collection-parts-quantity-filtered');
-    } else {
-        document.body.classList.remove('collection-parts-quantity-filtered');
     }
     
     // Оптимизация: отключаем анимации при быстрой навигации по коллекции деталей с фильтрацией по популярности
@@ -6585,36 +6962,37 @@ function triggerSearch(e = !1) {
         updateUI();
     } else if ("sets" === S.subView) {
         S.selThemeId = null;
+        S.selFigNum = null;
         fetchSets();
     } else if ("minifigs" === S.subView) {
+        S.selFigNum = null;
         fetchMinifigs();
     } else {
         S.selCatId = null;
+        S.selFigNum = null;
         console.log('Calling searchRebrickableParts with:', S.q.trim());
         searchRebrickableParts(S.q.trim());
     }
 }
 function openImageViewer(e) {
     if (!e || e.includes("data:image/svg+xml")) return;
+    
     // Отменяем возможный отложенный таймер закрытия
     if (viewerEl && viewerEl._closeTimer) {
         clearTimeout(viewerEl._closeTimer);
         viewerEl._closeTimer = null;
     }
 
-    // Простое открытие без сложных проверок
+    // Устанавливаем изображение
     viewerImg.setAttribute("src", e);
-    viewerEl.classList.remove("viewer-hidden");
     viewerEl.classList.remove("zoomed");
     viewerImg.classList.remove("zoomed");
     
-    // Устанавливаем z-index
-    viewerEl.style.zIndex = "100";
-    document.body.classList.add("overflow-hidden");
+    // Убираем класс viewer-hidden перед открытием
+    viewerEl.classList.remove("viewer-hidden");
     
-    requestAnimationFrame(() => {
-        viewerEl.classList.add("visible");
-    });
+    // Открываем через modalManager
+    modalManager.openModal('image-viewer-container', viewerEl);
     
     // Убираем масштабирование по клику
     viewerImg.onclick = null;
@@ -6624,73 +7002,24 @@ function openImageViewer(e) {
     if (closeBtn) {
         closeBtn.onclick = closeImageViewer;
     }
-    
-    console.log('Image viewer opened successfully');
 }
 function closeImageViewer() {
-    // Немедленно скрываем viewer визуально
-    viewerEl.classList.remove("visible");
-    viewerEl.classList.remove("zoomed");
+    // Сбрасываем изображение
+    viewerImg.setAttribute("src", "");
     
-    // Мгновенно выключаем перехват кликов и отправляем слой вниз,
-    // чтобы он не блокировал модальные окна даже если transitionend не сработает
-    viewerEl.style.pointerEvents = "none";
-    viewerEl.style.zIndex = "-1";
-
-    const cleanup = () => {
-        // Защита от повторного вызова
-        if (!viewerEl.classList.contains('viewer-hidden')) {
-            viewerEl.classList.add("viewer-hidden");
-            viewerImg.setAttribute("src", "");
-            // Сбрасываем инлайн-стили, полагаемся на CSS-классы
-            viewerEl.style.zIndex = "";
-            viewerEl.style.pointerEvents = "";
-            // Принудительно восстанавливаем состояние модальных окон
-            restoreModalStates();
-        }
-        if (viewerEl._closeTimer) {
-            clearTimeout(viewerEl._closeTimer);
-            viewerEl._closeTimer = null;
-        }
-    };
-
-    // Основной путь — после окончания анимации непрозрачности
-    viewerEl.addEventListener("transitionend", (e) => {
-        if (e.target === viewerEl) cleanup();
-    }, { once: true });
-
-    // Резервный путь — на случай, если transitionend не наступит
-    viewerEl._closeTimer = setTimeout(cleanup, 250);
+    // Закрываем через modalManager
+    modalManager.closeModal('image-viewer-container');
+    
+        // Дополнительно убеждаемся, что image viewer скрыт
+    if (viewerEl) {
+        viewerEl.classList.add('viewer-hidden');
+        viewerEl.classList.remove('visible');
+    }
 }
 
-// Функция для восстановления состояния модальных окон
+// Функция для восстановления состояния модальных окон (упрощенная)
 function restoreModalStates() {
-    // Проверяем и восстанавливаем z-index для всех модальных окон
-    const modals = [
-        { el: partModalEl, id: 'modal-container' },
-        { el: setModalEl, id: 'set-modal-container' },
-        { el: minifigModalEl, id: 'minifig-modal-container' },
-        { el: filterModalEl, id: 'filter-modal-container' },
-        { el: settingsModalEl, id: 'settings-modal-container' }
-    ];
-    
-    modals.forEach(modal => {
-        if (modal.el && !modal.el.classList.contains('modal-hidden')) {
-            modal.el.style.zIndex = modal.id === 'modal-container' ? '60' : '50';
-            modal.el.style.pointerEvents = 'auto';
-        }
-    });
-    
-    // Убеждаемся, что image viewer не блокирует
-    if (viewerEl && viewerEl.classList.contains('viewer-hidden')) {
-        viewerEl.style.zIndex = '-1';
-        viewerEl.style.pointerEvents = 'none';
-    }
-    
-    // Убираем overflow-hidden только если нет других модальных окон
-    if (!S.selPartId && !S.selSetNum && !S.selFigNum && !S.filterOpen && !S.settingsOpen) {
-        document.body.classList.remove('overflow-hidden');
-    }
+    // Теперь modalManager сам управляет z-index
 }
 
 // Функция для восстановления обработчиков image viewer (упрощенная)
@@ -6747,31 +7076,10 @@ function checkImageViewerState() {
 
 // Функция для принудительного восстановления всех модальных окон
 function forceRestoreAllModals() {
-    console.log('Force restoring all modals...');
-    
-    // Восстанавливаем все модальные окна
-    const modals = [
-        { el: partModalEl, id: 'modal-container', condition: S.selPartId },
-        { el: setModalEl, id: 'set-modal-container', condition: S.selSetNum },
-        { el: minifigModalEl, id: 'minifig-modal-container', condition: S.selFigNum },
-        { el: filterModalEl, id: 'filter-modal-container', condition: S.filterOpen },
-        { el: settingsModalEl, id: 'settings-modal-container', condition: S.settingsOpen }
-    ];
-    
-    modals.forEach(modal => {
-        if (modal.el && modal.condition) {
-            // Принудительно восстанавливаем z-index и pointer-events
-            modal.el.style.zIndex = '50';
-            modal.el.style.pointerEvents = 'auto';
-            modal.el.style.opacity = '1';
-            
-            // Убираем все лишние классы
-            modal.el.classList.remove('modal-hidden');
-            modal.el.classList.add('visible');
-            
-            console.log(`Restored modal: ${modal.id}`);
-        }
-    });
+    // Теперь используем modalManager для восстановления
+    if (modalManager.getOpenModalsCount() > 0) {
+        // modalManager сам управляет состоянием
+    }
     
     // Убеждаемся, что image viewer не блокирует
     if (viewerEl && viewerEl.classList.contains('viewer-hidden')) {
@@ -6781,87 +7089,101 @@ function forceRestoreAllModals() {
     
     // Восстанавливаем overflow-hidden для body
     document.body.classList.add('overflow-hidden');
-    
-    console.log('All modals restored');
 }
 
 function closeModal() {
-    const e = document.getElementById("modal-content");
-    e && !partModalEl.classList.contains("modal-hidden") && (partModalEl.classList.remove("visible"), e.classList.add("modal-content-leave"), !S.selSetNum && !S.filterOpen && !S.settingsOpen && !S.selFigNum && viewerEl.classList.contains("viewer-hidden") && document.body.classList.remove("overflow-hidden"), e.addEventListener("animationend", () => {
-        e.classList.contains("modal-content-leave") && (S.selPartId = null, S.partModal = {
-            groupId: null,
-            variants: [],
-            selColorId: null,
-            qty: 1,
-            loadingColors: !1,
-            loadingImg: !1,
-            imgUrl: null
-        }, partModalEl.classList.add("modal-hidden"), partModalEl.innerHTML = "")
-    }, {
-        once: !0
-    }))
+    // Сбрасываем состояние
+    S.selPartId = null;
+    S.partModal = {
+        groupId: null,
+        variants: [],
+        selColorId: null,
+        qty: 1,
+        loadingColors: !1,
+        loadingImg: !1,
+        imgUrl: null
+    };
+    
+    // Закрываем модальное окно через modalManager
+    modalManager.closeModal('modal-container');
 }
 
 function closeSetModal() {
-    const e = document.getElementById("set-modal-content");
-    e && !setModalEl.classList.contains("modal-hidden") && (setModalEl.classList.remove("visible"), e.classList.add("modal-content-leave"), !S.selPartId && !S.filterOpen && !S.settingsOpen && !S.selFigNum && viewerEl.classList.contains("viewer-hidden") && document.body.classList.remove("overflow-hidden"), e.addEventListener("animationend", () => {
-        e.classList.contains("modal-content-leave") && (S.selSetNum = null, S.setModal = {
-            loading: !1,
-            inv: [],
-            invPage: 1,
-            hasNextInv: !1,
-            qty: 1,
-            bulkUpdate: !1,
-            status: "",
-            statusType: "",
-            view: "details",
-            minifigs: [],
-            loadingMinifigs: !1
-        }, setModalEl.classList.add("modal-hidden"), setModalEl.innerHTML = "")
-    }, {
-        once: !0
-    }))
+    // Сбрасываем состояние
+    S.selSetNum = null;
+    S.setModal = {
+        loading: !1,
+        inv: [],
+        invPage: 1,
+        hasNextInv: !1,
+        qty: 1,
+        bulkUpdate: !1,
+        status: "",
+        statusType: "",
+        view: "details",
+        minifigs: [],
+        loadingMinifigs: !1
+    };
+    
+    // Закрываем модальное окно через modalManager
+    modalManager.closeModal('set-modal-container');
 }
 
 function closeMinifigModal() {
-    const e = document.getElementById("minifig-modal-content");
-    e && !minifigModalEl.classList.contains("modal-hidden") && (minifigModalEl.classList.remove("visible"), e.classList.add("modal-content-leave"), !S.selPartId && !S.selSetNum && !S.filterOpen && !S.settingsOpen && viewerEl.classList.contains("viewer-hidden") && document.body.classList.remove("overflow-hidden"), e.addEventListener("animationend", () => {
-        e.classList.contains("modal-content-leave") && (S.selFigNum = null, S.minifigModal = {
-            loading: !1,
-            qty: 1,
-            view: 'details',
-            inv: null,
-            loadingInv: !1,
-            invError: !1,
-            bulkUpdate: !1,
-            status: '',
-            statusType: ''
-        }, minifigModalEl.classList.add("modal-hidden"), minifigModalEl.innerHTML = "")
-    }, {
-        once: !0
-    }))
+    // Сбрасываем состояние модального окна, но НЕ сбрасываем selFigNum
+    // если мы хотим показать связанные наборы
+    S.minifigModal = {
+        loading: !1,
+        qty: 1,
+        view: 'details',
+        inv: null,
+        loadingInv: !1,
+        invError: !1,
+        bulkUpdate: !1,
+        status: '',
+        statusType: ''
+    };
+    
+    // Закрываем модальное окно через modalManager
+    modalManager.closeModal('minifig-modal-container');
 }
 
 function closeFilterModal() {
-    const e = document.getElementById("filter-modal-content");
-    e && !filterModalEl.classList.contains("modal-hidden") && (S.filterOpen = !1, filterModalEl.classList.remove("visible"), e.classList.add("modal-content-leave"), !S.selPartId && !S.selSetNum && !S.settingsOpen && !S.selFigNum && viewerEl.classList.contains("viewer-hidden") && document.body.classList.remove("overflow-hidden"), e.addEventListener("animationend", () => {
-        e.classList.contains("modal-content-leave") && (filterModalEl.classList.add("modal-hidden"), filterModalEl.innerHTML = "")
-    }, {
-        once: !0
-    }))
+    // Сбрасываем состояние
+    S.filterOpen = false;
+    
+    // Сбрасываем связанные наборы при закрытии фильтров
+    S.selFigNum = null;
+    
+    // Закрываем модальное окно через modalManager
+    modalManager.closeModal('filter-modal-container');
+}
+
+function closeRelatedSetsModal() {
+    console.log('closeRelatedSetsModal called');
+    
+    // Закрываем модальное окно через modalManager
+    modalManager.closeModal('related-sets-modal-container');
 }
 
 function closeSettingsModal() {
-    const e = document.getElementById("settings-modal-content");
-    e && !settingsModalEl.classList.contains("modal-hidden") && (S.settingsOpen = !1, settingsModalEl.classList.remove("visible"), e.classList.add("modal-content-leave"), !S.selPartId && !S.selSetNum && !S.filterOpen && !S.selFigNum && viewerEl.classList.contains("viewer-hidden") && document.body.classList.remove("overflow-hidden"), e.addEventListener("animationend", () => {
-        e.classList.contains("modal-content-leave") && (settingsModalEl.classList.add("modal-hidden"), settingsModalEl.innerHTML = "", S.settingsModal.delConfirm = null, S.settingsModal.status = "")
-    }, {
-        once: !0
-    }))
+    // Сбрасываем состояние
+    S.settingsOpen = false;
+    S.settingsModal.delConfirm = null;
+    S.settingsModal.status = '';
+    
+    // Закрываем модальное окно через modalManager
+    modalManager.closeModal('settings-modal-container');
 }
 function openModalForPart(e, t, o) {
     const l = PART_MAP[e];
     if (l) {
+        // Если уже открыто модальное окно детали, закрываем его
+        if (S.selPartId && S.selPartId !== e) {
+            console.log('openModalForPart: Closing previous part modal for:', S.selPartId);
+            modalManager.closeModal('modal-container');
+        }
+        
         // Удаляем дубликаты вариаций и гарантируем кликабельность
         let variants = Array.isArray(o) ? o : [];
         const seen = new Set();
@@ -6884,6 +7206,9 @@ function openModalForPart(e, t, o) {
             loadingImg: !1,
             imgUrl: l.rebrickable_img_url || null
         };
+        
+        // Открываем модальное окно через modalManager
+        modalManager.openModal('modal-container', partModalEl);
         renderModal();
         
         // Убеждаемся, что у детали есть изображение, загружаем если отсутствует
@@ -6892,7 +7217,7 @@ function openModalForPart(e, t, o) {
         if (l.availableColorIds) {
             if (l.availableColorIds.length > 0) {
                 S.partModal.selColorId = sortColorIds(l.availableColorIds, l.id)[0];
-                S.partModal.qty = S.coll[e]?.[S.partModal.selColorId] || 0;
+                S.partModal.qty = S.coll[e]?.[S.partNum]?.[S.partModal.selColorId] || 0;
                 updateModalPartially({
                     controls: !0
                 });
@@ -6906,6 +7231,12 @@ function openModalForPart(e, t, o) {
 
 function openModalForSet(e) {
     if (SET_MAP[e]) {
+        // Если уже открыто модальное окно набора, закрываем его
+        if (S.selSetNum && S.selSetNum !== e) {
+            console.log('openModalForSet: Closing previous set modal for:', S.selSetNum);
+            modalManager.closeModal('set-modal-container');
+        }
+        
         S.selSetNum = e;
         S.setModal = {
             loading: !1,
@@ -6920,6 +7251,13 @@ function openModalForSet(e) {
             minifigs: [],
             loadingMinifigs: !1
         };
+        
+        // Открываем модальное окно через modalManager
+        console.log('openModalForSet: Before modalManager.openModal - current z-indexes:');
+        modalManager.debugZIndexes();
+        modalManager.openModal('set-modal-container', setModalEl);
+        console.log('openModalForSet: After modalManager.openModal - current z-indexes:');
+        modalManager.debugZIndexes();
         renderSetModal(!0);
         
         // Убеждаемся, что у набора есть изображение, загружаем если отсутствует
@@ -6931,6 +7269,12 @@ function openModalForSet(e) {
 }
 function openModalForMinifig(e) {
     if (MINIFIG_MAP[e]) {
+        // Если уже открыто модальное окно минифигурки, закрываем его
+        if (S.selFigNum && S.selFigNum !== e) {
+            console.log('openModalForMinifig: Closing previous minifig modal for:', S.selFigNum);
+            modalManager.closeModal('minifig-modal-container');
+        }
+        
         S.selFigNum = e;
         S.minifigModal = {
             loading: !1,
@@ -6943,6 +7287,9 @@ function openModalForMinifig(e) {
             status: '',
             statusType: ''
         };
+        
+        // Открываем модальное окно через modalManager
+        modalManager.openModal('minifig-modal-container', minifigModalEl);
         renderMinifigModal(!0);
         
         // Убеждаемся, что у минифигурки есть изображение, загружаем если отсутствует
@@ -7991,7 +8338,8 @@ document.addEventListener("click", async e => {
             { el: setModalEl, sel: S.selSetNum },
             { el: minifigModalEl, sel: S.selFigNum },
             { el: filterModalEl, sel: S.filterOpen },
-            { el: settingsModalEl, sel: S.settingsOpen }
+            { el: settingsModalEl, sel: S.settingsOpen },
+            { el: relatedSetsModalEl, sel: !relatedSetsModalEl.classList.contains("modal-hidden") }
         ];
         
         const hasActiveModal = activeModals.some(modal => modal.sel);
@@ -8023,6 +8371,12 @@ document.addEventListener("click", async e => {
             if (part) {
                 const groupId = getGroupId(part.part_num || pid);
                 openModalForPart(part.id || part.part_num || pid, groupId, [part]);
+                
+                // Временно поднимаем модальное окно детали на самый верх
+                setTimeout(() => {
+                    modalManager.bringToFront('modal-container');
+                }, 100);
+                
                 S.partModal.selColorId = String(cid);
                 S.partModal.qty = S.coll[part.id]?.[S.partModal.selColorId] || 0;
                 updateModalPartially({ controls: !0, image: !0 });
@@ -8038,6 +8392,11 @@ document.addEventListener("click", async e => {
         const figNum = invFigEl.getAttribute('data-fig-num');
         if (figNum) {
             openModalForMinifig(figNum);
+            
+            // Временно поднимаем модальное окно минифигурки на самый верх
+            setTimeout(() => {
+                modalManager.bringToFront('minifig-modal-container');
+            }, 100);
         }
         return;
     }
@@ -8111,7 +8470,40 @@ document.addEventListener("click", async e => {
         // Сбрасываем мультивыбор только при переключении Каталог/Коллекция
         S.multiSelect.active = false; S.multiSelect.items = new Set();
         
-        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener()))
+        // Сохраняем selFigNum только если переключаемся на каталог и вкладку "Наборы"
+        const shouldKeepSelFigNum = (e === 'catalog' && S.subView === 'sets' && S.selFigNum);
+        const newSelFigNum = shouldKeepSelFigNum ? S.selFigNum : null;
+        
+        // Если переключаемся на каталог, принудительно закрываем все модальные окна
+        if (e === 'catalog') {
+            console.log('Switching to catalog, force closing all modals');
+            modalManager.closeAllModals();
+            
+            // Дополнительно принудительно закрываем все модальные окна
+            const allModals = [
+                'modal-container',
+                'set-modal-container', 
+                'minifig-modal-container',
+                'filter-modal-container',
+                'settings-modal-container',
+                'related-sets-modal-container'
+            ];
+            
+            allModals.forEach(modalId => {
+                const modalEl = document.getElementById(modalId);
+                if (modalEl && !modalEl.classList.contains('modal-hidden')) {
+                    console.log(`Force closing modal: ${modalId}`);
+                    modalEl.classList.add('modal-hidden');
+                    modalEl.classList.remove('visible');
+                    modalEl.innerHTML = '';
+                }
+            });
+            
+            // Убираем overflow-hidden
+            document.body.classList.remove('overflow-hidden');
+        }
+        
+        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener()))
     }
     const n = t.closest("[data-sub-view]");
     if (n?.dataset.subView) {
@@ -8134,6 +8526,10 @@ document.addEventListener("click", async e => {
         }, 1000);
         
         S.subView = e;
+        // Сбрасываем выбранную минифигурку при переключении на другие вкладки
+        if (e !== 'sets') {
+            S.selFigNum = null;
+        }
         S.q = "";
         S.err = null;
         S.increment = "minifigs" === e ? 36 : 48;
@@ -8191,6 +8587,7 @@ document.addEventListener("click", async e => {
             S.view = 'catalog';
             S.subView = 'parts';
             S.selCatId = null;
+            S.selFigNum = null;
             S.q = '';
             try {
                 const allParts = Object.values(PART_MAP).filter(Boolean);
@@ -8209,6 +8606,7 @@ document.addEventListener("click", async e => {
         S.view = 'catalog';
         S.subView = 'sets';
         S.selThemeId = null;
+        S.selFigNum = null;
         S.q = '';
         S.gridStale = true;
         fetchSets();
@@ -8238,7 +8636,7 @@ document.addEventListener("click", async e => {
                 document.body.classList.remove('theme-navigation');
             }, 800);
             
-            S.selThemeId = e, S.q = "", S.sortBy = "year_desc", S.setFilters = {
+            S.selThemeId = e, S.selFigNum = null, S.q = "", S.sortBy = "year_desc", S.setFilters = {
                 minYear: "",
                 maxYear: "",
                 minParts: "",
@@ -8263,7 +8661,7 @@ document.addEventListener("click", async e => {
             document.body.classList.remove('category-navigation');
         }, 800);
         
-        return S.q = "", "collection" === S.view ? (() => {
+        return S.q = "", S.selFigNum = null, "collection" === S.view ? (() => {
             // Отключаем анимации при навигании по коллекции категорий для улучшения производительности
             document.body.classList.add('collection-view');
             setTimeout(() => {
@@ -8289,7 +8687,15 @@ document.addEventListener("click", async e => {
         }
         const selFigBtn = t.closest('[data-action="toggle-select"]');
         if (selFigBtn) return; // обработано выше
-        return openModalForMinifig(u.dataset.figNum);
+        
+        // Открываем модальное окно минифигурки (и в каталоге, и в коллекции)
+        openModalForMinifig(u.dataset.figNum);
+        
+        // Временно поднимаем модальное окно минифигурки на самый верх
+        setTimeout(() => {
+            modalManager.bringToFront('minifig-modal-container');
+        }, 100);
+        return;
     }
     const g = t.closest(".set-card");
     if (g?.dataset.setNum) {
@@ -8301,7 +8707,13 @@ document.addEventListener("click", async e => {
         }
         const selSetBtn = t.closest('[data-action="toggle-select"]');
         if (selSetBtn) return; // обработано выше
-        return openModalForSet(g.dataset.setNum);
+        openModalForSet(g.dataset.setNum);
+        
+        // Временно поднимаем модальное окно набора на самый верх
+        setTimeout(() => {
+            modalManager.bringToFront('set-modal-container');
+        }, 100);
+        return;
     }
     const m = t.closest(".part-card");
     if (m?.dataset.groupId && m.dataset.partId) {
@@ -8323,6 +8735,11 @@ document.addEventListener("click", async e => {
         const selPartBtn = t.closest('[data-action="toggle-select"]');
         if (selPartBtn) return; // обработано выше
         openModalForPart(partId, groupId, groupPartsArr);
+        
+        // Временно поднимаем модальное окно детали на самый верх
+        setTimeout(() => {
+            modalManager.bringToFront('modal-container');
+        }, 100);
         if ("collection" === S.view && m.dataset.colorId) {
             S.partModal.selColorId = m.dataset.colorId;
             S.partModal.qty = S.coll[partId]?.[S.partModal.selColorId] || 0;
@@ -8338,9 +8755,11 @@ document.addEventListener("click", async e => {
     if ("minifig-modal-container" === t.id || t.closest("#minifig-modal-close")) return closeMinifigModal();
     if ("filter-modal-container" === t.id || t.closest("#filter-modal-close")) return closeFilterModal();
     if ("settings-modal-container" === t.id || t.closest("#settings-modal-close")) return closeSettingsModal();
+    if ("related-sets-modal-container" === t.id || t.closest("#related-sets-modal-close")) return closeRelatedSetsModal();
     if (t.closest("#search-button")) return triggerSearch();
     if (t.closest("#clear-search")) {
         S.q = "";
+        S.selFigNum = null;
         document.getElementById("search-input")?.focus();
         return void triggerSearch()
     }
@@ -8374,6 +8793,7 @@ document.addEventListener("click", async e => {
         renderHeader(); updateUI();
         return;
     }
+
     if (t.closest('[data-action="add-multiselect-to-collection"]')) {
         if (!S.multiSelect.active || S.multiSelect.items.size === 0) return;
         const keys = Array.from(S.multiSelect.items);
@@ -9143,7 +9563,80 @@ document.addEventListener("click", async e => {
                         console.error('Failed to refresh minifig image:', error);
                     }
                 }
-                break
+                break;
+            case "show-related-sets":
+                console.log('show-related-sets clicked, selFigNum:', S.selFigNum);
+                if (S.selFigNum) {
+                    // Закрываем все открытые модальные окна
+                    modalManager.closeAllModals();
+                    
+                    // Дополнительно принудительно закрываем все модальные окна
+                    const allModals = [
+                        'modal-container',
+                        'set-modal-container', 
+                        'minifig-modal-container',
+                        'filter-modal-container',
+                        'settings-modal-container',
+                        'related-sets-modal-container'
+                    ];
+                    
+                    allModals.forEach(modalId => {
+                        const modalEl = document.getElementById(modalId);
+                        if (modalEl && !modalEl.classList.contains('modal-hidden')) {
+                            console.log(`Force closing modal: ${modalId}`);
+                            modalEl.classList.add('modal-hidden');
+                            modalEl.classList.remove('visible');
+                            modalEl.innerHTML = '';
+                        }
+                    });
+                    
+                    // Убираем overflow-hidden
+                    document.body.classList.remove('overflow-hidden');
+                    
+                    console.log('All modals force closed, switching to catalog/sets');
+                    
+                    // Переключаемся на каталог и вкладку "Наборы" для показа связанных наборов
+                    S.view = "catalog";
+                    S.subView = "sets";
+                    console.log('Switched to catalog/sets, selFigNum:', S.selFigNum);
+                    
+                    // Обновляем интерфейс
+                    updateUI();
+                    console.log('updateUI called, selFigNum after:', S.selFigNum);
+                }
+                break;
+        }
+    } else if (relatedSetsModalEl?.contains(t)) {
+        // Обработка кликов в модальном окне связанных наборов
+        const actionEl = t.closest("[data-action]");
+        if (!actionEl) return;
+        
+        const { action, setNum } = actionEl.dataset;
+        switch (action) {
+            case "open-set-from-related":
+                if (setNum) {
+                    console.log('Opening set from related sets:', setNum);
+                    // НЕ закрываем модальное окно связанных наборов
+                    // closeRelatedSetsModal();
+                    openModalForSet(setNum);
+                    
+                    // Временно поднимаем модальное окно набора на самый верх
+                    setTimeout(() => {
+                        modalManager.bringToFront('set-modal-container');
+                    }, 100); // Небольшая задержка для завершения анимации открытия
+                    
+
+                }
+                break;
+        }
+        
+        // Закрытие модального окна
+        if (t.id === 'related-sets-modal-close' || t.closest('#related-sets-modal-close')) {
+            closeRelatedSetsModal();
+            // Если есть открытое модальное окно минифигурки, восстанавливаем его z-index
+            if (S.selFigNum && minifigModalEl && !minifigModalEl.classList.contains("modal-hidden")) {
+                minifigModalEl.style.setProperty('z-index', '70', 'important');
+            }
         }
     } else if (setModalEl?.contains(t)) {
         // Если клик пришел по вкладке минифигурки целиком, не перехватываем клики на внутренних кнопках
@@ -9175,7 +9668,7 @@ document.addEventListener("click", async e => {
                 S.selSetNum && (handleUpdateSetCollection(S.selSetNum, 0), S.setModal.qty = 0);
                 break;
             case "go-to-theme":
-                l && (closeSetModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "sets", S.selThemeId = parseInt(l, 10), fetchSets());
+                l && (closeSetModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "sets", S.selThemeId = parseInt(l, 10), S.selFigNum = null, fetchSets());
                 break;
             case "bulk-add-parts":
                 S.selSetNum && handleBulkUpdatePartsFromSet(S.selSetNum, "add");
@@ -9337,7 +9830,7 @@ document.addEventListener("click", async e => {
                     S.selPartId && S.partModal.selColorId && (await handleUpdateCollection(S.selPartId, S.partModal.selColorId, 0), S.partModal.qty = 0);
                     break;
                 case "go-to-category":
-                    o && (closeModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "parts", S.selCatId = parseInt(o, 10), loadPartsForCategory(S.selCatId));
+                    o && (closeModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "parts", S.selCatId = parseInt(o, 10), S.selFigNum = null, loadPartsForCategory(S.selCatId));
                     break;
                 case "retry-fetch-colors":
                     S.selPartId && fetchPartColors(S.selPartId)
@@ -9377,28 +9870,30 @@ document.addEventListener("click", async e => {
 }), document.addEventListener("keydown", e => {
     const activeElement = document.activeElement;
     
-    if ("Escape" === e.key) {
-        if (viewerEl.classList.contains("viewer-hidden")) {
-            if (S.filterOpen) {
-                closeFilterModal();
-            } else if (S.settingsOpen) {
-                closeSettingsModal();
-            } else if (S.selSetNum) {
-                closeSetModal();
-            } else if (S.selFigNum) {
-                closeMinifigModal();
-            } else if (S.selPartId) {
-                closeModal();
+        if ("Escape" === e.key) {
+            if (viewerEl.classList.contains("viewer-hidden")) {
+                if (S.filterOpen) {
+                    closeFilterModal();
+                } else if (S.settingsOpen) {
+                    closeSettingsModal();
+                } else if (S.selSetNum) {
+                    closeSetModal();
+                } else if (S.selFigNum) {
+                    closeMinifigModal();
+                } else if (S.selPartId) {
+                    closeModal();
+                } else if (!relatedSetsModalEl.classList.contains("modal-hidden")) {
+                    closeRelatedSetsModal();
+                }
+            } else {
+                closeImageViewer();
             }
-        } else {
-            closeImageViewer();
-        }
-        
-        // Двойное нажатие Escape для принудительного восстановления модальных окон
-        if (e.repeat) {
-            console.log('Double Escape detected, force restoring modals...');
-            forceRestoreAllModals();
-        }
+            
+            // Двойное нажатие Escape для принудительного восстановления модальных окон
+            if (e.repeat) {
+                console.log('Double Escape detected, force restoring modals...');
+                forceRestoreAllModals();
+            }
     } else if ("Enter" === e.key && activeElement.id === "search-input") {
         triggerSearch();
     }
@@ -10160,20 +10655,12 @@ async function loadInventoriesFromCSV() {
         let processedLines = 0;
         let skippedLines = 0;
         
-        console.log('Processing inventory parts lines...');
-        console.log('First few lines:', lines.slice(0, 3));
-        
         lines.forEach((line, lineIndex) => {
             if (line.trim()) {
                 const fields = parseCsvLine(line);
                 processedLines++;
                 
                 const [inventory_id, part_num, color_id, quantity, is_spare, img_url] = fields;
-                
-                // Debug: Log first few processed lines
-                if (lineIndex < 5) {
-                    console.log(`Line ${lineIndex}:`, { inventory_id, part_num, color_id, quantity, is_spare, img_url, fieldsLength: fields.length });
-                }
                 
                 if (inventory_id && part_num && color_id && quantity && is_spare !== 't') {
                     if (!inventoryPartsMap[inventory_id]) {
@@ -10210,14 +10697,6 @@ async function loadInventoriesFromCSV() {
                             PART_MAP[part_num].part_img_url = img_url;
                             PART_MAP[part_num].rebrickable_img_url = img_url;
                             partsWithImagesCount++;
-                            
-                            if (lineIndex < 5) {
-                                console.log(`Set image URL for part ${part_num}:`, img_url);
-                            }
-                        }
-                    } else {
-                        if (lineIndex < 5) {
-                            console.log(`No valid image URL for part ${part_num}:`, { img_url, fieldsLength: fields.length, startsWithHttp: img_url && img_url.startsWith('http') });
                         }
                     }
                     
@@ -10237,14 +10716,26 @@ async function loadInventoriesFromCSV() {
                     }
                 } else {
                     skippedLines++;
-                    if (lineIndex < 5) {
-                        console.log(`Skipped line ${lineIndex}:`, { inventory_id, part_num, color_id, quantity, is_spare });
-                    }
                 }
             }
         });
         
 
+        
+        // Загружаем inventories.csv для создания связей инвентарь-набор
+        const inventoriesCsvText = await fetchTextWithProgress('./Data/inventories.csv', 'Загрузка инвентарей...', 'inventories.csv');
+        const inventoriesLines = inventoriesCsvText.split('\n').slice(1);
+        
+        const inventoryToSetMap = {};
+        inventoriesLines.forEach(line => {
+            if (line.trim()) {
+                const fields = parseCsvLine(line);
+                const [inventory_id, version, set_num] = fields;
+                if (inventory_id && set_num) {
+                    inventoryToSetMap[inventory_id] = set_num;
+                }
+            }
+        });
         
         // Загружаем inventory_sets
         const setCsvText = await fetchTextWithProgress('./Data/inventory_sets.csv', 'Загрузка инвентаря наборов...', 'inventory_sets.csv');
@@ -10263,6 +10754,22 @@ async function loadInventoriesFromCSV() {
                         quantity: parseInt(quantity)
                     });
                 }
+            }
+        });
+        
+        // Дополняем inventorySetsMap данными из inventories.csv
+        Object.keys(inventoryToSetMap).forEach(inventoryId => {
+            const setNum = inventoryToSetMap[inventoryId];
+            if (!inventorySetsMap[inventoryId]) {
+                inventorySetsMap[inventoryId] = [];
+            }
+            // Проверяем, что набор еще не добавлен
+            const exists = inventorySetsMap[inventoryId].some(set => set.set_num === setNum);
+            if (!exists) {
+                inventorySetsMap[inventoryId].push({
+                    set_num: setNum,
+                    quantity: 1
+                });
             }
         });
         
@@ -10292,12 +10799,7 @@ async function loadInventoriesFromCSV() {
             sets: inventorySetsMap,
             minifigs: inventoryMinifigsMap
         };
-        console.log('Inventory data loaded:');
-        console.log('- Parts:', Object.keys(inventoryPartsMap).length);
-        console.log('- Sets:', Object.keys(inventorySetsMap).length);
-        console.log('- Minifigs:', Object.keys(inventoryMinifigsMap).length);
-        console.log('- Parts with images from CSV:', partsWithImagesCount);
-        console.log('- Parts with color-specific images:', partsWithColorImagesCount);
+
         
         // Загружаем отсутствующие изображения для элементов коллекции
         // await fetchMissingImagesFromCSV(); // Moved to initializeApp to ensure proper order
@@ -11216,35 +11718,47 @@ async function fetchMissingCollectionMinifigDetails() {
         // Force save state even after error to persist any successful fetches
         saveState();
     }
+}
+
+// Initialize API loading statistics if not exists
+function initializeApiStats() {
+    if (!localStorage.getItem('legoApiStats')) {
+        const initialStats = {
+            colors: 0,
+            parts: 0,
+            sets: 0,
+            minifigs: 0,
+            images: 0,
+            lastUpdate: null
+        };
+        localStorage.setItem('legoApiStats', JSON.stringify(initialStats));
     }
-    
-    // Initialize API loading statistics if not exists
-    function initializeApiStats() {
-        if (!localStorage.getItem('legoApiStats')) {
-            const initialStats = {
-                colors: 0,
-                parts: 0,
-                sets: 0,
-                minifigs: 0,
-                images: 0,
-                lastUpdate: null
-            };
-            localStorage.setItem('legoApiStats', JSON.stringify(initialStats));
+}
+
+// Вызываем инициализацию при запуске приложения
+initializeApiStats();
+
+// Функция для обновления значений фильтров при вводе
+function updateFilterValue(inputElement, filterKey) {
+    if (tempFilters && tempFilters.setFilters) {
+        tempFilters.setFilters[filterKey] = inputElement.value;
+        console.log('Filter updated via input:', filterKey, '=', inputElement.value);
+        console.log('Current tempFilters.setFilters:', tempFilters.setFilters);
+    }
+}
+
+// Обработчик клавиши Escape для закрытия последнего модального окна
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        if (modalManager.getOpenModalsCount() > 0) {
+            modalManager.closeLastModal();
+            e.preventDefault();
         }
     }
-    
-            // Вызываем инициализацию при запуске приложения
-    initializeApiStats();
-    
-    // Функция для обновления значений фильтров при вводе
-    function updateFilterValue(inputElement, filterKey) {
-        if (tempFilters && tempFilters.setFilters) {
-            tempFilters.setFilters[filterKey] = inputElement.value;
-            console.log('Filter updated via input:', filterKey, '=', inputElement.value);
-            console.log('Current tempFilters.setFilters:', tempFilters.setFilters);
-        }
-    }
+});
+
+// Инициализация modalManager
+console.log('modalManager initialized');
   </script>
 </body>
-</html>
 </html>
