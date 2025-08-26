@@ -1533,7 +1533,7 @@ body.tab-switching .minifig-card {
       ${I_X("w-6 h-6")}
     </button>
   </div>
-  <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 opacity-0 pointer-events-none z-40 transform translate-y-4" aria-label="Вернуться наверх">
+  <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 opacity-0 pointer-events-none z-40 transform translate-y-4" aria-label="Вернуться наверх" title="Прокрутить страницу в начало">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>
   </button>
   <script type="module">
@@ -3529,29 +3529,29 @@ function renderSidebar() {
     sidebarEl.innerHTML = `
         <div class="flex items-center justify-between mb-4 flex-shrink-0">
           <h1 class="text-xl font-bold text-white">Меню</h1>
-          <button id="sidebar-close" class="lg:hidden text-gray-300 hover:text-white p-1">
+          <button id="sidebar-close" class="lg:hidden text-gray-300 hover:text-white p-1" title="Закрыть боковую панель">
             ${I_X("w-6 h-6")}
           </button>
         </div>
 
         <div class="space-y-2 mb-4 flex-shrink-0">
-            <button data-view="catalog" class="${n("catalog")}">${I_Cat("w-5 h-5 mr-3")}<span>Каталог</span></button>
-            <button data-view="collection" class="${n("collection")}">${I_Coll("w-5 h-5 mr-3")}<span>Коллекция</span></button>
+            <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3")}<span>Каталог</span></button>
+            <button data-view="collection" class="${n("collection")}" title="Переключиться на просмотр вашей личной коллекции">${I_Coll("w-5 h-5 mr-3")}<span>Коллекция</span></button>
         </div>
 
         <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1">
-            <button data-sub-view="parts" class="${r("parts")}">
+            <button data-sub-view="parts" class="${r("parts")}" title="Показать детали">
                 ${I_Brick("w-5 h-5")}
                 <span class="mt-1">Детали</span>
                 ${s("parts",e,t)}
             </button>
-            <button data-sub-view="sets" class="${r("sets")} relative">
+            <button data-sub-view="sets" class="${r("sets")} relative" title="Показать наборы">
                 ${I_Set("w-5 h-5")}
                 <span class="mt-1">Наборы</span>
                 ${s("sets",o,l)}
                 ${S.view === "catalog" && S.selFigNum ? `<div class="absolute top-1 right-1 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold">${I_Minifig("w-3 h-3")}</div>` : ''}
             </button>
-            <button data-sub-view="minifigs" class="${r("minifigs")}">
+            <button data-sub-view="minifigs" class="${r("minifigs")}" title="Показать минифигурки">
                 ${I_Minifig("w-5 h-5")}
                 <span class="mt-1">Фигурки</span>
                 ${s("minifigs",a,i)}
@@ -3587,7 +3587,7 @@ function renderSidebar() {
                 `}
             </div>
             `:""}
-            <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">
+            <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
                 ${I_Settings("w-5 h-5 mr-2")} Настройки
             </button>
         </div>
@@ -3609,19 +3609,19 @@ function renderHeader() {
     const selBar = showMultiselectBar ? `
         <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between gap-2 flex-nowrap overflow-x-auto no-scrollbar" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .36s cubic-bezier(.22,.61,.36,1) both;' : ''}">
             <div class="flex items-center gap-3 flex-shrink-0">
-                <button data-action="cancel-multiselect" class="text-gray-300 hover:text-white">${I_X('w-5 h-5')}</button>
+                <button data-action="cancel-multiselect" class="text-gray-300 hover:text-white" title="Отменить мультивыбор">${I_X('w-5 h-5')}</button>
                 <span class="text-sm text-gray-300">Выбрано: <strong>${selCount}</strong></span>
             </div>
             <div class="flex items-center gap-2 flex-nowrap flex-shrink-0">
-                <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded-md">${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span></button>
-                ${S.view==='catalog' ? `<button data-action="add-multiselect-to-collection" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-2 rounded-md">+ В коллекцию</button>` : `<button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-md">${I_Trash('w-5 h-5')} <span class=\"hidden sm:inline\">Удалить</span></button>`}
+                <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded-md" title="Поделиться выбранными элементами через CSV файл и изображение">${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span></button>
+                ${S.view==='catalog' ? `<button data-action="add-multiselect-to-collection" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-2 rounded-md" title="Добавить выбранные элементы в коллекцию">+ В коллекцию</button>` : `<button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-md" title="Удалить выбранные элементы из коллекции">${I_Trash('w-5 h-5')} <span class=\"hidden sm:inline\">Удалить</span></button>`}
             </div>
         </div>
     ` : '';
     headerEl.innerHTML = `
             <div class="flex justify-between items-center gap-4">
                 <div class="flex items-center">
-                    <button id="sidebar-toggle" class="lg:hidden text-gray-300 hover:text-white mr-4 -ml-1 p-1">
+                    <button id="sidebar-toggle" class="lg:hidden text-gray-300 hover:text-white mr-4 -ml-1 p-1" title="Открыть/закрыть боковую панель навигации">
                         ${I_Menu("w-6 h-6")}
                     </button>
                     <h1 class="text-xl font-bold text-white hidden sm:block">
@@ -3633,12 +3633,12 @@ function renderHeader() {
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
                         <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-4 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-                        <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white ${S.q?"":"hidden"}">${I_X("w-5 h-5")}</button>
+                        <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white ${S.q?"":"hidden"}" title="Очистить поисковый запрос">${I_X("w-5 h-5")}</button>
                     </div>
-                     <button id="search-button" class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск">
+                     <button id="search-button" class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск" title="Выполнить поиск по введенному запросу">
                         ${I_Search("w-5 h-5")}
                     </button>
-                    <button id="filter-button" class="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors flex-shrink-0" aria-label="Фильтры">
+                    <button id="filter-button" class="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors flex-shrink-0" aria-label="Фильтры" title="Открыть панель фильтров и сортировки">
                         ${I_Filter("w-5 h-5")}
                     </button>
 
@@ -3699,7 +3699,7 @@ function renderSetCard(e, t, o = 0) {
                         </button>
                         `:""}
                 ${S.view==="collection"?`
-                        <button aria-label="Удалить ${e.name}" data-action="delete-set-from-collection" data-set-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                        <button aria-label="Удалить ${e.name}" data-action="delete-set-from-collection" data-set-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Удалить набор из коллекции">
                     ${I_Trash("w-4 h-4")}
                 </button>`:""}
                     </div>
@@ -3742,7 +3742,7 @@ function renderMinifigCard(e, t, o = 0) {
                         </button>
                         `:""}
                 ${S.view==="collection"?`
-                        <button aria-label="Удалить ${e.name || e.set_num}" data-action="delete-minifig-from-collection" data-fig-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                        <button aria-label="Удалить ${e.name || e.set_num}" data-action="delete-minifig-from-collection" data-fig-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Удалить минифигурку из коллекции">
                     ${I_Trash("w-4 h-4")}
                 </button>`:""}
                     </div>
@@ -3812,7 +3812,7 @@ function renderPartCard(e, t, o, l, a = 0) {
                         </button>
                         `: ''}
                 ${i && t ?`
-                        <button aria-label="Удалить ${e.name} (${t.name})" data-action="delete-from-collection" data-part-id="${e.id}" data-color-id="${t.id}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100">
+                        <button aria-label="Удалить ${e.name} (${t.name})" data-action="delete-from-collection" data-part-id="${e.id}" data-color-id="${t.id}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Удалить деталь из коллекции">
                         ${I_Trash("w-4 h-4")}
                     </button>
                 `:""}
@@ -4353,9 +4353,9 @@ function renderSetCollectionControls() {
                     
                     <div class="flex justify-between items-center gap-4">
                         <div class="flex items-center gap-2">
-                            <button data-action="decrease-set-qty" class="p-2 rounded-full ${e > 0 ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors" ${e <= 0 ? 'disabled' : ''}>${I_Minus("w-5 h-5")}</button>
+                            <button data-action="decrease-set-qty" class="p-2 rounded-full ${e > 0 ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors" ${e <= 0 ? 'disabled' : ''}" title="Уменьшить количество">${I_Minus("w-5 h-5")}</button>
                             <input id="set-modal-quantity-input" type="number" value="${e}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                            <button data-action="increase-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${I_Plus("w-5 h-5")}</button>
+                            <button data-action="increase-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors" title="Увеличить количество">${I_Plus("w-5 h-5")}</button>
                         </div>
                         <button data-action="update-set-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
                             ${t>0?"Обновить":"Добавить"}
@@ -4384,10 +4384,10 @@ function renderSetBulkPartsControls() {
             <div class="bg-gray-700/50 rounded-lg p-4 mt-4">
                 <h3 class="text-md font-semibold text-gray-300 mb-2">Коллекция деталей</h3>
                 <div class="grid grid-cols-2 gap-2">
-                    <button data-action="bulk-add-parts" class="flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-green-600 hover:bg-green-700 text-white">
+                    <button data-action="bulk-add-parts" class="flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-green-600 hover:bg-green-700 text-white" title="Добавить все детали из набора в коллекцию деталей">
                         ${I_Plus("w-5 h-5 mr-2")} Добавить все
                     </button>
-                    <button data-action="bulk-remove-parts" class="flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white">
+                    <button data-action="bulk-remove-parts" class="flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white" title="Удалить все детали из набора из коллекции деталей">
                         ${I_Minus("w-5 h-5 mr-2")} Удалить все
                     </button>
                 </div>
@@ -4576,8 +4576,8 @@ function renderSetModal(e = !1) {
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${t.name}</h2>
                  <div class="flex items-center gap-2 flex-shrink-0">
                     ${renderSetModalToggleButton()}
-                    <button data-action="share-set" class="text-gray-300 hover:text-white transition-colors" title="Поделиться">${I_Share("w-6 h-6")}</button>
-                    <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+                    <button data-action="share-set" class="text-gray-300 hover:text-white transition-colors" title="Поделиться набором через изображение и CSV файл">${I_Share("w-6 h-6")}</button>
+                    <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно набора">${I_X("w-6 h-5")}</button>
                  </div>
             </div>
             <div id="set-scroll-progress"><div class="bar"></div></div>
@@ -4748,8 +4748,8 @@ function renderModal() {
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-8">${e.name}</h2>
                  <div class="flex items-center gap-2">
-                    <button data-action="share-part" class="text-gray-300 hover:text-white transition-colors" title="Поделиться">${I_Share("w-6 h-6")}</button>
-                    <button id="modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+                    <button data-action="share-part" class="text-gray-300 hover:text-white transition-colors" title="Поделиться деталью через изображение и CSV файл">${I_Share("w-6 h-6")}</button>
+                    <button id="modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно">${I_X("w-6 h-6")}</button>
                  </div>
             </div>
             
@@ -4980,9 +4980,9 @@ function renderModalControls() {
                     
                     <div class="flex justify-between items-center gap-3">
                         <div class="flex items-center gap-1.5">
-                            <button data-action="decrease-qty" class="p-2 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors" ${t <= 0 ? 'disabled' : ''}>${I_Minus("w-5 h-5")}</button>
+                            <button data-action="decrease-qty" class="p-2 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors" ${t <= 0 ? 'disabled' : ''} title="Уменьшить количество">${I_Minus("w-5 h-5")}</button>
                             <input id="modal-quantity-input" type="number" value="${t}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                            <button data-action="increase-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${I_Plus("w-5 h-5")}</button>
+                            <button data-action="increase-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors" title="Увеличить количество">${I_Plus("w-5 h-5")}</button>
                         </div>
                         <button id="modal-update-collection-btn" data-action="update-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
                             ${l>0?"Обновить":"Добавить"}
@@ -5203,12 +5203,12 @@ function renderFilterModal() {
             <div id="filter-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Фильтры и сортировка</h2>
-                     <button id="filter-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+                     <button id="filter-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно фильтров">${I_X("w-6 h-6")}</button>
                 </div>
                 <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">${e}</div>
                 <div class="flex-shrink-0 p-4 border-t border-gray-700 flex justify-between items-center gap-4">
-                    <button data-action="modal-reset-filters" class="px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-gray-600 hover:bg-gray-500 text-white">Сбросить</button>
-                    <button data-action="modal-apply-filters" class="flex-grow px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-blue-600 hover:bg-blue-700 text-white">Применить</button>
+                    <button data-action="modal-reset-filters" class="px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-gray-600 hover:bg-gray-500 text-white" title="Сбросить все фильтры к значениям по умолчанию">Сбросить</button>
+                    <button data-action="modal-apply-filters" class="flex-grow px-4 py-2 text-sm font-semibold rounded-md transition-colors bg-blue-600 hover:bg-blue-700 text-white" title="Применить выбранные фильтры и сортировку">Применить</button>
                 </div>
             </div>
         `
@@ -5241,28 +5241,28 @@ function renderSettingsModal() {
                 <div class="flex gap-2">
                     <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
                     <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление ВСЕГО</button>
-                </div>` : `<button data-action="delete-all-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===l?"opacity-50 cursor-not-allowed":""}" ${0===l?"disabled":""}>${I_Trash("w-5 h-5 mr-2")} Удалить все детали</button>`;
+                </div>` : `<button data-action="delete-all-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===l?"opacity-50 cursor-not-allowed":""}" ${0===l?"disabled":""}" title="Удалить все детали из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все детали</button>`;
     let r = "";
     r = "sets" === e ? `
                 <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
                 <div class="flex gap-2">
                     <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
                     <button data-action="confirm-delete-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
-                </div>` : `<button data-action="delete-all-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===a?"opacity-50 cursor-not-allowed":""}" ${0===a?"disabled":""}>${I_Trash("w-5 h-5 mr-2")} Удалить все наборы</button>`;
+                </div>` : `<button data-action="delete-all-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===a?"opacity-50 cursor-not-allowed":""}" ${0===a?"disabled":""}" title="Удалить все наборы из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все наборы</button>`;
     let s = "";
     s = "minifigs" === e ? `
                 <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
                 <div class="flex gap-2">
                     <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
                     <button data-action="confirm-delete-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
-                </div>` : `<button data-action="delete-all-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===i?"opacity-50 cursor-not-allowed":""}" ${0===i?"disabled":""}>${I_Trash("w-5 h-5 mr-2")} Удалить все минифигурки</button>`;
+                </div>` : `<button data-action="delete-all-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===i?"opacity-50 cursor-not-allowed":""}" ${0===i?"disabled":""}" title="Удалить все минифигурки из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все минифигурки</button>`;
     const c = "error" === o ? "bg-red-900/50 text-red-300" : "success" === o ? "bg-green-900/50 text-green-300" : "bg-blue-900/50 text-blue-300";
     const enterClass = isFirstOpen ? 'modal-content-enter' : '';
     settingsModalEl.innerHTML = `
              <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${enterClass}">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Настройки</h2>
-                     <button id="settings-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+                     <button id="settings-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно настроек">${I_X("w-6 h-6")}</button>
                 </div>
                 <div id="settings-modal-scroll" class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
                      <div>
@@ -5271,13 +5271,13 @@ function renderSettingsModal() {
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Импорт и экспорт вашей коллекции в формате CSV. Импорт объединит данные с вашей текущей коллекцией</p>
                             <div class="grid grid-cols-2 gap-3">
-                                <button data-action="import-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-purple-600 hover:bg-purple-700 text-white">
+                                <button data-action="import-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-purple-600 hover:bg-purple-700 text-white" title="Импортировать коллекцию из CSV файла">
                                     ${I_Up("w-5 h-5 mr-2")} Импорт (.csv)
                                 </button>
-                                <button data-action="export-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-700 text-white">
+                                <button data-action="export-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-700 text-white" title="Экспортировать коллекцию в CSV файл">
                                     ${I_Down("w-5 h-5 mr-2")} Экспорт (.csv)
                                 </button>
-                                <button data-action="share-collection" class="col-span-2 w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">
+                                <button data-action="share-collection" class="col-span-2 w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white" title="Поделиться коллекцией через социальные сети или скачать CSV файл">
                                     ${I_Share("w-5 h-5 mr-2")} Передать в соцсети
                                 </button>
                                 
@@ -5548,8 +5548,8 @@ function renderMinifigModal(e = !1) {
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${t.name}</h2>
                  <div class="flex items-center gap-2 flex-shrink-0">
                     ${renderMinifigModalToggleButton()}
-                    <button data-action="share-minifig" class="text-gray-300 hover:text-white transition-colors" title="Поделиться">${I_Share("w-6 h-6")}</button>
-                    <button id="minifig-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+                    <button data-action="share-minifig" class="text-gray-300 hover:text-white transition-colors" title="Поделиться минифигуркой через изображение и CSV файл">${I_Share("w-6 h-6")}</button>
+                    <button id="minifig-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно минифигурки">${I_X("w-6 h-6")}</button>
                  </div>
             </div>
             <div id="minifig-scroll-progress"><div class="bar"></div></div>
@@ -5642,7 +5642,7 @@ function showRelatedSetsModal(relatedSets, minifigName) {
             <div id="related-sets-scroll-progress"><div class="bar"></div></div>
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-white">Наборы с минифигуркой "${minifigName}"</h2>
-                <button id="related-sets-modal-close" class="text-gray-400 hover:text-white transition-colors">${I_X("w-6 h-6")}</button>
+                <button id="related-sets-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно связанных наборов">${I_X("w-6 h-6")}</button>
             </div>
             <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-3">
                 ${setsList}
@@ -5715,9 +5715,9 @@ function renderMinifigModalDetailsView() {
                 
                 <div class="flex justify-between items-center gap-4">
                     <div class="flex items-center gap-2">
-                        <button data-action="decrease-minifig-qty" class="p-2 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors" ${t <= 0 ? 'disabled' : ''}>${I_Minus("w-5 h-5")}</button>
+                        <button data-action="decrease-minifig-qty" class="p-2 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors" ${t <= 0 ? 'disabled' : ''}" title="Уменьшить количество">${I_Minus("w-5 h-5")}</button>
                         <input type="number" value="${t}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                        <button data-action="increase-minifig-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors">${I_Plus("w-5 h-5")}</button>
+                        <button data-action="increase-minifig-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors" title="Увеличить количество">${I_Plus("w-5 h-5")}</button>
                     </div>
                     <button data-action="update-minifig-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors">
                         ${o>0?"Обновить":"Добавить"}
