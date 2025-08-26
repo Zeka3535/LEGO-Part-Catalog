@@ -3446,7 +3446,7 @@ function renderSidebar() {
             }).join("")
         };
         S.sidebarLoading ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : c = t + l(e)
-            } else if ("minifigs" === S.subView) d = "Минифигурки", c = '<li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог.</li><li class="flex justify-center p-12"><div class="p-2"><img src="' + getRandomMinifigImage() + '" alt="Случайная минифигурка" class="w-60 h-60 object-contain" onerror="this.style.display=\'none\'"></div></li>';
+            } else if ("minifigs" === S.subView) d = "Минифигурки", c = '<li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог.</li><li class="flex justify-center p-6"><div class="p-2"><img src="' + getRandomMinifigImage() + '" alt="Случайная минифигурка" class="w-60 h-60 object-contain" onerror="this.style.display=\'none\'"></div></li>';
     else {
         d = "Категории";
         let e = S.catTree;
@@ -3919,9 +3919,12 @@ function renderAppliedFilters() {
                     <button data-action="remove-filter" data-filter-type="sortBy" class="text-gray-200 hover:bg-gray-500/50 rounded-full p-0.5">${I_X("w-4 h-4")}</button>
                 </div>
             `;
-        e = [c, i, n].filter(Boolean).join(""), o = (!t && S.sortBy !== "popularity" && !S.selFigNum) || l.length > 0 || (a && "catalog" === S.view && a === true)
+        e = [c, i, n].filter(Boolean).join(""), o = (!t && S.sortBy !== "popularity" && !S.selFigNum) || (l.length > 0 && !S.selFigNum) || (a && "catalog" === S.view && a === true && !S.selFigNum)
     }
-    return o ? `
+    // Дополнительная проверка: не показывать кнопку "Очистить все" при показе связанных наборов
+    const shouldShowClearButton = o && !(S.subView === "sets" && S.selFigNum && !S.q);
+    
+    return shouldShowClearButton ? `
             <div class="px-4 pt-2 pb-0">
                 <div class="flex items-center flex-wrap gap-2">
                     ${e}
@@ -4055,7 +4058,26 @@ function renderMainContent() {
                                 <p class="text-sm text-gray-400">Для минифигурки "${MINIFIG_MAP[S.selFigNum]?.name || S.selFigNum}"</p>
                             </div>
                         </div>
-
+                        
+                        <!-- Превью-картинка минифигурки -->
+                        <div class="flex items-center gap-3">
+                            <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-shadow relative group" 
+                                 data-action="open-minifig-preview" 
+                                 data-fig-num="${S.selFigNum}"
+                                 title="Открыть детали минифигурки">
+                                <img src="${MINIFIG_MAP[S.selFigNum]?.minifig_img_url || MINIFIG_MAP[S.selFigNum]?.set_img_url || `https://cdn.rebrickable.com/media/minifigs/${S.selFigNum}.jpg`}" 
+                                     alt="${MINIFIG_MAP[S.selFigNum]?.name || S.selFigNum}" 
+                                     class="w-full h-full object-contain"
+                                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0zMiAxNkMyMy4xNjM0IDE2IDE2IDIzLjE2MzQgMTYgMzJDMTYgNDAuODM2NiAyMy4xNjM0IDQ4IDMyIDQ4QzQwLjgzNjYgNDggNDggNDAuODM2NiA0OCAzMkM0OCAyMy4xNjM0IDQwLjgzNjYgMTYgMzIgMTZaIiBmaWxsPSIjNkI3MjgwIi8+CjxwYXRoIGQ9Ik0yNCAyOEgyNEMyMi44OTU1IDI4IDIyIDI4Ljg5NTQgMjIgMzBWMzRIMjZWMzBDMjYgMjguODk1NCAyNS4xMDQ2IDI4IDI0IDI4WiIgZmlsbD0iIzZCNzI4MCIvPgo8cGF0aCBkPSJNMzIgMjhIMzJDMzAuODk1NCAyOCAzMCAyOC44OTU0IDMwIDMwVjM0SDM0VjMwQzM0IDI4Ljg5NTQgMzMuMTA0NiAyOCAzMiAyOFoiIGZpbGw9IiM2QjcyODAiLz4KPHBhdGggZD0iTTI0IDM2SDQwQzQxLjEwNDYgMzYgNDIgMzYuODk1NCA0MiAzOFY0MEg0MlY0MkM0MiA0My4xMDQ2IDQxLjEwNDYgNDQgNDAgNDRIMjRDMjIuODk1NCA0NCAyMiA0My4xMDQ2IDIyIDQyVjQwSDIyVjM4QzIyIDM2Ljg5NTQgMjIuODk1NCAzNiAyNCAzNloiIGZpbGw9IiM2QjcyODAiLz4KPC9zdmc+'">
+                                
+                                <!-- Иконка лупы при наведении -->
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                    <svg class="w-6 h-6 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             ` : '';
@@ -8415,6 +8437,21 @@ document.addEventListener("click", async e => {
         return;
     }
     
+    // Открытие модалки минифигурки из превью в заголовке связанных наборов
+    const minifigPreviewEl = t.closest('[data-action="open-minifig-preview"]');
+    if (minifigPreviewEl && (!clickedAction || clickedAction === 'open-minifig-preview')) {
+        const figNum = minifigPreviewEl.getAttribute('data-fig-num');
+        if (figNum) {
+            openModalForMinifig(figNum);
+            
+            // Временно поднимаем модальное окно минифигурки на самый верх
+            setTimeout(() => {
+                modalManager.bringToFront('minifig-modal-container');
+            }, 100);
+        }
+        return;
+    }
+    
     // Обработка кнопки закрытия image viewer (всегда работает)
     if (t.closest("#image-viewer-close")) {
         return closeImageViewer();
@@ -9477,23 +9514,16 @@ document.addEventListener("click", async e => {
                         updateSettingsModalStatus("Кэш приложения очищен успешно!", "success");
                         // Обновляем информацию об использовании памяти/кэша сразу после очистки
                         try {
-                            if (navigator.storage && navigator.storage.estimate) {
-                                const est = await navigator.storage.estimate();
-                                const used = typeof est.usage === 'number' ? est.usage : 0;
-                                const quota = typeof est.quota === 'number' ? est.quota : 0;
-                                const usedMb = (used / (1024 * 1024)).toFixed(2);
-                                const quotaMb = quota ? (quota / (1024 * 1024)).toFixed(0) : '—';
-                                const cacheUsageEl = document.getElementById('cache-usage');
-                                if (cacheUsageEl) {
-                                    cacheUsageEl.textContent = `Использование хранилища: ${usedMb} МБ${quota ? ` из ~${quotaMb} МБ` : ''}`;
-                                }
-                            }
-                            if (window.getCacheInfo) {
-                                const info = await window.getCacheInfo();
-                                const totalFiles = Object.values(info || {}).reduce((s, v) => s + (typeof v === 'number' ? v : 0), 0);
-                                const cacheUsageEl = document.getElementById('cache-usage');
-                                if (cacheUsageEl) {
-                                    cacheUsageEl.textContent += `${totalFiles ? `, файлов в кэше: ${totalFiles}` : ''}`;
+                            // Принудительно показываем нулевые значения для кеша и хранилища
+                            const cacheUsageEl = document.getElementById('cache-usage');
+                            if (cacheUsageEl) {
+                                if (navigator.storage && navigator.storage.estimate) {
+                                    const est = await navigator.storage.estimate();
+                                    const quota = typeof est.quota === 'number' ? est.quota : 0;
+                                    const quotaMb = quota ? (quota / (1024 * 1024)).toFixed(0) : '—';
+                                    cacheUsageEl.textContent = `Использование хранилища: 0 МБ из ~${quotaMb} МБ, файлов в кэше: 0`;
+                                } else {
+                                    cacheUsageEl.textContent = `Использование хранилища: 0 МБ, файлов в кэше: 0`;
                                 }
                             }
                         } catch {}
