@@ -3326,6 +3326,20 @@ function filterThemeTreeForCollection(e, t) {
     }).filter(Boolean) : []
 }
 
+// Функция для получения случайного изображения минифигурки
+    function getRandomMinifigImage() {
+        const min = 1;
+        let max = 30; // Fallback значение
+        
+        // Используем количество из загруженного файла, если доступно
+        if (window.MINIFIG_COUNT && window.MINIFIG_COUNT > 0) {
+            max = window.MINIFIG_COUNT;
+        }
+        
+        const randomNum = Math.floor(Math.random() * (max - min + 1)) + min;
+        return `./Minifig_png/fig-${randomNum}.png`;
+    }
+
 function renderSidebar() {
     // Сохраняем позицию прокрутки списка, чтобы избежать подпрыгивания при перерисовке
     const prevScrollTop = sidebarEl.querySelector('#sidebar-scroll-container')?.scrollTop || 0;
@@ -3432,7 +3446,7 @@ function renderSidebar() {
             }).join("")
         };
         S.sidebarLoading ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : c = t + l(e)
-    } else if ("minifigs" === S.subView) d = "Минифигурки", c = '<li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог.</li>';
+            } else if ("minifigs" === S.subView) d = "Минифигурки", c = '<li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог.</li><li class="flex justify-center p-12"><div class="p-2"><img src="' + getRandomMinifigImage() + '" alt="Случайная минифигурка" class="w-60 h-60 object-contain" onerror="this.style.display=\'none\'"></div></li>';
     else {
         d = "Категории";
         let e = S.catTree;
@@ -9934,6 +9948,18 @@ async function initializeApp() {
         
         console.log('CSV data loading completed');
         console.log('PART_MAP size after CSV loading:', Object.keys(PART_MAP).length);
+        
+        // Загружаем информацию о количестве доступных изображений минифигурок
+        try {
+            const response = await fetch('./Minifig_png/minifig-count.txt');
+            if (response.ok) {
+                const count = await response.text();
+                window.MINIFIG_COUNT = parseInt(count.trim());
+                console.log('Minifig count loaded:', window.MINIFIG_COUNT);
+            }
+        } catch (e) {
+            console.log('Minifig count file not found, using fallback range 1-30');
+        }
         
         // Проверяем наличие новых данных из API в фоновом режиме (без перегрузки)
         updateLoadingStatus("Проверка обновлений...", 95, "Проверка новых данных из API");
