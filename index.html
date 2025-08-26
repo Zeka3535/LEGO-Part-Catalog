@@ -3347,6 +3347,10 @@ function filterThemeTreeForCollection(e, t) {
         const randomNum = Math.floor(Math.random() * (max - min + 1)) + min;
         const imagePath = `./Minifig_png/fig-${randomNum}.png`;
         
+        // Предзагружаем изображение в кэш, если оно еще не загружено
+        const img = new Image();
+        img.src = imagePath;
+        
         // Сохраняем выбранное изображение в состоянии
         S.randomMinifigImage = imagePath;
         
@@ -3356,6 +3360,42 @@ function filterThemeTreeForCollection(e, t) {
     // Функция для сброса случайного изображения минифигурки
     function resetRandomMinifigImage() {
         S.randomMinifigImage = null;
+    }
+    
+    // Функция для настройки управления боковой панелью во время загрузки
+    function setupSidebarDuringLoading() {
+        const e = window.innerWidth < 1024;
+        // На малых экранах настраиваем боковую панель согласно состоянию S.sidebarOpen
+        if (e) {
+            if (S.sidebarOpen) {
+                sidebarEl.classList.remove("-translate-x-full");
+                backdropEl.classList.remove("hidden");
+                document.body.style.overflow = "hidden";
+            } else {
+                sidebarEl.classList.add("-translate-x-full");
+                backdropEl.classList.add("hidden");
+                document.body.style.overflow = "";
+            }
+        }
+    }
+    
+    // Функция для настройки управления боковой панелью
+    function setupSidebarManagement() {
+        const e = window.innerWidth < 1024;
+        // На больших экранах (>=1024px) боковая панель всегда открыта
+        if (window.innerWidth >= 1024) {
+            S.sidebarOpen = true;
+            sidebarEl.classList.remove("-translate-x-full");
+            backdropEl.classList.add("hidden");
+            document.body.style.overflow = "";
+            document.body.classList.add('sidebar-open-large');
+        } else {
+            // На малых экранах логика остается прежней
+            e ? S.sidebarOpen ? (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.remove("hidden"), document.body.style.overflow = "hidden") : (sidebarEl.classList.add("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "") : (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "")
+            
+            // Убираем класс sidebar-open-large для малых экранов
+            document.body.classList.remove('sidebar-open-large');
+        }
     }
 
 function renderSidebar() {
@@ -3463,7 +3503,12 @@ function renderSidebar() {
                 `
             }).join("")
         };
-        S.sidebarLoading ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : c = t + l(e)
+        if (S.sidebarLoading) {
+            // Во время загрузки показываем содержимое с индикатором загрузки сверху
+            c = '<div class="flex items-center justify-center p-3 mb-3 bg-gray-700/50 rounded-lg"><div class="loader !w-5 !h-5 mr-2"></div><span class="text-sm text-gray-300">Загрузка данных...</span></div>' + (t + l(e));
+        } else {
+            c = t + l(e);
+        }
             } else if ("minifigs" === S.subView) d = "Минифигурки", c = '<li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог.</li><li class="flex justify-center p-6"><div class="p-2"><img src="' + getRandomMinifigImage() + '" alt="Случайная минифигурка" class="w-60 h-60 object-contain" onerror="this.style.display=\'none\'"></div></li>';
     else {
         d = "Категории";
@@ -3504,7 +3549,58 @@ function renderSidebar() {
                 e = e.map(e => (Array.isArray(e.children) && (e.children = e.children.filter(e => a.has(e.id))), e)).filter(e => Array.isArray(e.children) && e.children.length > 0)
             }
         }
-        S.sidebarLoading ? c = '<div class="flex items-center justify-center p-4"><div class="loader !w-6 !h-6"></div></div>' : "collection" === S.view && Object.keys(S.coll).length > 0 && 0 === e.length ? c = '<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>' : (e.forEach(e => {
+        if (S.sidebarLoading) {
+            // Во время загрузки показываем содержимое с индикатором загрузки сверху
+            c = '<div class="flex items-center justify-center p-3 mb-3 bg-gray-700/50 rounded-lg"><div class="loader !w-5 !h-5 mr-2"></div><span class="text-sm text-gray-300">Загрузка данных...</span></div>';
+            if ("collection" === S.view && Object.keys(S.coll).length > 0 && 0 === e.length) {
+                c += '<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>';
+            } else {
+                e.forEach(e => {
+                    Array.isArray(e.children) && e.children.sort((e, t) => {
+                        const o = S.favCatIds.has(e.id),
+                            l = S.favCatIds.has(t.id);
+                        return o && !l ? -1 : !o && l ? 1 : e.name.localeCompare(t.name, 'en')
+                    })
+                });
+                c += t + e.map(e => {
+                    const t = S.expCats.has(e.name),
+                        o = e.children.map(e => {
+                            const t = ("catalog" === S.view && S.selCatId === e.id || "collection" === S.view && S.selCollCatId === e.id) ? "bg-blue-600/80 text-white" : "text-gray-400 hover:bg-gray-700/50 hover:text-gray-200",
+                                o = S.favCatIds.has(e.id),
+                                l = o ? "text-red-400 opacity-100" : "text-gray-500 lg:opacity-0 lg:group-hover:opacity-100";
+                            return `
+                              <li>
+                                  <button data-category-id="${e.id}" class="w-full text-left flex items-center p-2 pl-11 rounded-md transition-colors duration-150 ${t} group">
+                                    <span data-action="toggle-favorite-category" data-category-id="${e.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-10 mr-2 -ml-2 ${l}" aria-label="Добавить в избранное">
+                                        ${I_Heart("w-4 h-4",o)}
+                                    </span>
+                                    <span class="truncate flex-grow">${e.name}</span>
+                                  </button>
+                              </li>
+                           `
+                        }).join("");
+                    const l = (CATEGORY_ICONS[e.name] || I_Other)("w-5 h-5 mr-3 text-gray-400 flex-shrink-0");
+                    return `
+                          <li class="space-y-1">
+                              <button data-parent-category="${e.name}" class="w-full text-left flex items-center justify-between p-2 rounded-md hover:bg-gray-700 transition-colors duration-150">
+                                  <div class="flex items-center truncate">
+                                    ${l}
+                                    <span class="font-semibold text-gray-200 truncate">${e.name}</span>
+                                  </div>
+                                  ${I_Chev(`w-5 h-5 text-gray-400 transform transition-transform duration-200 ${t?"rotate-180":""}`)}
+                              </button>
+                              <ul class="space-y-1 ${t?"":"hidden"}">
+                                  ${o}
+                              </ul>
+                          </li>
+                      `
+                }).join("")
+            }
+        } else {
+            if ("collection" === S.view && Object.keys(S.coll).length > 0 && 0 === e.length) {
+                c = '<li class="text-gray-400 text-sm p-2">Нет деталей в категориях.</li>';
+            } else {
+                e.forEach(e => {
             Array.isArray(e.children) && e.children.sort((e, t) => {
                 const o = S.favCatIds.has(e.id),
                     l = S.favCatIds.has(t.id);
@@ -3542,7 +3638,9 @@ function renderSidebar() {
                       </ul>
                   </li>
               `
-        }).join(""))
+        }).join("")
+            }
+        }
     }
     sidebarEl.innerHTML = `
         <div class="flex items-center justify-between mb-4 flex-shrink-0">
@@ -3551,6 +3649,15 @@ function renderSidebar() {
             ${I_X("w-6 h-6")}
           </button>
         </div>
+        
+        ${S.sidebarLoading ? `
+        <div class="mb-4 p-3 bg-blue-900/30 border border-blue-700/50 rounded-lg">
+          <div class="flex items-center gap-2 text-blue-300">
+            <div class="loader !w-4 !h-4 !border-blue-400"></div>
+            <span class="text-sm font-medium">Загрузка данных каталога...</span>
+          </div>
+        </div>
+        ` : ''}
 
         <div class="space-y-2 mb-4 flex-shrink-0">
             <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3")}<span>Каталог</span></button>
@@ -3650,7 +3757,7 @@ function renderHeader() {
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
-                        <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-4 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                        <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-4 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Поиск по ID или названию"/>
                         <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white ${S.q?"":"hidden"}" title="Очистить поисковый запрос">${I_X("w-5 h-5")}</button>
                     </div>
                      <button id="search-button" class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск" title="Выполнить поиск по введенному запросу">
@@ -4052,7 +4159,7 @@ function renderMainContent() {
                             </div>
                         ` : ''}
                         <p class="text-gray-400 max-w-sm mb-6">${l}</p>
-                        <button id="feeling-lucky-button" class="relative z-10 pointer-events-auto flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg">
+                        <button id="feeling-lucky-button" class="relative z-10 pointer-events-auto flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg" title="Случайная деталь/набор из каталога">
                             ${I_Dice("w-6 h-6")} Мне повезёт!
                         </button>
                     </div>`;
@@ -5418,6 +5525,7 @@ function renderSettingsModal() {
                                <li>Полноэкранный просмотр изображений</li>
                                <li>Модальные карточки: изображения, цвета, количество в коллекции</li>
                                <li>Инвентари наборов и минифигурок (клики по элементам открывают карточки)</li>
+                               <li>Связанные наборы с минифигуркой</li>
                                <li>Панель мультивыбора (удаление в коллекции, добавление в каталоге)</li>
                                <li>Импорт/экспорт коллекции в CSV и «Поделиться» CSV в соцсети</li>
                            </ul>
@@ -5856,9 +5964,12 @@ function updateUI() {
     // Проверяем, продолжается ли загрузка
     const loadingContainer = document.getElementById('loading-container');
     if (loadingContainer && !loadingContainer.classList.contains('hidden')) {
-        // Все еще загружается, пока не рендерим основной контент
+        // Все еще загружается, но рендерим боковую панель и заголовок для возможности навигации
         renderSidebar();
         renderHeader();
+        
+        // Настраиваем управление боковой панелью даже во время загрузки
+        setupSidebarDuringLoading();
         return;
     }
     
@@ -5868,6 +5979,12 @@ function updateUI() {
         console.log('PART_MAP size:', Object.keys(PART_MAP).length);
         console.log('SET_MAP size:', Object.keys(SET_MAP).length);
         console.log('MINIFIG_MAP size:', Object.keys(MINIFIG_MAP).length);
+        
+        // Рендерим боковую панель и заголовок даже во время загрузки данных
+        renderSidebar();
+        renderHeader();
+        setupSidebarDuringLoading();
+        
         setTimeout(updateUI, 100);
         return;
     }
@@ -5893,21 +6010,8 @@ function updateUI() {
         });
     }
     
-    const e = window.innerWidth < 1024;
-    // На больших экранах (>=1024px) боковая панель всегда открыта
-    if (window.innerWidth >= 1024) {
-        S.sidebarOpen = true;
-        sidebarEl.classList.remove("-translate-x-full");
-        backdropEl.classList.add("hidden");
-        document.body.style.overflow = "";
-        document.body.classList.add('sidebar-open-large');
-    } else {
-        // На малых экранах логика остается прежней
-        e ? S.sidebarOpen ? (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.remove("hidden"), document.body.style.overflow = "hidden") : (sidebarEl.classList.add("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "") : (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "")
-        
-        // Убираем класс sidebar-open-large для малых экранов
-        document.body.classList.remove('sidebar-open-large');
-    }
+    // Настраиваем управление боковой панелью
+    setupSidebarManagement();
     
     // Оптимизация: отключаем анимации при быстрой прокрутке
     if (!S.scrollThrottle) {
@@ -8502,6 +8606,7 @@ document.addEventListener("click", async e => {
             // На больших экранах кнопка не работает - панель всегда открыта
             return;
         }
+        // Разрешаем открытие боковой панели даже во время загрузки данных
         S.sidebarOpen = !S.sidebarOpen;
         updateUI();
     }
@@ -8510,6 +8615,7 @@ document.addEventListener("click", async e => {
             // На больших экранах кнопка не работает - панель всегда открыта
             return;
         }
+        // Разрешаем закрытие боковой панели даже во время загрузки данных
         S.sidebarOpen = false;
         updateUI();
     }
@@ -8518,6 +8624,7 @@ document.addEventListener("click", async e => {
             // На больших экранах backdrop не работает - панель всегда открыта
             return;
         }
+        // Разрешаем закрытие боковой панели через backdrop даже во время загрузки данных
         S.sidebarOpen = false;
         updateUI();
     }
@@ -9233,6 +9340,7 @@ document.addEventListener("click", async e => {
         return;
     }
     if (t.closest("#filter-button")) {
+        // Разрешаем открытие фильтров даже во время загрузки данных
         S.filterOpen = !0;
         // Убеждаемся, что фильтры правильно инициализированы
         if (!S.filters) S.filters = { colorIds: [], inCollectionOnly: false };
@@ -9250,7 +9358,11 @@ document.addEventListener("click", async e => {
         return void forceRefreshPartImages();
     }
 
-    if (t.closest("#settings-button")) return S.settingsOpen = !0, void renderSettingsModal();
+    if (t.closest("#settings-button")) {
+        // Разрешаем открытие настроек даже во время загрузки данных
+        S.settingsOpen = !0;
+        return void renderSettingsModal();
+    }
 
     // Взаимодействия внутри модального окна фильтров
     if (filterModalEl?.contains(t)) {
@@ -10028,6 +10140,116 @@ document.addEventListener("click", async e => {
     const e = mainEl.scrollTop > 300;
     e && toTopBtn.classList.contains("opacity-0") ? toTopBtn.classList.remove("opacity-0", "pointer-events-none", "translate-y-4") : !e && !toTopBtn.classList.contains("opacity-0") && toTopBtn.classList.add("opacity-0", "pointer-events-none", "translate-y-4")
 });
+
+// Функция для фоновой предзагрузки остальных изображений
+async function preloadRemainingImagesInBackground() {
+    try {
+        // Предзагружаем остальные изображения деталей (51-100)
+        console.log('Background preloading remaining part images (51-100)...');
+        const remainingPartPromises = [];
+        for (let i = 51; i <= 100; i++) {
+            const img = new Image();
+            const preloadPromise = new Promise((resolve) => {
+                img.onload = () => resolve();
+                img.onerror = () => {
+                    console.warn(`Failed to preload part image part-${i}.png (folder may not exist)`);
+                    resolve();
+                };
+                img.src = `./Parts_png/part-${i}.png`;
+            });
+            remainingPartPromises.push(preloadPromise);
+        }
+        
+        // Предзагружаем остальные изображения наборов (21-50)
+        console.log('Background preloading remaining set images (21-50)...');
+        const remainingSetPromises = [];
+        for (let i = 21; i <= 50; i++) {
+            const img = new Image();
+            const preloadPromise = new Promise((resolve) => {
+                img.onload = () => resolve();
+                img.onerror = () => {
+                    console.warn(`Failed to preload set image set-${i}.png (folder may not exist)`);
+                    resolve();
+                };
+                img.src = `./Sets_png/set-${i}.png`;
+            });
+            remainingSetPromises.push(preloadPromise);
+        }
+        
+        // Загружаем все изображения параллельно в фоновом режиме
+        await Promise.all([...remainingPartPromises, ...remainingSetPromises]);
+        console.log('Successfully preloaded remaining images in background');
+        
+    } catch (error) {
+        console.error('Error preloading remaining images in background:', error);
+    }
+}
+
+// Функция для предварительной загрузки изображений в кэш
+async function preloadImages() {
+    try {
+        // Предзагружаем изображения минифигурок
+        const minifigCount = window.MINIFIG_COUNT || 30; // Используем количество из загруженного файла или fallback
+        console.log(`Preloading ${minifigCount} minifig images...`);
+        
+        const minifigPromises = [];
+        for (let i = 1; i <= minifigCount; i++) {
+            const img = new Image();
+            const preloadPromise = new Promise((resolve) => {
+                img.onload = () => resolve();
+                img.onerror = () => {
+                    console.warn(`Failed to preload minifig image fig-${i}.png`);
+                    resolve(); // Не прерываем загрузку других изображений при ошибке
+                };
+                img.src = `./Minifig_png/fig-${i}.png`;
+            });
+            minifigPromises.push(preloadPromise);
+        }
+        
+        // Предзагружаем популярные изображения деталей (первые 50)
+        console.log('Preloading popular part images...');
+        const partPromises = [];
+        for (let i = 1; i <= 50; i++) {
+            const img = new Image();
+            const preloadPromise = new Promise((resolve) => {
+                img.onload = () => resolve();
+                img.onerror = () => {
+                    console.warn(`Failed to preload part image part-${i}.png (folder may not exist)`);
+                    resolve();
+                };
+                img.src = `./Parts_png/part-${i}.png`;
+            });
+            partPromises.push(preloadPromise);
+        }
+        
+        // Предзагружаем популярные изображения наборов (первые 20)
+        console.log('Preloading popular set images...');
+        const setPromises = [];
+        for (let i = 1; i <= 20; i++) {
+            const img = new Image();
+            const preloadPromise = new Promise((resolve) => {
+                img.onload = () => resolve();
+                img.onerror = () => {
+                    console.warn(`Failed to preload set image set-${i}.png (folder may not exist)`);
+                    resolve();
+                };
+                img.src = `./Sets_png/set-${i}.png`;
+            });
+            setPromises.push(preloadPromise);
+        }
+        
+        // Загружаем все изображения параллельно
+        await Promise.all([...minifigPromises, ...partPromises, ...setPromises]);
+        console.log(`Successfully preloaded ${minifigCount} minifig images, 50 part images, and 20 set images`);
+        
+        // Обновляем прогресс загрузки
+        updateLoadingStatus("Кэширование завершено", 92, "Основные изображения загружены в кэш");
+        
+    } catch (error) {
+        console.error('Error preloading images:', error);
+    }
+}
+
 async function initializeApp() {
     // ВРЕМЕННО ОТКЛЮЧЕНО: Добавляем класс для анимации первой загрузки страницы
     // document.body.classList.add('page-loading');
@@ -10068,6 +10290,10 @@ async function initializeApp() {
         } catch (e) {
             console.log('Minifig count file not found, using fallback range 1-30');
         }
+        
+        // Предзагружаем изображения в кэш
+        updateLoadingStatus("Кэширование изображений...", 90, "Предзагрузка изображений минифигурок, деталей и наборов");
+        await preloadImages();
         
         // Проверяем наличие новых данных из API в фоновом режиме (без перегрузки)
         updateLoadingStatus("Проверка обновлений...", 95, "Проверка новых данных из API");
@@ -10114,6 +10340,10 @@ async function initializeApp() {
             // Теперь загружаем отсутствующие изображения после того, как все данные загружены
             console.log('Loading missing images after all data is loaded...');
             await fetchMissingImagesFromCSV();
+            
+            // Фоновая предзагрузка остальных изображений
+            console.log('Starting background image preloading...');
+            preloadRemainingImagesInBackground();
             
             // Окончательное завершение загрузки
             updateLoadingStatus("Загрузка завершена!", 100, "Приложение готово к использованию");
