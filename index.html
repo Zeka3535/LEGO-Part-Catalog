@@ -1788,6 +1788,7 @@ let S = {
     selPartId: null,
     selSetNum: null,
     selFigNum: null,
+    randomMinifigImage: null, // Сохраняем случайное изображение минифигурки
     sidebarOpen: window.innerWidth >= 1024,
     gridStale: !0,
     hasMoreItems: false,
@@ -1881,6 +1882,8 @@ let tempFilters = {
 };
 
 function loadState() {
+    // Сбрасываем случайное изображение минифигурки при загрузке состояния
+    resetRandomMinifigImage();
     
     const e = localStorage.getItem('legoCollection');
     if (e) try {
@@ -3328,6 +3331,11 @@ function filterThemeTreeForCollection(e, t) {
 
 // Функция для получения случайного изображения минифигурки
     function getRandomMinifigImage() {
+        // Если случайное изображение уже выбрано, возвращаем его
+        if (S.randomMinifigImage) {
+            return S.randomMinifigImage;
+        }
+        
         const min = 1;
         let max = 30; // Fallback значение
         
@@ -3337,7 +3345,17 @@ function filterThemeTreeForCollection(e, t) {
         }
         
         const randomNum = Math.floor(Math.random() * (max - min + 1)) + min;
-        return `./Minifig_png/fig-${randomNum}.png`;
+        const imagePath = `./Minifig_png/fig-${randomNum}.png`;
+        
+        // Сохраняем выбранное изображение в состоянии
+        S.randomMinifigImage = imagePath;
+        
+        return imagePath;
+    }
+    
+    // Функция для сброса случайного изображения минифигурки
+    function resetRandomMinifigImage() {
+        S.randomMinifigImage = null;
     }
 
 function renderSidebar() {
@@ -5870,6 +5888,8 @@ function updateUI() {
         searchInput.setAttribute('data-search-listener', 'true');
         searchInput.addEventListener('input', (e) => {
             S.q = e.target.value;
+            // Сбрасываем случайное изображение минифигурки при изменении поискового запроса
+            resetRandomMinifigImage();
         });
     }
     
@@ -6962,6 +6982,9 @@ async function handleBulkAddMinifigPartsFromModal(e) {
 }
 function triggerSearch(e = !1) {
     console.log('triggerSearch called with:', { e, S_q: S.q, S_subView: S.subView, S_view: S.view });
+    
+    // Сбрасываем случайное изображение минифигурки при поиске
+    resetRandomMinifigImage();
     
     // Показываем индикатор загрузки для поиска
     if (S.q && S.q.trim().length > 0) {
@@ -8554,6 +8577,9 @@ document.addEventListener("click", async e => {
             document.body.classList.remove('overflow-hidden');
         }
         
+        // Сбрасываем случайное изображение минифигурки при переключении представлений
+        resetRandomMinifigImage();
+        
         return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener()))
     }
     const n = t.closest("[data-sub-view]");
@@ -8564,6 +8590,8 @@ document.addEventListener("click", async e => {
         // Показываем индикатор загрузки при переключении подпредставлений
         if (e === 'minifigs') {
             updateLoadingStatus("Переключение на минифигурки...", 60, "Загрузка данных минифигурок");
+            // Сбрасываем случайное изображение минифигурки при переключении на вкладку минифигурок
+            resetRandomMinifigImage();
         } else if (e === 'sets') {
             updateLoadingStatus("Переключение на наборы...", 60, "Загрузка данных наборов");
         } else if (e === 'parts') {
@@ -8624,6 +8652,9 @@ document.addEventListener("click", async e => {
     }
     if (t.closest('[data-action="show-all-collection-items"]') || t.closest('[data-action="show-all-items-parts"]')) {
         // Сброс фильтров "все детали" и перерисовка
+        // Сбрасываем случайное изображение минифигурки при показе всех деталей
+        resetRandomMinifigImage();
+        
         if (S.view === 'collection') {
             document.body.classList.add('collection-view');
             setTimeout(() => document.body.classList.remove('collection-view'), 800);
@@ -8654,6 +8685,9 @@ document.addEventListener("click", async e => {
     }
     if (t.closest('[data-action="show-all-items-sets"]')) {
         // В каталоге: показать все наборы
+        // Сбрасываем случайное изображение минифигурки при показе всех наборов
+        resetRandomMinifigImage();
+        
         S.view = 'catalog';
         S.subView = 'sets';
         S.selThemeId = null;
@@ -8686,6 +8720,9 @@ document.addEventListener("click", async e => {
             setTimeout(() => {
                 document.body.classList.remove('theme-navigation');
             }, 800);
+            
+            // Сбрасываем случайное изображение минифигурки при навигации по темам
+            resetRandomMinifigImage();
             
             S.selThemeId = e, S.selFigNum = null, S.q = "", S.sortBy = "year_desc", S.setFilters = {
                 minYear: "",
@@ -8720,10 +8757,16 @@ document.addEventListener("click", async e => {
             }, 800);
             
             S.selCollCatId !== e && (S.selCollCatId = e, S.gridStale = !0, updateUI());
-        })() : S.selCatId !== e && (S.selCatId = e, S.filters = {
-            colorIds: [],
-            inCollectionOnly: !1
-        }, S.sortBy = "popularity", loadPartsForCategory(e)), void 0
+        })() : (() => {
+            // Сбрасываем случайное изображение минифигурки при навигации по категориям
+            resetRandomMinifigImage();
+            
+            S.selCatId !== e && (S.selCatId = e, S.filters = {
+                colorIds: [],
+                inCollectionOnly: !1
+            }, S.sortBy = "popularity", loadPartsForCategory(e));
+            return void 0;
+        })();
     }
     
     const d = t.closest('[data-action="delete-from-collection"]');
@@ -8811,6 +8854,8 @@ document.addEventListener("click", async e => {
     if (t.closest("#clear-search")) {
         S.q = "";
         S.selFigNum = null;
+        // Сбрасываем случайное изображение минифигурки при очистке поиска
+        resetRandomMinifigImage();
         document.getElementById("search-input")?.focus();
         return void triggerSearch()
     }
@@ -9217,6 +9262,8 @@ document.addEventListener("click", async e => {
             const input = sortLabel.querySelector('input[name="sort"][data-action="modal-set-sort"]');
             if (input) {
                 tempFilters.sortBy = input.value;
+                // Сбрасываем случайное изображение минифигурки при изменении сортировки
+                resetRandomMinifigImage();
                 updateFilterModalUI();
                 return;
             }
@@ -9225,13 +9272,21 @@ document.addEventListener("click", async e => {
             switch (actionEl.dataset.action) {
                 case 'modal-set-sort': {
                     const input = actionEl.tagName === 'INPUT' ? actionEl : actionEl.querySelector('input[name="sort"]');
-                    if (input) tempFilters.sortBy = input.value;
+                    if (input) {
+                        tempFilters.sortBy = input.value;
+                        // Сбрасываем случайное изображение минифигурки при изменении сортировки
+                        resetRandomMinifigImage();
+                    }
                     updateFilterModalUI();
                     return;
                 }
                 case 'modal-toggle-collection': {
                     const input = actionEl.tagName === 'INPUT' ? actionEl : actionEl.querySelector('input');
-                    if (input && tempFilters.filters) tempFilters.filters.inCollectionOnly = !!input.checked;
+                    if (input && tempFilters.filters) {
+                        tempFilters.filters.inCollectionOnly = !!input.checked;
+                        // Сбрасываем случайное изображение минифигурки при изменении фильтра коллекции
+                        resetRandomMinifigImage();
+                    }
                     updateFilterModalUI();
                     return;
                 }
@@ -9245,6 +9300,10 @@ document.addEventListener("click", async e => {
                         if (idx >= 0) list.splice(idx, 1); else list.push(colorId);
                         tempFilters.filters.colorIds = list;
                     }
+                    
+                    // Сбрасываем случайное изображение минифигурки при изменении цвета
+                    resetRandomMinifigImage();
+                    
                     updateFilterModalUI();
                     return;
                 }
@@ -9258,6 +9317,10 @@ document.addEventListener("click", async e => {
                         tempFilters.filters = { colorIds: [], inCollectionOnly: false };
                         tempFilters.sortBy = S.q ? 'relevance' : 'popularity';
                     }
+                    
+                    // Сбрасываем случайное изображение минифигурки при сбросе фильтров
+                    resetRandomMinifigImage();
+                    
                     updateFilterModalUI();
                     return;
                 }
@@ -9266,6 +9329,10 @@ document.addEventListener("click", async e => {
                     e.preventDefault();
                     if (S.filterApplying) return;
                     S.filterApplying = true;
+                    
+                    // Сбрасываем случайное изображение минифигурки при применении фильтров
+                    resetRandomMinifigImage();
+                    
                     if (S.subView === 'sets') {
                         S.setFilters = { ...tempFilters.setFilters };
                         S.sortBy = tempFilters.sortBy;
@@ -9295,6 +9362,10 @@ document.addEventListener("click", async e => {
         if ("sortBy" === e) {
             S.sortBy = S.q ? "relevance" : "popularity";
         }
+        
+        // Сбрасываем случайное изображение минифигурки при удалении фильтра
+        resetRandomMinifigImage();
+        
         return void refreshWithNewFilters()
     }
     if (t.closest('[data-action="remove-all-filters"]')) {
@@ -9313,6 +9384,10 @@ document.addEventListener("click", async e => {
             S.filters.inCollectionOnly = !1;
             S.sortBy = S.q ? "relevance" : "popularity";
         }
+        
+        // Сбрасываем случайное изображение минифигурки при удалении всех фильтров
+        resetRandomMinifigImage();
+        
         return void refreshWithNewFilters();
     }
      if (settingsModalEl?.contains(t)) {
@@ -9960,6 +10035,9 @@ async function initializeApp() {
     // Немедленно показываем индикатор загрузки
     updateLoadingStatus("Инициализация приложения...", 5, "Загрузка состояния и подготовка данных");
     
+    // Сбрасываем случайное изображение минифигурки при инициализации приложения
+    resetRandomMinifigImage();
+    
     loadState();
     
     // Инициализируем агрегатор прогресса загрузки CSV
@@ -10092,6 +10170,8 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener('beforeunload', (event) => {
         try {
             if (!S || !S.preventAccidentalExit) return;
+            // Сбрасываем случайное изображение минифигурки при закрытии/обновлении страницы
+            resetRandomMinifigImage();
             event.preventDefault();
             event.returnValue = '';
         } catch {}
@@ -11800,6 +11880,15 @@ function updateFilterValue(inputElement, filterKey) {
         tempFilters.setFilters[filterKey] = inputElement.value;
         console.log('Filter updated via input:', filterKey, '=', inputElement.value);
         console.log('Current tempFilters.setFilters:', tempFilters.setFilters);
+        
+        // Сбрасываем случайное изображение минифигурки при изменении фильтров
+        resetRandomMinifigImage();
+    }
+    
+    // Также обрабатываем фильтры для деталей
+    if (tempFilters && tempFilters.filters && filterKey === 'colorIds') {
+        // Сбрасываем случайное изображение минифигурки при изменении цветовых фильтров
+        resetRandomMinifigImage();
     }
 }
 
