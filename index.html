@@ -3059,60 +3059,141 @@ async function fetchMissingMinifigPartImages(minifigParts) {
     }
 }
 async function handleFeelingLucky() {
+    // Анимация кнопки
+    const button = document.getElementById('feeling-lucky-button');
+    const icon = document.getElementById('feeling-lucky-icon');
+    const text = document.getElementById('feeling-lucky-text');
+    
+    if (button && icon && text) {
+        button.disabled = true;
+        button.classList.add('opacity-75', 'cursor-not-allowed');
+        icon.innerHTML = '<div class="loader !w-6 !h-6 !border-2"></div>';
+        text.textContent = 'Ищем сокровище...';
+    }
+    
     S.loading = !0, S.err = null, S.gridStale = !0, updateUI();
     try {
-        if ("parts" === S.subView) {
+                if ("parts" === S.subView) {
+            // Небольшая задержка для лучшего UX
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Показываем случайную деталь из всей библиотеки (каталога)
             const hasCats = Array.isArray(flatCategories) && flatCategories.length > 0;
             let pool = [];
             if (hasCats) {
                 const tries = Math.min(10, flatCategories.length);
                 for (let i = 0; i < tries && pool.length === 0; i++) {
                     const randomCat = flatCategories[Math.floor(Math.random() * flatCategories.length)];
-                    pool = Object.values(PART_MAP).filter(p => p && p.categoryId === randomCat.id);
+                    pool = Object.values(PART_MAP).filter(p => p && p.categoryId === randomCat.id && p.name);
                 }
             }
             if (pool.length === 0) {
-                pool = Object.values(PART_MAP).filter(Boolean);
+                pool = Object.values(PART_MAP).filter(p => p && p.name);
             }
             if (pool.length === 0) throw new Error("Детали еще не загружены.");
+            
             const randomPart = pool[Math.floor(Math.random() * pool.length)];
             const partId = randomPart.id || randomPart.part_num;
             if (!partId) throw new Error("Некорректные данные детали.");
+            
             const groupId = getGroupId(partId);
-            let variants = Object.values(PART_MAP).filter(v => v && (v.id || v.part_num) && getGroupId(v.id || v.part_num) === groupId);
+            let variants = Object.values(PART_MAP).filter(v => 
+                v && (v.id || v.part_num) && getGroupId(v.id || v.part_num) === groupId
+            );
             if (typeof partCmp === 'function') variants = variants.sort(partCmp);
+            
             openModalForPart(partId, groupId, variants.length ? variants : [randomPart]);
+            
         } else if ("sets" === S.subView) {
-            let setPool = Object.values(SET_MAP).filter(Boolean);
+            // Небольшая задержка для лучшего UX
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Показываем случайный набор из всей библиотеки (каталога)
+            let setPool = Object.values(SET_MAP).filter(s => s && s.name);
             if (setPool.length === 0) throw new Error("Наборы еще не загружены.");
+            
+            // Пытаемся найти наборы с определенной темой для разнообразия
             const themeIds = Object.keys(THEME_MAP || {});
-            if (themeIds.length) {
-                const tries = Math.min(10, themeIds.length);
+            if (themeIds.length > 0) {
+                const tries = Math.min(5, themeIds.length);
                 for (let i = 0; i < tries; i++) {
                     const themeId = parseInt(themeIds[Math.floor(Math.random() * themeIds.length)], 10);
                     const themed = setPool.filter(s => s && s.theme_id === themeId);
-                    if (themed.length) { setPool = themed; break; }
+                    if (themed.length > 0) { 
+                        setPool = themed; 
+                        break; 
+                    }
                 }
             }
+            
             const randomSet = setPool[Math.floor(Math.random() * setPool.length)];
             if (!randomSet || !randomSet.set_num) throw new Error("Некорректные данные набора.");
+            
             SET_MAP[randomSet.set_num] = randomSet;
+            
             openModalForSet(randomSet.set_num);
             S.loading = !1;
             return void updateUI();
+            
         } else {
-            let figs = Object.values(MINIFIG_MAP).filter(Boolean);
+            // Небольшая задержка для лучшего UX
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Показываем случайную минифигурку из всей библиотеки (каталога)
+            let figs = Object.values(MINIFIG_MAP).filter(f => f && f.name);
             if (figs.length === 0) throw new Error("Минифигурки еще не загружены.");
+            
             const randomFig = figs[Math.floor(Math.random() * figs.length)];
             MINIFIG_MAP[randomFig.set_num] = randomFig;
-            openModalForMinifig(randomFig.set_num)
+            
+            openModalForMinifig(randomFig.set_num);
         }
     } catch (e) {
-        console.error("Feeling lucky failed:", e), S.err = `Не удалось совершить чудо: ${e.message}`
+        console.error("Feeling lucky failed:", e);
+        S.err = `Не удалось совершить чудо: ${e.message}`;
     } finally {
-        S.loading = !1, updateUI()
+        S.loading = !1;
+        updateUI();
+        
+        // Восстанавливаем кнопку
+        const button = document.getElementById('feeling-lucky-button');
+        const icon = document.getElementById('feeling-lucky-icon');
+        const text = document.getElementById('feeling-lucky-text');
+        
+        if (button && icon && text) {
+            button.disabled = false;
+            button.classList.remove('opacity-75', 'cursor-not-allowed');
+            icon.innerHTML = I_Dice("w-6 h-6");
+            text.textContent = 'Мне повезёт!';
+        }
     }
 }
+
+// Функция для обновления статистики кнопки "Мне повезёт"
+function updateFeelingLuckyStats() {
+    const statsElement = document.getElementById('feeling-lucky-stats');
+    if (!statsElement) return;
+    
+    try {
+        let stats = '';
+        if (S.subView === 'parts') {
+            const totalParts = Object.values(PART_MAP).filter(p => p && p.name).length;
+            stats = `🎲 ${totalParts.toLocaleString()} деталей в каталоге`;
+        } else if (S.subView === 'sets') {
+            const totalSets = Object.values(SET_MAP).filter(s => s && s.name).length;
+            stats = `🎲 ${totalSets.toLocaleString()} наборов в каталоге`;
+        } else {
+            const totalMinifigs = Object.values(MINIFIG_MAP).filter(f => f && f.name).length;
+            stats = `🎲 ${totalMinifigs.toLocaleString()} минифигурок в каталоге`;
+        }
+        
+        statsElement.textContent = stats;
+    } catch (e) {
+        statsElement.textContent = 'Статистика недоступна';
+    }
+}
+
+
 
 function getPartImageUrl(e) {
     const t = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
@@ -4085,7 +4166,7 @@ function renderMainContent() {
         let t, o, l, a = "grid-cols-[repeat(auto-fill,minmax(150px,1fr))]";
         if ("parts" === S.subView) {
             let i = {};
-            l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском.", S.filters.colorIds?.length > 1 ? l = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".' : null !== S.searchGroups ? (i = S.searchGroups, l = "По вашему запросу ничего не найдено.") : null !== S.selCatId && (i = S.catGroups, l = "В этой категории нет деталей.");
+            l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском", S.filters.colorIds?.length > 1 ? l = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".' : null !== S.searchGroups ? (i = S.searchGroups, l = "По вашему запросу ничего не найдено.") : null !== S.selCatId && (i = S.catGroups, l = "В этой категории нет деталей.");
             let n = Object.values(i).flat();
             // Фильтры для каталога «Все детали»
             if (S.filters) {
@@ -4142,14 +4223,14 @@ function renderMainContent() {
                 } else {
                     t = S.q ? S.searchSetRes : S.setRes;
                     o = e => renderSetCard(e, S.gridStale);
-                    l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов.";
+                    l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов, или воспользуйтесь поиском";
                     console.log('No related sets found, using default sets');
                 }
             } else {
                 // Обычное отображение наборов
                 t = S.q ? S.searchSetRes : S.setRes;
                 o = e => renderSetCard(e, S.gridStale);
-                l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов.";
+                l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов, или воспользуйтесь поиском";
                 console.log('Using default sets display');
             }
             console.log('Final t value for sets:', t);
@@ -4167,9 +4248,13 @@ function renderMainContent() {
                             </div>
                         ` : ''}
                         <p class="text-gray-400 max-w-sm mb-6">${l}</p>
-                        <button id="feeling-lucky-button" class="relative z-10 pointer-events-auto flex items-center gap-3 bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-lg" title="Случайная деталь/набор из каталога">
-                            ${I_Dice("w-6 h-6")} Мне повезёт!
-                        </button>
+                                <button id="feeling-lucky-button" class="relative z-10 pointer-events-auto flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 hover:shadow-xl shadow-lg group" title="Случайная деталь/набор из каталога">
+            <span id="feeling-lucky-icon" class="group-hover:rotate-12 transition-transform duration-300">${I_Dice("w-6 h-6")}</span>
+            <span id="feeling-lucky-text">Мне повезёт!</span>
+        </button>
+        <div class="text-center text-sm text-gray-500 mt-2">
+            <span id="feeling-lucky-stats">Загружаем статистику...</span>
+        </div>
                     </div>`;
         else {
             // Используем S.toDisplay для ограничения количества отображаемых карточек
@@ -4431,6 +4516,9 @@ function renderMainContent() {
     });
     
     // Убрана автоматическая загрузка изображений для предотвращения постоянных обновлений UI
+    
+    // Обновляем статистику кнопки "Мне повезёт" после рендеринга
+    setTimeout(() => updateFeelingLuckyStats(), 100);
 }
 // Добавляем слушатель события прокрутки для автоматической загрузки дополнительных элементов
 function setupScrollListener() {
@@ -6006,6 +6094,9 @@ function updateUI() {
     })));
     
     renderSidebar(), renderHeader(), renderMainContent();
+    
+    // Обновляем статистику кнопки "Мне повезёт"
+    updateFeelingLuckyStats();
     
     // Настраиваем слушатель событий для поискового ввода (только для обновления S.q, не для автопоиска)
     const searchInput = document.getElementById('search-input');
@@ -8752,14 +8843,80 @@ document.addEventListener("click", async e => {
         
         if ("catalog" === S.view && "minifigs" === e && !S.minifigRes) {
             fetchMinifigs();
+            
+            // Восстанавливаем состояние кнопки "Мне повезёт" после загрузки данных в каталоге
+            setTimeout(() => {
+                const button = document.getElementById('feeling-lucky-button');
+                const icon = document.getElementById('feeling-lucky-icon');
+                const text = document.getElementById('feeling-lucky-text');
+                
+                if (button && icon && text) {
+                    button.disabled = false;
+                    button.classList.remove('opacity-75', 'cursor-not-allowed');
+                    icon.innerHTML = I_Dice("w-6 h-6");
+                    text.textContent = 'Мне повезёт!';
+                }
+            }, 500);
         } else if ("minifigs" === e && S.view === "collection" && Object.keys(S.minifigColl).length > 0) {
             fetchMissingCollectionMinifigDetails().then(() => { 
                 S.gridStale = true; 
                 updateUI(); 
+                // Обновляем статистику после загрузки данных
+                setTimeout(() => updateFeelingLuckyStats(), 300);
+                
+                // Восстанавливаем состояние кнопки "Мне повезёт" после загрузки данных
+                setTimeout(() => {
+                    const button = document.getElementById('feeling-lucky-button');
+                    const icon = document.getElementById('feeling-lucky-icon');
+                    const text = document.getElementById('feeling-lucky-text');
+                    
+                    if (button && icon && text) {
+                        button.disabled = false;
+                        button.classList.remove('opacity-75', 'cursor-not-allowed');
+                        icon.innerHTML = I_Dice("w-6 h-6");
+                        text.textContent = 'Мне повезёт!';
+                    }
+                }, 400);
             }).catch(console.error);
         } else {
             updateUI();
         }
+        
+        // Если мы в каталоге и переключаемся между вкладками, вызываем функцию открытия каталога
+        if (S.view === "catalog") {
+            // Делаем то же самое, что и кнопка "Каталог"
+            console.log('Switching tabs in catalog, refreshing catalog state');
+            
+            // Сбрасываем мультивыбор
+            S.multiSelect.active = false; 
+            S.multiSelect.items = new Set();
+            
+            // Сбрасываем случайное изображение минифигурки
+            resetRandomMinifigImage();
+            
+            // Обновляем UI
+            updateUI();
+            
+            // Настраиваем слушатель прокрутки
+            setupScrollListener();
+            
+            // Восстанавливаем состояние кнопки "Мне повезёт" при переключении вкладок в каталоге
+            setTimeout(() => {
+                const button = document.getElementById('feeling-lucky-button');
+                const icon = document.getElementById('feeling-lucky-icon');
+                const text = document.getElementById('feeling-lucky-text');
+                
+                if (button && icon && text) {
+                    button.disabled = false;
+                    button.classList.remove('opacity-75', 'cursor-not-allowed');
+                    icon.innerHTML = I_Dice("w-6 h-6");
+                    text.textContent = 'Мне повезёт!';
+                }
+            }, 300);
+        }
+        
+        // Обновляем статистику кнопки "Мне повезёт" после смены представления
+        setTimeout(() => updateFeelingLuckyStats(), 200);
         
         // Настраиваем слушатель прокрутки для автоматической загрузки изображений
         setupScrollListener();
@@ -8795,6 +8952,8 @@ document.addEventListener("click", async e => {
             }
             S.gridStale = true;
             updateUI();
+            // Обновляем статистику после смены на каталог деталей
+            setTimeout(() => updateFeelingLuckyStats(), 300);
         }
         return;
     }
@@ -9908,6 +10067,8 @@ document.addEventListener("click", async e => {
                 break;
             case "go-to-theme":
                 l && (closeSetModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "sets", S.selThemeId = parseInt(l, 10), S.selFigNum = null, fetchSets());
+                // Обновляем статистику после перехода к теме
+                setTimeout(() => updateFeelingLuckyStats(), 500);
                 break;
             case "bulk-add-parts":
                 S.selSetNum && handleBulkUpdatePartsFromSet(S.selSetNum, "add");
@@ -10070,6 +10231,8 @@ document.addEventListener("click", async e => {
                     break;
                 case "go-to-category":
                     o && (closeModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "parts", S.selCatId = parseInt(o, 10), S.selFigNum = null, loadPartsForCategory(S.selCatId));
+                    // Обновляем статистику после перехода к категории
+                    setTimeout(() => updateFeelingLuckyStats(), 500);
                     break;
                 case "retry-fetch-colors":
                     S.selPartId && fetchPartColors(S.selPartId)
