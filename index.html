@@ -9883,6 +9883,14 @@ document.addEventListener("click", async e => {
                                 }
                             }
                         } catch {}
+                        
+                        // Принудительно обновляем отображение статистики API в настройках
+                        try {
+                            if (S.settingsOpen) {
+                                // Перерисовываем модальное окно настроек, чтобы обновить статистику
+                                renderSettingsModal();
+                            }
+                        } catch {}
                     } else {
                         updateSettingsModalStatus("Ошибка очистки кэша", "error");
                     }
@@ -10631,6 +10639,24 @@ document.addEventListener("DOMContentLoaded", () => {
                                     }
                                 })
                             );
+                            
+                            // Сбрасываем статистику API при очистке кэша
+                            try {
+                                const initialStats = {
+                                    colors: 0,
+                                    parts: 0,
+                                    sets: 0,
+                                    minifigs: 0,
+                                    images: 0,
+                                    lastUpdate: null
+                                };
+                                localStorage.setItem('legoApiStats', JSON.stringify(initialStats));
+                                window.API_STATS = initialStats;
+                                console.log('API stats reset successfully');
+                            } catch (statsError) {
+                                console.error('Failed to reset API stats:', statsError);
+                            }
+                            
                             console.log('App cache cleared successfully');
                             return true;
                         } catch (error) {
