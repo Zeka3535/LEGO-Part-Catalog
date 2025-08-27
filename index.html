@@ -4136,7 +4136,9 @@ function renderAppliedFilters() {
         e = [c, i, n].filter(Boolean).join(""), o = (!t && S.sortBy !== "popularity" && !S.selFigNum) || (l.length > 0 && !S.selFigNum) || (a && "catalog" === S.view && a === true && !S.selFigNum)
     }
     // Дополнительная проверка: не показывать кнопку "Очистить все" при показе связанных наборов
-    const shouldShowClearButton = o && !(S.subView === "sets" && S.selFigNum && !S.q);
+    // Также проверяем, что есть хотя бы один активный фильтр для отображения
+    const hasActiveFilters = e.trim() !== "";
+    const shouldShowClearButton = o && hasActiveFilters && !(S.subView === "sets" && S.selFigNum && !S.q);
     
     return shouldShowClearButton ? `
             <div class="px-4 pt-2 pb-0">
