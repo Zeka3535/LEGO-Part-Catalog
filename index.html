@@ -1552,7 +1552,7 @@ function getApiKey() {
     currentApiKeyIndex = (currentApiKeyIndex + 1) % REBRICKABLE_API_KEYS.length;
     return key;
 }
-const CACHE_NAME = 'lego-catalog-cache-v6';
+const CACHE_NAME = 'lego-catalog-cache-v7';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -1789,6 +1789,7 @@ let S = {
     selSetNum: null,
     selFigNum: null,
     randomMinifigImage: null, // Сохраняем случайное изображение минифигурки
+    lastMinifigNumber: null, // Сохраняем номер последней выбранной минифигурки
     sidebarOpen: window.innerWidth >= 1024,
     gridStale: !0,
     hasMoreItems: false,
@@ -3344,7 +3345,12 @@ function filterThemeTreeForCollection(e, t) {
             max = window.MINIFIG_COUNT;
         }
         
-        const randomNum = Math.floor(Math.random() * (max - min + 1)) + min;
+        let randomNum;
+        // Выбираем случайное число, отличное от предыдущего
+        do {
+            randomNum = Math.floor(Math.random() * (max - min + 1)) + min;
+        } while (randomNum === S.lastMinifigNumber && max > 1); // Повторяем, если выбрали ту же фигурку (если есть больше 1 фигурки)
+        
         const imagePath = `./Minifig_png/fig-${randomNum}.png`;
         
         // Предзагружаем изображение в кэш, если оно еще не загружено
@@ -3353,6 +3359,7 @@ function filterThemeTreeForCollection(e, t) {
         
         // Сохраняем выбранное изображение в состоянии
         S.randomMinifigImage = imagePath;
+        S.lastMinifigNumber = randomNum;
         
         return imagePath;
     }
@@ -3360,6 +3367,7 @@ function filterThemeTreeForCollection(e, t) {
     // Функция для сброса случайного изображения минифигурки
     function resetRandomMinifigImage() {
         S.randomMinifigImage = null;
+        S.lastMinifigNumber = null;
     }
     
     // Функция для настройки управления боковой панелью во время загрузки
@@ -10145,40 +10153,40 @@ document.addEventListener("click", async e => {
 async function preloadRemainingImagesInBackground() {
     try {
         // Предзагружаем остальные изображения деталей (51-100)
-        console.log('Background preloading remaining part images (51-100)...');
-        const remainingPartPromises = [];
-        for (let i = 51; i <= 100; i++) {
-            const img = new Image();
-            const preloadPromise = new Promise((resolve) => {
-                img.onload = () => resolve();
-                img.onerror = () => {
-                    console.warn(`Failed to preload part image part-${i}.png (folder may not exist)`);
-                    resolve();
-                };
-                img.src = `./Parts_png/part-${i}.png`;
-            });
-            remainingPartPromises.push(preloadPromise);
-        }
+        // console.log('Background preloading remaining part images (51-100)...');
+        // const remainingPartPromises = [];
+        // for (let i = 51; i <= 100; i++) {
+        //     const img = new Image();
+        //     const preloadPromise = new Promise((resolve) => {
+        //         img.onload = () => resolve();
+        //         img.onerror = () => {
+        //             console.warn(`Failed to preload part image part-${i}.png (folder may not exist)`);
+        //             resolve();
+        //         };
+        //         img.src = `./Parts_png/part-${i}.png`;
+        //     });
+        //     remainingPartPromises.push(preloadPromise);
+        // }
         
         // Предзагружаем остальные изображения наборов (21-50)
-        console.log('Background preloading remaining set images (21-50)...');
-        const remainingSetPromises = [];
-        for (let i = 21; i <= 50; i++) {
-            const img = new Image();
-            const preloadPromise = new Promise((resolve) => {
-                img.onload = () => resolve();
-                img.onerror = () => {
-                    console.warn(`Failed to preload set image set-${i}.png (folder may not exist)`);
-                    resolve();
-                };
-                img.src = `./Sets_png/set-${i}.png`;
-            });
-            remainingSetPromises.push(preloadPromise);
-        }
+        // console.log('Background preloading remaining set images (21-50)...');
+        // const remainingSetPromises = [];
+        // for (let i = 21; i <= 50; i++) {
+        //     const img = new Image();
+        //         const preloadPromise = new Promise((resolve) => {
+        //             img.onload = () => resolve();
+        //             img.onerror = () => {
+        //                 console.warn(`Failed to preload set image set-${i}.png (folder may not exist)`);
+        //                 resolve();
+        //             };
+        //             img.src = `./Sets_png/set-${i}.png`;
+        //         };
+        //         remainingSetPromises.push(preloadPromise);
+        // }
         
         // Загружаем все изображения параллельно в фоновом режиме
-        await Promise.all([...remainingPartPromises, ...remainingSetPromises]);
-        console.log('Successfully preloaded remaining images in background');
+        // await Promise.all([...remainingPartPromises, ...remainingSetPromises]);
+        console.log('Background image preloading disabled - Parts_png and Sets_png folders not found');
         
     } catch (error) {
         console.error('Error preloading remaining images in background:', error);
@@ -10207,40 +10215,40 @@ async function preloadImages() {
         }
         
         // Предзагружаем популярные изображения деталей (первые 50)
-        console.log('Preloading popular part images...');
-        const partPromises = [];
-        for (let i = 1; i <= 50; i++) {
-            const img = new Image();
-            const preloadPromise = new Promise((resolve) => {
-                img.onload = () => resolve();
-                img.onerror = () => {
-                    console.warn(`Failed to preload part image part-${i}.png (folder may not exist)`);
-                    resolve();
-                };
-                img.src = `./Parts_png/part-${i}.png`;
-            });
-            partPromises.push(preloadPromise);
-        }
+        // console.log('Preloading popular part images...');
+        // const partPromises = [];
+        // for (let i = 1; i <= 50; i++) {
+        //     const img = new Image();
+        //     const preloadPromise = new Promise((resolve) => {
+        //         img.onload = () => resolve();
+        //         img.onerror = () => {
+        //             console.warn(`Failed to preload part image part-${i}.png (folder may not exist)`);
+        //             resolve();
+        //         };
+        //         img.src = `./Parts_png/part-${i}.png`;
+        //     });
+        //     partPromises.push(preloadPromise);
+        // }
         
         // Предзагружаем популярные изображения наборов (первые 20)
-        console.log('Preloading popular set images...');
-        const setPromises = [];
-        for (let i = 1; i <= 20; i++) {
-            const img = new Image();
-            const preloadPromise = new Promise((resolve) => {
-                img.onload = () => resolve();
-                img.onerror = () => {
-                    console.warn(`Failed to preload set image set-${i}.png (folder may not exist)`);
-                    resolve();
-                };
-                img.src = `./Sets_png/set-${i}.png`;
-            });
-            setPromises.push(preloadPromise);
-        }
+        // console.log('Preloading popular set images...');
+        // const setPromises = [];
+        // for (let i = 1; i <= 20; i++) {
+        //     const img = new Image();
+        //     const preloadPromise = new Promise((resolve) => {
+        //         img.onload = () => resolve();
+        //         img.onerror = () => {
+        //             console.warn(`Failed to preload set image set-${i}.png (folder may not exist)`);
+        //             resolve();
+        //         };
+        //         img.src = `./Sets_png/set-${i}.png`;
+        //     });
+        //     setPromises.push(preloadPromise);
+        // }
         
         // Загружаем все изображения параллельно
-        await Promise.all([...minifigPromises, ...partPromises, ...setPromises]);
-        console.log(`Successfully preloaded ${minifigCount} minifig images, 50 part images, and 20 set images`);
+        await Promise.all([...minifigPromises]);
+        console.log(`Successfully preloaded ${minifigCount} minifig images`);
         
         // Обновляем прогресс загрузки
         updateLoadingStatus("Кэширование завершено", 92, "Основные изображения загружены в кэш");
@@ -10292,7 +10300,7 @@ async function initializeApp() {
         }
         
         // Предзагружаем изображения в кэш
-        updateLoadingStatus("Кэширование изображений...", 90, "Предзагрузка изображений минифигурок, деталей и наборов");
+        updateLoadingStatus("Кэширование изображений...", 90, "Предзагрузка изображений минифигурок");
         await preloadImages();
         
         // Проверяем наличие новых данных из API в фоновом режиме (без перегрузки)

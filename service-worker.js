@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lego-catalog-cache-v6';
+const CACHE_NAME = 'lego-catalog-cache-v7';
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
@@ -30,11 +30,17 @@ const CSV_ASSETS = [
     './Data/themes.csv'
 ];
 
+// Add minifig images to precache for better performance
+const MINIFIG_IMAGES = [];
+for (let i = 1; i <= 28; i++) {
+    MINIFIG_IMAGES.push(`./Minifig_png/fig-${i}.png`);
+}
+
 self.addEventListener('install', event => {
     event.waitUntil((async () => {
         try {
             const cache = await caches.open(CACHE_NAME);
-            const allAssets = [...PRECACHE_ASSETS, ...CSV_ASSETS];
+            const allAssets = [...PRECACHE_ASSETS, ...CSV_ASSETS, ...MINIFIG_IMAGES];
             // Try to discover split files via parts_info.txt
             const dynamicSplitFiles = await (async () => {
                 try {
@@ -165,8 +171,11 @@ self.addEventListener('fetch', event => {
     } else if (url.pathname.includes('/Data/') && url.pathname.endsWith('.csv')) {
         // CSV data files: stale-while-revalidate for better performance
         event.respondWith(staleWhileRevalidate(event.request));
+    } else if (url.pathname.includes('/Minifig_png/')) {
+        // Minifig images: cache first with aggressive caching and high priority
+        event.respondWith(cacheFirst(event.request));
     } else if (url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i)) {
-        // Images: cache first with aggressive caching
+        // Other images: cache first with aggressive caching
         event.respondWith(cacheFirst(event.request));
     } else if (url.pathname.match(/\.(css|js|html)$/)) {
         // Static assets: cache first
@@ -204,4 +213,38 @@ self.addEventListener('controllerchange', () => {
             client.postMessage({ type: 'RELOAD_PAGE' });
         });
     });
+});
+
+// Function to force refresh minifig images cache
+async function refreshMinifigCache() {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        // Remove old minifig images from cache
+        const oldMinifigKeys = await cache.keys();
+        const minifigKeys = oldMinifigKeys.filter(key => key.url.includes('/Minifig_png/'));
+        await Promise.all(minifigKeys.map(key => cache.delete(key)));
+        
+        // Add new minifig images to cache
+        const minifigPromises = MINIFIG_IMAGES.map(url => 
+            fetch(url).then(response => {
+                if (response.ok) {
+                    return cache.put(url, response);
+                }
+            }).catch(() => null)
+        );
+        await Promise.allSettled(minifigPromises);
+        console.log('Minifig cache refreshed successfully');
+    } catch (error) {
+        console.error('Error refreshing minifig cache:', error);
+    }
+}
+
+// Handle messages from main thread
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    } else if (event.data && event.data.type === 'REFRESH_MINIFIG_CACHE') {
+        // Force refresh minifig images cache
+        refreshMinifigCache();
+    }
 });
