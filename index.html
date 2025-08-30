@@ -2,10 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Каталог деталей и наборов LEGO</title>
 
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
@@ -26,57 +23,15 @@
       <style>
     body {
         font-family: sans-serif;
-        /* Защита от жестов на мобильных устройствах */
-        touch-action: pan-x pan-y;
-        -webkit-overflow-scrolling: touch;
-        overscroll-behavior: none;
-        -webkit-user-select: none;
-        user-select: none;
+        /* Защита от случайного масштабирования */
+        touch-action: manipulation;
     }
     
-    /* Дополнительная защита от жестов для мобильных устройств */
+    /* Дополнительная защита от масштабирования на мобильных устройствах */
     @media (max-width: 768px) {
         body {
-            touch-action: manipulation;
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Блокировка жестов масштабирования */
-        * {
-            touch-action: pan-x pan-y;
-        }
-        
-        /* Специальная обработка для скроллируемых элементов */
-        .scrollable-content {
-            touch-action: pan-x pan-y;
-            overscroll-behavior: contain;
-        }
-        
-        /* Блокировка жестов для модальных окон */
-        .modal-content {
-            touch-action: none;
-        }
-        
-
-        
-        /* Улучшенная защита от жестов для PWA */
-        @media (display-mode: standalone) {
-            body {
-                overscroll-behavior: none;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            /* Блокировка всех жестов от краев в полноэкранном режиме */
-            .edge-gesture-block {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                pointer-events: none;
-                z-index: 9999;
-            }
         }
     }
     
@@ -11175,124 +11130,17 @@ async function initializeApp() {
     })();
 }
 document.addEventListener("DOMContentLoaded", () => {
-    // Защита от жестов свайпа по краю экрана на Android
-    let touchStartX = 0;
-    let touchStartY = 0;
-    let touchEndX = 0;
-    let touchEndY = 0;
-    
-    // Функция для определения жеста свайпа
-    function handleGesture() {
-        const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
-        
-        // Определяем направление свайпа
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // Горизонтальный свайп
-            if (deltaX > 50 && touchStartX < 50) {
-                // Свайп вправо от левого края - блокируем
-                console.log('Блокирован свайп вправо от левого края');
-                return false;
-            }
-            if (deltaX < -50 && touchStartX > window.innerWidth - 50) {
-                // Свайп влево от правого края - блокируем
-                console.log('Блокирован свайп влево от правого края');
-                return false;
-            }
-        } else {
-            // Вертикальный свайп
-            if (deltaY > 50 && touchStartY < 50) {
-                // Свайп вниз от верхнего края - блокируем
-                console.log('Блокирован свайп вниз от верхнего края');
-                return false;
-            }
-        }
-        return true;
-    }
-    
-    // Обработчики событий касания
-    document.addEventListener('touchstart', (e) => {
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
-    }, { passive: true });
-    
-    document.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].clientX;
-        touchEndY = e.changedTouches[0].clientY;
-        
-        if (!handleGesture()) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-    }, { passive: false });
-    
-    // Дополнительная защита от навигационных жестов
-    if ('navigation' in window && 'gesture' in window.navigation) {
-        window.navigation.addEventListener('navigate', (e) => {
-            if (e.navigationType === 'push' || e.navigationType === 'replace') {
-                e.preventDefault();
-            }
-        });
-    }
-    
-    // Блокировка жестов браузера на мобильных устройствах
-    if ('standalone' in window.navigator && window.navigator.standalone) {
-        // Для PWA в режиме standalone
-        document.addEventListener('gesturestart', (e) => e.preventDefault());
-        document.addEventListener('gesturechange', (e) => e.preventDefault());
-        document.addEventListener('gestureend', (e) => e.preventDefault());
-    }
-    
-    // Дополнительная защита от навигационных жестов Android
-    let isGestureBlocked = false;
-    
-    // Обработчик для блокировки жестов во время прокрутки
-    document.addEventListener('scroll', () => {
-        isGestureBlocked = true;
-        setTimeout(() => {
-            isGestureBlocked = false;
-        }, 150);
-    }, { passive: true });
-    
-    // Улучшенная блокировка жестов
-    document.addEventListener('touchmove', (e) => {
-        if (isGestureBlocked) {
-            e.preventDefault();
-            return;
-        }
-        
-        // Блокируем жесты от краев экрана
-        const touch = e.touches[0];
-        const edgeThreshold = 30;
-        
-        if (touch.clientX < edgeThreshold || 
-            touch.clientX > window.innerWidth - edgeThreshold ||
-            touch.clientY < edgeThreshold) {
-            
-            // Разрешаем только вертикальную прокрутку от краев
-            if (Math.abs(touch.clientX - touchStartX) > Math.abs(touch.clientY - touchStartY)) {
-                e.preventDefault();
-            }
-        }
-    }, { passive: false });
-    
-    // Блокировка жестов масштабирования
+    // Защита от случайного масштабирования страницы
     document.addEventListener('wheel', (e) => {
         if (e.ctrlKey) {
             e.preventDefault();
         }
     }, { passive: false });
     
-    // Дополнительная защита для PWA
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-        // В полноэкранном режиме блокируем все жесты от краев
-        document.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            if (touch.clientX < 20 || touch.clientX > window.innerWidth - 20) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-    }
+    // Блокировка жестов масштабирования на мобильных устройствах
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+    document.addEventListener('gesturechange', (e) => e.preventDefault());
+    document.addEventListener('gestureend', (e) => e.preventDefault());
     
     viewerCloseBtn.innerHTML = I_X("w-6 h-6");
             // Добавляем слушатель события для импорта CSV файла
@@ -13089,46 +12937,7 @@ console.log('modalManager initialized');
 
 
 
-// Логируем информацию о защите от жестов
-console.log('Защита от жестов Android активирована');
-console.log('Блокируются жесты свайпа по краям экрана');
-console.log('Поддерживается PWA режим и standalone режим');
-console.log('Уведомления о заблокированных жестах отключены');
 
-// Функция для тестирования защиты от жестов (только в режиме разработки)
-function testGestureProtection() {
-    if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-        console.log('🔒 Тестирование защиты от жестов:');
-        console.log('✅ Свайп вправо от левого края - заблокирован');
-        console.log('✅ Свайп влево от правого края - заблокирован');
-        console.log('✅ Свайп вниз от верхнего края - заблокирован');
-        console.log('✅ Жесты масштабирования - заблокированы');
-        console.log('✅ Навигационные жесты - заблокированы');
-        console.log('ℹ️ Уведомления о заблокированных жестах отключены');
-        
-        // Добавляем кнопку тестирования в консоль
-        if (typeof window !== 'undefined') {
-            window.testGestureProtection = () => {
-                console.log('🧪 Тестирование защиты от жестов...');
-                // Симулируем жест свайпа от края
-                const touchEvent = new TouchEvent('touchstart', {
-                    touches: [{ clientX: 10, clientY: 100 }]
-                });
-                document.dispatchEvent(touchEvent);
-                
-                const touchEndEvent = new TouchEvent('touchend', {
-                    changedTouches: [{ clientX: 100, clientY: 100 }]
-                });
-                document.dispatchEvent(touchEndEvent);
-                
-                console.log('✅ Тест завершен - жесты заблокированы');
-            };
-        }
-    }
-}
-
-// Запускаем тестирование в режиме разработки
-testGestureProtection();
   </script>
 </body>
 </html>
