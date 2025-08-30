@@ -452,6 +452,34 @@
         border-radius: inherit;
         transform: translateY(0);
     }
+    /* Индикатор в модальном окне цветов детали */
+    #colors-scroll-progress {
+        position: absolute;
+        right: 2px;
+        top: 12px;
+        bottom: 12px;
+        width: 5px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 9999px;
+        overflow: hidden;
+        opacity: 0;
+        transform: translateX(8px);
+        transition: opacity .2s ease, transform .2s ease;
+        z-index: 15;
+        pointer-events: none;
+    }
+    #colors-scroll-progress.visible { opacity: .9; transform: translateX(0); }
+    #colors-scroll-progress .bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 48px;
+        background: linear-gradient(180deg, #60a5fa, #3b82f6);
+        box-shadow: 0 0 10px rgba(59,130,246,.35);
+        border-radius: inherit;
+        transform: translateY(0);
+    }
     /* Image viewer должен быть поверх модальных окон */
     #image-viewer-container.visible {
         pointer-events: auto !important;
@@ -1519,6 +1547,7 @@ body.tab-switching .minifig-card {
   <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
           <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
   <div id="minifig-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
+  <div id="colors-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
   <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
   <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
   <div id="related-sets-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
@@ -1605,6 +1634,7 @@ const I_Arch = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" view
 const I_Other = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
 const I_Filter = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>`;
 const I_Theme = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
+const I_Folder = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
 // Иконки для мультивыбора
 const I_Circle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle></svg>`;
 const I_CheckCircle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l2.5 2.5L16 9"></path></svg>`;
@@ -1874,7 +1904,8 @@ let S = {
         justActivated: !1
     },
     catalogMultiSelectEnabled: (localStorage.getItem('catalogMultiSelectEnabled') === 'true'),
-    collectionMultiSelectEnabled: (localStorage.getItem('collectionMultiSelectEnabled') !== 'false')
+    collectionMultiSelectEnabled: (localStorage.getItem('collectionMultiSelectEnabled') !== 'false'),
+    foldersEnabled: (localStorage.getItem('foldersEnabled') !== 'false') // По умолчанию включено
 };
 let tempFilters = {
     filters: { colorIds: [], inCollectionOnly: false },
@@ -1924,6 +1955,12 @@ function loadState() {
     } catch (e) {
         console.error("Failed to parse favorite themes from localStorage", e), S.favThemeIds = new Set
     }
+    
+    // Загружаем настройки
+    const foldersEnabled = localStorage.getItem('foldersEnabled');
+    if (foldersEnabled !== null) {
+        S.foldersEnabled = foldersEnabled === 'true';
+    }
 }
 
 function saveState() {
@@ -1942,6 +1979,7 @@ const sidebarEl = document.getElementById('sidebar-container'),
     mainEl = document.getElementById('main-content'),
     partModalEl = document.getElementById('modal-container'),
     setModalEl = document.getElementById('set-modal-container'),
+    colorsModalEl = document.getElementById('colors-modal-container'),
     minifigModalEl = document.getElementById('minifig-modal-container'),
     filterModalEl = document.getElementById('filter-modal-container'),
     settingsModalEl = document.getElementById('settings-modal-container'),
@@ -4150,6 +4188,117 @@ function renderAppliedFilters() {
         ` : ""
 }
 
+// Группировка для коллекции: в папку только детали, у которых > 1 цвета
+function groupCollectionPartsForDisplay(items) {
+    try {
+        const partIdToGroup = new Map();
+        (items || []).forEach(entry => {
+            const pid = entry?.part?.id;
+            if (!pid) return;
+            if (!partIdToGroup.has(pid)) {
+                partIdToGroup.set(pid, { part: entry.part, colors: [], totalQty: 0 });
+            }
+            const g = partIdToGroup.get(pid);
+            g.colors.push({ color: entry.color, quantity: entry.quantity });
+            g.totalQty += entry.quantity || 0;
+        });
+        const display = [];
+        for (const g of partIdToGroup.values()) {
+            const uniqueColors = new Map();
+            g.colors.forEach(ci => {
+                const key = String(ci?.color?.id);
+                if (!uniqueColors.has(key)) uniqueColors.set(key, ci);
+            });
+            const colorList = Array.from(uniqueColors.values());
+            if (colorList.length > 3 && S.foldersEnabled) {
+                console.log(`Creating folder for part ${g.part?.id} with ${colorList.length} colors, total qty: ${g.totalQty}`);
+                display.push({ type: 'folder', part: g.part, colors: colorList, totalQty: g.totalQty });
+            } else {
+                // Для 1-3 цветов или если папки отключены - показываем отдельные карточки по каждому цвету
+                for (const ci of colorList) {
+                    display.push({ type: 'single', entry: { part: g.part, color: ci?.color || null, quantity: ci?.quantity || 0 } });
+                }
+            }
+        }
+        // Сортировка по текущему режиму
+        const getName = it => it.type === 'folder' ? (it.part?.name || '') : (it.entry?.part?.name || '');
+        const getQty = it => it.type === 'folder' ? (it.totalQty || 0) : (it.entry?.quantity || 0);
+        const getPopularity = it => it.type === 'folder' ? (PART_MAP[it.part?.id]?.num_sets || 0) : (PART_MAP[it.entry?.part?.id]?.num_sets || 0);
+        switch (S.sortBy) {
+            case 'alpha_desc':
+                display.sort((a,b)=> (getName(b)).localeCompare(getName(a), 'en'));
+                break;
+            case 'quantity_desc':
+                display.sort((a,b)=> getQty(b) - getQty(a) || getName(a).localeCompare(getName(b),'en'));
+                break;
+            case 'quantity_asc':
+                display.sort((a,b)=> getQty(a) - getQty(b) || getName(a).localeCompare(getName(b),'en'));
+                break;
+            case 'popularity':
+                display.sort((a,b)=> getPopularity(b) - getPopularity(a));
+                break;
+            case 'popular': // на всякий случай поддержим альтернативное имя
+                display.sort((a,b)=> getPopularity(b) - getPopularity(a));
+                break;
+            default:
+                display.sort((a,b)=> getName(a).localeCompare(getName(b),'en'));
+        }
+        return display;
+    } catch (e) {
+        console.warn('groupCollectionPartsForDisplay failed:', e);
+        return [];
+    }
+}
+
+// Визуализация папки (тайл размера карточки) с 4 миниатюрами первых цветов
+function renderCollectionFolderCard(part, colors) {
+    try {
+        console.log(`Rendering folder card for part ${part?.id}:`, { part, colors, coll: S.coll?.[part?.id] });
+        const groupId = getGroupId(part.id);
+        const thumbs = (colors || []).slice(0,4);
+        const thumbImgs = thumbs.map(ci => {
+            const colorId = String(ci?.color?.id || '');
+            const fallback = part.rebrickable_img_url || part.part_img_url || '';
+            return `<div class="w-full h-full flex items-center justify-center bg-white rounded-lg overflow-hidden shadow-md border border-gray-200 hover:shadow-lg hover:scale-105 transition-all duration-200 cursor-pointer"><img ${getColorImageUrl(part.id, colorId, fallback)} alt="${part.name}" class="w-full h-full object-contain" loading="lazy" /></div>`;
+        });
+        while (thumbImgs.length < 4) {
+            thumbImgs.push(`<div class="w-full h-full bg-gray-100 rounded-lg border border-gray-200 flex items-center justify-center opacity-60"><div class="w-6 h-6 bg-gray-300 rounded-full"></div></div>`);
+        }
+        const colorsCount = (colors || []).length;
+        const inCollectionQty = Object.values(S.coll?.[part.id] || {}).reduce((a,b)=>a+b,0);
+        const isExpanded = !!(S.expandedFolders && S.expandedFolders.has(String(part.id)));
+        const ringClasses = isExpanded ? ' ring-2 ring-blue-500 ' : '';
+        const expandedClasses = isExpanded ? ' shadow-lg shadow-blue-500/50 bg-gradient-to-br from-gray-800 to-gray-700 ' : '';
+        return `
+            <div data-group-id="${groupId}" data-part-id="${part.id}" data-folder="true" class="part-card${ringClasses}${expandedClasses} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer transition-all duration-300">
+                ${inCollectionQty>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md pointer-events-none">${inCollectionQty}</div>`:""}
+                <div class="w-full h-40 bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center p-2 rounded-t-lg">
+                    <div class="w-full h-full relative grid grid-cols-2 grid-rows-2 gap-2">
+                        ${thumbImgs.join('')}
+                        ${(S.view==="collection" && S.collectionMultiSelectEnabled)?`
+                        <button data-action="toggle-select" data-item-type="part-folder" data-item-id="${part.id}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`parts-folder:${part.id}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
+                            ${S.multiSelect.active && S.multiSelect.items.has(`parts-folder:${part.id}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
+                        </button>
+                        `:""}
+                                          
+                        ${S.view==="collection"?`
+                        <button aria-label="Удалить все цвета ${part.name}" data-action="delete-folder-from-collection" data-part-id="${part.id}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Удалить все цвета детали из коллекции">${I_Trash('w-4 h-4')}</button>
+                        `:""}
+                    </div>
+                </div>
+                <div class="p-4 space-y-1">
+                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${part.name}</h3>
+                    <p class="text-xs text-gray-400 pointer-events-none">ID: ${part.id}</p>
+                    <p class="text-xs text-gray-300 pointer-events-none">Доступных цветов: ${colorsCount}</p>
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.warn('renderCollectionFolderCard failed:', e);
+        return '';
+    }
+}
+
 function renderMainContent() {
     let e = "";
     
@@ -4208,7 +4357,7 @@ function renderMainContent() {
             }
             o = e => {
                 const t = Object.values(S.coll[e.id] || {}).reduce((e, t) => e + t, 0);
-                return renderPartCard(e, null, t, S.gridStale)
+                return renderPartCard(e, null, t, S.gridStale);
             }, a = "grid-cols-[repeat(auto-fill,minmax(130px,1fr))]";
         } else if ("sets" === S.subView) {
             console.log('Sets subview, selFigNum:', S.selFigNum, 'q:', S.q, 'view:', S.view);
@@ -4259,14 +4408,7 @@ function renderMainContent() {
         </div>
                     </div>`;
         else {
-            // Используем S.toDisplay для ограничения количества отображаемых карточек
-            S.hasMoreItems = t.length > S.toDisplay;
-            // Сохраняем общее количество элементов и количество показанных для индикатора прогресса
-            S.totalItems = t.length;
-            const l = t.slice(0, S.toDisplay);
-            S.loadedItems = l.length;
-            console.log('Rendering sets:', t.length, 'total,', l.length, 'displayed');
-            console.log('First few sets:', l.slice(0, 3));
+            // Используем S.toDisplay для ограничения количества отображаемых карточек/групп
             // Добавляем заголовок для связанных наборов, если они отображаются
             const headerHtml = (S.subView === "sets" && S.selFigNum && !S.q) ? `
                 <div class="px-4 pt-4 pb-2">
@@ -4301,11 +4443,27 @@ function renderMainContent() {
                     </div>
                 </div>
             ` : '';
-            
-            e = `${headerHtml}<div class="grid ${a} gap-4 p-4">
-                    ${l.map((e,t)=>{const l=o(e,true,t);return l.replace('class="part-card ',`style="${S.getAnimationDelay(t)}" class="part-card `).replace('class="set-card ',`style="${S.getAnimationDelay(t)}" class="set-card `).replace('class="minifig-card ',`style="${S.getAnimationDelay(t)}" class="minifig-card `)}).join("")}
-                </div>`;
-            
+
+            // Каталог (sets/minifigs) рендерим как раньше, а для деталей в коллекции включаем группировку по имени
+            if (S.view === 'catalog' || S.subView !== 'parts') {
+                // Старое поведение сетки
+                // Рассчитываем лимит отображаемых элементов
+                S.hasMoreItems = t.length > S.toDisplay;
+                S.totalItems = t.length;
+                const shown = t.slice(0, S.toDisplay);
+                S.loadedItems = shown.length;
+                e = `${headerHtml}<div class="grid ${a} gap-4 p-4">${shown.map((e,t)=>{const l=o(e,true,t);return l.replace('class=\"part-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"part-card `).replace('class=\"set-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"set-card `).replace('class=\"minifig-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"minifig-card `)}).join("")}</div>`;
+            } else {
+                // Новое поведение: группировка карточек деталей по одинаковому названию
+                const groups = groupCollectionPartsByName(t);
+                S.hasMoreItems = groups.length > S.toDisplay;
+                S.totalItems = groups.length;
+                const shownGroups = groups.slice(0, S.toDisplay);
+                S.loadedItems = shownGroups.length;
+                const groupsHtml = shownGroups.map((g, idx) => renderCollectionNameGroup(g, idx)).join("");
+                e = `${headerHtml}<div class="space-y-3 p-4">${groupsHtml}</div>`;
+            }
+
             // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
         }
     } else {
@@ -4355,6 +4513,9 @@ function renderMainContent() {
                     t.sort((a, b) => a.quantity - b.quantity);
                     break;
                 case "popularity":
+                    t.sort((e, t) => (PART_MAP[t.part.id]?.num_sets || 0) - (PART_MAP[e.part.id]?.num_sets || 0))
+                    break;
+                case "popular":
                     t.sort((e, t) => (PART_MAP[t.part.id]?.num_sets || 0) - (PART_MAP[e.part.id]?.num_sets || 0))
             }
             o = (e, t, o) => renderPartCard(e.part, e.color, e.quantity, t, o);
@@ -4467,16 +4628,57 @@ function renderMainContent() {
                     <p class="text-gray-400">${l}</p>
                 </div>`;
         } else {
-            // Используем S.toDisplay для ограничения количества отображаемых карточек
-            S.hasMoreItems = t.length > S.toDisplay;
-            // Сохраняем общее количество элементов и количество показанных для индикатора прогресса
-            S.totalItems = t.length;
-            const l = t.slice(0, S.toDisplay);
-            S.loadedItems = l.length;
-            e = `<div class="grid ${n} gap-4 p-4">
-                    ${l.map((e,t)=>o(e,true,t)).join("")}
-                </div>`;
-            
+            // Для коллекции деталей включаем группировку по названию
+            if (S.subView === 'parts') {
+                // Преобразуем список в смесь одиночных карточек и папок по условию (>1 цвета)
+                const display = groupCollectionPartsForDisplay(t);
+                S.hasMoreItems = display.length > S.toDisplay;
+                S.totalItems = display.length;
+                const shown = display.slice(0, S.toDisplay);
+                S.loadedItems = shown.length;
+                if (!S.expandedFolders) S.expandedFolders = new Set();
+                const html = shown.map((d, idx) => {
+                    if (d.type === 'folder') {
+                        const base = renderCollectionFolderCard(d.part, d.colors)
+                            .replace('class="part-card ', `style="${S.getAnimationDelay(idx)}" class="part-card `);
+                        // Если папка раскрыта — отрисуем общий контейнер с синей рамкой вокруг папки и карточек цветов
+                        if (S.expandedFolders.has(String(d.part.id))) {
+                            const baseNoRing = base.replace(' ring-2 ring-blue-500 ', ' ');
+                            const colorCardsWrapped = d.colors.map(ci => {
+                                const entry = { part: d.part, color: ci.color, quantity: (S.coll?.[d.part.id]?.[String(ci.color?.id)] || 0) };
+                                const html = o(entry, true, idx + 1);
+                                return html;
+                            }).join("");
+                            return `
+                                <div class="part-folder-group-container" style="grid-column: 1 / -1;">
+                                    <div class="border-2 border-blue-500 rounded-xl p-6 shadow-2xl shadow-blue-500/30 bg-blue-50/10 backdrop-blur-sm relative">
+                                        <!-- Кнопка закрытия папки в правом верхнем углу контейнера -->
+                                        <button data-action="close-folder" data-part-id="${d.part.id}" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center z-20 shadow-lg transition-all duration-200 hover:scale-110" title="Закрыть папку">
+                                            ${I_X('w-4 h-4')}
+                                        </button>
+                                        
+                                        <div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
+                                            <div class="transform scale-105 transition-transform duration-200">${baseNoRing}</div>
+                                            ${colorCardsWrapped}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        return base;
+                    }
+                    // одиночные карточки: сразу обычная карточка (открывает модалку детали)
+                    return o(d.entry, true, idx);
+                }).join("");
+                e = `<div class="grid ${n} gap-4 p-4">${html}</div>`;
+            } else {
+                // Сетки для наборов и минифигурок без изменений
+                S.hasMoreItems = t.length > S.toDisplay;
+                S.totalItems = t.length;
+                const shown = t.slice(0, S.toDisplay);
+                S.loadedItems = shown.length;
+                e = `<div class="grid ${n} gap-4 p-4">${shown.map((e,t)=>o(e,true,t)).join("")}</div>`;
+            }
             // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
         }
     }
@@ -5521,6 +5723,16 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     <div>
+                        <h3 class="text-md font-semibold text-gray-300 mb-2">Отображение коллекции</h3>
+                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Folder('w-4 h-4 text-gray-300')} Группировка в папки</span>
+                                <button data-action="toggle-folders" class="toggle-switch ${S.foldersEnabled? 'on' : ''}" aria-pressed="${S.foldersEnabled}"><span class="knob"></span></button>
+                            </div>
+                            <p class="text-xs text-gray-400">Если включено, детали с более чем 3 цветами будут сгруппированы в папки. Если выключено, все детали будут показаны отдельными карточками.</p>
+                        </div>
+                    </div>
+                    <div>
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Защита от случайного выхода</h3>
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
                             <div class="flex items-center justify-between gap-2">
@@ -5624,6 +5836,7 @@ function renderSettingsModal() {
                                <li>Модальные карточки: изображения, цвета, количество в коллекции</li>
                                <li>Инвентари наборов и минифигурок (клики по элементам открывают карточки)</li>
                                <li>Связанные наборы с минифигуркой</li>
+                               <li>Папка для детали в коллекции если добавлено более трёх цветов</li>
                                <li>Панель мультивыбора (удаление в коллекции, добавление в каталоге)</li>
                                <li>Импорт/экспорт коллекции в CSV и «Поделиться» CSV в соцсети</li>
                            </ul>
@@ -6568,6 +6781,7 @@ function generateCsvDataForSelection(selection) {
     ];
     let csv = headers.join(",") + "\n";
     const fromCollection = (S.view === 'collection');
+    
     // Детали (цветоспецифично)
     for (const { id: partNum, colorId } of selection.parts || []) {
         const part = PART_MAP[partNum];
@@ -6581,6 +6795,51 @@ function generateCsvDataForSelection(selection) {
             "", "", "", "", ""
         ].join(",") + "\n";
     }
+    
+    // Папки (все детали в папке)
+    for (const folderPartId of selection.folders || []) {
+        const part = PART_MAP[folderPartId];
+        const category = part ? flatCategories.find(cat => cat.id === part.categoryId) : null;
+        
+        if (fromCollection) {
+            // Для коллекции: добавляем все цвета детали из коллекции
+            const collectionColors = S.coll?.[folderPartId] || {};
+            console.log(`Processing folder ${folderPartId}, collection colors:`, collectionColors);
+            
+            if (Object.keys(collectionColors).length > 0) {
+                // Есть цвета в коллекции - добавляем их все
+                for (const [colorId, qty] of Object.entries(collectionColors)) {
+                    if (qty > 0) {
+                        const color = COLOR_MAP[colorId];
+                        csv += [
+                            quote("part"), quote(folderPartId), quote(qty), quote(part?.name),
+                            quote(part?.categoryId), quote(category?.name),
+                            quote(colorId), quote(color?.name),
+                            "", "", "", "", ""
+                        ].join(",") + "\n";
+                    }
+                }
+            } else {
+                // Нет цветов в коллекции - добавляем деталь с нулевым количеством
+                console.log(`Folder ${folderPartId} has no colors in collection`);
+                csv += [
+                    quote("part"), quote(folderPartId), quote(0), quote(part?.name),
+                    quote(part?.categoryId), quote(category?.name),
+                    "", "",
+                    "", "", "", "", ""
+                ].join(",") + "\n";
+            }
+        } else {
+            // Если не из коллекции, добавляем деталь без цвета
+            csv += [
+                quote("part"), quote(folderPartId), quote(1), quote(part?.name),
+                quote(part?.categoryId), quote(category?.name),
+                "", "",
+                "", "", "", "", ""
+            ].join(",") + "\n";
+        }
+    }
+    
     // Наборы
     for (const setNum of selection.sets || []) {
         const set = SET_MAP[setNum];
@@ -6592,6 +6851,7 @@ function generateCsvDataForSelection(selection) {
             quote(set?.theme_id), quote(theme?.name), quote(set?.year), quote(set?.num_parts), ""
         ].join(",") + "\n";
     }
+    
     // Минифигурки
     for (const figNum of selection.minifigs || []) {
         const minifig = MINIFIG_MAP[figNum];
@@ -6602,6 +6862,7 @@ function generateCsvDataForSelection(selection) {
             quote(minifig?.num_parts)
         ].join(",") + "\n";
     }
+    
     return csv;
 }
 // Композитное превью PNG: слева — изображение карточки, справа — текст
@@ -7442,6 +7703,8 @@ function closeSettingsModal() {
 function openModalForPart(e, t, o) {
     const l = PART_MAP[e];
     if (l) {
+        // Если открыт экран папки цветов — закрываем его при открытии модалки детали
+        try { if (colorsModalEl && !colorsModalEl.classList.contains('modal-hidden')) { modalManager.closeModal('colors-modal-container'); } } catch {}
         // Если уже открыто модальное окно детали, закрываем его
         if (S.selPartId && S.selPartId !== e) {
             console.log('openModalForPart: Closing previous part modal for:', S.selPartId);
@@ -7491,6 +7754,87 @@ function openModalForPart(e, t, o) {
             fetchPartColors(l.id);
         }
     }
+}
+
+function setupColorsScrollProgress() {
+    const track = document.getElementById('colors-scroll-progress');
+    const scrollArea = document.getElementById('colors-modal-scroll');
+    if (!track || !scrollArea) return;
+    const update = () => {
+        if (!track || !scrollArea) return;
+        // Выровнять трек относительно видимой области с учётом sticky-заголовка
+        const header = document.getElementById('colors-modal-header');
+        const headerH = header?.offsetHeight || 0;
+        const top = Math.max(12, headerH + 8);
+        track.style.top = top + 'px';
+        track.style.bottom = '12px';
+        const max = (scrollArea.scrollHeight - scrollArea.clientHeight);
+        const percent = max <= 0 ? 100 : Math.min(100, Math.max(0, (scrollArea.scrollTop / max) * 100));
+        const containerH = track.clientHeight || 0;
+        const bar = track.querySelector('.bar');
+        const barH = bar?.clientHeight || 24;
+        const maxOffset = Math.max(0, containerH - barH);
+        const translatePx = (percent / 100) * maxOffset;
+        if (bar) bar.style.transform = `translateY(${translatePx}px)`;
+    };
+    update();
+    let to;
+    const onScroll = () => {
+        track?.classList.add('visible');
+        update();
+        clearTimeout(to);
+        to = setTimeout(() => track?.classList.remove('visible'), 200);
+    };
+    scrollArea.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', () => update(), { passive: true });
+}
+
+// Специальное модальное окно: все доступные цвета выбранной детали в виде карточек
+function openColorsModalForPart(partId) {
+    const part = PART_MAP[partId];
+    if (!part) return;
+    const colorIds = Object.keys(S.coll[partId] || {});
+    if (colorIds.length === 0 && part.availableColorIds && part.availableColorIds.length > 0) {
+        // если в коллекции нет, но есть известные доступные — покажем их
+        colorIds.push(...part.availableColorIds);
+    }
+    const unique = Array.from(new Set(colorIds));
+    const entries = unique.map(cid => ({ part, color: COLOR_MAP[cid], quantity: (S.coll?.[partId]?.[cid] || 0) }));
+    modalManager.openModal('colors-modal-container', colorsModalEl);
+    const selCount = S.multiSelect.items?.size || 0;
+    const showMultiselectBarInModal = S.multiSelect.active && S.collectionMultiSelectEnabled;
+    const colorsSelBar = showMultiselectBarInModal ? `
+        <div id="multiselect-bar" class="mt-3 bg-gray-800/80 border border-gray-700 rounded-lg p-2 flex items-center justify-between gap-2 flex-nowrap overflow-x-auto no-scrollbar" style="${S.multiSelect.justActivated ? 'animation: msSlideFadeIn .36s cubic-bezier(.22,.61,.36,1) both;' : ''}">
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <button data-action="cancel-multiselect" class="text-gray-300 hover:text-white" title="Отменить мультивыбор">${I_X('w-5 h-5')}</button>
+                <span class="text-sm text-gray-300">Выбрано: <strong>${selCount}</strong></span>
+            </div>
+            <div class="flex items-center gap-2 flex-nowrap flex-shrink-0">
+                <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded-md" title="Поделиться выбранными элементами через CSV файл и изображение">${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span></button>
+                <button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-md" title="Удалить выбранные элементы из коллекции">${I_Trash('w-5 h-5')} <span class="hidden sm:inline">Удалить</span></button>
+            </div>
+        </div>
+    ` : '';
+    const cards = entries.map((entry, idx) => renderPartCard(entry.part, entry.color, entry.quantity, true, idx)).join("");
+    colorsModalEl.innerHTML = `
+        <div class="bg-gray-900 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-5xl flex flex-col max-h-[calc(100vh-2rem)] overflow-hidden modal-content-enter">
+            <div class="relative flex-grow overflow-y-auto no-scrollbar bg-gray-900" id="colors-modal-scroll">
+                <div id="colors-scroll-progress"><div class="bar"></div></div>
+                <div id="colors-modal-header" class="sticky top-0 z-10 bg-gray-900 p-4 border-b border-gray-700 flex flex-col gap-3">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${part.name} — цвета (${unique.length})</h2>
+                        <button id="colors-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть">${I_X('w-6 h-6')}</button>
+                    </div>
+                    ${colorsSelBar}
+                </div>
+                <div class="p-4">
+                    <div class="bg-gray-800/60 rounded-lg p-3">
+                        <div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">${cards}</div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    setupColorsScrollProgress();
 }
 
 function openModalForSet(e) {
@@ -8561,7 +8905,10 @@ document.addEventListener("click", async e => {
         const colorId = selBtn.dataset.colorId || '';
         if (!type || !id) return;
         if (!S.multiSelect.active) { S.multiSelect.active = !0; S.multiSelect.justActivated = !0; }
-        const key = type === 'part' ? `parts:${id}:${colorId}` : (type === 'set' ? `sets:${id}` : `minifigs:${id}`);
+        const key =
+            type === 'part' ? `parts:${id}:${colorId}` :
+            (type === 'part-folder' ? `parts-folder:${id}` :
+            (type === 'set' ? `sets:${id}` : `minifigs:${id}`));
         if (S.multiSelect.items.has(key)) S.multiSelect.items.delete(key); else S.multiSelect.items.add(key);
         if (S.multiSelect.items.size === 0) { S.multiSelect.active = !1; S.multiSelect.justActivated = !1; }
         renderHeader();
@@ -9047,6 +9394,31 @@ document.addEventListener("click", async e => {
     
     const d = t.closest('[data-action="delete-from-collection"]');
     if (d?.dataset.partId && d.dataset.colorId) return await handleUpdateCollection(d.dataset.partId, d.dataset.colorId, 0);
+    const delFolderBtn = t.closest('[data-action="delete-folder-from-collection"]');
+    if (delFolderBtn) {
+        const pid = delFolderBtn.getAttribute('data-part-id');
+        if (pid && S.coll[pid]) {
+            const colors = Object.keys(S.coll[pid]);
+            for (const cid of colors) {
+                await handleUpdateCollection(pid, cid, 0);
+            }
+        }
+        return;
+    }
+    
+    // Обработка кнопки закрытия папки
+    const closeFolderBtn = t.closest('[data-action="close-folder"]');
+    if (closeFolderBtn) {
+        const pid = closeFolderBtn.getAttribute('data-part-id');
+        if (pid) {
+            // Закрываем папку, удаляя её из expandedFolders
+            if (!S.expandedFolders) S.expandedFolders = new Set();
+            S.expandedFolders.delete(String(pid));
+            S.gridStale = true;
+            updateUI();
+        }
+        return;
+    }
     const u = t.closest(".minifig-card");
     if (u?.dataset.figNum) {
         const delFigBtn = t.closest('[data-action="delete-minifig-from-collection"]');
@@ -9096,11 +9468,51 @@ document.addEventListener("click", async e => {
             const groups = S.searchGroups || S.catGroups;
             groupPartsArr = groups && groups[groupId] ? groups[groupId] : [part]
         } else {
-            const allParts = Object.values(PART_MAP);
-            (groupPartsArr = allParts.filter(p => p && getGroupId(p.part_num) === groupId).sort(partCmp));
-            if (groupPartsArr.length === 0) {
-                groupPartsArr = [part];
+            const isFolder = m.hasAttribute('data-folder');
+            const isColorsModalOpen = colorsModalEl && !colorsModalEl.classList.contains('modal-hidden');
+            const cardColorId = m.getAttribute('data-color-id');
+            // Если клик по карточке цвета (не папке) — всегда открываем модалку детали
+            if (!isFolder && cardColorId) {
+                openModalForPart(partId, groupId, [part]);
+                S.partModal.selColorId = String(cardColorId);
+                S.partModal.qty = S.coll[partId]?.[S.partModal.selColorId] || 0;
+                updateModalPartially({ controls: !0, image: !0 });
+                fetchPartColorSpecifics(partId, S.partModal.selColorId);
+                return;
             }
+            // Если это папка — открываем окно цветов только если в коллекции >3 цветов
+            if (isFolder) {
+                // Проверяем, не кликнули ли по кнопке закрытия
+                const closeBtn = t.closest('[data-action="close-folder"]');
+                if (closeBtn) {
+                    // Кнопка закрытия обрабатывается выше
+                    return;
+                }
+                
+                // Тоглим локальное раскрытие папки — карточки появятся рядом
+                if (!S.expandedFolders) S.expandedFolders = new Set();
+                const key = String(partId);
+                if (S.expandedFolders.has(key)) S.expandedFolders.delete(key); else S.expandedFolders.add(key);
+                S.gridStale = true;
+                updateUI();
+                return;
+            }
+            // Если открыт экран папки и кликнули по карточке внутри него — закрываем папку и открываем деталь
+            if (isColorsModalOpen) {
+                modalManager.closeModal('colors-modal-container');
+                openModalForPart(partId, groupId, [part]);
+                setTimeout(() => modalManager.bringToFront('modal-container'), 50);
+                if (cardColorId) {
+                    S.partModal.selColorId = String(cardColorId);
+                    S.partModal.qty = S.coll[partId]?.[S.partModal.selColorId] || 0;
+                    updateModalPartially({ controls: !0, image: !0 });
+                    fetchPartColorSpecifics(partId, S.partModal.selColorId);
+                }
+                return;
+            }
+            // Фолбэк: обычная модалка
+            openModalForPart(partId, groupId, [part]);
+            return;
         }
         const selPartBtn = t.closest('[data-action="toggle-select"]');
         if (selPartBtn) return; // обработано выше
@@ -9120,6 +9532,12 @@ document.addEventListener("click", async e => {
         }
         return;
     }
+    // Закрытие модального окна цветов
+    if (t.id === 'colors-modal-close' || t.closest('#colors-modal-close') || t.id === 'colors-modal-container') {
+        modalManager.closeModal('colors-modal-container');
+        return;
+    }
+    // Папки теперь кликаются как обычные карточки (открывают модалку), отдельный тогглер не нужен
     if ("modal-container" === t.id || t.closest("#modal-close")) return closeModal();
     if ("set-modal-container" === t.id || t.closest("#set-modal-close")) return closeSetModal();
     if ("minifig-modal-container" === t.id || t.closest("#minifig-modal-close")) return closeMinifigModal();
@@ -9159,6 +9577,12 @@ document.addEventListener("click", async e => {
             } else if (key.startsWith('parts:')) {
                 const [, id, colorId] = key.split(':');
                 await handleUpdateCollection(id, colorId, 0);
+            } else if (key.startsWith('parts-folder:')) {
+                const id = key.split(':')[1];
+                const colors = Object.keys(S.coll[id] || {});
+                for (const colorId of colors) {
+                    await handleUpdateCollection(id, colorId, 0);
+                }
             }
         }
         S.multiSelect.active = !1; S.multiSelect.items = new Set;
@@ -9183,6 +9607,21 @@ document.addEventListener("click", async e => {
                 const [, id, colorId] = key.split(':');
                 const qty = (S.coll[id]?.[colorId] || 0) + 1;
                 await handleUpdateCollection(id, colorId, qty);
+            } else if (key.startsWith('parts-folder:')) {
+                const id = key.split(':')[1];
+                // Для папки: увеличить количество по всем цветам в коллекции (или добавить 1 для первого известного цвета)
+                const colors = Object.keys(S.coll[id] || {});
+                if (colors.length > 0) {
+                    for (const colorId of colors) {
+                        const qty = (S.coll[id]?.[colorId] || 0) + 1;
+                        await handleUpdateCollection(id, colorId, qty);
+                    }
+                } else {
+                    // Если в коллекции нет ни одного цвета, добавим по первому доступному цвету
+                    const available = PART_MAP[id]?.availableColorIds;
+                    const colorId = Array.isArray(available) && available.length ? String(available[0]) : null;
+                    if (colorId) await handleUpdateCollection(id, colorId, 1);
+                }
             }
         }
         saveState(); forceSaveState();
@@ -9196,6 +9635,7 @@ document.addEventListener("click", async e => {
         const parts = [];
         const sets = [];
         const minifigs = [];
+        const folders = [];
         for (const key of keys) {
             if (key.startsWith('sets:')) {
                 const id = key.split(':')[1];
@@ -9206,15 +9646,21 @@ document.addEventListener("click", async e => {
             } else if (key.startsWith('parts:')) {
                 const [, id, colorId] = key.split(':');
                 parts.push({ id, colorId });
+            } else if (key.startsWith('parts-folder:')) {
+                const id = key.split(':')[1];
+                folders.push(id);
             }
         }
-        const selection = { parts, sets, minifigs };
+        const selection = { parts, sets, minifigs, folders };
+        console.log('Share multiselect selection:', selection);
+        console.log('S.coll:', S.coll);
+        console.log('S.view:', S.view);
         try {
             const csvData = generateCsvDataForSelection(selection);
             const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
             let fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
             const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
-            const totalSelected = parts.length + sets.length + minifigs.length;
+            const totalSelected = parts.length + sets.length + minifigs.length + folders.length;
             let prettyText = '';
             let files = [];
             let csvFile = null;
@@ -9241,7 +9687,30 @@ document.addEventListener("click", async e => {
                         const colorName = (COLOR_MAP[colorId]?.name || '');
                         return `— деталей: 1 (qty ${qty})${colorName ? `, цвет: ${colorName}` : ''}`;
                     }
-                    return `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`;
+                    if (folders.length === 1) {
+                        const folderId = folders[0];
+                        const part = PART_MAP[folderId];
+                        const totalQty = (S.view === 'collection' && S.coll?.[folderId]) ? 
+                            Object.values(S.coll[folderId]).reduce((a, b) => a + b, 0) : 0;
+                        const colorsCount = (S.view === 'collection' && S.coll?.[folderId]) ? 
+                            Object.keys(S.coll[folderId]).length : 0;
+                        
+                        // Для папки показываем перечисление всех цветов
+                        if (S.view === 'collection' && S.coll?.[folderId]) {
+                            const colorDetails = [];
+                            for (const [colorId, qty] of Object.entries(S.coll[folderId])) {
+                                if (qty > 0) {
+                                    const color = COLOR_MAP[colorId];
+                                    const colorName = color?.name || colorId;
+                                    colorDetails.push(`${colorName}: ${qty}`);
+                                }
+                            }
+                            return `— папка: ${part?.name || folderId} • ${colorDetails.join(', ')}`;
+                        } else {
+                            return `— папка: ${part?.name || folderId} (${colorsCount} цветов, всего: ${totalQty})`;
+                        }
+                    }
+                    return `— деталей: ${parts.length}, папок: ${folders.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`;
                 })();
                 let imageUrl = '';
                 let selectedName = '';
@@ -9269,13 +9738,50 @@ document.addEventListener("click", async e => {
                     const colorImg = (p?.colorImages && p.colorImages[colorId]) ? p.colorImages[colorId] : '';
                     imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || '');
                     selectedName = p?.name || `part-${pId}`;
+                } else if (folders.length === 1) {
+                    const folderId = folders[0];
+                    const p = PART_MAP[folderId] || {};
+                    const totalQty = (S.view === 'collection' && S.coll?.[folderId]) ? 
+                        Object.values(S.coll[folderId]).reduce((a, b) => a + b, 0) : 0;
+                    const colorsCount = (S.view === 'collection' && S.coll?.[folderId]) ? 
+                        Object.keys(S.coll[folderId]).length : 0;
+                    
+                    // Для папки показываем перечисление всех цветов
+                    if (S.view === 'collection' && S.coll?.[folderId]) {
+                        const colorDetails = [];
+                        for (const [colorId, qty] of Object.entries(S.coll[folderId])) {
+                            if (qty > 0) {
+                                const color = COLOR_MAP[colorId];
+                                const colorName = color?.name || colorId;
+                                colorDetails.push(`${colorName}: ${qty}`);
+                            }
+                        }
+                        detailsLine = `${p?.name || 'Папка деталей'} (${folderId}) • ${colorDetails.join(', ')}`;
+                    } else {
+                        detailsLine = `${p?.name || 'Папка деталей'} (${folderId}) • ${colorsCount} цветов • всего: ${totalQty}`;
+                    }
+                    imageUrl = (p?.part_img_url || p?.rebrickable_img_url || '');
+                    selectedName = p?.name || `folder-${folderId}`;
                 }
                 prettyText = [titleLine, detailsLine, countsLine, '', `Сайт: ${siteUrl}`].join('\n');
                 // Пытаемся собрать композит с реальным изображением; затем фолбэки SVG/PNG
                 let imageFile = null;
                 if (imageUrl && imageUrl.startsWith('http')) {
                     const opts = {};
-                    if (parts.length === 1) {
+                    if (folders.length === 1) {
+                        // Для папки используем основной цвет детали или первый доступный цвет
+                        const folderId = folders[0];
+                        const p = PART_MAP[folderId];
+                        if (p?.colorImages && Object.keys(p.colorImages).length > 0) {
+                            const firstColorId = Object.keys(p.colorImages)[0];
+                            const c = COLOR_MAP[firstColorId];
+                            if (c) {
+                                opts.colorHex = c.hex || '#000000';
+                                opts.colorName = c.name || '';
+                                opts.isTransparent = !!c.isTransparent;
+                            }
+                        }
+                    } else if (parts.length === 1) {
                         const { colorId } = parts[0];
                         const c = COLOR_MAP[colorId];
                         if (c) {
@@ -9286,7 +9792,29 @@ document.addEventListener("click", async e => {
                     }
                     // Добавим строку метаданных (кол-во, год, детали и т.д.)
                     let metaExtra = '';
-                    if (sets.length === 1) {
+                    if (folders.length === 1) {
+                        const folderId = folders[0];
+                        const p = PART_MAP[folderId] || {};
+                        const totalQty = (S.view === 'collection' && S.coll?.[folderId]) ? 
+                            Object.values(S.coll[folderId]).reduce((a, b) => a + b, 0) : 0;
+                        const colorsCount = (S.view === 'collection' && S.coll?.[folderId]) ? 
+                            Object.keys(S.coll[folderId]).length : 0;
+                        
+                        // Для папки показываем перечисление всех цветов
+                        if (S.view === 'collection' && S.coll?.[folderId]) {
+                            const colorDetails = [];
+                            for (const [colorId, qty] of Object.entries(S.coll[folderId])) {
+                                if (qty > 0) {
+                                    const color = COLOR_MAP[colorId];
+                                    const colorName = color?.name || colorId;
+                                    colorDetails.push(`${colorName}: ${qty}`);
+                                }
+                            }
+                            metaExtra = `папка: ${colorDetails.join(', ')}`;
+                        } else {
+                            metaExtra = `папка: ${colorsCount} цветов, всего: ${totalQty}`;
+                        }
+                    } else if (sets.length === 1) {
                         const s = SET_MAP[sets[0]] || {};
                         const piecesInfo = s?.num_parts ? `деталей в наборе: ${s.num_parts}` : '';
                         const yearInfo = s?.year ? `год: ${s.year}` : '';
@@ -9322,11 +9850,36 @@ document.addEventListener("click", async e => {
                 csvFile = new File([blob], fileName, { type: 'text/csv' });
                 files = imageFile ? [csvFile, imageFile] : [csvFile];
             } else {
+                // Для множественного выбора показываем детальную информацию о папках
+                let folderDetails = '';
+                if (folders.length > 0) {
+                    const folderInfo = [];
+                    for (const folderId of folders) {
+                        const part = PART_MAP[folderId];
+                        if (S.view === 'collection' && S.coll?.[folderId]) {
+                            const colorDetails = [];
+                            for (const [colorId, qty] of Object.entries(S.coll[folderId])) {
+                                if (qty > 0) {
+                                    const color = COLOR_MAP[colorId];
+                                    const colorName = color?.name || colorId;
+                                    colorDetails.push(`${colorName}: ${qty}`);
+                                }
+                            }
+                            folderInfo.push(`${part?.name || folderId} (${colorDetails.join(', ')})`);
+                        } else {
+                            folderInfo.push(`${part?.name || folderId}`);
+                        }
+                    }
+                    folderDetails = folderInfo.join('\n');
+                }
+                
                 prettyText = [
                     'Мой подбор из LEGO Part Catalog',
-                    `— деталей: ${parts.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`,
+                    `— деталей: ${parts.length}, папок: ${folders.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`,
+                    ...(folderDetails ? ['', 'Содержимое папок:', folderDetails] : []),
                     `Сайт: ${siteUrl}`
                 ].join('\n');
+                
                 // Для множественного выбора используем дефолтное имя, создаём CSV сейчас
                 csvFile = new File([blob], fileName, { type: 'text/csv' });
                 files = [csvFile];
@@ -9770,6 +10323,24 @@ document.addEventListener("click", async e => {
                     }
                 })();
                 S.gridStale = true; updateUI();
+                return;
+            case "toggle-folders":
+                S.foldersEnabled = !S.foldersEnabled;
+                localStorage.setItem('foldersEnabled', String(S.foldersEnabled));
+                // Обновляем только тумблер, не трогая остальной контент
+                (function(){
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-folders"]');
+                    if (btn) {
+                        if (S.foldersEnabled) btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.foldersEnabled));
+                    }
+                })();
+                S.settingsModal.status = S.foldersEnabled ? "Группировка в папки включена" : "Группировка в папки отключена";
+                S.settingsModal.statusType = "success";
+                S.gridStale = true; updateUI();
+                // Перерисовываем модал для обновления статуса
+                renderSettingsModal();
+                setTimeout(()=>{ if (S.settingsOpen) { S.settingsModal.status=''; renderSettingsModal(); } }, 2000);
                 return;
             case "toggle-prevent-exit":
                 S.preventAccidentalExit = !S.preventAccidentalExit;
@@ -12326,6 +12897,12 @@ function updateFilterValue(inputElement, filterKey) {
 // Обработчик клавиши Escape для закрытия последнего модального окна
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        // Закрытие модалки папки по Esc
+        if (colorsModalEl && !colorsModalEl.classList.contains('modal-hidden')) {
+            modalManager.closeModal('colors-modal-container');
+            e.preventDefault();
+            return;
+        }
         if (modalManager.getOpenModalsCount() > 0) {
             modalManager.closeLastModal();
             e.preventDefault();
