@@ -1828,6 +1828,72 @@ body.tab-switching .minifig-card {
     /* .loading-step:nth-child(2) { animation-delay: 0.2s; } */
     /* .loading-step:nth-child(3) { animation-delay: 0.3s; } */
     /* .loading-step:nth-child(4) { animation-delay: 0.4s; } */
+    
+    /* Анимации для подсказок */
+    .tip-container {
+        position: relative;
+        overflow: hidden;
+        min-height: 1.5rem;
+    }
+    
+    .tip-text {
+        transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    .tip-text.fade-out {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    
+    .tip-text.fade-in {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    
+    .tip-text.fade-in.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    /* Анимация появления подсказки */
+    @keyframes tipSlideIn {
+        0% {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+        100% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+    
+    /* Анимация исчезновения подсказки */
+    @keyframes tipSlideOut {
+        0% {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        100% {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+    }
+    
+    /* Анимация пульсации для привлечения внимания */
+    @keyframes tipPulse {
+        0%, 100% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.02);
+        }
+    }
+    
+    .tip-text.pulse {
+        animation: tipPulse 2s ease-in-out infinite;
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
@@ -1847,6 +1913,9 @@ body.tab-switching .minifig-card {
             <div id="loading-progress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
           </div>
           <div id="loading-details" class="text-sm text-gray-500"></div>
+          <div class="tip-container max-w-md mx-auto mt-4">
+            <div id="loading-tip" class="tip-text text-xs text-blue-400 italic"></div>
+          </div>
         </div>
       </div>
     </main>
@@ -1888,7 +1957,7 @@ function getApiKey() {
     currentApiKeyIndex = (currentApiKeyIndex + 1) % REBRICKABLE_API_KEYS.length;
     return key;
 }
-const CACHE_NAME = 'lego-catalog-cache-v12';
+const CACHE_NAME = 'lego-catalog-cache-v13';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -3531,12 +3600,34 @@ async function handleFeelingLucky() {
             icon.innerHTML = I_Dice("w-6 h-6");
             text.textContent = 'Мне повезёт!';
         }
+        
+        // Обновляем подсказку при каждом клике с анимацией
+        const tipElement = document.getElementById('feeling-lucky-tip');
+        if (tipElement && window.getRandomTip && window.animateTipChange) {
+            const newTip = window.getRandomTip();
+            window.animateTipChange(tipElement, newTip, () => {
+                // Добавляем подсказку в историю после анимации
+                if (window.addTipToHistory) {
+                    window.addTipToHistory(newTip, 'feelingLucky');
+                }
+            });
+        }
+        
+        // Перезапускаем автоматическую смену подсказок при каждом клике
+        setTimeout(() => {
+            if (window.startTipRotation) {
+                console.log('Restarting tip rotation after feeling lucky click');
+                window.startTipRotation();
+            }
+        }, 500);
     }
 }
 
 // Функция для обновления статистики кнопки "Мне повезёт"
 function updateFeelingLuckyStats() {
     const statsElement = document.getElementById('feeling-lucky-stats');
+    const tipElement = document.getElementById('feeling-lucky-tip');
+    
     if (!statsElement) return;
     
     try {
@@ -3553,8 +3644,52 @@ function updateFeelingLuckyStats() {
         }
         
         statsElement.textContent = stats;
+        
+        // Обновляем подсказку с анимацией
+        if (tipElement && window.getRandomTip && window.animateTipChange) {
+            const newTip = window.getRandomTip();
+            // Если это первая подсказка, показываем её без анимации исчезновения
+            if (!tipElement.textContent || tipElement.textContent === '💡 Загружаем подсказку...') {
+                tipElement.textContent = newTip;
+                tipElement.classList.add('fade-in', 'show');
+                setTimeout(() => {
+                    tipElement.classList.remove('fade-in', 'show');
+                }, 600);
+                // Добавляем первую подсказку в историю
+                if (window.addTipToHistory) {
+                    window.addTipToHistory(newTip, 'feelingLucky');
+                }
+            } else {
+                window.animateTipChange(tipElement, newTip, () => {
+                    // Добавляем подсказку в историю после анимации
+                    if (window.addTipToHistory) {
+                        window.addTipToHistory(newTip, 'feelingLucky');
+                    }
+                });
+            }
+        }
+        
+        // Запускаем автоматическую смену подсказок, если еще не запущена
+        if (window.startTipRotation && !window.tipRotationInterval) {
+            console.log('Starting tip rotation from updateFeelingLuckyStats');
+            window.startTipRotation();
+        } else if (window.startTipRotation && window.tipRotationInterval) {
+            console.log('Tip rotation already running, interval ID:', window.tipRotationInterval);
+            // Перезапускаем ротацию, чтобы убедиться, что она работает
+            setTimeout(() => {
+                if (window.startTipRotation) {
+                    console.log('Restarting tip rotation to ensure it works');
+                    window.startTipRotation();
+                }
+            }, 1000);
+        } else {
+            console.log('startTipRotation function not available');
+        }
     } catch (e) {
         statsElement.textContent = 'Статистика недоступна';
+        if (tipElement) {
+            tipElement.textContent = '💡 Подсказка недоступна';
+        }
     }
 }
 
@@ -4732,6 +4867,11 @@ function renderMainContent() {
         </button>
         <div class="text-center text-sm text-gray-500 mt-2">
             <span id="feeling-lucky-stats">Загружаем статистику...</span>
+        </div>
+        <div class="text-center text-xs text-blue-400 mt-6 px-8">
+            <div class="tip-container">
+                <span id="feeling-lucky-tip" class="tip-text italic">💡 Загружаем подсказку...</span>
+            </div>
         </div>
                     </div>`;
         else {
@@ -9539,7 +9679,18 @@ document.addEventListener("click", async e => {
         // Сбрасываем случайное изображение минифигурки при переключении представлений
         resetRandomMinifigImage();
         
-        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener()))
+        // Останавливаем автоматическую смену подсказок при переключении представлений
+        if (window.stopTipRotation) {
+            window.stopTipRotation();
+        }
+        
+        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener(), setTimeout(() => {
+            // Перезапускаем автоматическую смену подсказок после переключения представлений
+            if (window.startTipRotation) {
+                console.log('Restarting tip rotation after view switch');
+                window.startTipRotation();
+            }
+        }, 1000)))
     }
     const n = t.closest("[data-sub-view]");
     if (n?.dataset.subView) {
@@ -9570,6 +9721,12 @@ document.addEventListener("click", async e => {
         }
         
         S.subView = e;
+        
+        // Останавливаем автоматическую смену подсказок при переключении вкладок
+        if (window.stopTipRotation) {
+            window.stopTipRotation();
+        }
+        
         // Сбрасываем выбранную минифигурку при переключении на другие вкладки
         if (e !== 'sets') {
             S.selFigNum = null;
@@ -9675,7 +9832,16 @@ document.addEventListener("click", async e => {
         }
         
         // Обновляем статистику кнопки "Мне повезёт" после смены представления
-        setTimeout(() => updateFeelingLuckyStats(), 200);
+        setTimeout(() => {
+            updateFeelingLuckyStats();
+            // Перезапускаем автоматическую смену подсказок после переключения вкладок
+            setTimeout(() => {
+                if (window.startTipRotation) {
+                    console.log('Restarting tip rotation after tab switch');
+                    window.startTipRotation();
+                }
+            }, 500);
+        }, 200);
         
         // Настраиваем слушатель прокрутки для автоматической загрузки изображений
         setupScrollListener();
@@ -11439,11 +11605,396 @@ async function preloadImages() {
 }
 
 async function initializeApp() {
+    // Массив подсказок для кнопки "мне повезёт"
+    window.FEELING_LUCKY_TIPS = [
+        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+        "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
+        "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
+        "📱 Сайт адаптирован для мобильных устройств - удобно использовать на телефоне",
+        "⭐ Добавляйте часто используемые категории в избранное для быстрого доступа",
+        "🔄 При проблемах с загрузкой попробуйте обновить страницу или очистить кэш",
+        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+        "📊 Статистика показывает общее количество элементов в каталоге",
+        "🎯 Кнопка 'мне повезёт' показывает случайные элементы из всего каталога",
+        "💾 Данные сохраняются локально в браузере для быстрой работы",
+        "🖼️ Изображения загружаются автоматически при просмотре деталей",
+        "🔧 Используйте фильтры по темам для поиска наборов определенной серии",
+        "📋 Переключайтесь между каталогом и коллекцией для разных задач",
+        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+        "🎲 Каждый клик по 'мне повезёт' показывает что-то новое и интересное",
+        "⚡ Сайт работает офлайн после первой загрузки данных",
+        "🔄 Регулярно обновляйте данные для получения актуальной информации",
+        "🎯 Используйте комбинацию фильтров для точного поиска нужных элементов",
+        "📱 На мобильных устройствах используйте свайпы для навигации",
+        "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
+        "⭐ Добавляйте в избранное часто используемые темы для быстрого доступа",
+        "📊 В коллекции можно группировать детали по названию для удобства",
+        "🖼️ Нажмите на изображение детали для просмотра в полном размере",
+        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+        "📋 Экспортируйте свою коллекцию в формате CSV",
+        "🎲 Статистика обновляется в реальном времени при изменении коллекции",
+        "⚡ Быстрый поиск работает даже при медленном интернете",
+        "🔄 Автосохранение состояния происходит после каждого действия",
+        "🎯 Клик по карточке открывает детальную информацию",
+        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+        "🔍 Фильтры можно комбинировать для создания сложных запросов",
+        "🎨 Используйте цветовые фильтры для подбора деталей к набору",
+        "📊 Отслеживайте статистику использования различных элементов",
+        "🖼️ Предзагрузка изображений ускоряет работу с каталогом",
+        "🔧 Настройки интерфейса сохраняются между сессиями",
+        "📋 Импортируйте коллекции из других источников",
+        "🎲 Случайный режим помогает открыть новые интересные элементы",
+        "💡 Все подсказки содержат полезную информацию по использованию сайта"
+    ];
+    
+    console.log('FEELING_LUCKY_TIPS initialized with', window.FEELING_LUCKY_TIPS.length, 'tips');
+    
+    // Массив подсказок для экрана загрузки
+    window.LOADING_TIPS = [
+        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+        "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
+        "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
+        "📱 Сайт адаптирован для мобильных устройств - удобно использовать на телефоне",
+        "⭐ Добавляйте часто используемые категории в избранное для быстрого доступа",
+        "🔄 При проблемах с загрузкой попробуйте обновить страницу или очистить кэш",
+        "📊 Статистика показывает общее количество элементов в каталоге",
+        "🎯 Кнопка 'мне повезёт' показывает случайные элементы из всего каталога",
+        "💾 Данные сохраняются локально в браузере для быстрой работы",
+        "🖼️ Изображения загружаются автоматически при просмотре деталей",
+        "🔧 Используйте фильтры по темам для поиска наборов определенной серии",
+        "📋 Переключайтесь между каталогом и коллекцией для разных задач",
+        "🎲 Каждый клик по 'мне повезёт' показывает что-то новое и интересное",
+        "⚡ Сайт работает офлайн после первой загрузки данных",
+        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+        "🔄 Регулярно обновляйте данные для получения актуальной информации",
+        "🎯 Используйте комбинацию фильтров для точного поиска нужных элементов",
+        "📱 На мобильных устройствах используйте свайпы для навигации",
+        "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
+        "⭐ Добавляйте в избранное часто используемые темы для быстрого доступа",
+        "📊 В коллекции можно группировать детали по названию для удобства",
+        "🖼️ Нажмите на изображение детали для просмотра в полном размере",
+        "📋 Экспортируйте свою коллекцию в формате CSV",
+        "🎲 Статистика обновляется в реальном времени при изменении коллекции",
+        "⚡ Быстрый поиск работает даже при медленном интернете",
+        "🔄 Автосохранение состояния происходит после каждого действия",
+        "🎯 Клик по карточке открывает детальную информацию",
+        "🔍 Фильтры можно комбинировать для создания сложных запросов",
+        "🎨 Используйте цветовые фильтры для подбора деталей к набору",
+        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+        "📊 Отслеживайте статистику использования различных элементов",
+        "🖼️ Предзагрузка изображений ускоряет работу с каталогом",
+        "🔧 Настройки интерфейса сохраняются между сессиями",
+        "📋 Импортируйте коллекции из других источников",
+        "🎲 Случайный режим помогает открыть новые интересные элементы",
+        "💡 Все подсказки содержат полезную информацию по использованию сайта"
+    ];
+    
+    console.log('LOADING_TIPS initialized with', window.LOADING_TIPS.length, 'tips');
+    
+    // Глобальные переменные для отслеживания последних подсказок
+    window.LAST_TIPS_HISTORY = {
+        feelingLucky: [],
+        loading: [],
+        maxHistory: 3 // Храним последние 3 подсказки
+    };
+    
+    // Функция для получения случайной подсказки
+    window.getRandomTip = function() {
+        if (!window.FEELING_LUCKY_TIPS || window.FEELING_LUCKY_TIPS.length === 0) {
+            console.error('FEELING_LUCKY_TIPS array is not available');
+            return '💡 Подсказка недоступна';
+        }
+        
+        // Получаем текущую подсказку для исключения
+        const currentTip = document.getElementById('feeling-lucky-tip')?.textContent || '';
+        
+        // Фильтруем подсказки, исключая текущую и последние из истории
+        const availableTips = window.FEELING_LUCKY_TIPS.filter(tip => 
+            tip !== currentTip && !window.LAST_TIPS_HISTORY.feelingLucky.includes(tip)
+        );
+        
+        if (availableTips.length === 0) {
+            // Если все подсказки в истории, очищаем историю и начинаем заново
+            console.log('All tips are in history, clearing history');
+            window.LAST_TIPS_HISTORY.feelingLucky = [];
+            
+            // Исключаем только текущую подсказку
+            const freshTips = window.FEELING_LUCKY_TIPS.filter(tip => tip !== currentTip);
+            if (freshTips.length === 0) {
+                // Если все подсказки одинаковые, возвращаем любую
+                const randomIndex = Math.floor(Math.random() * window.FEELING_LUCKY_TIPS.length);
+                const tip = window.FEELING_LUCKY_TIPS[randomIndex];
+                console.log(`All tips are the same, selected: index ${randomIndex}, tip: ${tip}`);
+                return tip;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * freshTips.length);
+            const tip = freshTips[randomIndex];
+            console.log(`Fresh tip selected after history clear: index ${randomIndex}, tip: ${tip}`);
+            return tip;
+        }
+        
+        // Выбираем случайную подсказку из доступных
+        const randomIndex = Math.floor(Math.random() * availableTips.length);
+        const tip = availableTips[randomIndex];
+        console.log(`Random tip selected (excluding current and history): index ${randomIndex}, tip: ${tip}`);
+        return tip;
+    };
+    
+    // Функция для получения случайной подсказки для экрана загрузки
+    window.getRandomLoadingTip = function() {
+        if (!window.LOADING_TIPS || window.LOADING_TIPS.length === 0) {
+            console.error('LOADING_TIPS array is not available');
+            return '💡 Загружаем полезные советы...';
+        }
+        
+        // Получаем текущую подсказку для исключения
+        const currentTip = document.getElementById('loading-tip')?.textContent || '';
+        
+        // Фильтруем подсказки, исключая текущую и последние из истории
+        const availableTips = window.LOADING_TIPS.filter(tip => 
+            tip !== currentTip && !window.LAST_TIPS_HISTORY.loading.includes(tip)
+        );
+        
+        if (availableTips.length === 0) {
+            // Если все подсказки в истории, очищаем историю и начинаем заново
+            console.log('All loading tips are in history, clearing history');
+            window.LAST_TIPS_HISTORY.loading = [];
+            
+            // Исключаем только текущую подсказку
+            const freshTips = window.LOADING_TIPS.filter(tip => tip !== currentTip);
+            if (freshTips.length === 0) {
+                // Если все подсказки одинаковые, возвращаем любую
+                const randomIndex = Math.floor(Math.random() * window.FEELING_LUCKY_TIPS.length);
+                const tip = window.LOADING_TIPS[randomIndex];
+                console.log(`All loading tips are the same, selected: index ${randomIndex}, tip: ${tip}`);
+                return tip;
+            }
+            
+            const randomIndex = Math.floor(Math.random() * freshTips.length);
+            const tip = freshTips[randomIndex];
+            console.log(`Fresh loading tip selected after history clear: index ${randomIndex}, tip: ${tip}`);
+            return tip;
+        }
+        
+        // Выбираем случайную подсказку из доступных
+        const randomIndex = Math.floor(Math.random() * availableTips.length);
+        const tip = availableTips[randomIndex];
+        console.log(`Random loading tip selected (excluding current and history): index ${randomIndex}, tip: ${tip}`);
+        return tip;
+    };
+    
+    // Функция для красивой анимации смены подсказок
+    window.animateTipChange = function(element, newTip, onComplete = null) {
+        if (!element) return;
+        
+        // Добавляем класс для анимации исчезновения
+        element.classList.add('fade-out');
+        
+        // Ждем завершения анимации исчезновения
+        setTimeout(() => {
+            // Меняем текст
+            element.textContent = newTip;
+            
+            // Убираем класс исчезновения и добавляем класс появления
+            element.classList.remove('fade-out');
+            element.classList.add('fade-in');
+            
+            // Добавляем небольшую задержку для плавности
+            setTimeout(() => {
+                // Показываем новую подсказку
+                element.classList.add('show');
+                
+                // Добавляем пульсацию для привлечения внимания
+                element.classList.add('pulse');
+                
+                // Убираем пульсацию через 2 секунды
+                setTimeout(() => {
+                    element.classList.remove('pulse');
+                }, 2000);
+                
+                // Убираем классы анимации
+                setTimeout(() => {
+                    element.classList.remove('fade-in', 'show');
+                }, 600);
+                
+                // Вызываем callback если он есть
+                if (onComplete) onComplete();
+            }, 50);
+        }, 300);
+    };
+    
+    // Функция для добавления подсказки в историю
+    window.addTipToHistory = function(tip, type = 'feelingLucky') {
+        if (!window.LAST_TIPS_HISTORY || !window.LAST_TIPS_HISTORY[type]) return;
+        
+        const history = window.LAST_TIPS_HISTORY[type];
+        
+        // Добавляем новую подсказку в начало массива
+        history.unshift(tip);
+        
+        // Ограничиваем размер истории
+        if (history.length > window.LAST_TIPS_HISTORY.maxHistory) {
+            history.pop();
+        }
+        
+        console.log(`Added tip to ${type} history:`, tip);
+        console.log(`Current ${type} history:`, history);
+    };
+    
+    // Функция для автоматической смены подсказок каждые 5 секунд
+    window.startTipRotation = function() {
+        let tipElement = document.getElementById('feeling-lucky-tip');
+        
+        // Если элемент не найден, попробуем найти его через несколько секунд
+        if (!tipElement) {
+            console.log('Tip element not found, waiting for it to appear...');
+            let attempts = 0;
+            const maxAttempts = 10;
+            
+            const waitForElement = setInterval(() => {
+                tipElement = document.getElementById('feeling-lucky-tip');
+                attempts++;
+                
+                if (tipElement) {
+                    clearInterval(waitForElement);
+                    console.log('Tip element found after', attempts, 'attempts');
+                    startRotation();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(waitForElement);
+                    console.log('Tip element not found after', maxAttempts, 'attempts, giving up');
+                    return;
+                }
+            }, 500);
+            
+            return;
+        }
+        
+        startRotation();
+        
+        function startRotation() {
+            console.log('Starting tip rotation, current tip:', tipElement.textContent);
+            
+            // Останавливаем предыдущий интервал, если он существует
+            if (window.tipRotationInterval) {
+                clearInterval(window.tipRotationInterval);
+                console.log('Cleared previous tip rotation interval');
+            }
+            
+                    // Запускаем автоматическую смену подсказок каждые 5 секунд
+        window.tipRotationInterval = setInterval(() => {
+            if (tipElement && window.getRandomTip && window.animateTipChange) {
+                const newTip = window.getRandomTip();
+                window.animateTipChange(tipElement, newTip, () => {
+                    console.log('Tip rotated to:', newTip);
+                    // Добавляем подсказку в историю
+                    if (window.addTipToHistory) {
+                        window.addTipToHistory(newTip, 'feelingLucky');
+                    }
+                });
+            }
+        }, 5000);
+            
+            console.log('Tip rotation started, interval ID:', window.tipRotationInterval);
+        }
+    };
+    
+    // Функция для остановки автоматической смены подсказок
+    window.stopTipRotation = function() {
+        if (window.tipRotationInterval) {
+            console.log('Stopping tip rotation, interval ID:', window.tipRotationInterval);
+            clearInterval(window.tipRotationInterval);
+            window.tipRotationInterval = null;
+            console.log('Tip rotation stopped');
+        } else {
+            console.log('No tip rotation interval to stop');
+        }
+    };
+    
+    // Функция для принудительного запуска автоматической смены подсказок (для тестирования)
+    window.forceStartTipRotation = function() {
+        console.log('Force starting tip rotation...');
+        if (window.startTipRotation) {
+            window.startTipRotation();
+        } else {
+            console.error('startTipRotation function not available');
+        }
+    };
+    
+    // Функция для проверки состояния автоматической смены подсказок
+    window.checkTipRotationStatus = function() {
+        console.log('Tip rotation status:');
+        console.log('- FEELING_LUCKY_TIPS array length:', window.FEELING_LUCKY_TIPS ? window.FEELING_LUCKY_TIPS.length : 'undefined');
+        console.log('- getRandomTip function available:', !!window.getRandomTip);
+        console.log('- startTipRotation function available:', !!window.startTipRotation);
+        console.log('- stopTipRotation function available:', !!window.stopTipRotation);
+        console.log('- Current interval ID:', window.tipRotationInterval);
+        console.log('- Tip element exists:', !!document.getElementById('feeling-lucky-tip'));
+        
+        const tipElement = document.getElementById('feeling-lucky-tip');
+        if (tipElement) {
+            console.log('- Current tip text:', tipElement.textContent);
+        }
+    };
+    
+    // Функция для автоматической смены подсказок на экране загрузки
+    window.startLoadingTipRotation = function() {
+        const loadingTipElement = document.getElementById('loading-tip');
+        if (!loadingTipElement) {
+            console.log('Loading tip element not found, cannot start rotation');
+            return;
+        }
+        
+        console.log('Starting loading tip rotation, current tip:', loadingTipElement.textContent);
+        
+        // Останавливаем предыдущий интервал, если он существует
+        if (window.loadingTipRotationInterval) {
+            clearInterval(window.loadingTipRotationInterval);
+            console.log('Cleared previous loading tip rotation interval');
+        }
+        
+        // Запускаем автоматическую смену подсказок каждые 3 секунды (быстрее чем на основном экране)
+        window.loadingTipRotationInterval = setInterval(() => {
+            if (loadingTipElement && window.getRandomLoadingTip && window.animateTipChange) {
+                const newTip = window.getRandomLoadingTip();
+                window.animateTipChange(loadingTipElement, newTip, () => {
+                    console.log('Loading tip rotated to:', newTip);
+                    // Добавляем подсказку в историю
+                    if (window.addTipToHistory) {
+                        window.addTipToHistory(newTip, 'loading');
+                    }
+                });
+            }
+        }, 3000);
+        
+        console.log('Loading tip rotation started, interval ID:', window.loadingTipRotationInterval);
+    };
+    
+    // Функция для остановки автоматической смены подсказок на экране загрузки
+    window.stopLoadingTipRotation = function() {
+        if (window.loadingTipRotationInterval) {
+            console.log('Stopping loading tip rotation, interval ID:', window.loadingTipRotationInterval);
+            clearInterval(window.loadingTipRotationInterval);
+            window.loadingTipRotationInterval = null;
+            console.log('Loading tip rotation stopped');
+        } else {
+            console.log('No loading tip rotation interval to stop');
+        }
+    };
+    
     // ВРЕМЕННО ОТКЛЮЧЕНО: Добавляем класс для анимации первой загрузки страницы
     // document.body.classList.add('page-loading');
     
     // Немедленно показываем индикатор загрузки
     updateLoadingStatus("Инициализация приложения...", 5, "Загрузка состояния и подготовка данных");
+    
+    // Запускаем автоматическую смену подсказок на экране загрузки
+    setTimeout(() => {
+        if (window.startLoadingTipRotation) {
+            console.log('Starting loading tip rotation...');
+            window.startLoadingTipRotation();
+        }
+    }, 1000);
     
     // Сбрасываем случайное изображение минифигурки при инициализации приложения
     resetRandomMinifigImage();
@@ -11551,6 +12102,14 @@ async function initializeApp() {
                 setTimeout(() => {
                     showSidebarHint();
                 }, 1500);
+                
+                // Запускаем автоматическую смену подсказок после полной загрузки приложения
+                setTimeout(() => {
+                    if (window.startTipRotation) {
+                        console.log('Starting automatic tip rotation...');
+                        window.startTipRotation();
+                    }
+                }, 2000);
             }, 1000);
             
         } catch (e) {
@@ -11610,6 +12169,15 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!S || !S.preventAccidentalExit) return;
             // Сбрасываем случайное изображение минифигурки при закрытии/обновлении страницы
             resetRandomMinifigImage();
+            // Останавливаем автоматическую смену подсказок
+            if (window.stopTipRotation) {
+                window.stopTipRotation();
+            }
+            
+            // Останавливаем автоматическую смену подсказок на экране загрузки
+            if (window.stopLoadingTipRotation) {
+                window.stopLoadingTipRotation();
+            }
             event.preventDefault();
             event.returnValue = '';
         } catch {}
@@ -12715,6 +13283,7 @@ function updateLoadingStatus(status, progress = null, details = null) {
     const statusElement = document.getElementById('loading-status');
     const progressElement = document.getElementById('loading-progress');
     const detailsElement = document.getElementById('loading-details');
+    const loadingTipElement = document.getElementById('loading-tip');
     
     if (statusElement) {
         statusElement.textContent = status;
@@ -12727,10 +13296,30 @@ function updateLoadingStatus(status, progress = null, details = null) {
     if (detailsElement && details !== null) {
         detailsElement.textContent = details;
     }
+    
+    // Показываем первую подсказку при первом вызове с анимацией
+    if (loadingTipElement && !loadingTipElement.textContent && window.getRandomLoadingTip && window.animateTipChange) {
+        const firstTip = window.getRandomLoadingTip();
+        // Для первой подсказки используем только анимацию появления
+        loadingTipElement.textContent = firstTip;
+        loadingTipElement.classList.add('fade-in', 'show');
+        setTimeout(() => {
+            loadingTipElement.classList.remove('fade-in', 'show');
+        }, 600);
+        // Добавляем первую подсказку в историю
+        if (window.addTipToHistory) {
+            window.addTipToHistory(firstTip, 'loading');
+        }
+    }
 }
 function hideLoadingIndicator() {
     const loadingContainer = document.getElementById('loading-container');
     if (loadingContainer) {
+        // Останавливаем автоматическую смену подсказок на экране загрузки
+        if (window.stopLoadingTipRotation) {
+            window.stopLoadingTipRotation();
+        }
+        
         loadingContainer.classList.add('hidden');
         // Убираем контейнер загрузки после анимации
         setTimeout(() => {
