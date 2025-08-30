@@ -100,6 +100,144 @@
         from { opacity: 1; transform: scale(1); }
         to { opacity: 0; transform: scale(0.95); }
     }
+    
+    /* Стили для указателя sidebar-toggle */
+    .sidebar-hint {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        color: white;
+        padding: 20px 24px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.5;
+        text-align: center;
+        z-index: 1000;
+        max-width: 320px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.1);
+        animation: hintFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        pointer-events: none;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        backdrop-filter: blur(10px);
+    }
+    
+    .sidebar-hint::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+        border-radius: 16px;
+        z-index: -1;
+    }
+    
+    .sidebar-hint::after {
+        content: '';
+        position: absolute;
+        top: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-bottom: 10px solid #1f2937;
+        filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.3));
+    }
+    
+    .sidebar-hint-icon {
+        display: inline-block;
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        border-radius: 12px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        animation: iconPulse 2s ease-in-out infinite;
+    }
+    
+    .sidebar-hint-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #f3f4f6;
+        margin-bottom: 8px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .sidebar-hint-text {
+        color: #d1d5db;
+        font-size: 13px;
+        line-height: 1.4;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    @keyframes hintFadeIn {
+        from { 
+            opacity: 0; 
+            transform: translate(-50%, -50%) scale(0.9) translateY(10px);
+        }
+        to { 
+            opacity: 1; 
+            transform: translate(-50%, -50%) scale(1) translateY(0);
+        }
+    }
+    
+    @keyframes iconPulse {
+        0%, 100% { 
+            transform: scale(1) rotate(0deg);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+        50% { 
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+    }
+    
+    .sidebar-hint-close {
+        position: absolute;
+        top: -12px;
+        right: -12px;
+        width: 28px;
+        height: 28px;
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        pointer-events: auto;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.1);
+        transition: all 0.2s ease;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .sidebar-hint-close:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.2);
+    }
+    
+    .sidebar-hint-close:active {
+        transform: scale(0.95);
+    }
+    
+    /* Скрываем указатель на больших экранах */
+    @media (min-width: 1024px) {
+        .sidebar-hint {
+            display: none !important;
+        }
+    }
     /* Тумблеры (анимированный слайдер) */
     .toggle-switch {
         position: relative;
@@ -1591,7 +1729,7 @@ function getApiKey() {
     currentApiKeyIndex = (currentApiKeyIndex + 1) % REBRICKABLE_API_KEYS.length;
     return key;
 }
-const CACHE_NAME = 'lego-catalog-cache-v11';
+const CACHE_NAME = 'lego-catalog-cache-v12';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -1870,6 +2008,13 @@ let S = {
     preventAccidentalExit: (function(){
         try {
             const v = localStorage.getItem('preventAccidentalExit');
+            return v === null ? true : v === 'true';
+        } catch { return true; }
+    })(),
+    // Показывать ли указатель на кнопку sidebar-toggle для первой загрузки на малых устройствах
+    showSidebarHint: (function(){
+        try {
+            const v = localStorage.getItem('showSidebarHint');
             return v === null ? true : v === 'true';
         } catch { return true; }
     })(),
@@ -5435,6 +5580,9 @@ function renderModalControls() {
 function renderFilterModal() {
     if (!S.filterOpen) return void closeFilterModal();
     
+    // Скрываем указатель при открытии модального окна фильтров (всегда, так как это основное взаимодействие)
+    hideSidebarHint();
+    
     // Синхронизируем tempFilters с текущими фильтрами при открытии модального окна
     tempFilters.setFilters = { ...S.setFilters };
     tempFilters.sortBy = S.sortBy;
@@ -5656,6 +5804,8 @@ function renderSettingsModal() {
     
     S.settingsOpen = true;
     if (isFirstOpen) {
+        // Скрываем указатель при открытии модального окна настроек (всегда, так как это основное взаимодействие)
+        hideSidebarHint();
         modalManager.openModal('settings-modal-container', settingsModalEl);
     }
     const {
@@ -5746,12 +5896,13 @@ function renderSettingsModal() {
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Защита от случайной перезагрузки</h3>
                         <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm text-gray-300 flex items-center gap-2">Подтверждать перезагрузку/закрытие</span>
+                                <span class="text-sm text-gray-300 flex items-center gap-2">Подтверждать перезагрузку</span>
                                 <button data-action="toggle-prevent-exit" class="toggle-switch ${S.preventAccidentalExit? 'on' : ''}" aria-pressed="${S.preventAccidentalExit}"><span class="knob"></span></button>
                             </div>
                             <p class="text-xs text-gray-400">Рекомендуется для мобильных устройств: предотвратит потерю незаписанных изменений при случайном обновлении страницы.</p>
                         </div>
                     </div>
+
                      <div>
                         <h3 class="text-md font-semibold text-gray-300 mb-2">Опасная зона</h3>
                         <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 space-y-3">
@@ -6063,6 +6214,9 @@ function getRelatedSetsForMinifig(figNum) {
 // Функция для отображения модального окна связанных наборов
 function showRelatedSetsModal(relatedSets, minifigName) {
     if (!relatedSets || relatedSets.length === 0) return;
+    
+    // Скрываем указатель при открытии модального окна связанных наборов (всегда, так как это основное взаимодействие)
+    hideSidebarHint();
     
     modalManager.openModal('related-sets-modal-container', relatedSetsModalEl);
     
@@ -7512,6 +7666,9 @@ function triggerSearch(e = !1) {
 function openImageViewer(e) {
     if (!e || e.includes("data:image/svg+xml")) return;
     
+    // Скрываем указатель при открытии image viewer (всегда, так как это основное взаимодействие)
+    hideSidebarHint();
+    
     // Отменяем возможный отложенный таймер закрытия
     if (viewerEl && viewerEl._closeTimer) {
         clearTimeout(viewerEl._closeTimer);
@@ -7713,6 +7870,9 @@ function closeSettingsModal() {
 function openModalForPart(e, t, o) {
     const l = PART_MAP[e];
     if (l) {
+        // Скрываем указатель при открытии модального окна детали (всегда, так как это основное взаимодействие)
+        hideSidebarHint();
+        
         // Если открыт экран папки цветов — закрываем его при открытии модалки детали
         try { if (colorsModalEl && !colorsModalEl.classList.contains('modal-hidden')) { modalManager.closeModal('colors-modal-container'); } } catch {}
         // Если уже открыто модальное окно детали, закрываем его
@@ -7803,6 +7963,10 @@ function setupColorsScrollProgress() {
 function openColorsModalForPart(partId) {
     const part = PART_MAP[partId];
     if (!part) return;
+    
+    // Скрываем указатель при открытии модального окна цветов (всегда, так как это основное взаимодействие)
+    hideSidebarHint();
+    
     const colorIds = Object.keys(S.coll[partId] || {});
     if (colorIds.length === 0 && part.availableColorIds && part.availableColorIds.length > 0) {
         // если в коллекции нет, но есть известные доступные — покажем их
@@ -7849,6 +8013,9 @@ function openColorsModalForPart(partId) {
 
 function openModalForSet(e) {
     if (SET_MAP[e]) {
+        // Скрываем указатель при открытии модального окна набора (всегда, так как это основное взаимодействие)
+        hideSidebarHint();
+        
         // Если уже открыто модальное окно набора, закрываем его
         if (S.selSetNum && S.selSetNum !== e) {
             console.log('openModalForSet: Closing previous set modal for:', S.selSetNum);
@@ -7887,6 +8054,9 @@ function openModalForSet(e) {
 }
 function openModalForMinifig(e) {
     if (MINIFIG_MAP[e]) {
+        // Скрываем указатель при открытии модального окна минифигурки (всегда, так как это основное взаимодействие)
+        hideSidebarHint();
+        
         // Если уже открыто модальное окно минифигурки, закрываем его
         if (S.selFigNum && S.selFigNum !== e) {
             console.log('openModalForMinifig: Closing previous minifig modal for:', S.selFigNum);
@@ -9066,6 +9236,12 @@ document.addEventListener("click", async e => {
         }
         // Разрешаем открытие боковой панели даже во время загрузки данных
         S.sidebarOpen = !S.sidebarOpen;
+        
+        // Скрываем указатель при открытии боковой панели
+        if (S.sidebarOpen) {
+            hideSidebarHint();
+        }
+        
         updateUI();
     }
     if (t.closest("#sidebar-close")) {
@@ -9076,6 +9252,9 @@ document.addEventListener("click", async e => {
         // Разрешаем закрытие боковой панели даже во время загрузки данных
         S.sidebarOpen = false;
         updateUI();
+        
+        // Скрываем указатель при закрытии боковой панели
+        hideSidebarHint();
     }
     if ("sidebar-backdrop" === t.id) {
         if (window.innerWidth >= 1024) {
@@ -9085,6 +9264,9 @@ document.addEventListener("click", async e => {
         // Разрешаем закрытие боковой панели через backdrop даже во время загрузки данных
         S.sidebarOpen = false;
         updateUI();
+        
+        // Скрываем указатель при закрытии боковой панели
+        hideSidebarHint();
     }
     
     // Кнопки "Показать еще" удалены — обработчик не нужен
@@ -9109,6 +9291,12 @@ document.addEventListener("click", async e => {
         // Сбрасываем мультивыбор только при переключении Каталог/Коллекция
         S.multiSelect.active = false; S.multiSelect.items = new Set();
         
+        // Скрываем указатель при переключении представлений (только если нет активных модальных окон)
+        const activeModal = document.querySelector('[id$="-modal-container"]:not(.modal-hidden)');
+        if (!activeModal) {
+            hideSidebarHint();
+        }
+        
         // Сохраняем selFigNum только если переключаемся на каталог и вкладку "Наборы"
         const shouldKeepSelFigNum = (e === 'catalog' && S.subView === 'sets' && S.selFigNum);
         const newSelFigNum = shouldKeepSelFigNum ? S.selFigNum : null;
@@ -9117,6 +9305,9 @@ document.addEventListener("click", async e => {
         if (e === 'catalog') {
             console.log('Switching to catalog, force closing all modals');
             modalManager.closeAllModals();
+            
+            // Скрываем указатель при переключении на каталог (всегда, так как закрываем все модальные окна)
+            hideSidebarHint();
             
             // Дополнительно принудительно закрываем все модальные окна
             const allModals = [
@@ -9168,6 +9359,12 @@ document.addEventListener("click", async e => {
         setTimeout(() => {
             document.body.classList.remove('tab-switching');
         }, 1000);
+        
+        // Скрываем указатель при переключении подпредставлений (только если нет активных модальных окон)
+        const activeModal = document.querySelector('[id$="-modal-container"]:not(.modal-hidden)');
+        if (!activeModal) {
+            hideSidebarHint();
+        }
         
         S.subView = e;
         // Сбрасываем выбранную минифигурку при переключении на другие вкладки
@@ -10079,6 +10276,9 @@ document.addEventListener("click", async e => {
         if (!S.setFilters) S.setFilters = { minYear: "", maxYear: "", minParts: "", maxParts: "" };
         if (!S.sortBy) S.sortBy = 'popularity';
         
+        // Скрываем указатель при открытии фильтров
+        hideSidebarHint();
+        
         tempFilters = {
             filters: JSON.parse(JSON.stringify(S.filters)),
             setFilters: JSON.parse(JSON.stringify(S.setFilters)),
@@ -10093,6 +10293,10 @@ document.addEventListener("click", async e => {
     if (t.closest("#settings-button")) {
         // Разрешаем открытие настроек даже во время загрузки данных
         S.settingsOpen = !0;
+        
+        // Скрываем указатель при открытии настроек
+        hideSidebarHint();
+        
         return void renderSettingsModal();
     }
 
@@ -10369,6 +10573,7 @@ document.addEventListener("click", async e => {
                 renderSettingsModal();
                 setTimeout(()=>{ if (S.settingsOpen) { S.settingsModal.status=''; renderSettingsModal(); } }, 2000);
                 return;
+
             case "delete-all-parts":
                 S.settingsModal.delConfirm = "parts", renderSettingsModal();
                 break;
@@ -10448,30 +10653,12 @@ document.addEventListener("click", async e => {
                 try {
                     const success = await window.clearAppCache();
                     if (success) {
-                        updateSettingsModalStatus("Кэш приложения очищен успешно!", "success");
-                        // Обновляем информацию об использовании памяти/кэша сразу после очистки
-                        try {
-                            // Принудительно показываем нулевые значения для кеша и хранилища
-                            const cacheUsageEl = document.getElementById('cache-usage');
-                            if (cacheUsageEl) {
-                                if (navigator.storage && navigator.storage.estimate) {
-                                    const est = await navigator.storage.estimate();
-                                    const quota = typeof est.quota === 'number' ? est.quota : 0;
-                                    const quotaMb = quota ? (quota / (1024 * 1024)).toFixed(0) : '—';
-                                    cacheUsageEl.textContent = `Использование хранилища: 0 МБ из ~${quotaMb} МБ, файлов в кэше: 0`;
-                                } else {
-                                    cacheUsageEl.textContent = `Использование хранилища: 0 МБ, файлов в кэше: 0`;
-                                }
-                            }
-                        } catch {}
+                        updateSettingsModalStatus("Кэш очищен! Страница будет обновлена...", "success");
                         
-                        // Принудительно обновляем отображение статистики API в настройках
-                        try {
-                            if (S.settingsOpen) {
-                                // Перерисовываем модальное окно настроек, чтобы обновить статистику
-                                renderSettingsModal();
-                            }
-                        } catch {}
+                        // Через 1.5 секунды обновляем страницу
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1500);
                     } else {
                         updateSettingsModalStatus("Ошибка очистки кэша", "error");
                     }
@@ -11117,6 +11304,11 @@ async function initializeApp() {
             
             setTimeout(() => {
                 hideLoadingIndicator();
+                
+                // Показываем указатель sidebar-toggle на малых устройствах для первой загрузки
+                setTimeout(() => {
+                    showSidebarHint();
+                }, 1500);
             }, 1000);
             
         } catch (e) {
@@ -12929,15 +13121,101 @@ document.addEventListener('keydown', function(e) {
             modalManager.closeLastModal();
             e.preventDefault();
         }
+        
+        // Скрываем указатель sidebar-toggle по Escape (только если нет активных модальных окон)
+        const activeModal = document.querySelector('[id$="-modal-container"]:not(.modal-hidden)');
+        if (!activeModal) {
+            hideSidebarHint();
+        }
     }
 });
 
 // Инициализация modalManager
 console.log('modalManager initialized');
 
+// Функция для показа указателя sidebar-toggle
+function showSidebarHint() {
+    if (!S.showSidebarHint || window.innerWidth >= 1024) return;
+    
+    const hintEl = document.getElementById('sidebar-hint');
+    if (hintEl) {
+        hintEl.classList.remove('hidden');
+        
+        // Автоматически скрываем через 8 секунд
+        setTimeout(() => {
+            hideSidebarHint();
+        }, 8000);
+    }
+}
 
+// Функция для скрытия указателя sidebar-toggle
+function hideSidebarHint() {
+    const hintEl = document.getElementById('sidebar-hint');
+    if (hintEl) {
+        hintEl.classList.add('hidden');
+        // Сохраняем в localStorage, что указатель больше не показывать
+        S.showSidebarHint = false;
+        try {
+            localStorage.setItem('showSidebarHint', 'false');
+        } catch {}
+    }
+}
 
+    // Обработчик для кнопки закрытия указателя и клика по странице
+    document.addEventListener('click', (e) => {
+        if (e.target.id === 'sidebar-hint-close') {
+            hideSidebarHint();
+        } else if (!e.target.closest('#sidebar-hint') && !e.target.closest('.modal-content') && !e.target.closest('[id$="-modal-container"]')) {
+            // Скрываем указатель при клике в любом месте страницы (кроме самого указателя и модальных окон)
+            hideSidebarHint();
+        }
+    });
+    
+    // Обработчик изменения размера окна для автоматического скрытия указателя
+    window.addEventListener('resize', () => {
+        // Не скрываем указатель при изменении размера модальных окон
+        const activeModal = document.querySelector('[id$="-modal-container"]:not(.modal-hidden)');
+        if (activeModal) return;
+        
+        if (window.innerWidth >= 1024) {
+            hideSidebarHint();
+        }
+    });
+    
+    // Обработчик прокрутки для автоматического скрытия указателя
+    let scrollTimeout;
+    window.addEventListener('scroll', () => {
+        // Не скрываем указатель при прокрутке внутри модальных окон
+        const activeModal = document.querySelector('[id$="-modal-container"]:not(.modal-hidden)');
+        if (activeModal) return;
+        
+        if (scrollTimeout) {
+            clearTimeout(scrollTimeout);
+        }
+        scrollTimeout = setTimeout(() => {
+            hideSidebarHint();
+        }, 1000);
+    });
+    
+    // Обработчик фокуса на поиске для скрытия указателя
+    document.addEventListener('focusin', (e) => {
+        // Не скрываем указатель при фокусе внутри модальных окон
+        const activeModal = document.querySelector('[id$="-modal-container"]:not(.modal-hidden)');
+        if (activeModal && activeModal.contains(e.target)) return;
+        
+        if (e.target.id === 'search-input') {
+            hideSidebarHint();
+        }
+    });
 
   </script>
+  
+  <!-- Указатель для sidebar-toggle на малых устройствах -->
+  <div id="sidebar-hint" class="sidebar-hint hidden">
+      <div class="sidebar-hint-close" id="sidebar-hint-close">×</div>
+      <div class="sidebar-hint-icon">📱</div>
+      <div class="sidebar-hint-title">Навигация</div>
+      <div class="sidebar-hint-text">Используйте кнопку меню для открытия боковой панели с каталогом и категориями</div>
+  </div>
 </body>
 </html>
