@@ -67,6 +67,134 @@
         display: none !important;
     }
     
+    /* Стили для кнопок закрытия модальных окон */
+    .modal-close-btn {
+        position: relative;
+        width: 32px;
+        height: 32px;
+        background: #dc2626;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .modal-close-btn:hover {
+        background: #b91c1c;
+        transform: scale(1.1) rotate(2deg);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .modal-close-btn:active {
+        transform: scale(0.95) rotate(0deg);
+    }
+    
+    .modal-close-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 2.5;
+        transition: transform 0.3s ease;
+    }
+    
+    .modal-close-btn:hover svg {
+        transform: scale(1.1);
+    }
+    
+    /* Специальный стиль для кнопки закрытия боковой панели */
+    .modal-close-btn.lg\:hidden {
+        background: #6b7280;
+    }
+    
+    .modal-close-btn.lg\:hidden:hover {
+        background: #4b5563;
+    }
+    
+    /* Стили для кнопки открытия боковой панели */
+    .sidebar-toggle-btn {
+        position: relative;
+        width: 32px;
+        height: 32px;
+        background: #6b7280;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        margin-right: 1rem;
+        margin-left: -0.25rem;
+    }
+    
+    .sidebar-toggle-btn:hover {
+        background: #4b5563;
+        transform: scale(1.1) rotate(5deg);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .sidebar-toggle-btn:active {
+        transform: scale(0.95) rotate(0deg);
+    }
+    
+    .sidebar-toggle-btn svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 2.5;
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar-toggle-btn:hover svg {
+        transform: scale(1.1);
+    }
+    
+    /* Анимации для кнопок закрытия */
+    .modal-close-btn:not(.lg\:hidden) {
+        animation: buttonAppear 0.4s ease-out;
+    }
+    
+    .sidebar-toggle-btn {
+        animation: buttonAppear 0.4s ease-out 0.1s both;
+    }
+    
+    .sidebar-hint-close {
+        animation: buttonAppear 0.4s ease-out 0.2s both;
+    }
+    
+    @keyframes buttonAppear {
+        0% {
+            opacity: 0;
+            transform: scale(0.8) rotate(-10deg);
+        }
+        50% {
+            transform: scale(1.05) rotate(2deg);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+    }
+    
+    /* Пульсация для кнопки sidebar-toggle при первом показе */
+    .sidebar-toggle-btn.pulse {
+        animation: buttonPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes buttonPulse {
+        0%, 100% {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 0 rgba(107, 114, 128, 0.7);
+        }
+        50% {
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 0 0 10px rgba(107, 114, 128, 0);
+        }
+    }
+    
     .loader {
         border: 4px solid #4a5568;
         border-top: 4px solid #4299e1;
@@ -118,7 +246,7 @@
         max-width: 320px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.1);
         animation: hintFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        pointer-events: none;
+        pointer-events: auto;
         border: 1px solid rgba(59, 130, 246, 0.2);
         backdrop-filter: blur(10px);
     }
@@ -177,6 +305,37 @@
         font-size: 13px;
         line-height: 1.4;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+    
+    .sidebar-hint-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        background: #6b7280;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        font-size: 14px;
+        font-weight: bold;
+        line-height: 1;
+    }
+    
+    .sidebar-hint-close:hover {
+        background: #4b5563;
+        transform: scale(1.1) rotate(2deg);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .sidebar-hint-close:active {
+        transform: scale(0.95) rotate(0deg);
     }
     
     @keyframes hintFadeIn {
@@ -1706,8 +1865,8 @@ body.tab-switching .minifig-card {
         <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out">
       </div>
     </div>
-    <button id="image-viewer-close" class="absolute top-4 right-4 text-white text-opacity-80 hover:text-opacity-100 p-2 rounded-full bg-black/30 hover:bg-black/50 transition-all duration-200 hover:scale-110 z-[101]">
-      ${I_X("w-6 h-6")}
+    <button id="image-viewer-close" class="modal-close-btn absolute top-4 right-4 z-[101]">
+      ${I_X("w-4 h-4")}
     </button>
   </div>
   <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 opacity-0 pointer-events-none z-40 transform translate-y-4" aria-label="Вернуться наверх" title="Прокрутить страницу в начало">
@@ -1826,6 +1985,19 @@ class ModalManager {
         // Показываем модальное окно
         requestAnimationFrame(() => {
             modalElement.classList.add('visible');
+            
+            // Анимация появления кнопки закрытия
+            const closeBtn = modalElement.querySelector('.modal-close-btn');
+            if (closeBtn) {
+                closeBtn.style.opacity = '0';
+                closeBtn.style.transform = 'scale(0.8) rotate(-10deg)';
+                
+                setTimeout(() => {
+                    closeBtn.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                    closeBtn.style.opacity = '1';
+                    closeBtn.style.transform = 'scale(1) rotate(0deg)';
+                }, 200);
+            }
         });
         
         // Блокируем прокрутку body
@@ -3927,8 +4099,8 @@ function renderSidebar() {
     sidebarEl.innerHTML = `
         <div class="flex items-center justify-between mb-4 flex-shrink-0">
           <h1 class="text-xl font-bold text-white">Меню</h1>
-          <button id="sidebar-close" class="lg:hidden text-gray-300 hover:text-white p-1" title="Закрыть боковую панель">
-            ${I_X("w-6 h-6")}
+          <button id="sidebar-close" class="modal-close-btn lg:hidden" title="Закрыть боковую панель">
+                          ${I_X("w-4 h-4")}
           </button>
         </div>
         
@@ -4028,8 +4200,8 @@ function renderHeader() {
     headerEl.innerHTML = `
             <div class="flex justify-between items-center gap-4">
                 <div class="flex items-center">
-                    <button id="sidebar-toggle" class="lg:hidden text-gray-300 hover:text-white mr-4 -ml-1 p-1" title="Открыть/закрыть боковую панель навигации">
-                        ${I_Menu("w-6 h-6")}
+                    <button id="sidebar-toggle" class="sidebar-toggle-btn lg:hidden" title="Открыть/закрыть боковую панель навигации">
+                        ${I_Menu("w-4 h-4")}
                     </button>
                     <h1 class="text-xl font-bold text-white hidden sm:block">
                         LEGO® Catalog
@@ -5157,7 +5329,7 @@ function renderSetModal(e = !1) {
                  <div class="flex items-center gap-2 flex-shrink-0">
                     ${renderSetModalToggleButton()}
                     <button data-action="share-set" class="text-gray-300 hover:text-white transition-colors" title="Поделиться набором через изображение и CSV файл">${I_Share("w-6 h-6")}</button>
-                    <button id="set-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно набора">${I_X("w-6 h-5")}</button>
+                    <button id="set-modal-close" class="modal-close-btn" title="Закрыть модальное окно набора">${I_X("w-4 h-4")}</button>
                  </div>
             </div>
             <div id="set-scroll-progress"><div class="bar"></div></div>
@@ -5329,7 +5501,7 @@ function renderModal() {
                  <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-8">${e.name}</h2>
                  <div class="flex items-center gap-2">
                     <button data-action="share-part" class="text-gray-300 hover:text-white transition-colors" title="Поделиться деталью через изображение и CSV файл">${I_Share("w-6 h-6")}</button>
-                    <button id="modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно">${I_X("w-6 h-6")}</button>
+                    <button id="modal-close" class="modal-close-btn" title="Закрыть модальное окно">${I_X("w-4 h-4")}</button>
                  </div>
             </div>
             
@@ -5786,7 +5958,7 @@ function renderFilterModal() {
             <div id="filter-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Фильтры и сортировка</h2>
-                     <button id="filter-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно фильтров">${I_X("w-6 h-6")}</button>
+                     <button id="filter-modal-close" class="modal-close-btn" title="Закрыть модальное окно фильтров">${I_X("w-4 h-4")}</button>
                 </div>
                 <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">${e}</div>
                 <div class="flex-shrink-0 p-4 border-t border-gray-700 flex justify-between items-center gap-4">
@@ -5847,7 +6019,7 @@ function renderSettingsModal() {
              <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${enterClass}">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Настройки</h2>
-                     <button id="settings-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно настроек">${I_X("w-6 h-6")}</button>
+                     <button id="settings-modal-close" class="modal-close-btn" title="Закрыть модальное окно настроек">${I_X("w-4 h-4")}</button>
                 </div>
                 <div id="settings-modal-scroll" class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
                      <div>
@@ -6147,7 +6319,7 @@ function renderMinifigModal(e = !1) {
                  <div class="flex items-center gap-2 flex-shrink-0">
                     ${renderMinifigModalToggleButton()}
                     <button data-action="share-minifig" class="text-gray-300 hover:text-white transition-colors" title="Поделиться минифигуркой через изображение и CSV файл">${I_Share("w-6 h-6")}</button>
-                    <button id="minifig-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно минифигурки">${I_X("w-6 h-6")}</button>
+                    <button id="minifig-modal-close" class="modal-close-btn" title="Закрыть модальное окно минифигурки">${I_X("w-4 h-4")}</button>
                  </div>
             </div>
             <div id="minifig-scroll-progress"><div class="bar"></div></div>
@@ -6243,7 +6415,7 @@ function showRelatedSetsModal(relatedSets, minifigName) {
             <div id="related-sets-scroll-progress"><div class="bar"></div></div>
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                 <h2 class="text-xl font-bold text-white">Наборы с минифигуркой "${minifigName}"</h2>
-                <button id="related-sets-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть модальное окно связанных наборов">${I_X("w-6 h-6")}</button>
+                <button id="related-sets-modal-close" class="modal-close-btn" title="Закрыть модальное окно связанных наборов">${I_X("w-4 h-4")}</button>
             </div>
             <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-3">
                 ${setsList}
@@ -7693,6 +7865,16 @@ function openImageViewer(e) {
     const closeBtn = document.getElementById('image-viewer-close');
     if (closeBtn) {
         closeBtn.onclick = closeImageViewer;
+        
+        // Анимация появления кнопки закрытия
+        closeBtn.style.opacity = '0';
+        closeBtn.style.transform = 'scale(0.8) rotate(-10deg)';
+        
+        setTimeout(() => {
+            closeBtn.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            closeBtn.style.opacity = '1';
+            closeBtn.style.transform = 'scale(1) rotate(0deg)';
+        }, 200);
     }
 }
 function closeImageViewer() {
@@ -7997,7 +8179,7 @@ function openColorsModalForPart(partId) {
                 <div id="colors-modal-header" class="sticky top-0 z-10 bg-gray-900 p-4 border-b border-gray-700 flex flex-col gap-3">
                     <div class="flex justify-between items-center">
                         <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${part.name} — цвета (${unique.length})</h2>
-                        <button id="colors-modal-close" class="text-gray-400 hover:text-white transition-colors" title="Закрыть">${I_X('w-6 h-6')}</button>
+                        <button id="colors-modal-close" class="modal-close-btn" title="Закрыть">${I_X('w-4 h-4')}</button>
                     </div>
                     ${colorsSelBar}
                 </div>
@@ -9209,6 +9391,7 @@ document.addEventListener("click", async e => {
     
     // Обработка кнопки закрытия image viewer (всегда работает)
     if (t.closest("#image-viewer-close")) {
+        animateCloseButtonClick(t.closest("#image-viewer-close"));
         return closeImageViewer();
     }
     
@@ -9234,6 +9417,16 @@ document.addEventListener("click", async e => {
             // На больших экранах кнопка не работает - панель всегда открыта
             return;
         }
+        
+        // Анимация кнопки при клике
+        const sidebarToggleBtn = t.closest("#sidebar-toggle");
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.style.transform = 'scale(0.9) rotate(-2deg)';
+            setTimeout(() => {
+                sidebarToggleBtn.style.transform = 'scale(1) rotate(0deg)';
+            }, 150);
+        }
+        
         // Разрешаем открытие боковой панели даже во время загрузки данных
         S.sidebarOpen = !S.sidebarOpen;
         
@@ -9249,6 +9442,16 @@ document.addEventListener("click", async e => {
             // На больших экранах кнопка не работает - панель всегда открыта
             return;
         }
+        
+        // Анимация кнопки при клике
+        const sidebarCloseBtn = t.closest("#sidebar-close");
+        if (sidebarCloseBtn) {
+            sidebarCloseBtn.style.transform = 'scale(0.9) rotate(2deg)';
+            setTimeout(() => {
+                sidebarCloseBtn.style.transform = 'scale(1) rotate(0deg)';
+            }, 150);
+        }
+        
         // Разрешаем закрытие боковой панели даже во время загрузки данных
         S.sidebarOpen = false;
         updateUI();
@@ -9741,16 +9944,49 @@ document.addEventListener("click", async e => {
     }
     // Закрытие модального окна цветов
     if (t.id === 'colors-modal-close' || t.closest('#colors-modal-close') || t.id === 'colors-modal-container') {
+        if (t.closest('#colors-modal-close')) {
+            animateCloseButtonClick(t.closest('#colors-modal-close'));
+        }
         modalManager.closeModal('colors-modal-container');
         return;
     }
     // Папки теперь кликаются как обычные карточки (открывают модалку), отдельный тогглер не нужен
-    if ("modal-container" === t.id || t.closest("#modal-close")) return closeModal();
-    if ("set-modal-container" === t.id || t.closest("#set-modal-close")) return closeSetModal();
-    if ("minifig-modal-container" === t.id || t.closest("#minifig-modal-close")) return closeMinifigModal();
-    if ("filter-modal-container" === t.id || t.closest("#filter-modal-close")) return closeFilterModal();
-    if ("settings-modal-container" === t.id || t.closest("#settings-modal-close")) return closeSettingsModal();
-    if ("related-sets-modal-container" === t.id || t.closest("#related-sets-modal-close")) return closeRelatedSetsModal();
+    if ("modal-container" === t.id || t.closest("#modal-close")) {
+        if (t.closest("#modal-close")) {
+            animateCloseButtonClick(t.closest("#modal-close"));
+        }
+        return closeModal();
+    }
+    if ("set-modal-container" === t.id || t.closest("#set-modal-close")) {
+        if (t.closest("#set-modal-close")) {
+            animateCloseButtonClick(t.closest("#set-modal-close"));
+        }
+        return closeSetModal();
+    }
+    if ("minifig-modal-container" === t.id || t.closest("#minifig-modal-close")) {
+        if (t.closest("#minifig-modal-close")) {
+            animateCloseButtonClick(t.closest("#minifig-modal-close"));
+        }
+        return closeMinifigModal();
+    }
+    if ("filter-modal-container" === t.id || t.closest("#filter-modal-close")) {
+        if (t.closest("#filter-modal-close")) {
+            animateCloseButtonClick(t.closest("#filter-modal-close"));
+        }
+        return closeFilterModal();
+    }
+    if ("settings-modal-container" === t.id || t.closest("#settings-modal-close")) {
+        if (t.closest("#settings-modal-close")) {
+            animateCloseButtonClick(t.closest("#settings-modal-close"));
+        }
+        return closeSettingsModal();
+    }
+    if ("related-sets-modal-container" === t.id || t.closest("#related-sets-modal-close")) {
+        if (t.closest("#related-sets-modal-close")) {
+            animateCloseButtonClick(t.closest("#related-sets-modal-close"));
+        }
+        return closeRelatedSetsModal();
+    }
     if (t.closest("#search-button")) return triggerSearch();
     if (t.closest("#clear-search")) {
         S.q = "";
@@ -10808,6 +11044,9 @@ document.addEventListener("click", async e => {
         
         // Закрытие модального окна
         if (t.id === 'related-sets-modal-close' || t.closest('#related-sets-modal-close')) {
+            if (t.closest('#related-sets-modal-close')) {
+                animateCloseButtonClick(t.closest('#related-sets-modal-close'));
+            }
             closeRelatedSetsModal();
             // Если есть открытое модальное окно минифигурки, восстанавливаем его z-index
             if (S.selFigNum && minifigModalEl && !minifigModalEl.classList.contains("modal-hidden")) {
@@ -11304,6 +11543,9 @@ async function initializeApp() {
             
             setTimeout(() => {
                 hideLoadingIndicator();
+                
+                // Анимация появления кнопок
+                animateButtonsAppearance();
                 
                 // Показываем указатель sidebar-toggle на малых устройствах для первой загрузки
                 setTimeout(() => {
@@ -13141,6 +13383,27 @@ function showSidebarHint() {
     if (hintEl) {
         hintEl.classList.remove('hidden');
         
+        // Добавляем пульсацию к кнопке sidebar-toggle
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle');
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.classList.add('pulse');
+            
+            // Анимация появления кнопки
+            sidebarToggleBtn.style.opacity = '0';
+            sidebarToggleBtn.style.transform = 'scale(0.8) rotate(-10deg)';
+            
+            setTimeout(() => {
+                sidebarToggleBtn.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+                sidebarToggleBtn.style.opacity = '1';
+                sidebarToggleBtn.style.transform = 'scale(1) rotate(0deg)';
+            }, 100);
+            
+            // Убираем пульсацию через 5 секунд
+            setTimeout(() => {
+                sidebarToggleBtn.classList.remove('pulse');
+            }, 5000);
+        }
+        
         // Автоматически скрываем через 8 секунд
         setTimeout(() => {
             hideSidebarHint();
@@ -13161,9 +13424,46 @@ function hideSidebarHint() {
     }
 }
 
+// Функция для анимации появления кнопок
+function animateButtonsAppearance() {
+    // Добавляем анимацию появления для всех кнопок
+    const buttons = document.querySelectorAll('.sidebar-toggle-btn, .modal-close-btn, .sidebar-hint-close');
+    
+    buttons.forEach((button, index) => {
+        // Сначала скрываем кнопки
+        button.style.opacity = '0';
+        button.style.transform = 'scale(0.8) rotate(-10deg)';
+        
+        // Затем показываем их с задержкой
+        setTimeout(() => {
+            button.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            button.style.opacity = '1';
+            button.style.transform = 'scale(1) rotate(0deg)';
+        }, index * 100);
+    });
+}
+
+// Функция для анимации кнопки закрытия при клике
+function animateCloseButtonClick(button) {
+    if (button) {
+        button.style.transform = 'scale(0.9) rotate(2deg)';
+        setTimeout(() => {
+            button.style.transform = 'scale(1) rotate(0deg)';
+        }, 150);
+    }
+}
+
     // Обработчик для кнопки закрытия указателя и клика по странице
     document.addEventListener('click', (e) => {
         if (e.target.id === 'sidebar-hint-close') {
+            // Анимация кнопки при клике
+            const hintCloseBtn = e.target;
+            if (hintCloseBtn) {
+                hintCloseBtn.style.transform = 'scale(0.9) rotate(2deg)';
+                setTimeout(() => {
+                    hintCloseBtn.style.transform = 'scale(1) rotate(0deg)';
+                }, 150);
+            }
             hideSidebarHint();
         } else if (!e.target.closest('#sidebar-hint') && !e.target.closest('.modal-content') && !e.target.closest('[id$="-modal-container"]')) {
             // Скрываем указатель при клике в любом месте страницы (кроме самого указателя и модальных окон)
@@ -13212,7 +13512,7 @@ function hideSidebarHint() {
   
   <!-- Указатель для sidebar-toggle на малых устройствах -->
   <div id="sidebar-hint" class="sidebar-hint hidden">
-      <div class="sidebar-hint-close" id="sidebar-hint-close">×</div>
+      <button class="sidebar-hint-close" id="sidebar-hint-close" title="Закрыть подсказку">×</button>
       <div class="sidebar-hint-icon">📱</div>
       <div class="sidebar-hint-title">Навигация</div>
       <div class="sidebar-hint-text">Используйте кнопку меню для открытия боковой панели с каталогом и категориями</div>
