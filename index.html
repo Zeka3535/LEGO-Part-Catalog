@@ -18,13 +18,39 @@
   <meta property="og:image" content="ogimage.png">
   <meta property="og:type" content="website">
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'sans': ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+            'mono': ['JetBrains Mono', 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Consolas', 'Courier New', 'monospace'],
+          },
+          letterSpacing: {
+            'tighter': '-0.05em',
+            'tight': '-0.025em',
+            'normal': '0em',
+            'wide': '0.025em',
+            'wider': '0.05em',
+            'widest': '0.1em',
+          }
+        }
+      }
+    }
+  </script>
 
       <style>
     body {
-        font-family: sans-serif;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         /* Защита от случайного масштабирования */
         touch-action: manipulation;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
     }
     
     /* Дополнительная защита от масштабирования на мобильных устройствах */
@@ -115,6 +141,46 @@
         .folder-grid {
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         }
+    }
+    
+    /* Улучшенная типографика */
+    h1, h2, h3, h4, h5, h6 {
+        line-height: 1.2;
+    }
+    
+    /* Улучшенный текст в карточках */
+    .card-title {
+        line-height: 1.3;
+    }
+    
+    /* Улучшенная читаемость для длинного текста */
+    p, span, div {
+        line-height: 1.5;
+        text-rendering: optimizeLegibility;
+    }
+    
+    /* Специальные стили для заголовка */
+    .main-title {
+        line-height: 1.1;
+    }
+    
+    /* Моноширинный шрифт для технических данных */
+    .font-mono, code, pre {
+        font-weight: 500;
+        letter-spacing: 0.025em;
+    }
+    
+    /* Улучшенная читаемость для длинного текста */
+    p, span, div {
+        line-height: 1.5;
+        text-rendering: optimizeLegibility;
+    }
+    
+    /* Специальные стили для заголовка */
+    .main-title {
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        line-height: 1.1;
     }
     
     /* На очень малых устройствах (до 480px) - минимум 2 карточки в ширину */
@@ -230,6 +296,50 @@
 .color-palette-gradient {
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
+}
+
+/* Стили для индикаторов в палитре цветов */
+.indicator-white {
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: white;
+    border-radius: 9999px;
+}
+
+.indicator-white-with-border {
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: white;
+    border-radius: 9999px;
+    border: 1px solid black;
+    box-shadow: 0 0 0 1px black;
+}
+
+/* Стили для градиентного заголовка */
+.bg-gradient-to-r {
+    background: linear-gradient(to right, var(--tw-gradient-stops));
+}
+
+.from-blue-400 {
+    --tw-gradient-from: #60a5fa;
+    --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(96, 165, 250, 0));
+}
+
+.via-blue-500 {
+    --tw-gradient-stops: var(--tw-gradient-from), #3b82f6, var(--tw-gradient-to, rgba(59, 130, 246, 0));
+}
+
+.to-blue-600 {
+    --tw-gradient-to: #2563eb;
+}
+
+.bg-clip-text {
+    background-clip: text;
+    -webkit-background-clip: text;
+}
+
+.text-transparent {
+    color: transparent;
 }
 
 
@@ -4494,21 +4604,10 @@ function renderSidebar() {
             if ("collection" === S.view) {
                 const isActive = (S.selCollThemeId === null);
                 const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
-                const totalSetsInCollection = Object.values(S.setColl).reduce((total, set) => {
-                    return total + set.qty;
-                }, 0);
-                const countBadge = totalSetsInCollection > 0 ? `
-                    <span class="ml-2 bg-gray-600 text-white text-xs font-bold rounded-full px-2 py-1 min-w-[20px] text-center">
-                        ${totalSetsInCollection}
-                    </span>
-                ` : '';
                 t = `
                   <li>
                     <button data-action="show-all-collection-items" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}">
                       <span class="break-words leading-tight flex-1 self-center">Все наборы</span>
-                      <div class="flex-shrink-0 ml-2 self-center">
-                        ${countBadge}
-                      </div>
                     </button>
                   </li>
                 `;
@@ -4620,14 +4719,6 @@ function renderSidebar() {
                     ` : '';
                     
                     minifigContent = `
-                        <li>
-                            <button data-action="show-all-collection-minifigs" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 text-gray-300 hover:bg-gray-700 hover:text-white">
-                                <span class="break-words leading-tight flex-1 self-center">Все минифигурки</span>
-                                <div class="flex-shrink-0 ml-2 self-center">
-                                    ${countBadge}
-                                </div>
-                            </button>
-                        </li>
                         <li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог.</li>
                         <li class="flex justify-center p-2">
                             <div class="p-2 sm:p-3 md:p-4 lg:p-5">
@@ -4656,21 +4747,10 @@ function renderSidebar() {
             if ("collection" === S.view) {
                 const isActive = (S.selCollCatId === null);
                 const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
-                const totalPartsInCollection = Object.values(S.coll).reduce((total, colorObj) => {
-                    return total + Object.values(colorObj).reduce((sum, qty) => sum + qty, 0);
-                }, 0);
-                const countBadge = totalPartsInCollection > 0 ? `
-                    <span class="ml-2 bg-gray-600 text-white text-xs font-bold rounded-full px-2 py-1 min-w-[20px] text-center">
-                        ${totalPartsInCollection}
-                    </span>
-                ` : '';
                 t = `
                   <li>
                     <button data-action="show-all-collection-items" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}">
                       <span class="break-words leading-tight flex-1 self-center">Все детали</span>
-                      <div class="flex-shrink-0 ml-2 self-center">
-                        ${countBadge}
-                      </div>
                     </button>
                   </li>
                 `;
@@ -4991,11 +5071,11 @@ function renderHeader() {
                     <button id="sidebar-toggle" class="sidebar-toggle-btn lg:hidden" title="Открыть/закрыть боковую панель навигации">
                         ${I_Menu("w-4 h-4")}
                     </button>
-                    <h1 class="text-xl font-bold text-white hidden sm:block">
-                        LEGO® Catalog
-                        ${S.view === "catalog" && S.subView === "sets" && S.selFigNum ? 
-                            `<span class="text-sm font-normal text-blue-400 ml-2">• Связанные наборы</span>` : ''}
-                    </h1>
+                                          <h1 class="text-xl font-bold text-white hidden sm:block main-title">
+                         <span class="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent font-extrabold tracking-tight">LEGO® Catalog</span>
+                          ${S.view === "catalog" && S.subView === "sets" && S.selFigNum ? 
+                              `<span class="text-sm font-normal text-blue-400 ml-2">• Связанные наборы</span>` : ''}
+                      </h1>
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
@@ -5073,7 +5153,8 @@ function renderSetCard(e, t, o = 0) {
                 </div>
                 <div class="p-4 space-y-1 card-info-container">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none card-title">${e.name}</h3>
-                    <p class="text-xs text-gray-400 pointer-events-none card-info-text">#${e.set_num} • ${e.num_parts} шт • ${e.year}</p>
+                    <p class="text-xs text-gray-400 pointer-events-none card-info-text">#${e.set_num} • ${e.num_parts} деталей</p>
+                    <p class="text-xs text-gray-300 pointer-events-none card-info-text">Год выпуска: ${e.year}</p>
                 </div>
             </div>
         `
@@ -6513,7 +6594,7 @@ function renderColorSelector() {
                         <div class="flex flex-wrap justify-center gap-3 p-3 color-palette-inner">
                             ${sortColorIds(l,e.id).map(e=>{const o=COLOR_MAP[e];if(!o)return"";const l=S.coll[S.selPartId]&&S.coll[S.selPartId][e]>0;return`
                 <button data-color-id="${e}" title="${o.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center ${o.isTransparent?"checkerboard":""} ${t===e?"border-blue-500 scale-110":"border-gray-600 hover:border-gray-400"}" style="background-color: ${o.hex};">
-                    ${l?'<div class="w-2 h-2 bg-white rounded-full"></div>':""}
+                    ${l?`<div class="w-2 h-2 bg-white rounded-full ${o.isTransparent || o.hex === '#FFFFFF' || o.hex === '#fff' ? 'border border-black' : ''}"></div>`:""}
                 </button>
             `}).join("")}
                         </div>
@@ -8374,7 +8455,9 @@ async function handleUpdateCollection(e, t, o) {
             const existingDot = button.querySelector('.w-2.h-2.bg-white.rounded-full');
             if (o > 0 && !existingDot) {
                 let dot = document.createElement("div");
-                dot.className = "w-2 h-2 bg-white rounded-full";
+                const colorInfo = COLOR_MAP[t];
+                const needsBlackBorder = colorInfo && (colorInfo.isTransparent || colorInfo.hex === '#FFFFFF' || colorInfo.hex === '#fff');
+                dot.className = `w-2 h-2 bg-white rounded-full ${needsBlackBorder ? 'border border-black' : ''}`;
                 button.appendChild(dot);
             } else if (o <= 0 && existingDot) {
                 existingDot.remove();
