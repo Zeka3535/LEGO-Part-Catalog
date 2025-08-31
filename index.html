@@ -50,6 +50,133 @@
         display: none;
     }
     
+    /* Стили для выравнивания высоты кнопок в панели поиска */
+    #search-button,
+    #filter-button {
+        height: 40px; /* Фиксированная высота кнопок */
+        min-height: 40px;
+        width: 40px; /* Делаем кнопки квадратными */
+        min-width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0; /* Предотвращаем сжатие */
+    }
+    
+    #clear-search {
+        height: 40px;
+        min-height: 40px;
+        width: 40px; /* Ширина кнопки очистки */
+        min-width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0; /* Предотвращаем сжатие */
+        right: 0;
+        top: 0;
+        bottom: 0;
+    }
+    
+    /* Выравниваем высоту поля поиска с кнопками */
+    #search-input {
+        height: 40px; /* Такая же высота как у кнопок */
+        min-height: 40px;
+        box-sizing: border-box;
+        padding-top: 0.5rem; /* 8px */
+        padding-bottom: 0.5rem; /* 8px */
+    }
+    
+    /* Дополнительные стили для лучшего выравнивания панели поиска */
+    .flex.items-center.space-x-2.w-full.max-w-sm {
+        align-items: center; /* Возвращаем center вместо stretch */
+    }
+    
+    /* Исправляем layout на малых экранах */
+    @media (max-width: 640px) {
+        .flex.justify-between.items-center.gap-4 {
+            gap: 1rem !important;
+        }
+    }
+    
+    /* Обеспечиваем одинаковую высоту для всех элементов в панели поиска */
+    #search-input,
+    #search-button,
+    #filter-button {
+        box-sizing: border-box;
+    }
+    
+    /* Сохраняем стандартное расстояние между полем поиска и кнопками */
+    .flex.items-center.space-x-2 > * + * {
+        margin-left: 0.5rem !important; /* 8px - стандартное расстояние space-x-2 */
+    }
+    
+    /* Увеличиваем ширину поля поиска на малых устройствах */
+    @media (max-width: 640px) {
+        /* Убираем ограничение max-w-sm на малых экранах */
+        .flex.items-center.space-x-2.w-full.max-w-sm {
+            max-width: none !important;
+            width: 100% !important;
+        }
+        
+        /* Увеличиваем поле поиска */
+        .flex.items-center.space-x-2.w-full.max-w-sm .relative.flex-grow {
+            flex-grow: 1 !important;
+            min-width: 0 !important;
+        }
+        
+        /* Сохраняем стандартное расстояние между элементами на малых экранах */
+        .flex.items-center.space-x-2 > * + * {
+            margin-left: 0.5rem !important;
+        }
+        
+        /* Исправляем отступы кнопки sidebar-toggle на малых экранах */
+        .sidebar-toggle-btn {
+            margin-left: -0.5rem !important; /* Перемещаем ближе к левому краю */
+            margin-right: 1rem !important;
+        }
+        
+        /* Убираем лишние отступы у заголовка */
+        .flex.items-center h1 {
+            margin-left: 0 !important;
+        }
+    }
+    
+    /* Адаптивный размер текста для поля поиска на малых экранах */
+    @media (max-width: 640px) {
+        #search-input {
+            font-size: 13px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        #search-input {
+            font-size: 12px;
+        }
+    }
+    
+    /* Медиа-запрос для мобильных устройств */
+    @media (max-width: 640px) {
+        #search-button,
+        #filter-button {
+            height: 40px;
+            min-height: 40px;
+            width: 40px;
+            min-width: 40px;
+        }
+        
+        #clear-search {
+            height: 40px;
+            min-height: 40px;
+            width: 36px;
+            min-width: 36px;
+        }
+        
+        /* Увеличиваем правый отступ поля ввода для кнопки очистки */
+        #search-input {
+            padding-right: 2.5rem; /* 40px - достаточно места для кнопки очистки */
+        }
+    }
+    
     .checkerboard {
         background-image: linear-gradient(45deg, #374151 25%, transparent 25%), 
                           linear-gradient(-45deg, #374151 25%, transparent 25%), 
@@ -107,51 +234,64 @@
     
     /* Специальный стиль для кнопки закрытия боковой панели */
     .modal-close-btn.lg\:hidden {
-        background: #6b7280;
+        background: transparent;
+        color: #6b7280;
+        box-shadow: none;
+        border: none;
     }
     
     .modal-close-btn.lg\:hidden:hover {
-        background: #4b5563;
+        background: transparent;
+        color: #9ca3af;
+        transform: none;
+    }
+    
+    .modal-close-btn.lg\:hidden svg {
+        width: 20px;
+        height: 20px;
+        stroke-width: 2;
+        transition: color 0.2s ease;
+    }
+    
+    .modal-close-btn.lg\:hidden:hover svg {
+        transform: none;
     }
     
     /* Стили для кнопки открытия боковой панели */
     .sidebar-toggle-btn {
         position: relative;
-        width: 32px;
-        height: 32px;
-        background: #6b7280;
-        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        background: transparent;
+        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: white;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: none;
+        color: #6b7280;
+        transition: color 0.2s ease;
         cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         margin-right: 1rem;
-        margin-left: -0.25rem;
+        margin-left: -0.5rem; /* Перемещаем ближе к левому краю */
     }
     
     .sidebar-toggle-btn:hover {
-        background: #4b5563;
-        transform: scale(1.1) rotate(5deg);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        color: #9ca3af;
+        transform: none;
     }
     
     .sidebar-toggle-btn:active {
-        transform: scale(0.95) rotate(0deg);
+        transform: none;
     }
     
     .sidebar-toggle-btn svg {
-        width: 16px;
-        height: 16px;
-        stroke-width: 2.5;
-        transition: transform 0.3s ease;
+        width: 20px;
+        height: 20px;
+        stroke-width: 2;
+        transition: color 0.2s ease;
     }
     
     .sidebar-toggle-btn:hover svg {
-        transform: scale(1.1);
+        transform: none;
     }
     
     /* Анимации для кнопок закрытия */
@@ -159,10 +299,7 @@
         animation: buttonAppear 0.4s ease-out;
     }
     
-    .sidebar-toggle-btn {
-        animation: buttonAppear 0.4s ease-out 0.1s both;
-    }
-    
+  
     .sidebar-hint-close {
         animation: buttonAppear 0.4s ease-out 0.2s both;
     }
@@ -4315,7 +4452,7 @@ function renderHeader() {
     const {
         subView: e
     } = S;
-    let t = "Поиск по ID или названию...";
+    let t = "Поиск по деталям...";
     "sets" === e && (t = "Поиск по наборам..."), "minifigs" === e && (t = "Поиск по минифигуркам...");
     
     const selCount = S.multiSelect.items?.size || 0;
@@ -4346,13 +4483,13 @@ function renderHeader() {
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
-                        <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md py-2 pl-4 pr-10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Поиск по ID или названию"/>
-                        <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white ${S.q?"":"hidden"}" title="Очистить поисковый запрос">${I_X("w-5 h-5")}</button>
+                        <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Поиск по деталям"/>
+                        <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.q?"":"hidden"}" title="Очистить поисковый запрос">${I_X("w-5 h-5")}</button>
                     </div>
-                     <button id="search-button" class="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск" title="Выполнить поиск по введенному запросу">
+                     <button id="search-button" class="px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex-shrink-0" aria-label="Поиск" title="Выполнить поиск по введенному запросу">
                         ${I_Search("w-5 h-5")}
                     </button>
-                    <button id="filter-button" class="p-2 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors flex-shrink-0" aria-label="Фильтры" title="Открыть панель фильтров и сортировки">
+                    <button id="filter-button" class="px-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors flex-shrink-0" aria-label="Фильтры" title="Открыть панель фильтров и сортировки">
                         ${I_Filter("w-5 h-5")}
                     </button>
 
