@@ -187,11 +187,15 @@
     }
     
     .modal-hidden {
-        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
     
     .viewer-hidden {
-        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
     
     /* Стили для кнопок закрытия модальных окон */
@@ -260,8 +264,8 @@
     /* Стили для кнопки открытия боковой панели */
     .sidebar-toggle-btn {
         position: relative;
-        width: 40px;
-        height: 40px;
+        width: 48px;
+        height: 48px;
         background: transparent;
         border: none;
         display: flex;
@@ -272,26 +276,36 @@
         cursor: pointer;
         margin-right: 1rem;
         margin-left: -0.5rem; /* Перемещаем ближе к левому краю */
+        border-radius: 8px;
+        padding: 12px;
     }
     
     .sidebar-toggle-btn:hover {
         color: #9ca3af;
+        background: rgba(107, 114, 128, 0.1);
         transform: none;
     }
     
     .sidebar-toggle-btn:active {
-        transform: none;
+        transform: scale(0.95);
+        background: rgba(107, 114, 128, 0.2);
     }
     
     .sidebar-toggle-btn svg {
-        width: 20px;
-        height: 20px;
-        stroke-width: 2;
+        width: 24px;
+        height: 24px;
+        stroke-width: 2.5;
         transition: color 0.2s ease;
     }
     
     .sidebar-toggle-btn:hover svg {
         transform: none;
+    }
+    
+    .sidebar-toggle-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+        background: rgba(107, 114, 128, 0.1);
     }
     
     /* Анимации для кнопок закрытия */
@@ -357,14 +371,28 @@
     }
     
     @keyframes scaleIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+        from { 
+            opacity: 0; 
+            transform: scale(0.9) translateY(10px); 
+        }
+        to { 
+            opacity: 1; 
+            transform: scale(1) translateY(0); 
+        }
     }
     
     @keyframes scaleOut {
-        from { opacity: 1; transform: scale(1); }
-        to { opacity: 0; transform: scale(0.95); }
+        from { 
+            opacity: 1; 
+            transform: scale(1) translateY(0); 
+        }
+        to { 
+            opacity: 0; 
+            transform: scale(0.9) translateY(-10px); 
+        }
     }
+    
+    /* Убрали @keyframes для backdrop, теперь используем transition */
     
     /* Стили для указателя sidebar-toggle */
     .sidebar-hint {
@@ -578,9 +606,14 @@
     #set-modal-container,
     #settings-modal-container,
     #minifig-modal-container,
+    #colors-modal-container,
+    #related-sets-modal-container,
     #image-viewer-container {
         opacity: 0;
-        transition: opacity 0.2s ease-out;
+        transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(0px);
+        visibility: hidden;
+        pointer-events: none;
     }
     
     #modal-container.visible,
@@ -588,8 +621,13 @@
     #set-modal-container.visible,
     #settings-modal-container.visible,
     #minifig-modal-container.visible,
+    #colors-modal-container.visible,
+    #related-sets-modal-container.visible,
     #image-viewer-container.visible {
         opacity: 1;
+        backdrop-filter: blur(4px);
+        visibility: visible;
+        pointer-events: auto;
     }
     
     /* Анимация сворачивания/разворачивания панелей */
@@ -954,11 +992,11 @@
 
     
     .modal-content-enter {
-        animation: scaleIn 0.2s ease-out forwards;
+        animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
     
     .modal-content-leave {
-        animation: scaleOut 0.2s ease-out forwards;
+        animation: scaleOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
     /* Клип контента и корректное происхождение трансформации при анимациях модалок */
@@ -978,6 +1016,12 @@
     .modal-content-leave {
         box-shadow: none !important; /* убираем тень при скрытии, чтобы не выпирала */
     }
+    
+    /* Плавный переход размытия фона теперь управляется через transition выше */
+    
+    /* Image viewer также использует плавный переход размытия через transition выше */
+    
+    /* Transition для backdrop-filter управляется выше, анимации для контента остаются */
     
     .part-card.animate-in,
     .set-card.animate-in,
@@ -2057,15 +2101,15 @@ body.tab-switching .minifig-card {
       </div>
     </main>
   </div>
-  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
-          <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
-  <div id="minifig-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
-  <div id="colors-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
-  <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
-  <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
-  <div id="related-sets-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center backdrop-blur-sm modal-hidden"></div>
+  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
+          <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
+  <div id="minifig-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
+  <div id="colors-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
+  <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
+  <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
+  <div id="related-sets-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
-  <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center backdrop-blur-sm viewer-hidden">
+  <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center viewer-hidden">
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
       <div class="image-wrapper bg-white rounded-lg shadow-2xl overflow-hidden">
         <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out">
@@ -2192,6 +2236,22 @@ class ModalManager {
         requestAnimationFrame(() => {
             modalElement.classList.add('visible');
             
+            // Находим контент модального окна для анимации
+            const modalContent = modalElement.querySelector('[id$="-content"]') || modalElement.querySelector('.modal-content');
+            
+            if (modalContent) {
+                // Добавляем класс для анимации появления
+                modalContent.classList.add('modal-content-enter');
+                
+                // Убираем класс анимации после завершения
+                setTimeout(() => {
+                    modalContent.classList.remove('modal-content-enter');
+                }, 200);
+            } else if (modalId === 'image-viewer-container') {
+                // Для image viewer используем обычный CSS transition
+                // Анимация контролируется классом .visible
+            }
+            
             // Анимация появления кнопки закрытия
             const closeBtn = modalElement.querySelector('.modal-close-btn');
             if (closeBtn) {
@@ -2219,25 +2279,91 @@ class ModalManager {
         
         const modal = this.openModals[modalIndex];
         
-        // Скрываем модальное окно
-        modal.element.classList.remove('visible');
+        // Находим контент модального окна для анимации
+        const modalContent = modal.element.querySelector('[id$="-content"]') || modal.element.querySelector('.modal-content');
         
-        // Добавляем правильный класс скрытия в зависимости от типа модального окна
-        if (modalId === 'image-viewer-container') {
-            modal.element.classList.add('viewer-hidden');
+        if (modalContent) {
+            // Добавляем класс для анимации закрытия
+            modalContent.classList.add('modal-content-leave');
+            
+            // Ждем завершения анимации закрытия
+            setTimeout(() => {
+                // Убираем класс анимации (visible убирается позже для плавности)
+                
+                // Убираем класс анимации
+                modalContent.classList.remove('modal-content-leave');
+                
+                // Добавляем правильный класс скрытия в зависимости от типа модального окна
+                if (modalId === 'image-viewer-container') {
+                    // Для image viewer сразу скрываем, но backdrop-filter анимируется
+                    modal.element.classList.remove('visible');
+                    modal.element.style.transition = 'backdrop-filter 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+                    modal.element.style.backdropFilter = 'blur(0px)';
+                    
+                    // Ждем завершения анимации backdrop-filter
+                    setTimeout(() => {
+                        modal.element.classList.add('viewer-hidden');
+                        modal.element.style.transition = '';
+                        modal.element.style.backdropFilter = '';
+                    }, 250);
+                } else {
+                    // Для обычных модальных окон сразу скрываем, но backdrop-filter анимируется
+                    modal.element.classList.remove('visible');
+                    modal.element.style.transition = 'backdrop-filter 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+                    modal.element.style.backdropFilter = 'blur(0px)';
+                    
+                    // Ждем завершения анимации backdrop-filter
+                    setTimeout(() => {
+                        modal.element.classList.add('modal-hidden');
+                        modal.element.style.transition = '';
+                        modal.element.style.backdropFilter = '';
+                    }, 250);
+                }
+                
+                // Убираем из списка открытых модальных окон
+                this.openModals.splice(modalIndex, 1);
+                
+                // Убираем overflow-hidden только если нет других открытых модальных окон
+                if (this.openModals.length === 0) {
+                    document.body.classList.remove('overflow-hidden');
+                }
+            }, 200); // Время анимации закрытия
         } else {
-            modal.element.classList.add('modal-hidden');
+            // Если контент не найден, закрываем с анимацией backdrop-filter
+            modal.element.classList.remove('visible');
+            
+            if (modalId === 'image-viewer-container') {
+                // Для image viewer сразу скрываем, но backdrop-filter анимируется
+                modal.element.classList.remove('visible');
+                modal.element.style.transition = 'backdrop-filter 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+                modal.element.style.backdropFilter = 'blur(0px)';
+                
+                // Ждем завершения анимации backdrop-filter
+                setTimeout(() => {
+                    modal.element.classList.add('viewer-hidden');
+                    modal.element.style.transition = '';
+                    modal.element.style.backdropFilter = '';
+                }, 250);
+            } else {
+                // Для обычных модальных окон сразу скрываем, но backdrop-filter анимируется
+                modal.element.classList.remove('visible');
+                modal.element.style.transition = 'backdrop-filter 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+                modal.element.style.backdropFilter = 'blur(0px)';
+                
+                // Ждем завершения анимации backdrop-filter
+                setTimeout(() => {
+                    modal.element.classList.add('modal-hidden');
+                    modal.element.style.transition = '';
+                    modal.element.style.backdropFilter = '';
+                }, 250);
+            }
+            
+            this.openModals.splice(modalIndex, 1);
+            
+            if (this.openModals.length === 0) {
+                document.body.classList.remove('overflow-hidden');
+            }
         }
-        
-        // Убираем из списка открытых модальных окон
-        this.openModals.splice(modalIndex, 1);
-        
-        // Убираем overflow-hidden только если нет других открытых модальных окон
-        if (this.openModals.length === 0) {
-            document.body.classList.remove('overflow-hidden');
-        }
-        
-
     }
     
     closeLastModal() {
@@ -2263,14 +2389,19 @@ class ModalManager {
         // Создаем копию массива, чтобы избежать проблем при итерации
         const modalsToClose = [...this.openModals];
         
-        modalsToClose.forEach(modal => {
-            this.closeModal(modal.id);
+        // Закрываем все модальные окна с небольшой задержкой для плавности
+        modalsToClose.forEach((modal, index) => {
+            setTimeout(() => {
+                this.closeModal(modal.id);
+            }, index * 50); // Небольшая задержка между закрытием каждого модального окна
         });
         
-        // Убираем overflow-hidden
-        document.body.classList.remove('overflow-hidden');
+        // Убираем overflow-hidden после небольшой задержки
+        setTimeout(() => {
+            document.body.classList.remove('overflow-hidden');
+        }, modalsToClose.length * 50 + 200);
         
-        console.log('ModalManager.closeAllModals: All modals closed');
+        console.log('ModalManager.closeAllModals: All modals closing with animation');
     }
     
     getMaxZIndex() {
