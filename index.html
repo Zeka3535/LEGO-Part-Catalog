@@ -91,6 +91,161 @@
         align-items: center; /* Возвращаем center вместо stretch */
     }
     
+    /* Скругленные углы для разделительной линии в карточках */
+    .card-image-container {
+        border-bottom-left-radius: 0.5rem;
+        border-bottom-right-radius: 0.5rem;
+    }
+    
+    /* Скругленные углы для информационного блока в карточках */
+    .card-info-container {
+        border-top-left-radius: 0.5rem;
+        border-top-right-radius: 0.5rem;
+    }
+    
+    /* Адаптивная сетка для папок деталей */
+    .folder-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    /* На малых устройствах (до 640px) - минимум 2 карточки в ширину */
+    @media (max-width: 640px) {
+        .folder-grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+    }
+    
+    /* На очень малых устройствах (до 480px) - минимум 2 карточки в ширину */
+    @media (max-width: 480px) {
+        .folder-grid {
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        }
+    }
+    
+    /* Адаптивная сетка для основного контента деталей */
+    .parts-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    /* На малых устройствах (до 640px) - минимум 2 карточки в ширину */
+    @media (max-width: 640px) {
+        .parts-grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+    }
+    
+    /* На очень малых устройствах (до 480px) - минимум 2 карточки в ширину */
+    @media (max-width: 480px) {
+        .parts-grid {
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        }
+    }
+    
+    /* Адаптивная сетка для наборов и минифигурок */
+    .sets-minifigs-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+    
+    /* На малых устройствах (до 640px) - минимум 2 карточки в ширину */
+    @media (max-width: 640px) {
+        .sets-minifigs-grid {
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        }
+    }
+    
+    /* На очень малых устройствах (до 480px) - минимум 2 карточки в ширину */
+    @media (max-width: 480px) {
+        .sets-minifigs-grid {
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        }
+    }
+    
+    /* Адаптивные стили для информации о карточках */
+    .card-info-text {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    /* На малых устройствах делаем текст еще более компактным */
+    @media (max-width: 480px) {
+        .card-info-text {
+            font-size: 0.65rem;
+        }
+    }
+    
+    /* Адаптивные стили для заголовков карточек */
+.card-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* На малых устройствах делаем заголовки более компактными */
+@media (max-width: 480px) {
+    .card-title {
+        font-size: 0.75rem;
+        line-height: 1.2;
+    }
+}
+
+/* Палитра цветов в модальном окне детали */
+.color-palette-container {
+    max-height: 12rem; /* 48 * 0.25 = 12rem (192px) */
+    overflow-y: auto;
+    /* Добавляем отступ снизу для видимости скругленных углов */
+    padding-bottom: 0.5rem;
+    /* Обеспечиваем видимость скругленных углов */
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Скругление нижних углов блока палитры */
+.color-palette-wrapper {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Скругление нижних углов контейнера с прокруткой */
+.color-palette-container {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Скругление нижних углов внутреннего контейнера с цветами */
+.color-palette-inner {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Стили для градиента прокрутки */
+.color-palette-gradient {
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+
+
+
+
+
+
+/* Отступы между блоками в модальном окне детали */
+.modal-section-spacing {
+    margin-bottom: 1.5rem; /* 24px */
+}
+
+/* Отступы в заголовках секций */
+.modal-section-title {
+    margin-bottom: 0.75rem; /* 12px */
+}
+    
     /* Исправляем layout на малых экранах */
     @media (max-width: 640px) {
         .flex.justify-between.items-center.gap-4 {
@@ -1110,10 +1265,10 @@ body.tab-switching .minifig-card {
         transform: none !important;
     }
     
+    /* Отключаем hover эффекты только на мобильных устройствах */
     .part-card:hover,
     .set-card:hover,
     .minifig-card:hover {
-        /* transform: translateY(-2px) scale(1.01); */
         transform: none !important;
     }
 }
@@ -1146,7 +1301,7 @@ body.tab-switching .minifig-card {
 .part-card,
 .set-card,
 .minifig-card {
-    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out !important;
+    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out !important;
     will-change: transform;
 }
 
@@ -1154,8 +1309,8 @@ body.tab-switching .minifig-card {
 .part-card:hover,
 .set-card:hover,
 .minifig-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.6);
+    transform: translateY(-6px) scale(1.03) !important;
+    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* Форсируем hover-поднятие на десктопах, если не идет активная навигация */
@@ -1163,8 +1318,8 @@ body.tab-switching .minifig-card {
     body:not(.scrolling):not(.resizing):not(.tab-switching):not(.searching):not(.filtering):not(.sorting) .part-card:hover,
     body:not(.scrolling):not(.resizing):not(.tab-switching):not(.searching):not(.filtering):not(.sorting) .set-card:hover,
     body:not(.scrolling):not(.resizing):not(.tab-switching):not(.searching):not(.filtering):not(.sorting) .minifig-card:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.6) !important;
+        transform: translateY(-6px) scale(1.03) !important;
+        box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08) !important;
     }
 }
 
@@ -1175,7 +1330,7 @@ body.tab-switching .minifig-card {
     .minifig-card.animate-in {
         animation: none !important;
         opacity: 1 !important;
-        transform: none !important;
+        /* Сохраняем hover эффекты даже при отключении анимаций */
     }
     
     .part-card:not(.animate-in),
@@ -1183,7 +1338,7 @@ body.tab-switching .minifig-card {
     .minifig-card:not(.animate-in) {
         animation: none !important;
         opacity: 1 !important;
-        transform: none !important;
+        /* Сохраняем hover эффекты даже при отключении анимаций */
     }
 }
 
@@ -1193,7 +1348,7 @@ body.tab-switching .minifig-card {
 .scrolling .minifig-card {
     animation: none !important;
     opacity: 1 !important;
-    transform: none !important;
+    /* Сохраняем hover эффекты даже при прокрутке */
 }
 
 /* Анимация для новых карточек при загрузке - ОТКЛЮЧЕНА */
@@ -1201,7 +1356,7 @@ body.tab-switching .minifig-card {
 .set-card:not(.animate-in),
 .minifig-card:not(.animate-in) {
     opacity: 1 !important;
-    transform: none !important;
+    /* Сохраняем hover эффекты даже при отключении анимаций */
     animation: none !important;
 }
 
@@ -1852,22 +2007,7 @@ body.tab-switching .minifig-card {
     box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2);
 }
 
-.part-card:hover,
-.set-card:hover,
-.minifig-card:hover {
-    transform: translateY(-6px) scale(1.03) !important;
-    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08) !important;
-}
-
-/* Hover эффекты на больших экранах */
-@media (min-width: 1024px) {
-    .part-card:hover,
-    .set-card:hover,
-    .minifig-card:hover {
-        transform: translateY(-6px) scale(1.03) !important;
-        box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08) !important;
-    }
-}
+/* Hover эффекты для карточек уже определены в базовых стилях выше */
   
     /* Стили для кастомного выпадающего списка вариаций */
     #variation-select-button {
@@ -2188,6 +2328,20 @@ const I_Wheel = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 const I_Minifig = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3"></circle><path d="M12 11v5"></path><path d="M9 22v-5h6v5"></path><path d="M9 11H5a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h4"></path><path d="M15 11h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4"></path></svg>`;
 const I_Bar = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"></path><path d="M4 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0z"></path><path d="M20 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0z"></path></svg>`;
 const I_Arch = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V11c0-3.87 3.13-7 7-7s7 3.13 7 7v10"></path><path d="M5 21h14"></path></svg>`;
+
+// Функция для правильного склонения слова "цвет"
+const getColorWord = (count) => {
+    if (count === 1) return "Цвет";
+    if (count >= 2 && count <= 4) return "Цвета";
+    return "Цветов";
+};
+
+// Функция для создания иконки круглой детали LEGO 1x1
+const I_Lego1x1 = (c, colorHex) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10" fill="${colorHex}" stroke="currentColor"/>
+    <circle cx="12" cy="12" r="3" fill="rgba(255,255,255,0.3)"/>
+    <circle cx="12" cy="12" r="1.5" fill="rgba(255,255,255,0.6)"/>
+</svg>`;
 const I_Other = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
 const I_Filter = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>`;
 const I_Theme = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0L12 2.69z"></path></svg>`;
@@ -3174,32 +3328,44 @@ async function fetchPartColors(e) {
     // Показываем индикатор загрузки для загрузки цветов
     updateLoadingStatus("Загрузка цветов детали...", 75, "Загрузка доступных цветов");
     
-    S.partModal.loadingColors = !0, updateModalPartially({
+    S.partModal.loadingColors = !0;
+    updateModalPartially({
         colors: !0
     });
+    
     let t = []; // Объявляем t в начале функции
     try {
         t = (await apiFetchPaginated(`/parts/${e}/colors/`)).map(e => String(e.color_id));
+        
         if (PART_MAP[e]) {
             PART_MAP[e].availableColorIds = t;
+            
             if (t.length > 0 && (!S.partModal.selColorId || !t.includes(S.partModal.selColorId))) {
                 S.partModal.selColorId = sortColorIds(t, e)[0];
             }
         }
     } catch (error) {
-        console.error(`Failed to fetch colors for ${e}:`, error), PART_MAP[e] || (PART_MAP[e] = {}), PART_MAP[e].availableColorIds = PART_MAP[e].availableColorIds || []
+        console.error(`Failed to fetch colors for ${e}:`, error);
+        if (!PART_MAP[e]) {
+            PART_MAP[e] = {};
+        }
+        PART_MAP[e].availableColorIds = PART_MAP[e].availableColorIds || [];
     } finally {
         S.partModal.loadingColors = !1;
         
         // Обновляем статус загрузки для цветов
         if (PART_MAP[e] && PART_MAP[e].availableColorIds && PART_MAP[e].availableColorIds.length !== undefined) {
-            updateLoadingStatus("Цвета загружены", 80, `Доступно ${PART_MAP[e].availableColorIds.length} цветов`);
+            updateLoadingStatus("Цвета загружены", 80, `Доступно ${PART_MAP[e].availableColorIds.length} ${getColorWord(PART_MAP[e].availableColorIds.length)}`);
         }
         
         updateModalPartially({
             colors: !0,
             controls: !0
-        }), S.partModal.selColorId && fetchPartColorSpecifics(e, S.partModal.selColorId)
+        });
+        
+        if (S.partModal.selColorId) {
+            fetchPartColorSpecifics(e, S.partModal.selColorId);
+        }
     }
 }
 async function fetchPartColorSpecifics(e, t) {
@@ -4672,7 +4838,7 @@ function renderSetCard(e, t, o = 0) {
     return `
             <div data-set-num="${e.set_num}" style="${a}" class="set-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
                 ${i>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md pointer-events-none">${i}</div>`:""}
-                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
+                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg card-image-container">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getSetImageAttrs(e.set_num, e.set_img_url)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
                         ${((S.view==="collection" && S.collectionMultiSelectEnabled) || (S.view==="catalog" && S.catalogMultiSelectEnabled))?`
@@ -4686,9 +4852,9 @@ function renderSetCard(e, t, o = 0) {
                 </button>`:""}
                     </div>
                 </div>
-                <div class="p-4 space-y-1">
-                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${e.name}</h3>
-                    <p class="text-xs text-gray-400 pointer-events-none">#${e.set_num} • ${e.num_parts} pcs • ${e.year}</p>
+                <div class="p-4 space-y-1 card-info-container">
+                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none card-title">${e.name}</h3>
+                    <p class="text-xs text-gray-400 pointer-events-none card-info-text">#${e.set_num} • ${e.num_parts} шт • ${e.year}</p>
                 </div>
             </div>
         `
@@ -4700,7 +4866,7 @@ function renderMinifigCard(e, t, o = 0) {
             <div class="h-4 bg-gray-700 rounded w-24 mb-2"></div>
             <div class="h-3 bg-gray-700 rounded w-16 mb-1"></div>
             <div class="h-3 bg-gray-700 rounded w-12"></div>
-            <span class="text-gray-400 text-xs mt-4">Загрузка...</span>
+            <span class="text-gray-400 text-xs mt-4 card-info-text">Загрузка...</span>
         </div>
     `;
     
@@ -4715,7 +4881,7 @@ function renderMinifigCard(e, t, o = 0) {
             <div data-fig-num="${e.set_num}" style="${a}" class="minifig-card ${l} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
                 ${S.view==="collection"?"":""}
                 ${i>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md pointer-events-none">${i}</div>`:""}
-                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
+                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg card-image-container">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getPartImageUrl((e.minifig_img_url && e.minifig_img_url.startsWith('http')) || (e.set_img_url && e.set_img_url.startsWith('http')) ? (e.minifig_img_url || e.set_img_url) : null)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
                         ${((S.view==="collection" && S.collectionMultiSelectEnabled) || (S.view==="catalog" && S.catalogMultiSelectEnabled))?`
@@ -4729,10 +4895,10 @@ function renderMinifigCard(e, t, o = 0) {
                 </button>`:""}
                     </div>
                 </div>
-                <div class="p-4 space-y-1">
-                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${e.name || 'Загрузка...'}</h3>
-                    <p class="text-xs text-gray-400 pointer-events-none">#${e.set_num}</p>
-                    ${!e.name ? '<p class="text-xs text-blue-400">Загружаем детали...</p>' : ''}
+                <div class="p-4 space-y-1 card-info-container">
+                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none card-title">${e.name || 'Загрузка...'}</h3>
+                    <p class="text-xs text-gray-400 pointer-events-none card-info-text">#${e.set_num}</p>
+                    ${!e.name ? '<p class="text-xs text-blue-400 card-info-text">Загружаем детали...</p>' : ''}
                 </div>
             </div>
         `
@@ -4778,14 +4944,14 @@ function renderPartCard(e, t, o, l, a = 0) {
     const tHtml = t ? `
         <div class="flex items-center pt-1 pointer-events-none">
             <span class="w-4 h-4 rounded-full border border-gray-500 ${t.isTransparent?"checkerboard":""}" style="background-color: ${t.hex};"></span>
-            <span class="ml-2 text-xs text-gray-300 truncate">${t.name}</span>
+            <span class="ml-2 text-xs text-gray-300 truncate card-info-text">${t.name}</span>
         </div>
     ` : "";
     return `
             <div data-group-id="${n}" data-part-id="${e.id}" ${i && t ?`data-color-id="${t.id}"`:""} style="${s}" class="part-card ${r} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
                 ${i && t ?"" :""}
                 ${c}
-                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg">
+                <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg card-image-container">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getPartImageAttrs(e.id, d)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
                         ${(S.view==="collection" && S.collectionMultiSelectEnabled)?`
@@ -4800,9 +4966,9 @@ function renderPartCard(e, t, o, l, a = 0) {
                 `:""}
                     </div>
                 </div>
-                <div class="p-4 space-y-1">
-                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${e.name}</h3>
-                    <p class="text-xs text-gray-400 pointer-events-none">ID: ${e.id}</p>
+                <div class="p-4 space-y-1 card-info-container">
+                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none card-title">${e.name}</h3>
+                    <p class="text-xs text-gray-400 pointer-events-none card-info-text">ID: ${e.id}</p>
                     ${i? tHtml :""}
                 </div>
             </div>
@@ -5002,7 +5168,7 @@ function renderCollectionFolderCard(part, colors) {
         return `
             <div data-group-id="${groupId}" data-part-id="${part.id}" data-folder="true" class="part-card${ringClasses}${expandedClasses} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer transition-all duration-300">
                 ${inCollectionQty>0?`<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md pointer-events-none">${inCollectionQty}</div>`:""}
-                <div class="w-full h-40 bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center p-2 rounded-t-lg">
+                <div class="w-full h-40 bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center p-2 rounded-t-lg card-image-container">
                     <div class="w-full h-full relative grid grid-cols-2 grid-rows-2 gap-2">
                         ${thumbImgs.join('')}
                         ${(S.view==="collection" && S.collectionMultiSelectEnabled)?`
@@ -5012,14 +5178,14 @@ function renderCollectionFolderCard(part, colors) {
                         `:""}
                                           
                         ${S.view==="collection"?`
-                        <button aria-label="Удалить все цвета ${part.name}" data-action="delete-folder-from-collection" data-part-id="${part.id}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Удалить все цвета детали из коллекции">${I_Trash('w-4 h-4')}</button>
+                        <button aria-label="Удалить все цвета ${part.name}" data-action="delete-folder-from-collection" data-part-id="${part.id}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-md opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100" title="Удалить все ${getColorWord(colorsCount)} детали из коллекции">${I_Trash('w-4 h-4')}</button>
                         `:""}
                     </div>
                 </div>
-                <div class="p-4 space-y-1">
-                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${part.name}</h3>
-                    <p class="text-xs text-gray-400 pointer-events-none">ID: ${part.id}</p>
-                    <p class="text-xs text-gray-300 pointer-events-none">Доступных цветов: ${colorsCount}</p>
+                <div class="p-4 space-y-1 card-info-container">
+                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none card-title">${part.name}</h3>
+                    <p class="text-xs text-gray-400 pointer-events-none card-info-text">ID: ${part.id}</p>
+                    <p class="text-xs text-gray-300 pointer-events-none card-info-text">${getColorWord(colorsCount)}: ${colorsCount}</p>
                 </div>
             </div>
         `;
@@ -5044,7 +5210,7 @@ function renderMainContent() {
     if (S.loading) e = '<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>';
     else if (S.err) e = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${S.err}</p></div>`;
     else if ("catalog" === S.view) {
-        let t, o, l, a = "grid-cols-[repeat(auto-fill,minmax(150px,1fr))]";
+        let t, o, l, a = "sets-minifigs-grid";
         if ("parts" === S.subView) {
             let i = {};
             l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском", S.filters.colorIds?.length > 1 ? l = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".' : null !== S.searchGroups ? (i = S.searchGroups, l = "По вашему запросу ничего не найдено.") : null !== S.selCatId && (i = S.catGroups, l = "В этой категории нет деталей.");
@@ -5088,7 +5254,7 @@ function renderMainContent() {
             o = e => {
                 const t = Object.values(S.coll[e.id] || {}).reduce((e, t) => e + t, 0);
                 return renderPartCard(e, null, t, S.gridStale);
-            }, a = "grid-cols-[repeat(auto-fill,minmax(130px,1fr))]";
+            }, a = "parts-grid";
         } else if ("sets" === S.subView) {
             console.log('Sets subview, selFigNum:', S.selFigNum, 'q:', S.q, 'view:', S.view);
             // Проверяем, есть ли выбранная минифигурка для показа связанных наборов
@@ -5254,7 +5420,7 @@ function renderMainContent() {
                     t.sort((e, t) => (PART_MAP[t.part.id]?.num_sets || 0) - (PART_MAP[e.part.id]?.num_sets || 0))
             }
             o = (e, t, o) => renderPartCard(e.part, e.color, e.quantity, t, o);
-            n = "grid-cols-[repeat(auto-fill,minmax(130px,1fr))]";
+            n = "parts-grid";
         } else if ("sets" === S.subView) {
             let sets = Object.keys(S.setColl).map(e => SET_MAP[e]).filter(Boolean);
             
@@ -5322,7 +5488,8 @@ function renderMainContent() {
                 case "parts_desc":
                     t.sort((e, t) => t.num_parts - e.num_parts)
             }
-            o = (e, t, o) => renderSetCard(e, t, o)
+            o = (e, t, o) => renderSetCard(e, t, o);
+            n = "sets-minifigs-grid";
         } else {
             let minifigs = Object.keys(S.minifigColl).map(e => MINIFIG_MAP[e]).filter(Boolean);
             i && (minifigs = minifigs.filter(e => e.name.toLowerCase().includes(i) || e.set_num.toLowerCase().includes(i)));
@@ -5349,6 +5516,7 @@ function renderMainContent() {
                     t.sort((e, t) => e.num_parts - e.num_parts)
             }
             o = (e, t, o) => renderMinifigCard(e, t, o);
+            n = "sets-minifigs-grid";
         }
         if (t.length === 0) {
             (i || "parts" === S.subView && (S.filters.colorIds.length > 0 || S.selCollCatId) || "sets" === S.subView && S.selCollThemeId) && (l += ", соответствующих фильтрам");
@@ -5392,7 +5560,7 @@ function renderMainContent() {
                                             ${I_X('w-4 h-4')}
                                         </button>
                                         
-                                        <div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">
+                                        <div class="folder-grid">
                                             <div class="transform scale-105 transition-transform duration-200">${baseNoRing}</div>
                                             ${colorCardsWrapped}
                                         </div>
@@ -5405,14 +5573,14 @@ function renderMainContent() {
                     // одиночные карточки: сразу обычная карточка (открывает модалку детали)
                     return o(d.entry, true, idx);
                 }).join("");
-                e = `<div class="grid ${n} gap-4 p-4">${html}</div>`;
+                e = `<div class="${n} p-4">${html}</div>`;
             } else {
                 // Сетки для наборов и минифигурок без изменений
                 S.hasMoreItems = t.length > S.toDisplay;
                 S.totalItems = t.length;
                 const shown = t.slice(0, S.toDisplay);
                 S.loadedItems = shown.length;
-                e = `<div class="grid ${n} gap-4 p-4">${shown.map((e,t)=>o(e,true,t)).join("")}</div>`;
+                e = `<div class="${n} p-4">${shown.map((e,t)=>o(e,true,t)).join("")}</div>`;
             }
             // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
         }
@@ -5924,26 +6092,30 @@ function renderModal() {
                 </div>
                 
                 <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
-                    <div class="space-y-6">
-                        <div>
-                            <p class="text-sm text-gray-400">ID: ${e.id}</p>
-                            ${t?`
-                                <div class="text-sm text-gray-400 flex items-center mt-1">
-                                    <span class="mr-1">Категория:</span>
-                                    <button data-action="go-to-category" data-category-id="${e.categoryId}" class="text-blue-400 hover:text-blue-300 hover:underline text-left truncate">
-                                        ${t}
-                                    </button>
-                                </div>
-                            `:""}
+                    <div>
+                        <div class="modal-section-spacing">
+                            <h3 class="text-md font-semibold text-gray-300 modal-section-title">Деталь</h3>
+                            <div class="space-y-1 text-sm text-gray-400">
+                                <p><span class="font-semibold text-gray-300">Название:</span> ${e.name}</p>
+                                <p>ID: ${e.id}</p>
+                                ${t?`
+                                    <div class="flex items-center">
+                                        <span class="mr-1">Категория:</span>
+                                        <button data-action="go-to-category" data-category-id="${e.categoryId}" class="text-blue-400 hover:text-blue-300 hover:underline text-left truncate">
+                                            ${t}
+                                        </button>
+                                    </div>
+                                `:""}
+                            </div>
                             ${a?`<div class="mt-4">${a}</div>`:""}
                         </div>
                         
-                        <div>
-                          <h3 class="text-md font-semibold text-gray-300 mb-3">Доступные цвета</h3>
-                           <div id="color-selector-container" class="min-h-[200px]">${renderColorSelector()}</div>
+                        <div class="modal-section-spacing">
+                          <h3 class="text-md font-semibold text-gray-300 modal-section-title">Цвета</h3>
+                           <div id="color-selector-container" class="min-h-[120px] sm:min-h-[120px] lg:min-h-[160px]">${renderColorSelector()}</div>
                         </div>
                         
-                        <div id="modal-controls-container">${renderModalControls()}</div>
+                        <div id="modal-controls-container" class="modal-section-spacing">${renderModalControls()}</div>
                     </div>
                 </div>
             </div>
@@ -6106,11 +6278,20 @@ function renderColorSelector() {
         selColorId: t,
         loadingColors: o
     } = S.partModal, l = e.availableColorIds || [];
-    return o ? '<div class="flex items-center justify-center h-24"><div class="loader !w-8 !h-8"></div></div>' : 0 === l.length ? '<div class="text-center py-4">\n                        <p class="text-sm text-gray-400 mb-3">Нет информации о доступных цветах.</p>\n                        <button data-action="retry-fetch-colors" class="bg-blue-600 text-white font-bold py-1.5 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm">\n                            Попробовать снова\n                        </button>\n                    </div>' : `
+    
+    if (o) {
+        return '<div class="flex items-center justify-center h-24"><div class="loader !w-8 !h-8"></div></div>';
+    }
+    
+    if (l.length === 0) {
+        return '<div class="text-center py-4">\n                        <p class="text-sm text-gray-400 mb-3">Нет информации о доступных цветах.</p>\n                        <button data-action="retry-fetch-colors" class="bg-blue-600 text-white font-bold py-1.5 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm">\n                            Попробовать снова\n                        </button>\n                    </div>';
+    }
+    
+    return `
             <div class="bg-gray-900/50 rounded-lg">
-                <div class="relative">
-                    <div class="max-h-48 overflow-y-auto no-scrollbar">
-                        <div class="flex flex-wrap justify-center gap-3 p-3">
+                <div class="relative color-palette-wrapper">
+                    <div class="color-palette-container no-scrollbar">
+                        <div class="flex flex-wrap justify-center gap-3 p-3 color-palette-inner">
                             ${sortColorIds(l,e.id).map(e=>{const o=COLOR_MAP[e];if(!o)return"";const l=S.coll[S.selPartId]&&S.coll[S.selPartId][e]>0;return`
                 <button data-color-id="${e}" title="${o.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center ${o.isTransparent?"checkerboard":""} ${t===e?"border-blue-500 scale-110":"border-gray-600 hover:border-gray-400"}" style="background-color: ${o.hex};">
                     ${l?'<div class="w-2 h-2 bg-white rounded-full"></div>':""}
@@ -6118,10 +6299,10 @@ function renderColorSelector() {
             `}).join("")}
                         </div>
                     </div>
-                    ${l.length>1.5*COLOR_COLLAPSE_THRESHOLD?'<div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-900/50 to-transparent pointer-events-none"></div>':""}
+                    ${l.length>1.5*COLOR_COLLAPSE_THRESHOLD?'<div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-900/50 to-transparent pointer-events-none color-palette-gradient"></div>':""}
                 </div>
             </div>
-        `
+        `;
 }
 function renderModalControls() {
     const {
@@ -6691,7 +6872,7 @@ function updateModalPartially(e) {
     }
     if (e.colors) {
         const e = document.getElementById("color-selector-container");
-        e && (e.innerHTML = renderColorSelector())
+        e && (e.innerHTML = renderColorSelector());
     }
     if (e.controls) {
         const e = document.getElementById("modal-controls-container");
@@ -8509,6 +8690,8 @@ function openModalForPart(e, t, o) {
                     controls: !0
                 });
                 fetchPartColorSpecifics(l.id, S.partModal.selColorId);
+            } else {
+                fetchPartColors(l.id);
             }
         } else {
             fetchPartColors(l.id);
@@ -8586,14 +8769,14 @@ function openColorsModalForPart(partId) {
                 <div id="colors-scroll-progress"><div class="bar"></div></div>
                 <div id="colors-modal-header" class="sticky top-0 z-10 bg-gray-900 p-4 border-b border-gray-700 flex flex-col gap-3">
                     <div class="flex justify-between items-center">
-                        <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${part.name} — цвета (${unique.length})</h2>
+                        <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4">${part.name} — ${getColorWord(unique.length)} (${unique.length})</h2>
                         <button id="colors-modal-close" class="modal-close-btn" title="Закрыть">${I_X('w-4 h-4')}</button>
                     </div>
                     ${colorsSelBar}
                 </div>
                 <div class="p-4">
                     <div class="bg-gray-800/60 rounded-lg p-3">
-                        <div class="grid grid-cols-[repeat(auto-fill,minmax(130px,1fr))] gap-4">${cards}</div>
+                        <div class="folder-grid">${cards}</div>
                     </div>
                 </div>
             </div>
