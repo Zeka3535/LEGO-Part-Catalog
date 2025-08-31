@@ -2716,7 +2716,7 @@ class ModalManager {
 const modalManager = new ModalManager();
 
 let S = {
-    view: 'catalog',
+    view: 'collection',
     subView: 'parts',
     catTree: [],
     expCats: new Set,
@@ -2746,6 +2746,7 @@ let S = {
     selFigNum: null,
     randomMinifigImage: null, // Сохраняем случайное изображение минифигурки
     lastMinifigNumber: null, // Сохраняем номер последней выбранной минифигурки
+    longPressTriggered: false, // Флаг для блокировки обычного клика после долгого нажатия
     sidebarOpen: window.innerWidth >= 1024,
     gridStale: !0,
     hasMoreItems: false,
@@ -4042,7 +4043,289 @@ async function fetchMissingMinifigPartImages(minifigParts) {
         }
     }
 }
-async function handleFeelingLucky() {
+
+// Функция для обработки долгого нажатия на кнопки бокового меню
+function handleLongPress(type) {
+    console.log(`🎲 Long press detected for: ${type}`);
+    
+    // Защита от повторного вызова
+    if (window.handleLongPressInProgress) {
+        console.log('🚫 handleLongPress already in progress, skipping...');
+        return;
+    }
+    window.handleLongPressInProgress = true;
+    
+    // НЕМЕДЛЕННО блокируем updateUI для предотвращения перерисовки
+    const originalUpdateUI = window.updateUI;
+    const originalRenderMainContent = window.renderMainContent;
+    
+    // Создаем глобальный флаг блокировки
+    window.UI_BLOCKED = true;
+    console.log('🚫 UI blocked globally during long press');
+    
+    window.updateUI = () => {
+        console.log('🚫 updateUI blocked during long press (early)');
+        return;
+    };
+    
+    // Также блокируем renderMainContent
+    if (typeof renderMainContent === 'function') {
+        window.renderMainContent = () => {
+            console.log('🚫 renderMainContent blocked during long press');
+            return;
+        };
+    }
+    
+    // Добавляем анимацию нажатия
+    const button = document.querySelector(`[data-long-press="${type}"]`);
+    if (button) {
+        button.style.transform = 'scale(0.95)';
+        button.style.transition = 'transform 0.1s ease';
+        
+        // Устанавливаем флаг долгого нажатия для блокировки обычного клика
+        button.setAttribute('data-long-press-triggered', 'true');
+        
+        // Также устанавливаем глобальный флаг
+        S.longPressTriggered = true;
+        
+        // Возвращаем кнопку в нормальное состояние
+        setTimeout(() => {
+            button.style.transform = '';
+            button.style.transition = '';
+        }, 100);
+    }
+    
+    // Показываем случайный элемент без перерисовки UI
+    console.log('🚀 Calling showRandomElement...');
+    showRandomElement(type, originalUpdateUI, originalRenderMainContent);
+    
+    // Сбрасываем флаг выполнения
+    window.handleLongPressInProgress = false;
+    console.log('🔄 handleLongPress execution flag reset');
+}
+
+// Функция для показа случайного элемента без перерисовки UI
+async function showRandomElement(type, originalUpdateUI, originalRenderMainContent) {
+    console.log(`🎲 showRandomElement called for type: ${type}`);
+    
+    // Защита от повторного вызова
+    if (window.showRandomElementInProgress) {
+        console.log('🚫 showRandomElement already in progress, skipping...');
+        return;
+    }
+    window.showRandomElementInProgress = true;
+    
+    // updateUI и renderMainContent уже заблокированы в handleLongPress
+    
+    // Небольшая задержка для лучшего UX
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    try {
+        if ("parts" === type) {
+            console.log('🎯 Opening random part modal...');
+            // Показываем случайную деталь
+            const hasCats = Array.isArray(flatCategories) && flatCategories.length > 0;
+            let pool = [];
+            if (hasCats) {
+                const tries = Math.min(10, flatCategories.length);
+                for (let i = 0; i < tries && pool.length === 0; i++) {
+                    const randomCat = flatCategories[Math.floor(Math.random() * flatCategories.length)];
+                    pool = Object.values(PART_MAP).filter(p => p && p.categoryId === randomCat.id && p.name);
+                }
+            }
+            if (pool.length === 0) {
+                pool = Object.values(PART_MAP).filter(p => p && p.name);
+            }
+            if (pool.length === 0) throw new Error("Детали еще не загружены.");
+            
+            const randomPart = pool[Math.floor(Math.random() * pool.length)];
+            const partId = randomPart.id || randomPart.part_num;
+            if (!partId) throw new Error("Некорректные данные детали.");
+            
+            const groupId = getGroupId(partId);
+            let variants = Object.values(PART_MAP).filter(v => 
+                v && (v.id || v.part_num) && getGroupId(v.id || v.part_num) === groupId
+            );
+            if (typeof partCmp === 'function') variants = variants.sort(partCmp);
+            
+            openModalForPart(partId, groupId, variants.length ? variants : [randomPart]);
+            
+        } else if ("sets" === type) {
+            console.log('🎯 Opening random set modal...');
+            // Небольшая задержка для лучшего UX
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Показываем случайный набор
+            let setPool = Object.values(SET_MAP).filter(s => s && s.name);
+            if (setPool.length === 0) throw new Error("Наборы еще не загружены.");
+            
+            // Пытаемся найти наборы с определенной темой для разнообразия
+            const themeIds = Object.keys(THEME_MAP || {});
+            if (themeIds.length > 0) {
+                const tries = Math.min(5, themeIds.length);
+                for (let i = 0; i < tries; i++) {
+                    const themeId = parseInt(themeIds[Math.floor(Math.random() * themeIds.length)], 10);
+                    const themed = setPool.filter(s => s && s.theme_id === themeId);
+                    if (themed.length > 0) { 
+                        setPool = themed; 
+                        break; 
+                    }
+                }
+            }
+            
+            const randomSet = setPool[Math.floor(Math.random() * setPool.length)];
+            if (!randomSet || !randomSet.set_num) throw new Error("Некорректные данные набора.");
+            
+            SET_MAP[randomSet.set_num] = randomSet;
+            
+            openModalForSet(randomSet.set_num);
+            
+        } else if ("minifigs" === type) {
+            console.log('🎯 Opening random minifig modal...');
+            // Небольшая задержка для лучшего UX
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Показываем случайную минифигурку
+            let figs = Object.values(MINIFIG_MAP).filter(f => f && f.name);
+            if (figs.length === 0) throw new Error("Минифигурки еще не загружены.");
+            
+            const randomFig = figs[Math.floor(Math.random() * figs.length)];
+            MINIFIG_MAP[randomFig.set_num] = randomFig;
+            
+            openModalForMinifig(randomFig.set_num);
+        }
+        
+        // Сбрасываем флаг долгого нажатия после успешного показа элемента
+        S.longPressTriggered = false;
+        console.log('🔄 Long press flag reset');
+        
+        // Восстанавливаем updateUI и renderMainContent
+        if (originalUpdateUI) {
+            window.updateUI = originalUpdateUI;
+            console.log('🔄 updateUI restored');
+        }
+        if (originalRenderMainContent) {
+            window.renderMainContent = originalRenderMainContent;
+            console.log('🔄 renderMainContent restored');
+        }
+        
+        // Сбрасываем глобальный флаг блокировки
+        window.UI_BLOCKED = false;
+        console.log('🔄 Global UI block removed');
+        
+    } catch (e) {
+        console.error("showRandomElement failed:", e);
+        // Показываем ошибку пользователю без перерисовки UI
+        const errorNotification = document.createElement('div');
+        errorNotification.className = 'fixed top-20 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 text-sm font-medium';
+        errorNotification.textContent = `❌ Ошибка: ${e.message}`;
+        document.body.appendChild(errorNotification);
+        
+        setTimeout(() => {
+            if (errorNotification.parentNode) {
+                errorNotification.parentNode.removeChild(errorNotification);
+            }
+        }, 3000);
+        
+        // Сбрасываем флаг долгого нажатия даже при ошибке
+        S.longPressTriggered = false;
+        
+        // Восстанавливаем updateUI и renderMainContent даже при ошибке
+        if (originalUpdateUI) {
+            window.updateUI = originalUpdateUI;
+            console.log('🔄 updateUI restored after error');
+        }
+        if (originalRenderMainContent) {
+            window.renderMainContent = originalRenderMainContent;
+            console.log('🔄 renderMainContent restored after error');
+        }
+        
+        // Сбрасываем глобальный флаг блокировки
+        window.UI_BLOCKED = false;
+        console.log('🔄 Global UI block removed after error');
+    } finally {
+        // Всегда сбрасываем флаг выполнения
+        window.showRandomElementInProgress = false;
+        console.log('🔄 showRandomElement execution flag reset');
+    }
+}
+
+// Функция для настройки обработчиков долгого нажатия
+function setupLongPressHandlers() {
+    const longPressButtons = document.querySelectorAll('[data-long-press]');
+    
+    longPressButtons.forEach(button => {
+        let pressTimer = null;
+        const longPressDelay = 1000; // 1 секунда
+        let pressStartTime = 0;
+        let longPressTriggered = false; // Флаг для блокировки обычного клика
+        
+        const startPress = (e) => {
+            pressStartTime = Date.now();
+            longPressTriggered = false; // Сбрасываем флаг при начале нажатия
+            
+            // Добавляем визуальную обратную связь
+            button.style.transition = 'all 0.3s ease';
+            button.style.filter = 'brightness(1.1)';
+            
+            pressTimer = setTimeout(() => {
+                const type = button.getAttribute('data-long-press');
+                if (type) {
+                    longPressTriggered = true; // Устанавливаем флаг при срабатывании долгого нажатия
+                    handleLongPress(type);
+                }
+            }, longPressDelay);
+        };
+        
+        const endPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+            
+            // Возвращаем кнопку в нормальное состояние
+            button.style.filter = '';
+            
+            // Если нажатие было коротким, убираем все эффекты
+            const pressDuration = Date.now() - pressStartTime;
+            if (pressDuration < longPressDelay) {
+                button.style.transition = '';
+            }
+        };
+        
+        // Блокируем обычный клик после долгого нажатия
+        const blockClick = (e) => {
+            if (longPressTriggered) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                longPressTriggered = false; // Сбрасываем флаг
+                return false;
+            }
+        };
+        
+        // Обработчики для мобильных устройств
+        button.addEventListener('touchstart', startPress, { passive: true });
+        button.addEventListener('touchend', endPress, { passive: true });
+        button.addEventListener('touchcancel', endPress, { passive: true });
+        button.addEventListener('click', blockClick, true); // Используем capture для блокировки
+        
+        // Обработчики для десктопа
+        button.addEventListener('mousedown', startPress);
+        button.addEventListener('mouseup', endPress);
+        button.addEventListener('mouseleave', endPress);
+        button.addEventListener('click', blockClick, true); // Используем capture для блокировки
+        
+        // Предотвращаем контекстное меню при долгом нажатии
+        button.addEventListener('contextmenu', (e) => e.preventDefault());
+    });
+}
+
+async function handleFeelingLucky(type = null) {
+    // Если тип не передан, используем текущий subView
+    const targetType = type || S.subView;
+    console.log('🎲 handleFeelingLucky called, targetType:', targetType, 'current subView:', S.subView, 'loading:', S.loading);
+    
     // Анимация кнопки
     const button = document.getElementById('feeling-lucky-button');
     const icon = document.getElementById('feeling-lucky-icon');
@@ -4055,9 +4338,10 @@ async function handleFeelingLucky() {
         text.textContent = 'Ищем сокровище...';
     }
     
+    console.log('🔄 Setting loading state and calling updateUI');
     S.loading = !0, S.err = null, S.gridStale = !0, updateUI();
     try {
-                if ("parts" === S.subView) {
+                if ("parts" === targetType) {
             // Небольшая задержка для лучшего UX
             await new Promise(resolve => setTimeout(resolve, 800));
             
@@ -4088,7 +4372,7 @@ async function handleFeelingLucky() {
             
             openModalForPart(partId, groupId, variants.length ? variants : [randomPart]);
             
-        } else if ("sets" === S.subView) {
+        } else if ("sets" === targetType) {
             // Небольшая задержка для лучшего UX
             await new Promise(resolve => setTimeout(resolve, 800));
             
@@ -4175,10 +4459,15 @@ async function handleFeelingLucky() {
 
 // Функция для обновления статистики кнопки "Мне повезёт"
 function updateFeelingLuckyStats() {
+    console.log('🔍 updateFeelingLuckyStats called, subView:', S.subView, 'loading:', S.loading);
+    
     const statsElement = document.getElementById('feeling-lucky-stats');
     const tipElement = document.getElementById('feeling-lucky-tip');
     
-    if (!statsElement) return;
+    if (!statsElement) {
+        console.log('❌ statsElement not found');
+        return;
+    }
     
     try {
         let stats = '';
@@ -4221,21 +4510,16 @@ function updateFeelingLuckyStats() {
         
         // Запускаем автоматическую смену подсказок, если еще не запущена
         if (window.startTipRotation && !window.tipRotationInterval) {
-            console.log('Starting tip rotation from updateFeelingLuckyStats');
+            console.log('🚀 Starting tip rotation from updateFeelingLuckyStats');
             window.startTipRotation();
         } else if (window.startTipRotation && window.tipRotationInterval) {
-            console.log('Tip rotation already running, interval ID:', window.tipRotationInterval);
-            // Перезапускаем ротацию, чтобы убедиться, что она работает
-            setTimeout(() => {
-                if (window.startTipRotation) {
-                    console.log('Restarting tip rotation to ensure it works');
-                    window.startTipRotation();
-                }
-            }, 1000);
+            console.log('⚠️ Tip rotation already running, interval ID:', window.tipRotationInterval);
+            // НЕ перезапускаем ротацию - это создает бесконечный цикл!
         } else {
-            console.log('startTipRotation function not available');
+            console.log('❌ startTipRotation function not available');
         }
     } catch (e) {
+        console.error('💥 Error in updateFeelingLuckyStats:', e);
         statsElement.textContent = 'Статистика недоступна';
         if (tipElement) {
             tipElement.textContent = '💡 Подсказка недоступна';
@@ -4928,23 +5212,25 @@ function renderSidebar() {
         </div>
 
         <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1">
-            <button data-sub-view="parts" class="${r("parts")}" title="Показать детали">
+            <button data-sub-view="parts" class="${r("parts")}" title="Показать детали" data-long-press="parts">
                 ${I_Brick("w-5 h-5")}
                 <span class="mt-1">Детали</span>
                 ${s("parts",e,t)}
             </button>
-            <button data-sub-view="sets" class="${r("sets")} relative" title="Показать наборы">
+            <button data-sub-view="sets" class="${r("sets")} relative" title="Показать наборы" data-long-press="sets">
                 ${I_Set("w-5 h-5")}
                 <span class="mt-1">Наборы</span>
                 ${s("sets",o,l)}
                 ${S.view === "catalog" && S.selFigNum ? `<div class="absolute top-1 right-1 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold">${I_Minifig("w-3 h-3")}</div>` : ''}
             </button>
-            <button data-sub-view="minifigs" class="${r("minifigs")}" title="Показать минифигурки">
+            <button data-sub-view="minifigs" class="${r("minifigs")}" title="Показать минифигурки" data-long-press="minifigs">
                 ${I_Minifig("w-5 h-5")}
                 <span class="mt-1">Фигурки</span>
                 ${s("minifigs",a,i)}
             </button>
         </div>
+        
+
         
         <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar">
           <h2 class="text-lg font-semibold text-white mb-3">${d}</h2>
@@ -5042,6 +5328,9 @@ function renderSidebar() {
     // Восстанавливаем позицию прокрутки после перерисовки
     const scrollEl = document.getElementById('sidebar-scroll-container');
     if (scrollEl) scrollEl.scrollTop = prevScrollTop;
+    
+    // Настраиваем обработчики долгого нажатия для кнопок бокового меню
+    setupLongPressHandlers();
 }
 
 function renderHeader() {
@@ -5496,15 +5785,22 @@ function renderCollectionFolderCard(part, colors) {
 }
 
 function renderMainContent() {
+    // Проверяем глобальный флаг блокировки
+    if (window.UI_BLOCKED) {
+        console.log('🚫 renderMainContent blocked by global flag');
+        return;
+    }
+    
     let e = "";
     
-    console.log('renderMainContent called:', {
+    console.log('🎨 renderMainContent called:', {
         view: S.view,
         subView: S.subView,
         loading: S.loading,
         error: S.err,
         toDisplay: S.toDisplay,
-        hasMoreItems: S.hasMoreItems
+        hasMoreItems: S.hasMoreItems,
+        stack: new Error().stack?.split('\n').slice(1, 4).join('\n')
     });
     
     if (S.loading) e = '<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>';
@@ -5513,8 +5809,119 @@ function renderMainContent() {
         let t, o, l, a = "sets-minifigs-grid";
         if ("parts" === S.subView) {
             let i = {};
-            l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском", S.filters.colorIds?.length > 1 ? l = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".' : null !== S.searchGroups ? (i = S.searchGroups, l = "По вашему запросу ничего не найдено.") : null !== S.selCatId && (i = S.catGroups, l = "В этой категории нет деталей.");
+            l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском";
+            
+            // Инициализируем данные для деталей, если они не загружены
+            if (!S.catGroups && !S.searchGroups && Object.keys(PART_MAP).length > 0) {
+                console.log('🔧 Initializing parts data for parts subview');
+                
+                // Если есть поисковый запрос, ищем по нему
+                if (S.q && S.q.trim()) {
+                    console.log('🔍 Searching parts for query:', S.q);
+                    const searchResults = Object.values(PART_MAP).filter(part => 
+                        part.name && part.name.toLowerCase().includes(S.q.toLowerCase()) ||
+                        part.part_num && part.part_num.toLowerCase().includes(S.q.toLowerCase())
+                    );
+                    S.searchGroups = { 'search': searchResults };
+                    console.log('🔍 Search results for parts:', searchResults.length);
+                } else {
+                    // Загружаем ВСЕ доступные детали (не только первые 100)
+                    const allParts = Object.values(PART_MAP);
+                    S.catGroups = { 'default': allParts };
+                    console.log('🔧 All parts loaded:', allParts.length);
+                }
+            }
+            
+            // Автоматически сортируем все детали по популярности (частота использования в наборах) после инициализации
+            if (S.catGroups && Object.keys(S.catGroups).length > 0) {
+                console.log('📊 Sorting parts by popularity (most used first)');
+                Object.keys(S.catGroups).forEach(key => {
+                    if (Array.isArray(S.catGroups[key])) {
+                        S.catGroups[key].sort((a, b) => {
+                            const popularityA = parseInt(a.num_sets) || 0;
+                            const popularityB = parseInt(b.num_sets) || 0;
+                            return popularityB - popularityA; // Популярные первыми
+                        });
+                    }
+                });
+                console.log('✅ Parts sorted by popularity, most used first');
+            }
+            
+            if (S.searchGroups && Object.keys(S.searchGroups).length > 0) {
+                console.log('📊 Sorting search results by popularity (most used first)');
+                Object.keys(S.searchGroups).forEach(key => {
+                    if (Array.isArray(S.searchGroups[key])) {
+                        S.searchGroups[key].sort((a, b) => {
+                            const popularityA = parseInt(a.num_sets) || 0;
+                            const popularityB = parseInt(b.num_sets) || 0;
+                            return popularityB - popularityA; // Популярные первыми
+                        });
+                    }
+                });
+                console.log('✅ Search results sorted by popularity, most used first');
+            }
+            
+            if (S.filters.colorIds?.length > 1) {
+                l = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию".';
+            } else if (S.searchGroups !== null) {
+                i = S.searchGroups;
+                l = "По вашему запросу ничего не найдено.";
+            } else if (S.selCatId !== null) {
+                i = S.catGroups;
+                l = "В этой категории нет деталей.";
+            } else {
+                // Если нет ни поиска, ни выбранной категории, используем все детали
+                if (S.catGroups && Object.keys(S.catGroups).length > 0) {
+                    i = S.catGroups;
+                    l = "Все детали";
+                    console.log('🔧 Using all parts data:', Object.keys(S.catGroups));
+                }
+            }
+            
+            // Дополнительная проверка: если есть поисковый запрос, но searchGroups не инициализирован
+            if (S.q && S.q.trim() && (!S.searchGroups || Object.keys(S.searchGroups).length === 0)) {
+                console.log('🔍 Re-initializing search results for parts query:', S.q);
+                const searchResults = Object.values(PART_MAP).filter(part => 
+                    part.name && part.name.toLowerCase().includes(S.q.toLowerCase()) ||
+                    part.part_num && part.part_num.toLowerCase().includes(S.q.toLowerCase())
+                );
+                S.searchGroups = { 'search': searchResults };
+                i = S.searchGroups;
+                l = searchResults.length > 0 ? `Результаты поиска для "${S.q}" (${searchResults.length})` : "По вашему запросу ничего не найдено.";
+                console.log('🔍 Search results re-initialized:', searchResults.length);
+            }
+            
+            // Дополнительная проверка: если есть выбранная категория, но catGroups не инициализирован
+            if (S.selCatId && (!S.catGroups || Object.keys(S.catGroups).length === 0)) {
+                console.log('🔧 Re-initializing category data for category ID:', S.selCatId);
+                // Здесь можно добавить логику загрузки деталей по категории
+                // Пока что используем все детали
+                const allParts = Object.values(PART_MAP);
+                S.catGroups = { 'category': allParts };
+                i = S.catGroups;
+                l = `Детали в категории (${allParts.length})`;
+                console.log('🔧 Category data re-initialized:', allParts.length);
+            }
+            
             let n = Object.values(i).flat();
+            console.log('📊 Parts processing:', {
+                iKeys: Object.keys(i),
+                nLength: n.length,
+                filters: S.filters
+            });
+            
+            // Дополнительная проверка: если i пустой, используем все детали
+            if (n.length === 0 && S.catGroups && Object.keys(S.catGroups).length > 0) {
+                console.log('⚠️ No parts found, falling back to all parts');
+                i = S.catGroups;
+                n = Object.values(i).flat();
+                l = "Все детали";
+                console.log('📊 Parts after fallback:', {
+                    iKeys: Object.keys(i),
+                    nLength: n.length
+                });
+            }
+            
             // Фильтры для каталога «Все детали»
             if (S.filters) {
                 // Только элементы, присутствующие в коллекции
@@ -5533,10 +5940,22 @@ function renderMainContent() {
                     n = [];
                 }
             }
+            
+            console.log('📊 Parts after filtering:', {
+                nLength: n.length,
+                filtersApplied: !!S.filters
+            });
+            
             // Удаляем дубликаты и группируем вариации
             i = groupParts(n);
             const r = i ? Object.keys(i) : [];
             t = r.map(gid => pickBestPartVariantForCard(i[gid])).filter(Boolean);
+            
+            console.log('📊 Parts final result:', {
+                iKeys: Object.keys(i),
+                rLength: r.length,
+                tLength: t?.length || 0
+            });
             // Применяем сортировку к карточкам после выбора лучшей вариации
             if (S.sortBy) {
                 switch (S.sortBy) {
@@ -5557,12 +5976,63 @@ function renderMainContent() {
             }, a = "parts-grid";
         } else if ("sets" === S.subView) {
             console.log('Sets subview, selFigNum:', S.selFigNum, 'q:', S.q, 'view:', S.view);
+            
+            // Инициализируем данные для наборов, если они не загружены
+            if (!S.setRes && !S.searchSetRes && Object.keys(SET_MAP).length > 0) {
+                console.log('🔧 Initializing sets data for sets subview');
+                // Загружаем все наборы или наборы по умолчанию
+                if (S.q && S.q.trim()) {
+                    // Если есть поисковый запрос, ищем по нему
+                    const searchResults = Object.values(SET_MAP).filter(set => 
+                        set.name && set.name.toLowerCase().includes(S.q.toLowerCase()) ||
+                        set.set_num && set.set_num.toLowerCase().includes(S.q.toLowerCase())
+                    );
+                    S.searchSetRes = searchResults;
+                    console.log('🔍 Search results for sets:', searchResults.length);
+                } else {
+                    // Если нет запроса, загружаем ВСЕ доступные наборы (не только первые 100)
+                    const allSets = Object.values(SET_MAP);
+                    S.setRes = allSets;
+                    console.log('📦 All sets loaded:', allSets.length);
+                }
+            }
+            
+            // Автоматически сортируем все наборы по году (новые первыми) после инициализации
+            if (S.setRes && Array.isArray(S.setRes)) {
+                console.log('📅 Sorting sets by year (newest first)');
+                S.setRes.sort((a, b) => {
+                    const yearA = parseInt(a.year) || 0;
+                    const yearB = parseInt(b.year) || 0;
+                    return yearB - yearA; // Новые первыми
+                });
+                console.log('✅ Sets sorted by year, newest first');
+            }
+            
+            if (S.searchSetRes && Array.isArray(S.searchSetRes)) {
+                console.log('📅 Sorting search results by year (newest first)');
+                S.searchSetRes.sort((a, b) => {
+                    const yearA = parseInt(a.year) || 0;
+                    const yearB = parseInt(b.year) || 0;
+                    return yearB - yearA; // Новые первыми
+                });
+                console.log('✅ Search results sorted by year, newest first');
+            }
+            
             // Проверяем, есть ли выбранная минифигурка для показа связанных наборов
             if (S.selFigNum && !S.q) {
                 // Показываем связанные наборы для выбранной минифигурки
                 const relatedSets = getRelatedSetsForMinifig(S.selFigNum);
                 console.log('Related sets for minifig:', S.selFigNum, ':', relatedSets);
                 if (relatedSets && relatedSets.length > 0) {
+                    // Сортируем связанные наборы по году (новые первыми)
+                    console.log('📅 Sorting related sets by year (newest first)');
+                    relatedSets.sort((a, b) => {
+                        const yearA = parseInt(a.year) || 0;
+                        const yearB = parseInt(b.year) || 0;
+                        return yearB - yearA; // Новые первыми
+                    });
+                    console.log('✅ Related sets sorted by year, newest first');
+                    
                     t = relatedSets;
                     o = e => renderSetCard(e, S.gridStale);
                     l = `Связанные наборы для минифигурки "${MINIFIG_MAP[S.selFigNum]?.name || S.selFigNum}" (${relatedSets.length})`;
@@ -5582,6 +6052,47 @@ function renderMainContent() {
             }
             console.log('Final t value for sets:', t);
         } else {
+            // Инициализируем данные для минифигурок, если они не загружены
+            if (!S.minifigRes && !S.searchMinifigRes && Object.keys(MINIFIG_MAP).length > 0) {
+                console.log('🔧 Initializing minifigs data for minifigs subview');
+                // Загружаем все минифигурки или минифигурки по умолчанию
+                if (S.q && S.q.trim()) {
+                    // Если есть поисковый запрос, ищем по нему
+                    const searchResults = Object.values(MINIFIG_MAP).filter(minifig => 
+                        minifig.name && minifig.name.toLowerCase().includes(S.q.toLowerCase()) ||
+                        minifig.set_num && minifig.set_num.toLowerCase().includes(S.q.toLowerCase())
+                    );
+                    S.searchMinifigRes = searchResults;
+                    console.log('🔍 Search results for minifigs:', searchResults.length);
+                } else {
+                    // Если нет запроса, загружаем ВСЕ доступные минифигурки (не только первые 100)
+                    const allMinifigs = Object.values(MINIFIG_MAP);
+                    S.minifigRes = allMinifigs;
+                    console.log('👤 All minifigs loaded:', allMinifigs.length);
+                }
+            }
+            
+            // Автоматически сортируем все минифигурки по году (новые первыми) после инициализации
+            if (S.minifigRes && Array.isArray(S.minifigRes)) {
+                console.log('📅 Sorting minifigs by year (newest first)');
+                S.minifigRes.sort((a, b) => {
+                    const yearA = parseInt(a.year) || 0;
+                    const yearB = parseInt(b.year) || 0;
+                    return yearB - yearA; // Новые первыми
+                });
+                console.log('✅ Minifigs sorted by year, newest first');
+            }
+            
+            if (S.searchMinifigRes && Array.isArray(S.searchMinifigRes)) {
+                console.log('📅 Sorting minifig search results by year (newest first)');
+                S.searchMinifigRes.sort((a, b) => {
+                    const yearA = parseInt(a.year) || 0;
+                    const yearB = parseInt(b.year) || 0;
+                    return yearB - yearA; // Новые первыми
+                });
+                console.log('✅ Minifig search results sorted by year, newest first');
+            }
+            
             t = S.q ? S.searchMinifigRes : S.minifigRes;
             o = e => renderMinifigCard(e, S.gridStale);
             l = S.q ? "По вашему запросу ничего не найдено." : "catalog" === S.view && !S.q ? "Используйте поиск для нахождения минифигурок." : "В коллекции нет минифигурок.";
@@ -5649,10 +6160,41 @@ function renderMainContent() {
             if (S.view === 'catalog' || S.subView !== 'parts') {
                 // Старое поведение сетки
                 // Рассчитываем лимит отображаемых элементов
-                S.hasMoreItems = t.length > S.toDisplay;
-                S.totalItems = t.length;
-                const shown = t.slice(0, S.toDisplay);
-                S.loadedItems = shown.length;
+                console.log('📊 Setting hasMoreItems for catalog view:', {
+                    tLength: t?.length || 0,
+                    toDisplay: S.toDisplay,
+                    t: t,
+                    subView: S.subView
+                });
+                
+                // Защита от null/undefined значений
+                if (!t || !Array.isArray(t)) {
+                    console.log('⚠️ t is not a valid array, setting hasMoreItems to false');
+                    S.hasMoreItems = false;
+                    S.totalItems = 0;
+                    S.loadedItems = 0;
+                } else {
+                    S.hasMoreItems = t.length > S.toDisplay;
+                    S.totalItems = t.length;
+                    const shown = t.slice(0, S.toDisplay);
+                    S.loadedItems = shown.length;
+                }
+                
+                console.log('📊 Catalog view stats:', {
+                    hasMoreItems: S.hasMoreItems,
+                    totalItems: S.totalItems,
+                    loadedItems: S.loadedItems,
+                    toDisplay: S.toDisplay,
+                    subView: S.subView
+                });
+                
+                if (S.hasMoreItems) {
+                    console.log('✅ Will show more items button or auto-load');
+                } else {
+                    console.log('❌ No more items to load');
+                }
+                
+                const shown = t ? t.slice(0, S.toDisplay) : [];
                 e = `${headerHtml}<div class="grid ${a} gap-4 p-4">${shown.map((e,t)=>{const l=o(e,true,t);return l.replace('class=\"part-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"part-card `).replace('class=\"set-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"set-card `).replace('class=\"minifig-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"minifig-card `)}).join("")}</div>`;
             } else {
                 // Новое поведение: группировка карточек деталей по одинаковому названию
@@ -5929,11 +6471,15 @@ function renderMainContent() {
 }
 // Добавляем слушатель события прокрутки для автоматической загрузки дополнительных элементов
 function setupScrollListener() {
+    console.log('🔧 setupScrollListener called, mainEl:', mainEl);
+    
     if (mainEl.hasAttribute('data-scroll-listener')) {
+        console.log('⚠️ Scroll listener already set up, skipping');
         return; // Уже настроено
     }
     
     mainEl.setAttribute('data-scroll-listener', 'true');
+    console.log('✅ Scroll listener attribute set');
     
     let scrollTimeout;
     
@@ -5949,7 +6495,7 @@ function setupScrollListener() {
             const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px от конца
             
             if (isAtBottom && !S.loading && S.hasMoreItems) {
-                console.log('Auto-loading more items on scroll...', {
+                console.log('📜 Auto-loading more items on scroll...', {
                     current: S.toDisplay,
                     increment: S.increment,
                     hasMore: S.hasMoreItems,
@@ -5958,12 +6504,29 @@ function setupScrollListener() {
                     clientHeight
                 });
                 
+                // Проверяем, не превышаем ли мы общее количество элементов
+                if (S.totalItems && S.toDisplay >= S.totalItems) {
+                    console.log('⚠️ Already showing all items, skipping auto-load');
+                    S.hasMoreItems = false;
+                    return;
+                }
+                
+                // Защита от бесконечного увеличения
+                if (S.toDisplay > 10000) {
+                    console.log('⚠️ toDisplay too high, stopping auto-load');
+                    S.hasMoreItems = false;
+                    return;
+                }
+                
                 S.toDisplay += S.increment;
                 S.gridStale = true;
+                console.log('🔄 Calling updateUI from scroll listener, new toDisplay:', S.toDisplay);
                 updateUI();
             }
         }, 100); // Задержка 100ms для оптимизации
     }, { passive: true });
+    
+    console.log('✅ Scroll listener added successfully');
 }
 
 function renderSetCollectionControls() {
@@ -7497,9 +8060,18 @@ function renderMinifigModalInventoryView() {
         </div>`;
 }
 function updateUI() {
+    // Проверяем глобальный флаг блокировки
+    if (window.UI_BLOCKED) {
+        console.log('🚫 updateUI blocked by global flag');
+        return;
+    }
+    
+    console.log('🔄 updateUI called, view:', S.view, 'subView:', S.subView, 'loading:', S.loading);
+    
     // Проверяем, продолжается ли загрузка
     const loadingContainer = document.getElementById('loading-container');
     if (loadingContainer && !loadingContainer.classList.contains('hidden')) {
+        console.log('📱 Loading container visible, rendering sidebar and header');
         // Все еще загружается, но рендерим боковую панель и заголовок для возможности навигации
         renderSidebar();
         renderHeader();
@@ -7511,16 +8083,17 @@ function updateUI() {
     
     // Проверяем, что данные загружены
     if (Object.keys(PART_MAP).length === 0 || Object.keys(SET_MAP).length === 0 || Object.keys(MINIFIG_MAP).length === 0) {
-        console.warn('Data not loaded yet, waiting...');
-        console.log('PART_MAP size:', Object.keys(PART_MAP).length);
-        console.log('SET_MAP size:', Object.keys(SET_MAP).length);
-        console.log('MINIFIG_MAP size:', Object.keys(MINIFIG_MAP).length);
+        console.warn('⚠️ Data not loaded yet, waiting...');
+        console.log('📊 PART_MAP size:', Object.keys(PART_MAP).length);
+        console.log('📦 SET_MAP size:', Object.keys(SET_MAP).length);
+        console.log('👤 MINIFIG_MAP size:', Object.keys(MINIFIG_MAP).length);
         
         // Рендерим боковую панель и заголовок даже во время загрузки данных
         renderSidebar();
         renderHeader();
         setupSidebarDuringLoading();
         
+        console.log('⏰ Scheduling updateUI retry in 100ms');
         setTimeout(updateUI, 100);
         return;
     }
@@ -7533,9 +8106,54 @@ function updateUI() {
         hasImage: !!(p.part_img_url || p.rebrickable_img_url)
     })));
     
+    // Проверяем и применяем глобальную сортировку, если она еще не была применена
+    if (!window.globalSortingApplied) {
+        console.log('📅 Applying global sorting in updateUI...');
+        
+        // Сортируем все наборы по году (новые первыми)
+        if (Object.keys(SET_MAP).length > 0) {
+            console.log('📦 Sorting all sets by year in updateUI...');
+            const allSets = Object.values(SET_MAP);
+            allSets.sort((a, b) => {
+                const yearA = parseInt(a.year) || 0;
+                const yearB = parseInt(b.year) || 0;
+                return yearB - yearA; // Новые первыми
+            });
+            console.log('✅ All sets sorted by year in updateUI');
+        }
+        
+        // Сортируем все минифигурки по году (новые первыми)
+        if (Object.keys(MINIFIG_MAP).length > 0) {
+            console.log('👤 Sorting all minifigs by year in updateUI...');
+            const allMinifigs = Object.values(MINIFIG_MAP);
+            allMinifigs.sort((a, b) => {
+                const yearA = parseInt(a.year) || 0;
+                const yearB = parseInt(b.year) || 0;
+                return yearB - yearA; // Новые первыми
+            });
+            console.log('✅ All minifigs sorted by year in updateUI');
+        }
+        
+        // Сортируем все детали по популярности (часто используемые первыми)
+        if (Object.keys(PART_MAP).length > 0) {
+            console.log('🔧 Sorting all parts by popularity in updateUI...');
+            const allParts = Object.values(PART_MAP);
+            allParts.sort((a, b) => {
+                const popularityA = parseInt(a.num_sets) || 0;
+                const popularityB = parseInt(b.num_sets) || 0;
+                return popularityB - popularityA; // Популярные первыми
+            });
+            console.log('✅ All parts sorted by popularity in updateUI');
+        }
+        
+        window.globalSortingApplied = true;
+        console.log('🎯 Global sorting applied in updateUI!');
+    }
+    
     renderSidebar(), renderHeader(), renderMainContent();
     
     // Обновляем статистику кнопки "Мне повезёт"
+    console.log('📊 Calling updateFeelingLuckyStats from updateUI');
     updateFeelingLuckyStats();
     
     // Настраиваем слушатель событий для поискового ввода (только для обновления S.q, не для автопоиска)
@@ -7943,6 +8561,9 @@ function updateUI() {
             updateUI();
         });
     }
+    
+    // Настраиваем обработчики долгого нажатия для кнопок бокового меню
+    setupLongPressHandlers();
 }
 function generateCsvData() {
     const t = (t) => {
@@ -10152,6 +10773,9 @@ document.addEventListener("beforeinput", e => {
 document.addEventListener("click", async e => {
     if (!(e.target instanceof Element)) return;
     const t = e.target;
+    
+    // Логируем все клики для отладки
+    console.log('🖱️ Click detected on:', t.tagName, t.className, t.dataset);
     // Мультивыбор: переключение
     const selBtn = t.closest('[data-action="toggle-select"]');
     if (selBtn) {
@@ -10438,15 +11062,24 @@ document.addEventListener("click", async e => {
         }
         
         return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener(), setTimeout(() => {
-            // Перезапускаем автоматическую смену подсказок после переключения представлений
-            if (window.startTipRotation) {
-                console.log('Restarting tip rotation after view switch');
-                window.startTipRotation();
-            }
+            // НЕ перезапускаем ротацию подсказок - это создает бесконечный цикл!
+            console.log('⚠️ Skipping tip rotation restart to prevent infinite loop');
         }, 1000)))
     }
     const n = t.closest("[data-sub-view]");
     if (n?.dataset.subView) {
+        // Проверяем, не было ли долгого нажатия на эту кнопку
+        if (n.hasAttribute('data-long-press-triggered') || S.longPressTriggered) {
+            console.log('🚫 Blocking click after long press on:', n.dataset.subView);
+            console.log('🚫 Flags:', { 
+                hasAttribute: n.hasAttribute('data-long-press-triggered'), 
+                globalFlag: S.longPressTriggered 
+            });
+            n.removeAttribute('data-long-press-triggered');
+            S.longPressTriggered = false; // Сбрасываем глобальный флаг
+            return;
+        }
+        
         const e = n.dataset.subView;
         if (S.subView === e) return;
         
@@ -10586,14 +11219,9 @@ document.addEventListener("click", async e => {
         
         // Обновляем статистику кнопки "Мне повезёт" после смены представления
         setTimeout(() => {
+            console.log('📊 Updating feeling lucky stats after view change');
             updateFeelingLuckyStats();
-            // Перезапускаем автоматическую смену подсказок после переключения вкладок
-            setTimeout(() => {
-                if (window.startTipRotation) {
-                    console.log('Restarting tip rotation after tab switch');
-                    window.startTipRotation();
-                }
-            }, 500);
+            // НЕ перезапускаем ротацию подсказок - это создает бесконечный цикл!
         }, 200);
         
         // Настраиваем слушатель прокрутки для автоматической загрузки изображений
@@ -12373,6 +13001,7 @@ async function preloadImages() {
 async function initializeApp() {
     // Массив подсказок для кнопки "мне повезёт"
     window.FEELING_LUCKY_TIPS = [
+        "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
         "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
         "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
         "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
@@ -12417,6 +13046,7 @@ async function initializeApp() {
     
     // Массив подсказок для экрана загрузки
     window.LOADING_TIPS = [
+        "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
         "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
         "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
         "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
@@ -12610,11 +13240,19 @@ async function initializeApp() {
     
     // Функция для автоматической смены подсказок каждые 5 секунд
     window.startTipRotation = function() {
+        console.log('🔄 startTipRotation called, current interval:', window.tipRotationInterval);
+        
+        // Защита от множественного запуска
+        if (window.tipRotationInterval) {
+            console.log('⚠️ Tip rotation already running, skipping start request');
+            return;
+        }
+        
         let tipElement = document.getElementById('feeling-lucky-tip');
         
         // Если элемент не найден, попробуем найти его через несколько секунд
         if (!tipElement) {
-            console.log('Tip element not found, waiting for it to appear...');
+            console.log('🔍 Tip element not found, waiting for it to appear...');
             let attempts = 0;
             const maxAttempts = 10;
             
@@ -12624,11 +13262,11 @@ async function initializeApp() {
                 
                 if (tipElement) {
                     clearInterval(waitForElement);
-                    console.log('Tip element found after', attempts, 'attempts');
+                    console.log('✅ Tip element found after', attempts, 'attempts');
                     startRotation();
                 } else if (attempts >= maxAttempts) {
                     clearInterval(waitForElement);
-                    console.log('Tip element not found after', maxAttempts, 'attempts, giving up');
+                    console.log('❌ Tip element not found after', maxAttempts, 'attempts, giving up');
                     return;
                 }
             }, 500);
@@ -12639,41 +13277,43 @@ async function initializeApp() {
         startRotation();
         
         function startRotation() {
-            console.log('Starting tip rotation, current tip:', tipElement.textContent);
+            console.log('🎯 startRotation called, current tip:', tipElement.textContent);
             
             // Останавливаем предыдущий интервал, если он существует
             if (window.tipRotationInterval) {
                 clearInterval(window.tipRotationInterval);
-                console.log('Cleared previous tip rotation interval');
+                console.log('🧹 Cleared previous tip rotation interval');
             }
             
-                    // Запускаем автоматическую смену подсказок каждые 5 секунд
-        window.tipRotationInterval = setInterval(() => {
-            if (tipElement && window.getRandomTip && window.animateTipChange) {
-                const newTip = window.getRandomTip();
-                window.animateTipChange(tipElement, newTip, () => {
-                    console.log('Tip rotated to:', newTip);
-                    // Добавляем подсказку в историю
-                    if (window.addTipToHistory) {
-                        window.addTipToHistory(newTip, 'feelingLucky');
-                    }
-                });
-            }
-        }, 5000);
+            // Запускаем автоматическую смену подсказок каждые 5 секунд
+            window.tipRotationInterval = setInterval(() => {
+                if (tipElement && window.getRandomTip && window.animateTipChange) {
+                    const newTip = window.getRandomTip();
+                    console.log('🔄 Rotating tip to:', newTip);
+                    window.animateTipChange(tipElement, newTip, () => {
+                        console.log('✅ Tip rotated to:', newTip);
+                        // Добавляем подсказку в историю
+                        if (window.addTipToHistory) {
+                            window.addTipToHistory(newTip, 'feelingLucky');
+                        }
+                    });
+                }
+            }, 5000);
             
-            console.log('Tip rotation started, interval ID:', window.tipRotationInterval);
+            console.log('🚀 Tip rotation started, interval ID:', window.tipRotationInterval);
         }
     };
     
     // Функция для остановки автоматической смены подсказок
     window.stopTipRotation = function() {
+        console.log('🛑 stopTipRotation called, current interval:', window.tipRotationInterval);
         if (window.tipRotationInterval) {
-            console.log('Stopping tip rotation, interval ID:', window.tipRotationInterval);
+            console.log('🛑 Stopping tip rotation, interval ID:', window.tipRotationInterval);
             clearInterval(window.tipRotationInterval);
             window.tipRotationInterval = null;
-            console.log('Tip rotation stopped');
+            console.log('✅ Tip rotation stopped');
         } else {
-            console.log('No tip rotation interval to stop');
+            console.log('ℹ️ No tip rotation interval to stop');
         }
     };
     
@@ -12689,7 +13329,7 @@ async function initializeApp() {
     
     // Функция для проверки состояния автоматической смены подсказок
     window.checkTipRotationStatus = function() {
-        console.log('Tip rotation status:');
+        console.log('🔍 Tip rotation status:');
         console.log('- FEELING_LUCKY_TIPS array length:', window.FEELING_LUCKY_TIPS ? window.FEELING_LUCKY_TIPS.length : 'undefined');
         console.log('- getRandomTip function available:', !!window.getRandomTip);
         console.log('- startTipRotation function available:', !!window.startTipRotation);
@@ -12701,6 +13341,39 @@ async function initializeApp() {
         if (tipElement) {
             console.log('- Current tip text:', tipElement.textContent);
         }
+    };
+    
+    // Добавляем глобальную дебаг команду для анализа состояния
+    window.debugFeelingLucky = function() {
+        console.log('🔍 === DEBUG FEELING LUCKY ===');
+        console.log('S.view:', S.view);
+        console.log('S.subView:', S.subView);
+        console.log('S.loading:', S.loading);
+        console.log('S.err:', S.err);
+        console.log('window.tipRotationInterval:', window.tipRotationInterval);
+        console.log('window.startTipRotation available:', !!window.startTipRotation);
+        console.log('window.stopTipRotation available:', !!window.stopTipRotation);
+        console.log('window.getRandomTip available:', !!window.getRandomTip);
+        console.log('window.animateTipChange available:', !!window.animateTipChange);
+        console.log('feeling-lucky-button exists:', !!document.getElementById('feeling-lucky-button'));
+        console.log('feeling-lucky-stats exists:', !!document.getElementById('feeling-lucky-stats'));
+        console.log('feeling-lucky-tip exists:', !!document.getElementById('feeling-lucky-tip'));
+        console.log('=== END DEBUG ===');
+    };
+    
+    // Добавляем дебаг команду для проверки состояния прокрутки
+    window.debugScrollState = function() {
+        console.log('📜 === DEBUG SCROLL STATE ===');
+        console.log('S.toDisplay:', S.toDisplay);
+        console.log('S.totalItems:', S.totalItems);
+        console.log('S.hasMoreItems:', S.hasMoreItems);
+        console.log('S.increment:', S.increment);
+        console.log('S.loadedItems:', S.loadedItems);
+        console.log('mainEl.scrollHeight:', mainEl?.scrollHeight);
+        console.log('mainEl.clientHeight:', mainEl?.clientHeight);
+        console.log('mainEl.scrollTop:', mainEl?.scrollTop);
+        console.log('Scroll listener attribute:', mainEl?.getAttribute('data-scroll-listener'));
+        console.log('=== END SCROLL DEBUG ===');
     };
     
     // Функция для автоматической смены подсказок на экране загрузки
@@ -13170,6 +13843,47 @@ async function loadDataFromCSV() {
         console.log('- Categories:', flatCategories.length);
         console.log('- Themes:', Object.keys(THEME_MAP).length);
         
+        // Глобальная сортировка всех данных после загрузки
+        console.log('📅 Starting global sorting of all data...');
+        
+        // Сортируем все наборы по году (новые первыми)
+        if (Object.keys(SET_MAP).length > 0) {
+            console.log('📦 Sorting all sets by year (newest first)...');
+            const allSets = Object.values(SET_MAP);
+            allSets.sort((a, b) => {
+                const yearA = parseInt(a.year) || 0;
+                const yearB = parseInt(b.year) || 0;
+                return yearB - yearA; // Новые первыми
+            });
+            console.log('✅ All sets sorted by year, newest first');
+        }
+        
+        // Сортируем все минифигурки по году (новые первыми)
+        if (Object.keys(MINIFIG_MAP).length > 0) {
+            console.log('👤 Sorting all minifigs by year (newest first)...');
+            const allMinifigs = Object.values(MINIFIG_MAP);
+            allMinifigs.sort((a, b) => {
+                const yearA = parseInt(a.year) || 0;
+                const yearB = parseInt(b.year) || 0;
+                return yearB - yearA; // Новые первыми
+            });
+            console.log('✅ All minifigs sorted by year, newest first');
+        }
+        
+        // Сортируем все детали по популярности (часто используемые первыми)
+        if (Object.keys(PART_MAP).length > 0) {
+            console.log('🔧 Sorting all parts by popularity (most used first)...');
+            const allParts = Object.values(PART_MAP);
+            allParts.sort((a, b) => {
+                const popularityA = parseInt(a.num_sets) || 0;
+                const popularityB = parseInt(b.num_sets) || 0;
+                return popularityB - popularityA; // Популярные первыми
+            });
+            console.log('✅ All parts sorted by popularity, most used first');
+        }
+        
+        console.log('🎯 Global sorting completed successfully!');
+        
         // Инициализируем общее количество всех деталей в каталоге
         S.totalPartsInCatalog = Object.keys(PART_MAP).length;
         
@@ -13206,6 +13920,47 @@ async function loadDataFromCSV() {
             if (Object.keys(SET_MAP).length > 0) {
                 S.totalSetsInCatalog = Object.keys(SET_MAP).length;
             }
+            
+            // Глобальная сортировка данных из API
+            console.log('📅 Starting global sorting of API data...');
+            
+            // Сортируем все наборы по году (новые первыми)
+            if (Object.keys(SET_MAP).length > 0) {
+                console.log('📦 Sorting all API sets by year (newest first)...');
+                const allSets = Object.values(SET_MAP);
+                allSets.sort((a, b) => {
+                    const yearA = parseInt(a.year) || 0;
+                    const yearB = parseInt(b.year) || 0;
+                    return yearB - yearA; // Новые первыми
+                });
+                console.log('✅ All API sets sorted by year, newest first');
+            }
+            
+            // Сортируем все минифигурки по году (новые первыми)
+            if (Object.keys(MINIFIG_MAP).length > 0) {
+                console.log('👤 Sorting all API minifigs by year (newest first)...');
+                const allMinifigs = Object.values(MINIFIG_MAP);
+                allMinifigs.sort((a, b) => {
+                    const yearA = parseInt(a.year) || 0;
+                    const yearB = parseInt(b.year) || 0;
+                    return yearB - yearA; // Новые первыми
+                });
+                console.log('✅ All API minifigs sorted by year, newest first');
+            }
+            
+            // Сортируем все детали по популярности (часто используемые первыми)
+            if (Object.keys(PART_MAP).length > 0) {
+                console.log('🔧 Sorting all API parts by popularity (most used first)...');
+                const allParts = Object.values(PART_MAP);
+                allParts.sort((a, b) => {
+                    const popularityA = parseInt(a.num_sets) || 0;
+                    const popularityB = parseInt(b.num_sets) || 0;
+                    return popularityB - popularityA; // Популярные первыми
+                });
+                console.log('✅ All API parts sorted by popularity, most used first');
+            }
+            
+            console.log('🎯 Global API sorting completed successfully!');
             
             updateLoadingStatus("Загрузка из API завершена", 100, "Каталог готов к использованию");
             setTimeout(() => {
