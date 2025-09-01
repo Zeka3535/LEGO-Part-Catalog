@@ -838,10 +838,21 @@
         height: 22px;
         border-radius: 9999px;
         background: #374151; /* gray-700 - более темный для лучшего контраста */
-        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1);
-        transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all .2s ease;
         outline: none;
+        cursor: pointer;
     }
+    
+    .toggle-switch:hover {
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15), 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .toggle-switch:active {
+        transform: scale(0.98);
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
     .toggle-switch .knob {
         position: absolute;
         top: 2px; left: 2px;
@@ -849,11 +860,131 @@
         border-radius: 9999px;
         background: #f3f4f6; /* gray-100 - более мягкий белый */
         box-shadow: 0 2px 6px rgba(0,0,0,.4);
-        transition: transform .2s ease;
+        transition: all .2s ease;
     }
-    .toggle-switch.on { background: #2563eb; /* blue-600 - основной цвет сайта */ }
-    .toggle-switch.on .knob { transform: translateX(20px); }
-    .toggle-switch:focus-visible { box-shadow: 0 0 0 3px rgba(59,130,246,.45); }
+    
+    .toggle-switch.on { 
+        background: #2563eb; /* blue-600 - основной цвет сайта */
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 4px rgba(37, 99, 235, 0.3), 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    .toggle-switch.on:hover {
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15), 0 4px 8px rgba(37, 99, 235, 0.4), 0 0 0 3px rgba(37, 99, 235, 0.15);
+    }
+    
+    .toggle-switch.on .knob { 
+        transform: translateX(20px);
+        box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+    }
+    
+    .toggle-switch:focus-visible { 
+        box-shadow: 0 0 0 3px rgba(59,130,246,.45);
+    }
+    
+    /* Дополнительные стили для переключателей в настройках */
+    .settings-modal .toggle-switch,
+    #settings-modal-container .toggle-switch {
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    .settings-modal .toggle-switch:hover,
+    #settings-modal-container .toggle-switch:hover {
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15), 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+    }
+    
+    .settings-modal .toggle-switch.on,
+    #settings-modal-container .toggle-switch.on {
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 4px rgba(37, 99, 235, 0.3), 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
+    }
+    
+    .settings-modal .toggle-switch.on:hover,
+    #settings-modal-container .toggle-switch.on:hover {
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15), 0 4px 8px rgba(37, 99, 235, 0.4), 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    }
+    
+    /* Стабилизация модального окна настроек */
+    #settings-modal-container {
+        transform: none !important;
+        transition: none !important;
+    }
+    
+    #settings-modal-content {
+        transform: none !important;
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    /* Стабилизация кнопки закрытия */
+    #settings-modal-close {
+        transform: none !important;
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    /* Стабилизация контейнера статуса */
+    #import-export-status {
+        min-height: auto !important;
+        transition: none !important;
+        animation: none !important;
+        border-radius: 0.5rem !important;
+        font-weight: 500 !important;
+        margin: 0 0.75rem !important;
+        white-space: pre-line !important;
+        overflow: visible !important;
+        max-width: 200px !important;
+        line-height: 1.1 !important;
+        font-size: 10px !important;
+    }
+    
+    /* Стили для сообщений об ошибках */
+    #import-export-status.bg-red-900\/50 {
+        border: 1px solid rgba(239, 68, 68, 0.3) !important;
+        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1) !important;
+    }
+    
+    /* Стили для сообщений об успехе */
+    #import-export-status.bg-green-900\/50 {
+        border: 1px solid rgba(34, 197, 94, 0.3) !important;
+        box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1) !important;
+    }
+    
+    /* Стили для информационных сообщений */
+    #import-export-status.bg-blue-900\/50 {
+        border: 1px solid rgba(59, 130, 246, 0.3) !important;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1) !important;
+    }
+    
+    /* Предотвращение подпрыгивания при изменении содержимого */
+    #settings-modal-scroll {
+        transform: none !important;
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    /* Отключение всех анимаций для модального окна настроек */
+    #settings-modal-container *,
+    #settings-modal-container *::before,
+    #settings-modal-container *::after {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+    }
+    
+    /* Исключение для переключателей - им нужны анимации */
+    #settings-modal-container .toggle-switch,
+    #settings-modal-container .toggle-switch * {
+        animation: none !important;
+        transition: all 0.2s ease !important;
+        transform: none !important;
+    }
+    
+    #settings-modal-container .toggle-switch:hover {
+        transform: none !important;
+    }
+    
+    #settings-modal-container .toggle-switch.on .knob {
+        transform: translateX(20px) !important;
+    }
     /* Анимация панели мультивыбора */
     @keyframes msSlideFadeIn {
         from { opacity: 0; transform: translateY(-10px); }
@@ -1087,52 +1218,77 @@
     /* Стили для элементов в карточках */
     
     /* Счётчики количества в карточках */
-    .set-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
-    .minifig-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
-    .part-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
-        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2);
-        transition: all 0.2s ease;
-        animation: pulse 2s infinite;
+    .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
+        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+        transition: all 0.2s ease !important;
+        animation: pulse 2s infinite !important;
     }
     
     .set-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
     .minifig-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
     .part-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
-        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3);
-        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3) !important;
+        transform: scale(1.05) !important;
+    }
+    
+    /* Дополнительные стили для счётчиков в карточках наборов и минифигурок */
+    .set-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
+    .minifig-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
+        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+        transition: all 0.2s ease !important;
+        animation: pulse 2s infinite !important;
+    }
+    
+    .set-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
+    .minifig-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3) !important;
+        transform: scale(1.05) !important;
     }
     
     /* Кнопки выбора (корзина) в карточках */
+    button[data-action="toggle-select"] {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    button[data-action="toggle-select"]:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        transform: scale(1.1) !important;
+    }
+    
+    button[data-action="toggle-select"]:active {
+        transform: scale(0.95) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    /* Дополнительные стили для кнопок корзины в карточках наборов и минифигурок */
     .set-card button[data-action="toggle-select"],
-    .minifig-card button[data-action="toggle-select"],
-    .part-card button[data-action="toggle-select"] {
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: all 0.2s ease;
+    .minifig-card button[data-action="toggle-select"] {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.2s ease !important;
     }
     
     .set-card button[data-action="toggle-select"]:hover,
-    .minifig-card button[data-action="toggle-select"]:hover,
-    .part-card button[data-action="toggle-select"]:hover {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(59, 130, 246, 0.2);
-        transform: scale(1.1);
+    .minifig-card button[data-action="toggle-select"]:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+        transform: scale(1.1) !important;
     }
     
     .set-card button[data-action="toggle-select"]:active,
-    .minifig-card button[data-action="toggle-select"]:active,
-    .part-card button[data-action="toggle-select"]:active {
-        transform: scale(0.95);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    .minifig-card button[data-action="toggle-select"]:active {
+        transform: scale(0.95) !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
     }
     
     /* Цветовые кружки в карточках деталей */
-    .part-card .w-4.h-4.rounded-full.border {
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: all 0.2s ease;
+    .w-4.h-4.rounded-full.border {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.2s ease !important;
     }
     
     .part-card:hover .w-4.h-4.rounded-full.border {
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
+        transform: scale(1.1) !important;
     }
     
     /* Анимация пульсации для счетчиков */
@@ -1147,29 +1303,42 @@
     
     /* Счетчики в папках и других специальных случаях */
     .part-card[data-folder="true"] .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
-        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2);
-        transition: all 0.2s ease;
-        animation: pulse 2s infinite;
+        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2) !important;
+        transition: all 0.2s ease !important;
+        animation: pulse 2s infinite !important;
     }
     
     .part-card[data-folder="true"]:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
-        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3);
-        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3) !important;
+        transform: scale(1.05) !important;
     }
     
     /* Улучшенные стили для всех карточек */
     .set-card,
     .minifig-card,
     .part-card {
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
     }
     
     .set-card:hover,
     .minifig-card:hover,
     .part-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Дополнительные стили для карточек наборов и минифигурок */
+    .set-card,
+    .minifig-card {
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    }
+    
+    .set-card:hover,
+    .minifig-card:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1) !important;
     }
     
     /* Цветовые кружки в модальных окнах и фильтрах */
@@ -1197,6 +1366,65 @@
     .color-palette-inner span:hover {
         transform: scale(1.1);
         z-index: 10;
+    }
+    
+    /* Кнопки удаления в карточках */
+    button[data-action="delete-from-collection"],
+    button[data-action="delete-set-from-collection"],
+    button[data-action="delete-minifig-from-collection"] {
+        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2) !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    button[data-action="delete-from-collection"]:hover,
+    button[data-action="delete-set-from-collection"]:hover,
+    button[data-action="delete-minifig-from-collection"]:hover {
+        box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3), 0 0 0 3px rgba(220, 38, 38, 0.1) !important;
+        transform: scale(1.1) !important;
+    }
+    
+    button[data-action="delete-from-collection"]:active,
+    button[data-action="delete-set-from-collection"]:active,
+    button[data-action="delete-minifig-from-collection"]:active {
+        transform: scale(0.95) !important;
+        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2) !important;
+    }
+    
+    /* Тени для белых контейнеров картинок в карточках */
+    .card-image-container .bg-white {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Тени для белых контейнеров картинок в модальных окнах */
+    .modal-content .bg-white.rounded-md,
+    .modal-content .bg-white.rounded-lg,
+    [id*="modal"] .bg-white.rounded-md,
+    [id*="modal"] .bg-white.rounded-lg {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Тени для белых контейнеров в инвентарях */
+    .inventory-container .bg-white.rounded-md,
+    .inventory-container .bg-white.rounded-lg,
+    .collection-container .bg-white.rounded-md,
+    .collection-container .bg-white.rounded-lg {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Общие тени для всех белых контейнеров с картинками */
+    .bg-white.rounded-md,
+    .bg-white.rounded-lg {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* Дополнительные тени для специфических модальных окон */
+    #set-modal-container .bg-white.rounded-md,
+    #minifig-modal-container .bg-white.rounded-md,
+    #modal-container .bg-white.rounded-md,
+    #related-sets-modal-container .bg-white.rounded-md,
+    #image-viewer-container .bg-white.rounded-md,
+    #image-viewer-container .bg-white.rounded-lg {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     }
     
     #image-viewer-container.zoomed {
@@ -2879,14 +3107,27 @@ function simpleInactivityInit() {
             }
         }
         
-        // Обработчик закрытия
+        // Обработчик закрытия по кнопке
         closeBtn.addEventListener('click', () => {
-            console.log('🎯 Закрываем подсказку');
+            console.log('🎯 Закрываем подсказку по кнопке');
             overlay.classList.remove('show');
             overlay.classList.add('hidden');
             stopTipRotation();
             // Перезапускаем таймер после закрытия
             resetInactivityTimer();
+        });
+        
+        // Обработчик закрытия по клику на пустое место (оверлей)
+        overlay.addEventListener('click', (event) => {
+            // Проверяем, что клик был именно по оверлею, а не по его содержимому
+            if (event.target === overlay) {
+                console.log('🎯 Закрываем подсказку по клику на пустое место');
+                overlay.classList.remove('show');
+                overlay.classList.add('hidden');
+                stopTipRotation();
+                // Перезапускаем таймер после закрытия
+                resetInactivityTimer();
+            }
         });
         
         // Обработчики активности пользователя
@@ -7995,12 +8236,12 @@ function renderSettingsModal() {
              <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${enterClass}">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Настройки</h2>
+                     <div id="import-export-status" class="px-1.5 py-0.5 text-[10px] rounded-md ${t?c:'bg-transparent text-transparent'} text-center flex-shrink-0" style="${t?'':'display: none;'}">${t||''}</div>
                      <button id="settings-modal-close" class="modal-close-btn" title="Закрыть модальное окно настроек">${I_X("w-4 h-4")}</button>
                 </div>
                 <div id="settings-modal-scroll" class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
                      <div>
                         <h3 class="text-md font-semibold text-white mb-2">Импорт и экспорт CSV</h3>
-                         ${t?`<div id="import-export-status" class="mb-2 p-2 text-sm rounded-md ${c}">${t}</div>`:'<div id="import-export-status" class="mb-2"></div>'}
                         <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Импорт и экспорт вашей коллекции в формате CSV. Импорт объединит данные с вашей текущей коллекцией</p>
                             <div class="grid grid-cols-2 gap-3">
@@ -9476,7 +9717,7 @@ async function createRasterPreviewImage(title, subtitle, options = {}) {
 // Функция для экспорта коллекции в CSV
 function exportCollectionToCSV() {
     try {
-        updateSettingsModalStatus("Подготовка CSV файла...", "info");
+        updateSettingsModalStatus("Подготовка\nCSV файла", "info");
         
         const csvData = generateCsvData();
         
@@ -9489,7 +9730,12 @@ function exportCollectionToCSV() {
         document.body.removeChild(link);
         URL.revokeObjectURL(link.href);
         
-        updateSettingsModalStatus("Экспорт CSV успешно завершен!", "success");
+        updateSettingsModalStatus("Экспорт CSV\nуспешно завершен!", "success");
+        setTimeout(() => {
+            if (S.settingsOpen && S.settingsModal.status === "Экспорт CSV\nуспешно завершен!") {
+                clearSettingsModalStatus();
+            }
+        }, 3000);
     } catch (e) {
         console.error("CSV Export failed:", e);
         S.settingsModal.status = `Ошибка экспорта CSV: ${e.message}`, S.settingsModal.statusType = "error";
@@ -9501,11 +9747,7 @@ async function processCsvData(content) {
         updateSettingsModalStatus(e, t);
         "error" !== t && setTimeout(() => {
             if (S.settingsOpen && S.settingsModal.status === e) {
-                S.settingsModal.status = "";
-                const statusElement = document.getElementById('import-export-status');
-                if (statusElement) {
-                    statusElement.classList.add('hidden');
-                }
+                clearSettingsModalStatus();
             }
         }, 3e3)
     };
@@ -12853,11 +13095,10 @@ document.addEventListener("click", async e => {
                 if (checkbox) {
                     localStorage.setItem('disableColorSpecificImages', checkbox.checked.toString());
                     if (checkbox.checked) {
-                        S.settingsModal.status = "Загрузка изображений для каждого цвета отключена. Коллекция будет загружаться быстрее.", S.settingsModal.statusType = "success";
-                    } else {
-                        S.settingsModal.status = "Загрузка изображений для каждого цвета включена.", S.settingsModal.statusType = "success";
-                    }
-                    renderSettingsModal();
+                                            updateSettingsModalStatus("Загрузка изображений\nдля каждого цвета отключена", "success");
+                } else {
+                                            updateSettingsModalStatus("Загрузка изображений\nдля каждого цвета включена", "success");
+                }
                 }
                 break;
             case "share-collection": {
@@ -12880,15 +13121,13 @@ document.addEventListener("click", async e => {
                             setTimeout(() => URL.revokeObjectURL(url), 5000);
                             window.open(siteUrl, '_blank');
                         }
-                        S.settingsModal.status = 'Коллекция подготовлена и передана.'; S.settingsModal.statusType = 'success';
-                        renderSettingsModal();
+                        updateSettingsModalStatus('Коллекция подготовлена\nи передана', 'success');
                         // Автоочистка статуса через 2.5с
-                        setTimeout(() => { if (S.settingsOpen && S.settingsModal.status === 'Коллекция подготовлена и передана.') { S.settingsModal.status = ''; renderSettingsModal(); } }, 2500);
+                        setTimeout(() => { if (S.settingsOpen && S.settingsModal.status === 'Коллекция подготовлена\nи передана') { clearSettingsModalStatus(); } }, 2500);
                     } catch (err) {
                         console.error('Share collection failed:', err);
-                        S.settingsModal.status = 'Не удалось передать коллекцию.'; S.settingsModal.statusType = 'error';
-                        renderSettingsModal();
-                        setTimeout(() => { if (S.settingsOpen && S.settingsModal.status === 'Не удалось передать коллекцию.') { S.settingsModal.status = ''; renderSettingsModal(); } }, 3000);
+                        updateSettingsModalStatus('Не удалось передать\nколлекцию', 'error');
+                        setTimeout(() => { if (S.settingsOpen && S.settingsModal.status === 'Не удалось передать\nколлекцию') { clearSettingsModalStatus(); } }, 3000);
                     }
                 })();
                 return;
@@ -12933,12 +13172,9 @@ document.addEventListener("click", async e => {
                         btn.setAttribute('aria-pressed', String(S.foldersEnabled));
                     }
                 })();
-                S.settingsModal.status = S.foldersEnabled ? "Группировка в папки включена" : "Группировка в папки отключена";
-                S.settingsModal.statusType = "success";
+                updateSettingsModalStatus(S.foldersEnabled ? "Группировка в папки\nвключена" : "Группировка в папки\nотключена", "success");
                 S.gridStale = true; updateUI();
-                // Перерисовываем модал для обновления статуса
-                renderSettingsModal();
-                setTimeout(()=>{ if (S.settingsOpen) { S.settingsModal.status=''; renderSettingsModal(); } }, 2000);
+                setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
                 return;
             case "toggle-prevent-exit":
                 S.preventAccidentalExit = !S.preventAccidentalExit;
@@ -12951,11 +13187,8 @@ document.addEventListener("click", async e => {
                         btn.setAttribute('aria-pressed', String(S.preventAccidentalExit));
                     }
                 })();
-                S.settingsModal.status = S.preventAccidentalExit ? "Подтверждение выхода включено" : "Подтверждение выхода отключено";
-                S.settingsModal.statusType = "success";
-                // Перерисовывать весь модал не нужно, достаточно обновить тумблер и статус
-                renderSettingsModal();
-                setTimeout(()=>{ if (S.settingsOpen) { S.settingsModal.status=''; renderSettingsModal(); } }, 2000);
+                updateSettingsModalStatus(S.preventAccidentalExit ? "Подтверждение выхода\nвключено" : "Подтверждение выхода\nотключено", "success");
+                setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
                 return;
 
             case "delete-all-parts":
@@ -12986,36 +13219,35 @@ document.addEventListener("click", async e => {
                 S.coll = {}, S.setColl = {}, S.minifigColl = {}, saveState(), S.settingsModal.delConfirm = null, renderSettingsModal(), updateUI();
                 break;
             case "refresh-minifig-data":
-                updateSettingsModalStatus("Обновление данных минифигурок...", "info");
+                updateSettingsModalStatus("Обновление данных\nминифигурок", "info");
                 try {
                     await refreshMinifigData();
-                    S.settingsModal.status = "Данные минифигурок обновлены", S.settingsModal.statusType = "success";
+                    updateSettingsModalStatus("Данные минифигурок\nобновлены", "success");
                 } catch (err) {
                     console.error(err);
-                    S.settingsModal.status = "Не удалось обновить минифигурки", S.settingsModal.statusType = "error";
+                    updateSettingsModalStatus("Не удалось обновить\nминифигурки", "error");
                 }
-                renderSettingsModal();
                 break;
             case "reload-csv-data":
-                updateSettingsModalStatus("Перезагрузка данных из CSV...", "info");
+                updateSettingsModalStatus("Перезагрузка данных\nиз CSV", "info");
                 try {
                     await loadDataFromCSV();
-                    updateSettingsModalStatus("Данные из CSV перезагружены успешно!", "success");
+                    updateSettingsModalStatus("Данные из CSV\nперезагружены успешно!", "success");
                 } catch (error) {
-                    updateSettingsModalStatus(`Ошибка перезагрузки CSV: ${error.message}`, "error");
+                    updateSettingsModalStatus(`Ошибка перезагрузки\nCSV: ${error.message}`, "error");
                 }
                 break;
             case "load-missing-api-data":
-                updateSettingsModalStatus("Загрузка недостающих данных из API...", "info");
+                updateSettingsModalStatus("Загрузка недостающих\nданных из API", "info");
                 try {
                     await loadMissingDataFromAPI();
-                    updateSettingsModalStatus("Недостающие данные загружены успешно!", "success");
+                    updateSettingsModalStatus("Недостающие данные\nзагружены успешно!", "success");
                 } catch (error) {
-                    updateSettingsModalStatus(`Ошибка загрузки API данных: ${error.message}`, "error");
+                    updateSettingsModalStatus(`Ошибка загрузки\nAPI данных: ${error.message}`, "error");
                 }
                 break;
             case "force-reload-csv":
-                updateSettingsModalStatus("Принудительная перезагрузка CSV данных...", "info");
+                updateSettingsModalStatus("Принудительная\nперезагрузка CSV", "info");
                 try {
                     // Сначала очищаем все карты данных
                     Object.keys(PART_MAP).forEach(key => delete PART_MAP[key]);
@@ -13027,27 +13259,27 @@ document.addEventListener("click", async e => {
                     
                     // Перезагружаем из CSV
                     await loadDataFromCSV();
-                    updateSettingsModalStatus("CSV данные принудительно перезагружены!", "success");
+                    updateSettingsModalStatus("CSV данные\nпринудительно перезагружены!", "success");
                 } catch (error) {
-                    updateSettingsModalStatus(`Ошибка принудительной перезагрузки: ${error.message}`, "error");
+                    updateSettingsModalStatus(`Ошибка принудительной\nперезагрузки: ${error.message}`, "error");
                 }
                 break;
             case "clear-app-cache":
-                updateSettingsModalStatus("Очистка кэша приложения...", "info");
+                updateSettingsModalStatus("Очистка кэша\nприложения", "info");
                 try {
                     const success = await window.clearAppCache();
                     if (success) {
-                        updateSettingsModalStatus("Кэш очищен! Страница будет обновлена...", "success");
+                        updateSettingsModalStatus("Кэш очищен!\nСтраница будет обновлена...", "success");
                         
                         // Через 1.5 секунды обновляем страницу
                         setTimeout(() => {
                             window.location.reload();
                         }, 1500);
                     } else {
-                        updateSettingsModalStatus("Ошибка очистки кэша", "error");
+                        updateSettingsModalStatus("Ошибка очистки\nкэша", "error");
                     }
                 } catch (error) {
-                    updateSettingsModalStatus(`Ошибка очистки кэша: ${error.message}`, "error");
+                                            updateSettingsModalStatus(`Ошибка очистки\nкэша: ${error.message}`, "error");
                 }
                 break;
             // Кнопка "Информация" убрана; сведения о кэше обновляются автоматически при открытии настроек
@@ -13590,85 +13822,78 @@ async function preloadImages() {
 async function initializeApp() {
     // Массив подсказок для кнопки "мне повезёт"
     window.FEELING_LUCKY_TIPS = [
-        "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
-        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
-        "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
-        "📱 Сайт адаптирован для мобильных устройств - удобно использовать на телефоне",
-        "⭐ Добавляйте часто используемые категории в избранное для быстрого доступа",
-        "🔄 При проблемах с загрузкой попробуйте обновить страницу или очистить кэш",
-        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "📊 Статистика показывает общее количество элементов в каталоге",
-        "🎯 Кнопка 'мне повезёт' показывает случайные элементы из всего каталога",
-        "💾 Данные сохраняются локально в браузере для быстрой работы",
-        "🖼️ Изображения загружаются автоматически при просмотре деталей",
-        "🔧 Используйте фильтры по темам для поиска наборов определенной серии",
-        "📋 Переключайтесь между каталогом и коллекцией для разных задач",
-        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "⚡ Сайт работает офлайн после первой загрузки данных",
-        "🔄 Регулярно обновляйте данные для получения актуальной информации",
-        "🎯 Используйте комбинацию фильтров для точного поиска нужных элементов",
-        "📱 На мобильных устройствах используйте свайпы для навигации",
-        "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
-        "⭐ Добавляйте в избранное часто используемые темы для быстрого доступа",
-        "📊 В коллекции можно группировать детали по названию для удобства",
-        "🖼️ Нажмите на изображение детали для просмотра в полном размере",
-        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "📋 Экспортируйте свою коллекцию в формате CSV",
-        "🎲 Статистика обновляется в реальном времени при изменении коллекции",
-        "⚡ Быстрый поиск работает даже при медленном интернете",
-        "🔄 Автосохранение состояния происходит после каждого действия",
-        "🎯 Клик по карточке открывает детальную информацию",
-        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "🔍 Фильтры можно комбинировать для создания сложных запросов",
-        "🎨 Используйте цветовые фильтры для подбора деталей к набору",
-        "📊 Отслеживайте статистику использования различных элементов",
-        "🖼️ Предзагрузка изображений ускоряет работу с каталогом",
-        "🔧 Настройки интерфейса сохраняются между сессиями",
-        "📋 Импортируйте коллекции из других источников",
-        "🎲 Удерживайте кнопку Детали/Наборы/Фигурки 1 секунду для случайного элемента",
-        "📱 Интерфейс оптимизирован для всех устройств"
+    "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
+    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+    "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
+    "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
+    "📱 Сайт адаптирован для мобильных устройств - удобно использовать на телефоне",
+    "❤️ Добавляйте часто используемые категории в избранное для быстрого доступа",
+    "🔄 При проблемах с загрузкой попробуйте обновить страницу или очистить кэш",
+    "📊 Статистика показывает общее количество элементов в каталоге",
+    "💾 Данные сохраняются локально в браузере для быстрой работы",
+    "🖼️ Изображения загружаются автоматически при просмотре деталей",
+    "🔧 Используйте фильтры по темам для поиска наборов определенной серии",
+    "📋 Переключайтесь между каталогом и коллекцией для разных задач",
+    "⚡ Сайт работает офлайн после первой загрузки данных",
+    "🔄 Регулярно обновляйте данные для получения актуальной информации",
+    "🎯 Используйте комбинацию фильтров для точного поиска нужных элементов",
+    "📱 На мобильных устройствах используйте свайпы для навигации",
+    "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
+    "❤️ Добавляйте в избранное часто используемые темы для быстрого доступа",
+    "📊 В коллекции можно группировать детали по названию для удобства",
+    "🖼️ Нажмите на изображение детали для просмотра в полном размере",
+    "📋 Экспортируйте свою коллекцию в формате CSV",
+    "🎲 Статистика обновляется в реальном времени при изменении коллекции",
+    "⚡ Быстрый поиск работает даже при медленном интернете",
+    "🔄 Автосохранение состояния происходит после каждого действия",
+    "🎯 Клик по карточке открывает детальную информацию",
+    "🔍 Фильтры можно комбинировать для создания сложных запросов",
+    "🎨 Используйте цветовые фильтры для подбора деталей к набору",
+    "📊 Отслеживайте статистику использования различных элементов",
+    "🖼️ Предзагрузка изображений ускоряет работу с каталогом",
+    "🔧 Настройки интерфейса сохраняются между сессиями",
+    "📋 Импортируйте коллекции из других источников",
+    "🎲 Удерживайте кнопку Детали/Наборы/Фигурки 1 секунду для случайного элемента",
+    "📱 Интерфейс оптимизирован для всех устройств"
     ];
     
     console.log('FEELING_LUCKY_TIPS initialized with', window.FEELING_LUCKY_TIPS.length, 'tips');
     
     // Массив подсказок для экрана загрузки
     window.LOADING_TIPS = [
-        "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
-        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
-        "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
-        "📱 Сайт адаптирован для мобильных устройств - удобно использовать на телефоне",
-        "❤️ Добавляйте часто используемые категории в избранное для быстрого доступа",
-        "🔄 При проблемах с загрузкой попробуйте обновить страницу или очистить кэш",
-        "📊 Статистика показывает общее количество элементов в каталоге",
-        "🎯 Кнопка 'мне повезёт' показывает случайные элементы из всего каталога",
-        "💾 Данные сохраняются локально в браузере для быстрой работы",
-        "🖼️ Изображения загружаются автоматически при просмотре деталей",
-        "🔧 Используйте фильтры по темам для поиска наборов определенной серии",
-        "📋 Переключайтесь между каталогом и коллекцией для разных задач",
-        "⚡ Сайт работает офлайн после первой загрузки данных",
-        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "🔄 Регулярно обновляйте данные для получения актуальной информации",
-        "🎯 Используйте комбинацию фильтров для точного поиска нужных элементов",
-        "📱 На мобильных устройствах используйте свайпы для навигации",
-        "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
-        "⭐ Добавляйте в избранное часто используемые темы для быстрого доступа",
-        "📊 В коллекции можно группировать детали по названию для удобства",
-        "🖼️ Нажмите на изображение детали для просмотра в полном размере",
-        "📋 Экспортируйте свою коллекцию в формате CSV",
-        "🎲 Статистика обновляется в реальном времени при изменении коллекции",
-        "⚡ Быстрый поиск работает даже при медленном интернете",
-        "🔄 Автосохранение состояния происходит после каждого действия",
-        "🎯 Клик по карточке открывает детальную информацию",
-        "🔍 Фильтры можно комбинировать для создания сложных запросов",
-        "🎨 Используйте цветовые фильтры для подбора деталей к набору",
-        "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "📊 Отслеживайте статистику использования различных элементов",
-        "🖼️ Предзагрузка изображений ускоряет работу с каталогом",
-        "🔧 Настройки интерфейса сохраняются между сессиями",
-        "📋 Импортируйте коллекции из других источников",
-        "💡 Все подсказки содержат полезную информацию по использованию сайта"
+    "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
+    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+    "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
+    "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
+    "📱 Сайт адаптирован для мобильных устройств - удобно использовать на телефоне",
+    "❤️ Добавляйте часто используемые категории в избранное для быстрого доступа",
+    "🔄 При проблемах с загрузкой попробуйте обновить страницу или очистить кэш",
+    "📊 Статистика показывает общее количество элементов в каталоге",
+    "💾 Данные сохраняются локально в браузере для быстрой работы",
+    "🖼️ Изображения загружаются автоматически при просмотре деталей",
+    "🔧 Используйте фильтры по темам для поиска наборов определенной серии",
+    "📋 Переключайтесь между каталогом и коллекцией для разных задач",
+    "⚡ Сайт работает офлайн после первой загрузки данных",
+    "🔄 Регулярно обновляйте данные для получения актуальной информации",
+    "🎯 Используйте комбинацию фильтров для точного поиска нужных элементов",
+    "📱 На мобильных устройствах используйте свайпы для навигации",
+    "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
+    "❤️ Добавляйте в избранное часто используемые темы для быстрого доступа",
+    "📊 В коллекции можно группировать детали по названию для удобства",
+    "🖼️ Нажмите на изображение детали для просмотра в полном размере",
+    "📋 Экспортируйте свою коллекцию в формате CSV",
+    "🎲 Статистика обновляется в реальном времени при изменении коллекции",
+    "⚡ Быстрый поиск работает даже при медленном интернете",
+    "🔄 Автосохранение состояния происходит после каждого действия",
+    "🎯 Клик по карточке открывает детальную информацию",
+    "🔍 Фильтры можно комбинировать для создания сложных запросов",
+    "🎨 Используйте цветовые фильтры для подбора деталей к набору",
+    "📊 Отслеживайте статистику использования различных элементов",
+    "🖼️ Предзагрузка изображений ускоряет работу с каталогом",
+    "🔧 Настройки интерфейса сохраняются между сессиями",
+    "📋 Импортируйте коллекции из других источников",
+    "🎲 Удерживайте кнопку Детали/Наборы/Фигурки 1 секунду для случайного элемента",
+    "📱 Интерфейс оптимизирован для всех устройств"
     ];
     
     console.log('LOADING_TIPS initialized with', window.LOADING_TIPS.length, 'tips');
@@ -14917,8 +15142,7 @@ async function loadInventoriesFromCSV() {
                 }
                 loadedParts++;
                 if (S.settingsOpen) {
-                    S.settingsModal.status = `Загрузка инвентарей (часть ${idx + 1}/${maxParts})...`;
-                    renderSettingsModal();
+                    updateSettingsModalStatus(`Загрузка инвентарей\nчасть ${idx + 1}/${maxParts}`, "info");
                 }
             } catch (error) {
                 console.error(`Failed to load part ${label}:`, error);
@@ -15520,16 +15744,32 @@ function updateSettingsModalStatus(status, statusType = 'info') {
     S.settingsModal.status = status;
     S.settingsModal.statusType = statusType;
     
-            // Обновляем только элемент статуса без полной перерисовки
+    // Обновляем только элемент статуса без полной перерисовки
     const statusElement = document.getElementById('import-export-status');
+    
     if (statusElement) {
         const statusClass = statusType === 'error' ? 'bg-red-900/50 text-red-300' : 
                            statusType === 'success' ? 'bg-green-900/50 text-green-300' : 
                            'bg-blue-900/50 text-blue-300';
         
-        statusElement.className = `mb-2 p-2 text-sm rounded-md ${statusClass}`;
+        statusElement.className = `px-1.5 py-0.5 text-[10px] rounded-md ${statusClass} text-center flex-shrink-0`;
         statusElement.textContent = status;
-        statusElement.classList.remove('hidden');
+        statusElement.style.display = 'block';
+    }
+}
+
+// Функция для очистки статуса
+function clearSettingsModalStatus() {
+    if (!S.settingsOpen || !S.settingsModal) return;
+    
+    S.settingsModal.status = "";
+    S.settingsModal.statusType = "info";
+    
+    const statusElement = document.getElementById('import-export-status');
+    if (statusElement) {
+        statusElement.style.display = 'none';
+        statusElement.textContent = '';
+        statusElement.className = 'px-1.5 py-0.5 text-[10px] rounded-md bg-transparent text-transparent text-center flex-shrink-0';
     }
 }
 
@@ -15787,7 +16027,7 @@ async function loadMissingDataFromAPI() {
         }
         
         // Update loading status
-        updateSettingsModalStatus("Загрузка недостающих данных из API...", "info");
+                        updateSettingsModalStatus("Загрузка недостающих\nданных из API", "info");
         
         // Since we now generate all image URLs from CSV, this function is mainly for future use
         // when new data might be available that's not in our CSV files
@@ -15795,7 +16035,7 @@ async function loadMissingDataFromAPI() {
         const stats = getLoadingStats();
         
         // Update loading status
-        updateSettingsModalStatus("Все данные доступны из CSV!", "success");
+        updateSettingsModalStatus("Все данные доступны\nиз CSV!", "success");
         
         // Save state after API loading
         saveState();
@@ -15814,13 +16054,13 @@ async function refreshMinifigData() {
             return;
         }
         
-        updateSettingsModalStatus("Обновление данных минифигурок...", "info");
+                        updateSettingsModalStatus("Обновление данных\nминифигурок", "info");
         await fetchMissingCollectionMinifigDetails();
         
         // Update UI after refresh
         S.gridStale = true;
         updateUI();
-        updateSettingsModalStatus("Данные минифигурок обновлены!", "success");
+        updateSettingsModalStatus("Данные минифигурок\nобновлены!", "success");
     } catch (error) {
         console.error('Failed to refresh minifig data:', error);
     }
