@@ -958,6 +958,247 @@
         cursor: default;
     }
     
+    /* Стилизованные чекбоксы и радиокнопки */
+    input[type="checkbox"],
+    input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #4b5563; /* border-gray-600 */
+        border-radius: 4px;
+        background-color: #1f2937; /* bg-gray-800 */
+        cursor: pointer;
+        position: relative;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        /* Исправляем выравнивание по вертикали */
+        vertical-align: middle;
+        margin: 0;
+        flex-shrink: 0;
+    }
+    
+    input[type="radio"] {
+        border-radius: 50%;
+    }
+    
+    input[type="checkbox"]:hover,
+    input[type="radio"]:hover {
+        border-color: #6b7280; /* border-gray-500 */
+        background-color: #374151; /* bg-gray-700 */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(59, 130, 246, 0.1);
+        transform: translateY(-1px);
+    }
+    
+    input[type="checkbox"]:checked,
+    input[type="radio"]:checked {
+        border-color: #2563eb; /* border-blue-600 */
+        background-color: #2563eb; /* bg-blue-600 */
+        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    
+    input[type="checkbox"]:checked:hover,
+    input[type="radio"]:checked:hover {
+        background-color: #1d4ed8; /* bg-blue-700 */
+        border-color: #1d4ed8; /* border-blue-700 */
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 0 0 3px rgba(37, 99, 235, 0.15);
+        transform: translateY(-1px);
+    }
+    
+    input[type="checkbox"]:focus,
+    input[type="radio"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    
+    input[type="checkbox"]:disabled,
+    input[type="radio"]:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: #374151; /* bg-gray-700 */
+        border-color: #6b7280; /* border-gray-500 */
+    }
+    
+    /* Иконка для чекбокса */
+    input[type="checkbox"]:checked::after {
+        content: '';
+        position: absolute;
+        left: 5px;
+        top: 2px;
+        width: 4px;
+        height: 8px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        animation: checkmark 0.2s ease-in-out;
+    }
+    
+    /* Иконка для радиокнопки */
+    input[type="radio"]:checked::after {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 6px;
+        height: 6px;
+        background-color: white;
+        border-radius: 50%;
+        animation: radioDot 0.2s ease-in-out;
+    }
+    
+    /* Анимации для иконок */
+    @keyframes checkmark {
+        from {
+            opacity: 0;
+            transform: rotate(45deg) scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: rotate(45deg) scale(1);
+        }
+    }
+    
+    @keyframes radioDot {
+        from {
+            opacity: 0;
+            transform: scale(0.5);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
+    /* Дополнительные стили для выравнивания радиокнопок в фильтрах */
+    label:has(input[type="radio"]),
+    label:has(input[type="checkbox"]) {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    label:has(input[type="radio"]) input[type="radio"],
+    label:has(input[type="checkbox"]) input[type="checkbox"] {
+        margin: 0;
+        align-self: center;
+    }
+    
+    /* Стили для элементов в карточках */
+    
+    /* Счётчики количества в карточках */
+    .set-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
+    .minifig-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
+    .part-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
+        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2);
+        transition: all 0.2s ease;
+        animation: pulse 2s infinite;
+    }
+    
+    .set-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
+    .minifig-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
+    .part-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3);
+        transform: scale(1.05);
+    }
+    
+    /* Кнопки выбора (корзина) в карточках */
+    .set-card button[data-action="toggle-select"],
+    .minifig-card button[data-action="toggle-select"],
+    .part-card button[data-action="toggle-select"] {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.2s ease;
+    }
+    
+    .set-card button[data-action="toggle-select"]:hover,
+    .minifig-card button[data-action="toggle-select"]:hover,
+    .part-card button[data-action="toggle-select"]:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3), 0 0 0 3px rgba(59, 130, 246, 0.2);
+        transform: scale(1.1);
+    }
+    
+    .set-card button[data-action="toggle-select"]:active,
+    .minifig-card button[data-action="toggle-select"]:active,
+    .part-card button[data-action="toggle-select"]:active {
+        transform: scale(0.95);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    /* Цветовые кружки в карточках деталей */
+    .part-card .w-4.h-4.rounded-full.border {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+    
+    .part-card:hover .w-4.h-4.rounded-full.border {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transform: scale(1.1);
+    }
+    
+    /* Анимация пульсации для счетчиков */
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+        50% {
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3);
+        }
+    }
+    
+    /* Счетчики в папках и других специальных случаях */
+    .part-card[data-folder="true"] .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
+        box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2);
+        transition: all 0.2s ease;
+        animation: pulse 2s infinite;
+    }
+    
+    .part-card[data-folder="true"]:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
+        box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3);
+        transform: scale(1.05);
+    }
+    
+    /* Улучшенные стили для всех карточек */
+    .set-card,
+    .minifig-card,
+    .part-card {
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .set-card:hover,
+    .minifig-card:hover,
+    .part-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Цветовые кружки в модальных окнах и фильтрах */
+    .modal-content .w-6.h-6.rounded-full.border,
+    .filter-modal .w-6.h-6.rounded-full.border,
+    .w-8.h-8.rounded-full.border-2 {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+    
+    .modal-content .w-6.h-6.rounded-full.border:hover,
+    .filter-modal .w-6.h-6.rounded-full.border:hover,
+    .w-8.h-8.rounded-full.border-2:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        transform: scale(1.05);
+    }
+    
+    /* Цветовые кружки в палитре цветов */
+    .color-palette-inner button,
+    .color-palette-inner span {
+        transition: all 0.2s ease;
+    }
+    
+    .color-palette-inner button:hover,
+    .color-palette-inner span:hover {
+        transform: scale(1.1);
+        z-index: 10;
+    }
+    
     #image-viewer-container.zoomed {
         cursor: default;
     }
@@ -7442,7 +7683,7 @@ function renderColorSelector() {
                     <div class="color-palette-container no-scrollbar">
                         <div class="flex flex-wrap justify-center gap-3 p-3 color-palette-inner">
                             ${sortColorIds(l,e.id).map(e=>{const o=COLOR_MAP[e];if(!o)return"";const l=S.coll[S.selPartId]&&S.coll[S.selPartId][e]>0;return`
-                <button data-color-id="${e}" title="${o.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center ${o.isTransparent?"checkerboard":""} ${t===e?"border-blue-500 scale-110":"border-gray-600 hover:border-gray-400"}" style="background-color: ${o.hex};">
+                <button data-color-id="${e}" title="${o.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-lg ${o.isTransparent?"checkerboard":""} ${t===e?"border-blue-500 scale-110":"border-gray-600 hover:border-gray-400"}" style="background-color: ${o.hex}; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.boxShadow='0 10px 15px -3px ${o.hex}40, 0 4px 6px -2px ${o.hex}30'" onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'">
                     ${l?`<div class="w-2 h-2 bg-white rounded-full ${o.isTransparent || o.hex === '#FFFFFF' || o.hex === '#fff' ? 'border border-black' : ''}"></div>`:""}
                 </button>
             `}).join("")}
@@ -7533,9 +7774,9 @@ function renderFilterModal() {
                 o = "relevance" === e.id && !S.q,
                 l = ("relevance" === e.id && S.q || "year_desc" === e.id && !S.q ? `<span class="ml-2 text-xs bg-blue-600/50 text-blue-300 px-1.5 py-0.5 rounded-full">По умолч.</span>` : "");
             return `
-                    <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${o?"opacity-50 cursor-not-allowed":""}">
-                        <input type="radio" name="sort" value="${e.id}" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-500 focus:ring-blue-500" ${t?"checked":""} ${o?"disabled":""} data-action="modal-set-sort">
-                        <span class="ml-3 text-white">${e.name}</span>
+                    <label class="p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${o?"opacity-50 cursor-not-allowed":""}">
+                        <input type="radio" name="sort" value="${e.id}" ${t?"checked":""} ${o?"disabled":""} data-action="modal-set-sort">
+                        <span class="text-white">${e.name}</span>
                         ${l}
                     </label>
                 `
@@ -7597,9 +7838,9 @@ function renderFilterModal() {
                 o = "relevance" === e.id && !S.q,
                 l = ("relevance" === e.id && S.q || "name_asc" === e.id && !S.q ? `<span class="ml-2 text-xs bg-blue-600/50 text-blue-300 px-1.5 py-0.5 rounded-full">По умолч.</span>` : "");
             return `
-                    <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${o?"opacity-50 cursor-not-allowed":""}">
-                        <input type="radio" name="sort" value="${e.id}" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-500 focus:ring-blue-500" ${t?"checked":""} ${o?"disabled":""} data-action="modal-set-sort">
-                        <span class="ml-3 text-white">${e.name}</span>
+                    <label class="p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${o?"opacity-50 cursor-not-allowed":""}">
+                        <input type="radio" name="sort" value="${e.id}" ${t?"checked":""} ${o?"disabled":""} data-action="modal-set-sort">
+                        <span class="text-white">${e.name}</span>
                         ${l}
                     </label>
                 `
@@ -7644,9 +7885,9 @@ function renderFilterModal() {
                 o = "relevance" === e.id && !S.q || "popularity" === e.id && S.q,
                 l = S.q && "relevance" === e.id || !S.q && "popularity" === e.id ? '<span class="ml-2 text-xs bg-blue-600/50 text-blue-300 px-1.5 py-0.5 rounded-full">По умолч.</span>' : "";
             return `
-                    <label class="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${o?"opacity-50 cursor-not-allowed":""}">
-                        <input type="radio" name="sort" value="${e.id}" class="h-4 w-4 text-blue-600 bg-gray-700 border-gray-500 focus:ring-blue-500" ${t?"checked":""} ${o?"disabled":""} data-action="modal-set-sort">
-                        <span class="ml-3 text-white">${e.name}</span>
+                    <label class="p-3 rounded-lg hover:bg-gray-700/50 transition-colors cursor-pointer ${o?"opacity-50 cursor-not-allowed":""}">
+                        <input type="radio" name="sort" value="${e.id}" ${t?"checked":""} ${o?"disabled":""} data-action="modal-set-sort">
+                        <span class="text-white">${e.name}</span>
                         ${l}
                     </label>
                 `
@@ -7654,19 +7895,16 @@ function renderFilterModal() {
                 <div>
                     <h3 class="text-md font-semibold text-gray-300 mb-2">Фильтры</h3>
                     <div class="bg-gray-900/50 rounded-lg p-2">
-                        <label class="flex justify-between items-center p-2 cursor-pointer">
+                        <label class="p-2 cursor-pointer">
+                            <input type="checkbox" ${tempFilters.filters.inCollectionOnly?"checked":""} data-action="modal-toggle-collection">
                             <span class="text-white">Только детали в коллекции</span>
-                            <div class="relative">
-                                <input type="checkbox" class="sr-only peer" ${tempFilters.filters.inCollectionOnly?"checked":""} data-action="modal-toggle-collection">
-                                <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-500 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                            </div>
                         </label>
                     </div>
                 </div>
                             ` : "", l = Object.keys(COLOR_MAP).sort((e, t) => COLOR_MAP[e].name.localeCompare(COLOR_MAP[t].name, 'en')).map(e => {
             const t = COLOR_MAP[e],
                 o = tempFilters.filters.colorIds.includes(e);
-            return `<button data-action="modal-set-color" data-color-id="${e}" title="${t.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${t.isTransparent?"checkerboard":""} ${o?"border-blue-500 scale-110":"border-gray-600 hover:border-gray-400"}" style="background-color: ${t.hex};"></button>`
+            return `<button data-action="modal-set-color" data-color-id="${e}" title="${t.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 ${t.isTransparent?"checkerboard":""} ${o?"border-blue-500 scale-110":"border-gray-600 hover:border-gray-400"}" style="background-color: ${t.hex}; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.boxShadow='0 10px 15px -3px ${t.hex}40, 0 4px 6px -2px ${t.hex}30'" onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"></button>`
         }).join("");
         e = `
                 <div>
@@ -7682,7 +7920,7 @@ function renderFilterModal() {
                             <div class="grid gap-2" style="grid-template-columns: repeat(auto-fill,minmax(180px,1fr));">
                                 ${Object.keys(COLOR_MAP).sort((a,b)=>COLOR_MAP[a].name.localeCompare(COLOR_MAP[b].name,'en')).map(id=>{const c=COLOR_MAP[id];const sel=tempFilters.filters.colorIds.includes(id);return `
                                     <button data-action="modal-set-color" data-color-id="${id}" class="flex items-center gap-3 p-2 rounded-md border ${sel?"border-blue-500 bg-blue-900/30":"border-gray-700 hover:border-gray-500"}">
-                                        <span class="w-6 h-6 rounded-full border ${c.isTransparent?"checkerboard border-gray-500":"border-gray-500"}" style="background-color:${c.hex}"></span>
+                                        <span class="w-6 h-6 rounded-full border ${c.isTransparent?"checkerboard border-gray-500":"border-gray-500"}" style="background-color:${c.hex}; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);" onmouseover="this.style.boxShadow='0 4px 6px -1px ${c.hex}40, 0 2px 4px -1px ${c.hex}30'" onmouseout="this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'"></span>
                                         <span class="text-sm text-gray-200 truncate">${c.name}</span>
                                     </button>`}).join("")}
                             </div>
@@ -7799,7 +8037,7 @@ function renderSettingsModal() {
                                 <span class="text-sm text-gray-300 flex items-center gap-2">${I_Folder('w-4 h-4 text-green-400')} Группировка в папки</span>
                                 <button data-action="toggle-folders" class="toggle-switch ${S.foldersEnabled? 'on' : ''}" aria-pressed="${S.foldersEnabled}"><span class="knob"></span></button>
                             </div>
-                            <p class="text-xs text-gray-400">Если включено, детали с более чем 3 цветами будут сгруппированы в папки. Если выключено, все детали будут показаны отдельными карточками.</p>
+                            <p class="text-xs text-gray-400">Если включено, детали с более чем 3-мя цветами будут сгруппированы в папки. Если выключено, все детали будут показаны отдельными карточками.</p>
                         </div>
                     </div>
                     <div>
