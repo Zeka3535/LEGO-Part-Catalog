@@ -835,8 +835,8 @@
         width: 42px;
         height: 22px;
         border-radius: 9999px;
-        background: #4b5563; /* gray-600 */
-        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.08);
+        background: #374151; /* gray-700 - более темный для лучшего контраста */
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1);
         transition: background .2s ease, box-shadow .2s ease, transform .2s ease;
         outline: none;
     }
@@ -845,11 +845,11 @@
         top: 2px; left: 2px;
         width: 18px; height: 18px;
         border-radius: 9999px;
-        background: #ffffff;
-        box-shadow: 0 2px 6px rgba(0,0,0,.35);
+        background: #f3f4f6; /* gray-100 - более мягкий белый */
+        box-shadow: 0 2px 6px rgba(0,0,0,.4);
         transition: transform .2s ease;
     }
-    .toggle-switch.on { background: #2563eb; /* blue-600 */ }
+    .toggle-switch.on { background: #2563eb; /* blue-600 - основной цвет сайта */ }
     .toggle-switch.on .knob { transform: translateX(20px); }
     .toggle-switch:focus-visible { box-shadow: 0 0 0 3px rgba(59,130,246,.45); }
     /* Анимация панели мультивыбора */
@@ -6361,8 +6361,7 @@ function renderMainContent() {
             n = "sets-minifigs-grid";
         }
         if (t.length === 0) {
-            (i || "parts" === S.subView && (S.filters.colorIds.length > 0 || S.selCollCatId) || "sets" === S.subView && S.selCollThemeId) && (l += ", соответствующих фильтрам");
-            l += ".";
+            (i || "parts"===S.subView && (S.filters.colorIds.length > 0 || S.selCollCatId) || "sets" === S.subView && S.selCollThemeId) && (l += ", соответствующих фильтрам");
             e = `<div class="flex flex-col items-center justify-center h-full p-4 text-center">
                     ${S.sidebarLoading ? `
                         <div class="flex items-center text-blue-400 text-sm mb-6">
@@ -7443,28 +7442,28 @@ function renderSettingsModal() {
     n = "parts" === e ? `
                 <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
                 <div class="flex gap-2">
-                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
-                    <button data-action="confirm-delete-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
+                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
+                    <button data-action="confirm-delete-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление</button>
                 </div>` : "all" === e ? `
                 <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо и удалит ВСЕ данные в коллекции</p>
                 <div class="flex gap-2">
-                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
-                    <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление ВСЕГО</button>
-                </div>` : `<button data-action="delete-all-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===l?"opacity-50 cursor-not-allowed":""}" ${0===l?"disabled":""}" title="Удалить все детали из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все детали</button>`;
+                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
+                    <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление ВСЕГО</button>
+                </div>` : `<button data-action="delete-all-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25 ${0===l?"opacity-50 cursor-not-allowed":""}" ${0===l?"disabled":""}" title="Удалить все детали из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все детали</button>`;
     let r = "";
     r = "sets" === e ? `
                 <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
                 <div class="flex gap-2">
-                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
-                    <button data-action="confirm-delete-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
-                </div>` : `<button data-action="delete-all-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===a?"opacity-50 cursor-not-allowed":""}" ${0===a?"disabled":""}" title="Удалить все наборы из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все наборы</button>`;
+                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
+                    <button data-action="confirm-delete-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление</button>
+                </div>` : `<button data-action="delete-all-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25 ${0===a?"opacity-50 cursor-not-allowed":""}" ${0===a?"disabled":""}" title="Удалить все наборы из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все наборы</button>`;
     let s = "";
     s = "minifigs" === e ? `
                 <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
                 <div class="flex gap-2">
-                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
-                    <button data-action="confirm-delete-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление</button>
-                </div>` : `<button data-action="delete-all-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white ${0===i?"opacity-50 cursor-not-allowed":""}" ${0===i?"disabled":""}" title="Удалить все минифигурки из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все минифигурки</button>`;
+                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
+                    <button data-action="confirm-delete-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление</button>
+                </div>` : `<button data-action="delete-all-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25 ${0===i?"opacity-50 cursor-not-allowed":""}" ${0===i?"disabled":""}" title="Удалить все минифигурки из коллекции (действие необратимо)">${I_Trash("w-5 h-5 mr-2")} Удалить все минифигурки</button>`;
     const c = "error" === o ? "bg-red-900/50 text-red-300" : "success" === o ? "bg-green-900/50 text-green-300" : "bg-blue-900/50 text-blue-300";
     const enterClass = isFirstOpen ? 'modal-content-enter' : '';
     settingsModalEl.innerHTML = `
@@ -7475,18 +7474,18 @@ function renderSettingsModal() {
                 </div>
                 <div id="settings-modal-scroll" class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
                      <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Импорт и экспорт CSV</h3>
+                        <h3 class="text-md font-semibold text-white mb-2">Импорт и экспорт CSV</h3>
                          ${t?`<div id="import-export-status" class="mb-2 p-2 text-sm rounded-md ${c}">${t}</div>`:'<div id="import-export-status" class="mb-2"></div>'}
-                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Импорт и экспорт вашей коллекции в формате CSV. Импорт объединит данные с вашей текущей коллекцией</p>
                             <div class="grid grid-cols-2 gap-3">
-                                <button data-action="import-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-purple-600 hover:bg-purple-700 text-white" title="Импортировать коллекцию из CSV файла">
+                                <button data-action="import-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-purple-600 hover:bg-purple-700 text-white shadow-lg hover:shadow-purple-500/25" title="Импортировать коллекцию из CSV файла">
                                     ${I_Up("w-5 h-5 mr-2")} Импорт (.csv)
                                 </button>
-                                <button data-action="export-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-700 text-white" title="Экспортировать коллекцию в CSV файл">
+                                <button data-action="export-csv" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-700 text-white shadow-lg hover:shadow-orange-500/25" title="Экспортировать коллекцию в CSV файл">
                                     ${I_Down("w-5 h-5 mr-2")} Экспорт (.csv)
                                 </button>
-                                <button data-action="share-collection" class="col-span-2 w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white" title="Поделиться коллекцией через социальные сети или скачать CSV файл">
+                                <button data-action="share-collection" class="col-span-2 w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/25" title="Поделиться коллекцией через социальные сети или скачать CSV файл">
                                     ${I_Share("w-5 h-5 mr-2")} Передать в соцсети
                                 </button>
                                 
@@ -7494,33 +7493,33 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Мультивыбор</h3>
-                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                        <h3 class="text-md font-semibold text-white mb-2">Мультивыбор</h3>
+                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Cat('w-4 h-4 text-gray-300')} Каталог</span>
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Cat('w-4 h-4 text-blue-400')} Каталог</span>
                                 <button data-action="toggle-catalog-multiselect" class="toggle-switch ${S.catalogMultiSelectEnabled? 'on' : ''}" aria-pressed="${S.catalogMultiSelectEnabled}"><span class="knob"></span></button>
                             </div>
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Coll('w-4 h-4 text-gray-300')} Коллекция</span>
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Coll('w-4 h-4 text-green-400')} Коллекция</span>
                                 <button data-action="toggle-collection-multiselect" class="toggle-switch ${S.collectionMultiSelectEnabled? 'on' : ''}" aria-pressed="${S.collectionMultiSelectEnabled}"><span class="knob"></span></button>
                             </div>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Отображение коллекции</h3>
-                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                        <h3 class="text-md font-semibold text-white mb-2">Отображение коллекции</h3>
+                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Folder('w-4 h-4 text-gray-300')} Группировка в папки</span>
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Folder('w-4 h-4 text-green-400')} Группировка в папки</span>
                                 <button data-action="toggle-folders" class="toggle-switch ${S.foldersEnabled? 'on' : ''}" aria-pressed="${S.foldersEnabled}"><span class="knob"></span></button>
                             </div>
                             <p class="text-xs text-gray-400">Если включено, детали с более чем 3 цветами будут сгруппированы в папки. Если выключено, все детали будут показаны отдельными карточками.</p>
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Защита от случайной перезагрузки</h3>
-                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                        <h3 class="text-md font-semibold text-white mb-2">Защита от случайной перезагрузки</h3>
+                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm text-gray-300 flex items-center gap-2">Подтверждать перезагрузку</span>
+                                <span class="text-sm text-gray-300 flex items-center gap-2">🛡️ Подтверждать перезагрузку</span>
                                 <button data-action="toggle-prevent-exit" class="toggle-switch ${S.preventAccidentalExit? 'on' : ''}" aria-pressed="${S.preventAccidentalExit}"><span class="knob"></span></button>
                             </div>
                             <p class="text-xs text-gray-400">Рекомендуется для мобильных устройств: предотвратит потерю незаписанных изменений при случайном обновлении страницы.</p>
@@ -7528,28 +7527,28 @@ function renderSettingsModal() {
                     </div>
 
                      <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Опасная зона</h3>
-                        <div class="bg-red-900/20 border border-red-500/30 rounded-lg p-3 space-y-3">
-                           ${"all" !== e ? `<button data-action="delete-all-data" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white mb-3">
+                        <h3 class="text-md font-semibold text-white mb-2">Опасная зона</h3>
+                        <div class="bg-red-900/20 border border-red-600/30 rounded-lg p-3 space-y-3">
+                           ${"all" !== e ? `<button data-action="delete-all-data" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white mb-3 shadow-lg hover:shadow-red-500/25">
                                ${I_Trash("w-5 h-5 mr-2")} Удалить всё
                            </button>` : ""}
                            ${"all"===e ? `
-                               <div class="bg-red-900/30 border border-red-700/50 rounded-md p-3">
+                               <div class="p-3">
                                    <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо и удалит ВСЕ данные в коллекции</p>
                                    <div class="flex gap-2">
-                                       <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white">Отмена</button>
-                                       <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-800 hover:bg-red-700 text-white">Подтвердить удаление ВСЕГО</button>
+                                       <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
+                                       <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление ВСЕГО</button>
                                    </div>
                                </div>
                            ` : `${n}${r}${s}`}
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">Управление кэшем</h3>
-                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3">
+                        <h3 class="text-md font-semibold text-white mb-2">Управление кэшем</h3>
+                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Управление кэшем приложения для улучшения производительности и освобождения места</p>
                             <div class="flex gap-3">
-                                <button data-action="clear-app-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white">
+                                <button data-action="clear-app-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
                                     ${I_Trash("w-5 h-5 mr-2")} Очистить кэш
                                 </button>
                             </div>
@@ -7557,47 +7556,102 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     <div>
-                        <button data-action="toggle-settings-stats" class="w-full flex items-center justify-between text-left text-md font-semibold text-gray-300 mb-2">
+                        <button data-action="toggle-settings-stats" class="w-full flex items-center justify-between text-left text-md font-semibold text-white mb-2">
                             <span>Статистика загрузки</span>
                             <span id="settings-stats-chevron" class="rotate">${I_Chev('w-5 h-5 text-gray-400')}</span>
                         </button>
-                        <div id="settings-stats-panel" class="bg-gray-900/50 rounded-lg p-3 space-y-2 text-sm collapse-panel">
+                        <div id="settings-stats-panel" class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-2 text-sm collapse-panel">
                             <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
                             ${(() => {
                                 const stats = getLoadingStats();
                                 const lastUpdate = stats.lastApiUpdate ? new Date(stats.lastApiUpdate).toLocaleString('ru-RU') : 'Никогда';
                                 const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
                                 return `
-                                    <div class="grid grid-cols-2 gap-2 text-xs">
-                                        <div class="text-gray-400">Цвета:</div>
-                                        <div class="text-white">${stats.colors}</div>
-                                        <div class="text-gray-400">Категории:</div>
-                                        <div class="text-white">${stats.categories}</div>
-                                        <div class="text-gray-400">Темы:</div>
-                                        <div class="text-white">${stats.themes}</div>
-                                        <div class="text-gray-400">Детали:</div>
-                                        <div class="text-white">${stats.parts} (${stats.partsWithImages} с изображениями)</div>
-                                        <div class="text-gray-400">Наборы:</div>
-                                        <div class="text-white">${stats.sets} (${stats.setsWithImages} с изображениями)</div>
-                                        <div class="text-gray-400">Минифигурки:</div>
-                                        <div class="text-white">${stats.minifigs} (${stats.minifigsWithImages} с изображениями)</div>
+                                    <div class="space-y-1">
+                                        <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                            <div class="flex items-center text-gray-300 text-xs">
+                                                <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                                                Цвета:
+                                            </div>
+                                            <div class="text-white font-semibold text-xs">${stats.colors}</div>
+                                        </div>
+                                        <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                            <div class="flex items-center text-gray-300 text-xs">
+                                                <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                                                Категории:
+                                            </div>
+                                            <div class="text-white font-semibold text-xs">${stats.categories}</div>
+                                        </div>
+                                        <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                            <div class="flex items-center text-gray-300 text-xs">
+                                                <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                                                Темы:
+                                            </div>
+                                            <div class="text-white font-semibold text-xs">${stats.themes}</div>
+                                        </div>
+                                        <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                            <div class="flex items-center text-gray-300 text-xs">
+                                                <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                                                Детали:
+                                            </div>
+                                            <div class="text-white font-semibold text-xs">${stats.parts}</div>
+                                        </div>
+                                        <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                            <div class="flex items-center text-gray-300 text-xs">
+                                                <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                                                Наборы:
+                                            </div>
+                                            <div class="text-white font-semibold text-xs">${stats.sets}</div>
+                                        </div>
+                                        <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                            <div class="flex items-center text-gray-300 text-xs">
+                                                <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
+                                                Минифигурки:
+                                            </div>
+                                            <div class="text-white font-semibold text-xs">${stats.minifigs}</div>
+                                        </div>
                                     </div>
                                     <button data-action="toggle-api-stats" class="w-full flex items-center justify-between text-left text-xs font-semibold text-yellow-300 mt-3 pt-2 border-t border-gray-700/50">
                                         <span>Данные через API</span>
                                         <span id="api-stats-chevron" class="${apiOpen ? 'rotate-180' : ''}">${I_Chev('w-4 h-4 text-yellow-300')}</span>
                                     </button>
                                     <div id="api-stats-panel" class="${apiOpen ? 'open ' : ''}collapse-panel">
-                                        <div class="grid grid-cols-2 gap-2 text-xs text-yellow-300 mt-1">
-                                            <div class="text-gray-400">Цвета:</div>
-                                            <div class="text-white">${stats.apiColors}</div>
-                                            <div class="text-gray-400">Детали:</div>
-                                            <div class="text-white">${stats.apiParts}</div>
-                                            <div class="text-gray-400">Наборы:</div>
-                                            <div class="text-white">${stats.apiSets}</div>
-                                            <div class="text-gray-400">Минифигурки:</div>
-                                            <div class="text-white">${stats.apiMinifigs}</div>
-                                            <div class="text-gray-400">Изображения:</div>
-                                            <div class="text-white">${stats.apiImages}</div>
+                                        <div class="space-y-1 mt-1">
+                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                                <div class="flex items-center text-gray-300 text-xs">
+                                                    <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                                                    Цвета:
+                                                </div>
+                                                <div class="text-white font-semibold text-xs">${stats.apiColors}</div>
+                                            </div>
+                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                                <div class="flex items-center text-gray-300 text-xs">
+                                                    <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                                                    Детали:
+                                                </div>
+                                                <div class="text-white font-semibold text-xs">${stats.apiParts}</div>
+                                            </div>
+                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                                <div class="flex items-center text-gray-300 text-xs">
+                                                    <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                                                    Наборы:
+                                                </div>
+                                                <div class="text-white font-semibold text-xs">${stats.apiSets}</div>
+                                            </div>
+                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                                <div class="flex items-center text-gray-300 text-xs">
+                                                    <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
+                                                    Минифигурки:
+                                                </div>
+                                                <div class="text-white font-semibold text-xs">${stats.apiMinifigs}</div>
+                                            </div>
+                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                                <div class="flex items-center text-gray-300 text-xs">
+                                                    <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                                                    Изображения:
+                                                </div>
+                                                <div class="text-white font-semibold text-xs">${stats.apiImages}</div>
+                                            </div>
                                         </div>
                                         <div class="text-blue-400 text-xs mt-2">
                                             Последнее обновление API: ${lastUpdate}
@@ -14652,36 +14706,91 @@ function refreshSettingsStatsPanel() {
     const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
     panel.innerHTML = `
         <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-            <div class="text-gray-400">Цвета:</div>
-            <div class="text-white">${stats.colors}</div>
-            <div class="text-gray-400">Категории:</div>
-            <div class="text-white">${stats.categories}</div>
-            <div class="text-gray-400">Темы:</div>
-            <div class="text-white">${stats.themes}</div>
-            <div class="text-gray-400">Детали:</div>
-            <div class="text-white">${stats.parts} (${stats.partsWithImages} с изображениями)</div>
-            <div class="text-gray-400">Наборы:</div>
-            <div class="text-white">${stats.sets} (${stats.setsWithImages} с изображениями)</div>
-            <div class="text-gray-400">Минифигурки:</div>
-            <div class="text-white">${stats.minifigs} (${stats.minifigsWithImages} с изображениями)</div>
+        <div class="space-y-1">
+            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                <div class="flex items-center text-gray-300 text-xs">
+                    <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                    Цвета:
+                </div>
+                <div class="text-white font-semibold text-xs">${stats.colors}</div>
+            </div>
+            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                <div class="flex items-center text-gray-300 text-xs">
+                    <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                    Категории:
+                </div>
+                <div class="text-white font-semibold text-xs">${stats.categories}</div>
+            </div>
+            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                <div class="flex items-center text-gray-300 text-xs">
+                    <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                    Темы:
+                </div>
+                <div class="text-white font-semibold text-xs">${stats.themes}</div>
+            </div>
+            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                <div class="flex items-center text-gray-300 text-xs">
+                    <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                    Детали:
+                </div>
+                <div class="text-white font-semibold text-xs">${stats.parts}</div>
+            </div>
+            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                <div class="flex items-center text-gray-300 text-xs">
+                    <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                    Наборы:
+                </div>
+                <div class="text-white font-semibold text-xs">${stats.sets}</div>
+            </div>
+            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                <div class="flex items-center text-gray-300 text-xs">
+                    <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
+                    Минифигурки:
+                </div>
+                <div class="text-white font-semibold text-xs">${stats.minifigs}</div>
+            </div>
         </div>
         <button data-action="toggle-api-stats" class="w-full flex items-center justify-between text-left text-xs font-semibold text-yellow-300 mt-3 pt-2 border-t border-gray-700/50">
             <span>Данные через API</span>
             <span id="api-stats-chevron" class="${apiOpen ? 'rotate-180' : ''}">${I_Chev('w-4 h-4 text-yellow-300')}</span>
         </button>
         <div id="api-stats-panel" class="${apiOpen ? 'open ' : ''}collapse-panel">
-            <div class="grid grid-cols-2 gap-2 text-xs text-yellow-300 mt-1">
-                <div class="text-gray-400">Цвета:</div>
-                <div class="text-white">${stats.apiColors}</div>
-                <div class="text-gray-400">Детали:</div>
-                <div class="text-white">${stats.apiParts}</div>
-                <div class="text-gray-400">Наборы:</div>
-                <div class="text-white">${stats.apiSets}</div>
-                <div class="text-gray-400">Минифигурки:</div>
-                <div class="text-white">${stats.apiMinifigs}</div>
-                <div class="text-gray-400">Изображения:</div>
-                <div class="text-white">${stats.apiImages}</div>
+            <div class="space-y-1 mt-1">
+                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                    <div class="flex items-center text-gray-300 text-xs">
+                        <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
+                        Цвета:
+                    </div>
+                    <div class="text-white font-semibold text-xs">${stats.apiColors}</div>
+                </div>
+                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                    <div class="flex items-center text-gray-300 text-xs">
+                        <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                        Детали:
+                    </div>
+                    <div class="text-white font-semibold text-xs">${stats.apiParts}</div>
+                </div>
+                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                    <div class="flex items-center text-gray-300 text-xs">
+                        <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                        Наборы:
+                    </div>
+                    <div class="text-white font-semibold text-xs">${stats.apiSets}</div>
+                </div>
+                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                    <div class="flex items-center text-gray-300 text-xs">
+                        <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
+                        Минифигурки:
+                    </div>
+                    <div class="text-white font-semibold text-xs">${stats.apiMinifigs}</div>
+                </div>
+                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                    <div class="flex items-center text-gray-300 text-xs">
+                        <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                        Изображения:
+                    </div>
+                    <div class="text-white font-semibold text-xs">${stats.apiImages}</div>
+                </div>
             </div>
             <div class="text-blue-400 text-xs mt-2">
                 Последнее обновление API: ${lastUpdate}
