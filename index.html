@@ -2327,6 +2327,132 @@ body.tab-switching .minifig-card {
     .tip-text.pulse {
         animation: tipPulse 2s ease-in-out infinite;
     }
+
+    /* Стили для системы неактивности */
+    .inactivity-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.5s ease-in-out;
+    }
+
+    .inactivity-overlay.show {
+        opacity: 1;
+    }
+
+    .inactivity-content {
+        background: linear-gradient(135deg, rgba(31, 41, 55, 0.3) 0%, rgba(55, 65, 81, 0.3) 100%);
+        border: 2px solid rgba(75, 85, 99, 0.8);
+        border-radius: 20px;
+        padding: 2rem;
+        text-align: center;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        transform: scale(0.9);
+        transition: transform 0.5s ease-in-out;
+        backdrop-filter: blur(10px);
+    }
+
+    .inactivity-overlay.show .inactivity-content {
+        transform: scale(1);
+    }
+
+    .inactivity-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        animation: bounce 2s ease-in-out infinite;
+    }
+
+    .inactivity-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #fbbf24;
+        margin-bottom: 1rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .inactivity-text {
+        font-size: 1.1rem;
+        color: #e5e7eb;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .inactivity-close {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        width: 32px;
+        height: 32px;
+        background: #dc2626;
+        border-radius: 50%;
+        color: white;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        transition: all 0.2s ease;
+    }
+
+    .inactivity-close:hover {
+        background: #b91c1c;
+        transform: scale(1.1) rotate(2deg);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .inactivity-close:active {
+        transform: scale(0.95) rotate(0deg);
+    }
+
+    .inactivity-close svg {
+        width: 16px;
+        height: 16px;
+        stroke-width: 2.5;
+        transition: transform 0.3s ease;
+    }
+
+    .inactivity-close:hover svg {
+        transform: scale(1.1);
+    }
+
+    @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+        }
+        40% {
+            transform: translateY(-10px);
+        }
+        60% {
+            transform: translateY(-5px);
+        }
+    }
+
+    /* Размытие основного контента при неактивности */
+    body.inactive #main-content,
+    body.inactive #sidebar-container,
+    body.inactive #header-container {
+        filter: blur(3px);
+        transition: filter 0.5s ease-in-out;
+    }
+
+    /* Оверлей неактивности всегда остается четким */
+    .inactivity-overlay {
+        filter: blur(0) !important;
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
@@ -2374,6 +2500,16 @@ body.tab-switching .minifig-card {
   <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 opacity-0 pointer-events-none z-40 transform translate-y-4" aria-label="Вернуться наверх" title="Прокрутить страницу в начало">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>
   </button>
+
+  <!-- Система неактивности с подсказками -->
+  <div id="inactivity-overlay" class="inactivity-overlay hidden">
+      <div class="inactivity-content">
+          <div class="inactivity-icon">💡</div>
+          <div class="inactivity-title">Полезная подсказка</div>
+          <div class="inactivity-text" id="inactivity-tip"></div>
+          <button class="inactivity-close" id="inactivity-close" title="Закрыть подсказку"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+  </div>
   <script type="module">
 const DEBUG = false;
 if (!DEBUG) {
@@ -2381,6 +2517,153 @@ if (!DEBUG) {
     console.debug = () => {};
     console.warn = () => {};
 }
+
+// Проверяем, что скрипт выполняется
+console.log('🚀 СКРИПТ ЗАГРУЖЕН! DEBUG =', DEBUG);
+
+// Тестовая функция для проверки выполнения
+function testFunction() {
+    console.log('🧪 ТЕСТОВАЯ ФУНКЦИЯ ВЫЗВАНА!');
+    return true;
+}
+
+// Вызываем тестовую функцию
+testFunction();
+
+// Простая инициализация системы неактивности
+let inactivityTimer = null;
+let tipRotationTimer = null;
+
+const inactivityTips = [
+    "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
+    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
+    "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
+    "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
+    "📱 Сайт адаптирован для мобильных устройств - удобно использовать на телефоне",
+    "⭐ Добавляйте часто используемые категории в избранное для быстрого доступа",
+    "🔄 При проблемах с загрузкой попробуйте обновить страницу или очистить кэш",
+    "📊 Статистика показывает общее количество элементов в каталоге",
+    "🎯 Кнопка 'мне повезёт' показывает случайные элементы из всего каталога",
+    "💾 Данные сохраняются локально в браузере для быстрой работы",
+    "🖼️ Изображения загружаются автоматически при просмотре деталей",
+    "🔧 Используйте фильтры по темам для поиска наборов определенной серии",
+    "📋 Переключайтесь между каталогом и коллекцией для разных задач",
+    "⚡ Сайт работает офлайн после первой загрузки данных",
+    "🔄 Регулярно обновляйте данные для получения актуальной информации",
+    "🎯 Используйте комбинацию фильтров для точного поиска нужных элементов",
+    "📱 На мобильных устройствах используйте свайпы для навигации",
+    "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
+    "⭐ Добавляйте в избранное часто используемые темы для быстрого доступа",
+    "📊 В коллекции можно группировать детали по названию для удобства",
+    "🖼️ Нажмите на изображение детали для просмотра в полном размере",
+    "📋 Экспортируйте свою коллекцию в формате CSV",
+    "🎲 Статистика обновляется в реальном времени при изменении коллекции",
+    "⚡ Быстрый поиск работает даже при медленном интернете",
+    "🔄 Автосохранение состояния происходит после каждого действия",
+    "🎯 Клик по карточке открывает детальную информацию",
+    "🔍 Фильтры можно комбинировать для создания сложных запросов",
+    "🎨 Используйте цветовые фильтры для подбора деталей к набору",
+    "📊 Отслеживайте статистику использования различных элементов",
+    "🖼️ Предзагрузка изображений ускоряет работу с каталогом",
+    "🔧 Настройки интерфейса сохраняются между сессиями",
+    "📋 Импортируйте коллекции из других источников",
+    "🎲 Удерживайте кнопку Детали/Наборы/Фигурки 1 секунду для случайного элемента",
+    "📱 Интерфейс оптимизирован для всех устройств"
+];
+
+function simpleInactivityInit() {
+    console.log('🎯 ПРОСТАЯ ИНИЦИАЛИЗАЦИЯ СИСТЕМЫ НЕАКТИВНОСТИ');
+    
+    // Проверяем элементы
+    const overlay = document.getElementById('inactivity-overlay');
+    const tip = document.getElementById('inactivity-tip');
+    const closeBtn = document.getElementById('inactivity-close');
+    
+    console.log('🎯 Элементы найдены:', {
+        overlay: !!overlay,
+        tip: !!tip,
+        closeBtn: !!closeBtn
+    });
+    
+    if (overlay && tip && closeBtn) {
+        console.log('🎯 Все элементы найдены, запускаем простую систему');
+        
+        // Функция для сброса таймера
+        function resetInactivityTimer() {
+            console.log('🔄 Сбрасываем таймер неактивности');
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+            }
+            
+            // Останавливаем смену подсказок при активности
+            stopTipRotation();
+            
+            // Запускаем новый таймер на 90 секунд
+            inactivityTimer = setTimeout(() => {
+                console.log('🎯 Показываем подсказку!');
+                // Выбираем случайную подсказку
+                const randomIndex = Math.floor(Math.random() * inactivityTips.length);
+                tip.textContent = inactivityTips[randomIndex];
+                overlay.classList.remove('hidden');
+                overlay.classList.add('show');
+                // Запускаем автоматическую смену подсказок
+                startTipRotation();
+            }, 90000);
+            
+            console.log('🔄 Таймер неактивности установлен на 90 секунд');
+        }
+        
+        // Функция для автоматической смены подсказок
+        function startTipRotation() {
+            if (tipRotationTimer) {
+                clearInterval(tipRotationTimer);
+            }
+            
+            tipRotationTimer = setInterval(() => {
+                if (overlay && overlay.classList.contains('show')) {
+                    console.log('🔄 Меняем подсказку');
+                    // Выбираем случайную подсказку
+                    const randomIndex = Math.floor(Math.random() * inactivityTips.length);
+                    tip.textContent = inactivityTips[randomIndex];
+                }
+            }, 5000);
+        }
+        
+        // Функция для остановки смены подсказок
+        function stopTipRotation() {
+            if (tipRotationTimer) {
+                clearInterval(tipRotationTimer);
+                tipRotationTimer = null;
+            }
+        }
+        
+        // Обработчик закрытия
+        closeBtn.addEventListener('click', () => {
+            console.log('🎯 Закрываем подсказку');
+            overlay.classList.remove('show');
+            overlay.classList.add('hidden');
+            stopTipRotation();
+            // Перезапускаем таймер после закрытия
+            resetInactivityTimer();
+        });
+        
+        // Обработчики активности пользователя
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        
+        activityEvents.forEach(event => {
+            document.addEventListener(event, () => {
+                console.log(`🎯 Активность пользователя: ${event}`);
+                resetInactivityTimer();
+            }, { passive: true });
+        });
+        
+        // Запускаем первый таймер
+        resetInactivityTimer();
+    }
+}
+
+// Запускаем простую инициализацию
+simpleInactivityInit();
 const REBRICKABLE_API_URL = 'https://rebrickable.com/api/v3/lego';
 const REBRICKABLE_API_KEYS = ['20c78cc607d6059c8d2a61338d851590', '04a7405ad41f1dd484a562f6e0c57312', 'd93f5c0989f63afa9b1c29ef8ad66002', 'b4179c1b8bd3c022ec9fc0e713e96b77', 'd32527bc33b575b8825a0ba04ba4add5'];
 let currentApiKeyIndex = 0;
@@ -2390,7 +2673,7 @@ function getApiKey() {
     currentApiKeyIndex = (currentApiKeyIndex + 1) % REBRICKABLE_API_KEYS.length;
     return key;
 }
-const CACHE_NAME = 'lego-catalog-cache-v13';
+const CACHE_NAME = 'lego-catalog-cache-v14';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -4448,12 +4731,13 @@ async function handleFeelingLucky(type = null) {
         }
         
         // Перезапускаем автоматическую смену подсказок при каждом клике
-        setTimeout(() => {
-            if (window.startTipRotation) {
-                console.log('Restarting tip rotation after feeling lucky click');
-                window.startTipRotation();
-            }
-        }, 500);
+        // ОТКЛЮЧЕНО: конфликт с системой неактивности
+        // setTimeout(() => {
+        //     if (window.startTipRotation) {
+        //         console.log('Restarting tip rotation after feeling lucky click');
+        //         window.startTipRotation();
+        //     }
+        // }, 500);
     }
 }
 
@@ -4509,15 +4793,16 @@ function updateFeelingLuckyStats() {
         }
         
         // Запускаем автоматическую смену подсказок, если еще не запущена
-        if (window.startTipRotation && !window.tipRotationInterval) {
-            console.log('🚀 Starting tip rotation from updateFeelingLuckyStats');
-            window.startTipRotation();
-        } else if (window.startTipRotation && window.tipRotationInterval) {
-            console.log('⚠️ Tip rotation already running, interval ID:', window.tipRotationInterval);
-            // НЕ перезапускаем ротацию - это создает бесконечный цикл!
-        } else {
-            console.log('❌ startTipRotation function not available');
-        }
+        // ОТКЛЮЧЕНО: конфликт с системой неактивности
+        // if (window.startTipRotation && !window.tipRotationInterval) {
+        //     console.log('🚀 Starting tip rotation from updateFeelingLuckyStats');
+        //     window.startTipRotation();
+        // } else if (window.startTipRotation && window.tipRotationInterval) {
+        //     console.log('⚠️ Tip rotation already running, interval ID:', window.tipRotationInterval);
+        //     // НЕ перезапускаем ротацию - это создает бесконечный цикл!
+        // } else {
+        //     console.log('❌ startTipRotation function not available');
+        // }
     } catch (e) {
         console.error('💥 Error in updateFeelingLuckyStats:', e);
         statsElement.textContent = 'Статистика недоступна';
@@ -13070,7 +13355,6 @@ async function initializeApp() {
         "🔧 Используйте фильтры по темам для поиска наборов определенной серии",
         "📋 Переключайтесь между каталогом и коллекцией для разных задач",
         "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
-        "🎲 Каждый клик по 'мне повезёт' показывает что-то новое и интересное",
         "⚡ Сайт работает офлайн после первой загрузки данных",
         "🔄 Регулярно обновляйте данные для получения актуальной информации",
         "🎯 Используйте комбинацию фильтров для точного поиска нужных элементов",
@@ -13092,8 +13376,8 @@ async function initializeApp() {
         "🖼️ Предзагрузка изображений ускоряет работу с каталогом",
         "🔧 Настройки интерфейса сохраняются между сессиями",
         "📋 Импортируйте коллекции из других источников",
-        "🎲 Случайный режим помогает открыть новые интересные элементы",
-        "💡 Все подсказки содержат полезную информацию по использованию сайта"
+        "🎲 Удерживайте кнопку Детали/Наборы/Фигурки 1 секунду для случайного элемента",
+        "📱 Интерфейс оптимизирован для всех устройств"
     ];
     
     console.log('FEELING_LUCKY_TIPS initialized with', window.FEELING_LUCKY_TIPS.length, 'tips');
@@ -13597,12 +13881,13 @@ async function initializeApp() {
                 }, 1500);
                 
                 // Запускаем автоматическую смену подсказок после полной загрузки приложения
-                setTimeout(() => {
-                    if (window.startTipRotation) {
-                        console.log('Starting automatic tip rotation...');
-                        window.startTipRotation();
-                    }
-                }, 2000);
+                // ОТКЛЮЧЕНО: конфликт с системой неактивности
+                // setTimeout(() => {
+                //     if (window.startTipRotation) {
+                //         console.log('Starting automatic tip rotation...');
+                //         window.startTipRotation();
+                //     }
+                // }, 2000);
             }, 1000);
             
         } catch (e) {
@@ -15744,6 +16029,198 @@ function animateCloseButtonClick(button) {
         }
     });
 
+    // Система неактивности с подсказками
+    console.log('🔧 Начинаем инициализацию системы неактивности...');
+    
+    // Переменные уже объявлены глобально выше, используем их
+    inactivityOverlay = document.getElementById('inactivity-overlay');
+    inactivityTip = document.getElementById('inactivity-tip');
+    inactivityCloseBtn = document.getElementById('inactivity-close');
+
+    // Функция для показа подсказки по порядку
+    function showRandomTip() {
+        console.log('💡 showRandomTip вызвана, стек вызовов:', new Error().stack);
+        
+        if (!inactivityOverlay) {
+            console.log('❌ inactivityOverlay не найден');
+            return;
+        }
+        
+        // Показываем подсказку по текущему индексу
+        inactivityTip.textContent = inactivityTips[currentTipIndex];
+        
+        inactivityOverlay.classList.remove('hidden');
+        document.body.classList.add('inactive');
+        
+        // Показываем с анимацией
+        setTimeout(() => {
+            inactivityOverlay.classList.add('show');
+        }, 100);
+        
+        // Запускаем автоматическую смену подсказок каждые 5 секунд
+        startTipRotation();
+        
+        console.log('💡 Подсказка показана:', inactivityTips[currentTipIndex]);
+    }
+
+    // Функция для автоматической смены подсказок
+    function startTipRotation() {
+        if (tipRotationTimer) {
+            clearInterval(tipRotationTimer);
+        }
+        
+        tipRotationTimer = setInterval(() => {
+            if (inactivityOverlay && inactivityOverlay.classList.contains('show') && inactivityTip) {
+                // Переходим к следующей подсказке
+                currentTipIndex = (currentTipIndex + 1) % inactivityTips.length;
+                inactivityTip.textContent = inactivityTips[currentTipIndex];
+            }
+        }, 5000);
+    }
+
+    // Функция для остановки смены подсказок
+    function stopTipRotation() {
+        if (tipRotationTimer) {
+            clearInterval(tipRotationTimer);
+            tipRotationTimer = null;
+        }
+    }
+
+    // Функция для скрытия подсказки
+    function hideInactivityTip() {
+        if (!inactivityOverlay) return;
+        
+        // Останавливаем смену подсказок
+        stopTipRotation();
+        
+        inactivityOverlay.classList.remove('show');
+        document.body.classList.remove('inactive');
+        
+        setTimeout(() => {
+            inactivityOverlay.classList.add('hidden');
+        }, 500);
+        
+        // Сбрасываем индекс подсказки для следующего цикла
+        currentTipIndex = 0;
+        
+        // Сбрасываем таймер
+        resetInactivityTimer();
+    }
+
+    // Функция для сброса таймера неактивности
+    function resetInactivityTimer() {
+        console.log('🔄 resetInactivityTimer вызвана');
+        
+        if (inactivityTimer) {
+            console.log('⏰ Очищаем предыдущий таймер:', inactivityTimer);
+            clearTimeout(inactivityTimer);
+        }
+        
+        // Останавливаем смену подсказок при активности пользователя
+        stopTipRotation();
+        
+        // Запускаем таймер на 90 секунд (для тестирования)
+        inactivityTimer = setTimeout(() => {
+            console.log('⏰ Таймер сработал! Показываем подсказку');
+            showRandomTip();
+        }, 90000);
+        
+        console.log('🔄 Таймер неактивности сброшен, следующий показ через 90 секунд. ID таймера:', inactivityTimer);
+    }
+
+    // Функция для инициализации системы неактивности
+    function initInactivitySystem() {
+        console.log('🚀 initInactivitySystem вызвана');
+        
+        // Проверяем, не инициализирована ли уже система
+        if (document.hasAttribute('data-inactivity-initialized')) {
+            console.log('⚠️ Система неактивности уже инициализирована');
+            return;
+        }
+        
+        inactivityOverlay = document.getElementById('inactivity-overlay');
+        inactivityTip = document.getElementById('inactivity-tip');
+        inactivityCloseBtn = document.getElementById('inactivity-close');
+        
+        console.log('🔍 Элементы найдены:', {
+            overlay: !!inactivityOverlay,
+            tip: !!inactivityTip,
+            closeBtn: !!inactivityCloseBtn
+        });
+        
+        // Дополнительная проверка элементов
+        console.log('🔍 Проверяем элементы в DOM:');
+        console.log('  - inactivity-overlay:', document.getElementById('inactivity-overlay'));
+        console.log('  - inactivity-tip:', document.getElementById('inactivity-tip'));
+        console.log('  - inactivity-close:', document.getElementById('inactivity-close'));
+        
+        if (!inactivityOverlay || !inactivityTip || !inactivityCloseBtn) {
+            console.log('❌ Не все элементы найдены, выходим');
+            return;
+        }
+        
+        // Обработчик для кнопки закрытия
+        inactivityCloseBtn.addEventListener('click', hideInactivityTip);
+        
+        // Обработчик для клика по оверлею (закрытие)
+        inactivityOverlay.addEventListener('click', (e) => {
+            if (e.target === inactivityOverlay) {
+                hideInactivityTip();
+            }
+        });
+        
+        // Обработчики активности пользователя
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        
+        // Проверяем, не добавлены ли уже обработчики
+        if (!document.hasAttribute('data-inactivity-listeners')) {
+            document.setAttribute('data-inactivity-listeners', 'true');
+            
+            activityEvents.forEach(event => {
+                document.addEventListener(event, () => {
+                    console.log(`🎯 Активность пользователя: ${event}`);
+                    resetInactivityTimer();
+                }, { passive: true });
+            });
+            
+            console.log('✅ Обработчики активности добавлены');
+        } else {
+            console.log('⚠️ Обработчики активности уже добавлены');
+        }
+        
+        // Запускаем таймер при инициализации
+        resetInactivityTimer();
+        
+        // Отмечаем, что система инициализирована
+        document.setAttribute('data-inactivity-initialized', 'true');
+        
+        console.log('✅ Система неактивности инициализирована');
+    }
+
+    // Инициализируем систему неактивности после загрузки страницы
+    console.log('🔧 Скрипт системы неактивности загружен');
+    console.log('🔧 document.readyState:', document.readyState);
+    console.log('🔧 Текущее время:', new Date().toLocaleTimeString());
+    
+    // Принудительная инициализация через 3 секунды
+    setTimeout(() => {
+        console.log('🔧 Принудительная инициализация через 3 секунды');
+        initInactivitySystem();
+    }, 3000);
+    
+    if (document.readyState === 'loading') {
+        console.log('🔧 DOM еще загружается, ждем DOMContentLoaded');
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🔧 DOMContentLoaded сработал');
+            initInactivitySystem();
+        });
+    } else {
+        console.log('🔧 DOM уже загружен, инициализируем сразу');
+        initInactivitySystem();
+    }
+
+    console.log('🏁 КОНЕЦ СКРИПТА СИСТЕМЫ НЕАКТИВНОСТИ');
+
   </script>
   
   <!-- Указатель для sidebar-toggle на малых устройствах -->
@@ -15753,5 +16230,6 @@ function animateCloseButtonClick(button) {
       <div class="sidebar-hint-title">Навигация</div>
       <div class="sidebar-hint-text">Используйте кнопку меню для открытия боковой панели с каталогом и категориями</div>
   </div>
+
 </body>
 </html>
