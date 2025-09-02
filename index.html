@@ -933,25 +933,46 @@
         overflow: visible !important;
         max-width: 200px !important;
         line-height: 1.1 !important;
-        font-size: 10px !important;
+        font-size: 12px !important;
     }
     
     /* Стили для сообщений об ошибках */
     #import-export-status.bg-red-900\/50 {
-        border: 1px solid rgba(239, 68, 68, 0.3) !important;
-        box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1) !important;
+        border: 2px solid rgba(239, 68, 68, 0.8) !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
+        font-weight: 600 !important;
+        background-color: rgba(239, 68, 68, 0.25) !important;
+        z-index: 1000 !important;
+        position: relative !important;
+        min-width: 80px !important;
+        max-width: 120px !important;
+        font-size: 9px !important;
     }
     
     /* Стили для сообщений об успехе */
     #import-export-status.bg-green-900\/50 {
-        border: 1px solid rgba(34, 197, 94, 0.3) !important;
-        box-shadow: 0 2px 4px rgba(34, 197, 94, 0.1) !important;
+        border: 2px solid rgba(34, 197, 94, 0.8) !important;
+        box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
+        font-weight: 600 !important;
+        background-color: rgba(34, 197, 94, 0.25) !important;
+        z-index: 1000 !important;
+        position: relative !important;
+        min-width: 100px !important;
+        max-width: 180px !important;
+        font-size: 10px !important;
     }
     
     /* Стили для информационных сообщений */
     #import-export-status.bg-blue-900\/50 {
-        border: 1px solid rgba(59, 130, 246, 0.3) !important;
-        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1) !important;
+        border: 2px solid rgba(59, 130, 246, 0.8) !important;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+        font-weight: 600 !important;
+        background-color: rgba(59, 130, 246, 0.25) !important;
+        z-index: 1000 !important;
+        position: relative !important;
+        min-width: 100px !important;
+        max-width: 180px !important;
+        font-size: 10px !important;
     }
     
     /* Предотвращение подпрыгивания при изменении содержимого */
@@ -8278,7 +8299,7 @@ function renderSettingsModal() {
              <div id="settings-modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100vh-2rem)] ${enterClass}">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Настройки</h2>
-                     <div id="import-export-status" class="px-1.5 py-0.5 text-[10px] rounded-md ${t?c:'bg-transparent text-transparent'} text-center flex-shrink-0" style="${t?'':'display: none;'}">${t||''}</div>
+                     <div id="import-export-status" class="px-2 py-1 text-xs rounded-md ${t?c:'bg-transparent text-transparent'} text-center flex-shrink-0" style="${t?'':'display: none;'}">${t||''}</div>
                      <button id="settings-modal-close" class="modal-close-btn" title="Закрыть модальное окно настроек">${I_X("w-4 h-4")}</button>
                 </div>
                 <div id="settings-modal-scroll" class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-6">
@@ -9939,8 +9960,8 @@ async function processCsvData(content) {
         }
         saveState(), t(`Импорт CSV завершен. Добавлено: ${n.parts} деталей, ${n.sets} наборов, ${n.minifigs} минифигурок.`, "success")
     } catch (e) {
-        console.error("CSV Import failed:", e), t(`Ошибка импорта CSV: ${e.message}`, "error");
-        throw e;
+        console.error("CSV Import failed:", e), t(`${e.message}`, "error");
+        // Не перебрасываем ошибку, чтобы она обрабатывалась в вызывающем коде
     }
 }
 
@@ -13274,7 +13295,7 @@ document.addEventListener("click", async e => {
                         btn.setAttribute('aria-pressed', String(S.preventAccidentalExit));
                     }
                 })();
-                updateSettingsModalStatus(S.preventAccidentalExit ? "Подтверждение выхода\nвключено" : "Подтверждение выхода\nотключено", "success");
+                updateSettingsModalStatus(S.preventAccidentalExit ? "Подтверждение\nперезагрузки включено" : "Подтверждение\nперезагрузки отключено", "success");
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
                 return;
 
@@ -13356,7 +13377,7 @@ document.addEventListener("click", async e => {
                 try {
                     const success = await window.clearAppCache();
                     if (success) {
-                        updateSettingsModalStatus("Кэш очищен!\nСтраница будет обновлена...", "success");
+                        updateSettingsModalStatus("Кэш очищен!\nСтраница будет обновлена", "success");
                         
                         // Через 1.5 секунды обновляем страницу
                         setTimeout(() => {
@@ -14490,6 +14511,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     updateUI();
                 } catch (error) {
                     console.error('CSV import failed:', error);
+                    // Показываем сообщение об ошибке
+                    updateSettingsModalStatus(`${error.message}`, 'error');
                     // Очищаем ввод в случае ошибки
                     event.target.value = '';
                 }
@@ -15877,9 +15900,22 @@ function updateSettingsModalStatus(status, statusType = 'info') {
                            statusType === 'success' ? 'bg-green-900/50 text-green-300' : 
                            'bg-blue-900/50 text-blue-300';
         
-        statusElement.className = `px-1.5 py-0.5 text-[10px] rounded-md ${statusClass} text-center flex-shrink-0`;
+        statusElement.className = `px-2 py-1 text-xs rounded-md ${statusClass} text-center flex-shrink-0 cursor-pointer`;
         statusElement.textContent = status;
         statusElement.style.display = 'block';
+        
+        // Добавляем обработчик клика для ручного закрытия
+        statusElement.onclick = () => clearSettingsModalStatus();
+        
+        // Автоматическое скрытие сообщения через определенное время
+        const timeout = statusType === 'error' ? 5000 : statusType === 'success' ? 3000 : 4000;
+        setTimeout(() => {
+            if (S.settingsOpen && S.settingsModal.status === status) {
+                clearSettingsModalStatus();
+            }
+        }, timeout);
+    } else {
+        renderSettingsModal();
     }
 }
 
@@ -15894,7 +15930,7 @@ function clearSettingsModalStatus() {
     if (statusElement) {
         statusElement.style.display = 'none';
         statusElement.textContent = '';
-        statusElement.className = 'px-1.5 py-0.5 text-[10px] rounded-md bg-transparent text-transparent text-center flex-shrink-0';
+        statusElement.className = 'px-2 py-1 text-xs rounded-md bg-transparent text-transparent text-center flex-shrink-0';
     }
 }
 
