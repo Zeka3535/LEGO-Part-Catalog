@@ -1032,16 +1032,44 @@
     
     /* Анимация сворачивания/разворачивания панелей */
     .collapse-panel {
-        overflow: hidden;
-        max-height: 0;
-        opacity: 0;
+        overflow: hidden !important;
+        max-height: 0 !important;
+        opacity: 0 !important;
         padding: 0 !important; /* убираем паддинги, чтобы не было лишнего отступа в свернутом состоянии */
-        transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease;
+        transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease !important;
     }
     .collapse-panel.open {
-        max-height: 1000px; /* достаточная высота для контента */
-        opacity: 1;
+        max-height: 1000px !important; /* достаточная высота для контента */
+        opacity: 1 !important;
         padding: 0.75rem !important; /* соответствие классу p-3 */
+    }
+    
+    /* Более специфичные селекторы для панели статистики */
+    #settings-stats-panel.collapse-panel {
+        overflow: hidden !important;
+        max-height: 0 !important;
+        opacity: 0 !important;
+        padding: 0 !important;
+        transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease !important;
+    }
+    #settings-stats-panel.collapse-panel.open {
+        max-height: 1000px !important;
+        opacity: 1 !important;
+        padding: 0.75rem !important;
+    }
+    
+    /* Стили для панели "Данные через API" */
+    #api-stats-panel.collapse-panel {
+        overflow: hidden !important;
+        max-height: 0 !important;
+        opacity: 0 !important;
+        padding: 0 !important;
+        transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease !important;
+    }
+    #api-stats-panel.collapse-panel.open {
+        max-height: 1000px !important;
+        opacity: 1 !important;
+        padding: 0.75rem !important;
     }
     .rotate {
         transition: transform 0.2s ease;
@@ -2923,6 +2951,20 @@ body.tab-switching .minifig-card {
     /* Оверлей неактивности всегда остается четким */
     .inactivity-overlay {
         filter: blur(0) !important;
+    }
+
+    /* Стили для кнопки "Поднять на верх" - точно как у кнопок в меню настроек */
+    #scroll-to-top-btn:not(.opacity-0) {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.15s ease !important;
+    }
+    
+    #scroll-to-top-btn:not(.opacity-0):hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(37, 99, 235, 0.25) !important;
+    }
+    
+    #scroll-to-top-btn:active {
+        transform: scale(0.98) !important;
     }
   </style>
 </head>
@@ -8326,7 +8368,7 @@ function renderSettingsModal() {
                             <span>Статистика загрузки</span>
                             <span id="settings-stats-chevron" class="rotate">${I_Chev('w-5 h-5 text-gray-400')}</span>
                         </button>
-                        <div id="settings-stats-panel" class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-2 text-sm collapse-panel">
+                        <div id="settings-stats-panel" class="bg-gray-800/60 border border-gray-700/50 rounded-lg space-y-2 text-sm collapse-panel">
                             <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
                             ${(() => {
                                 const stats = getLoadingStats();
@@ -8381,7 +8423,7 @@ function renderSettingsModal() {
                                         <span>Данные через API</span>
                                         <span id="api-stats-chevron" class="${apiOpen ? 'rotate-180' : ''}">${I_Chev('w-4 h-4 text-yellow-300')}</span>
                                     </button>
-                                    <div id="api-stats-panel" class="${apiOpen ? 'open ' : ''}collapse-panel">
+                                    <div id="api-stats-panel" class="collapse-panel ${apiOpen ? 'open' : ''}">
                                         <div class="space-y-1 mt-1">
                                             <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                                                 <div class="flex items-center text-gray-300 text-xs">
@@ -8464,6 +8506,49 @@ function renderSettingsModal() {
         const scrollEl = document.getElementById('settings-modal-scroll');
         if (scrollEl) scrollEl.scrollTop = prevScrollTop;
     }
+    
+    // Инициализируем состояние панели "Статистика загрузки"
+    setTimeout(() => {
+        const panel = document.getElementById('settings-stats-panel');
+        const chevron = document.getElementById('settings-stats-chevron');
+        const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
+        
+        if (panel) {
+            if (apiOpen) {
+                panel.classList.add('open');
+            } else {
+                panel.classList.remove('open');
+            }
+        }
+        
+        if (chevron) {
+            if (apiOpen) {
+                chevron.classList.add('rotate-180');
+            } else {
+                chevron.classList.remove('rotate-180');
+            }
+        }
+        
+        // Инициализируем состояние панели "Данные через API"
+        const apiPanel = document.getElementById('api-stats-panel');
+        const apiChevron = document.getElementById('api-stats-chevron');
+        
+        if (apiPanel) {
+            if (apiOpen) {
+                apiPanel.classList.add('open');
+            } else {
+                apiPanel.classList.remove('open');
+            }
+        }
+        
+        if (apiChevron) {
+            if (apiOpen) {
+                apiChevron.classList.add('rotate-180');
+            } else {
+                apiChevron.classList.remove('rotate-180');
+            }
+        }
+    }, 0);
     // Обновляем информацию об использовании хранилища/кэша (в МБ)
     ;(async () => {
         try {
@@ -13074,6 +13159,8 @@ document.addEventListener("click", async e => {
                 const chevron = document.getElementById('settings-stats-chevron');
                 if (panel) {
                     panel.classList.toggle('open');
+                    const isOpen = panel.classList.contains('open');
+                    try { localStorage.setItem('apiStatsOpen', String(isOpen)); } catch {}
                 }
                 if (chevron) {
                     chevron.classList.toggle('rotate-180');
@@ -15461,6 +15548,44 @@ function refreshSettingsStatsPanel() {
     const stats = getLoadingStats();
     const lastUpdate = stats.lastApiUpdate ? new Date(stats.lastApiUpdate).toLocaleString('ru-RU') : 'Никогда';
     const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
+    
+    // Применяем состояние панели
+    if (apiOpen) {
+        panel.classList.add('open');
+    } else {
+        panel.classList.remove('open');
+    }
+    
+    // Обновляем состояние шеврона
+    const chevron = document.getElementById('settings-stats-chevron');
+    if (chevron) {
+        if (apiOpen) {
+            chevron.classList.add('rotate-180');
+        } else {
+            chevron.classList.remove('rotate-180');
+        }
+    }
+    
+    // Обновляем состояние панели "Данные через API"
+    const apiPanel = document.getElementById('api-stats-panel');
+    const apiChevron = document.getElementById('api-stats-chevron');
+    
+    if (apiPanel) {
+        if (apiOpen) {
+            apiPanel.classList.add('open');
+        } else {
+            apiPanel.classList.remove('open');
+        }
+    }
+    
+    if (apiChevron) {
+        if (apiOpen) {
+            apiChevron.classList.add('rotate-180');
+        } else {
+            apiChevron.classList.remove('rotate-180');
+        }
+    }
+    
     panel.innerHTML = `
         <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
         <div class="space-y-1">
@@ -15511,7 +15636,7 @@ function refreshSettingsStatsPanel() {
             <span>Данные через API</span>
             <span id="api-stats-chevron" class="${apiOpen ? 'rotate-180' : ''}">${I_Chev('w-4 h-4 text-yellow-300')}</span>
         </button>
-        <div id="api-stats-panel" class="${apiOpen ? 'open ' : ''}collapse-panel">
+        <div id="api-stats-panel" class="collapse-panel ${apiOpen ? 'open' : ''}">
             <div class="space-y-1 mt-1">
                 <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                     <div class="flex items-center text-gray-300 text-xs">
