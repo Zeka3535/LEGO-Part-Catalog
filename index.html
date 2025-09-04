@@ -3555,7 +3555,6 @@ const modalManager = new ModalManager();
 let S = {
     view: 'collection',
     subView: 'parts',
-    tool: 'analytics',
     catTree: [],
     expCats: new Set,
     selCatId: null,
@@ -6562,19 +6561,6 @@ function renderSidebar() {
         }).join("")
             }
         }
-    } else if ("tools" === S.view) {
-        d = "Инструменты";
-        c = `
-            <div class="space-y-1">
-                <button data-tool="analytics" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${S.tool === "analytics" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"}">
-                    <div class="flex items-center">
-                        ${I_Analytics("w-5 h-5 mr-3 text-blue-400 flex-shrink-0")}
-                        <span class="font-semibold text-gray-200 break-words leading-tight">Аналитика</span>
-                    </div>
-                </button>
-                <!-- Место для будущих инструментов -->
-            </div>
-        `;
     }
     sidebarEl.innerHTML = `
         <div class="flex items-center justify-between mb-4 flex-shrink-0">
@@ -6596,10 +6582,10 @@ function renderSidebar() {
         <div class="space-y-2 mb-4 flex-shrink-0">
             <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3")}<span>Каталог</span></button>
             <button data-view="collection" class="${n("collection")}" title="Переключиться на просмотр вашей личной коллекции">${I_Coll("w-5 h-5 mr-3")}<span>Коллекция</span></button>
-            <button data-view="tools" class="${n("tools")}" title="Инструменты для анализа и работы с коллекцией">${I_Analytics("w-5 h-5 mr-3")}<span>Инструменты</span></button>
+            <button data-view="analytics" class="${n("analytics")}" title="Аналитика и статистика коллекции, редкие детали">${I_Analytics("w-5 h-5 mr-3")}<span>Аналитика</span></button>
         </div>
 
-        ${S.view !== "tools" ? `
+        ${S.view !== "analytics" ? `
         <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1">
             <button data-sub-view="parts" class="${r("parts")}" title="Показать детали" data-long-press="parts">
                 ${I_Brick("w-5 h-5")}
@@ -6622,7 +6608,7 @@ function renderSidebar() {
         
 
         
-        ${S.view !== "tools" ? `
+        ${S.view !== "analytics" ? `
         <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar">
           <h2 class="text-lg font-semibold text-white mb-3">${d}</h2>
           <nav>
@@ -6712,14 +6698,14 @@ function renderSidebar() {
                 </div>
             </div>
             `:""}
-            ${S.view !== "tools" ? `
+            ${S.view !== "analytics" ? `
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
                 ${I_Settings("w-5 h-5 mr-2")} Настройки
             </button>
             ` : ''}
         </div>
         
-        ${S.view === "tools" ? `
+        ${S.view === "analytics" ? `
         <!-- Кнопка настроек внизу только для аналитики -->
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
@@ -7887,39 +7873,28 @@ function renderMainContent() {
             // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
         }
     } 
-    if ("tools" === S.view) {
-        if (S.tool === "analytics") {
-            // Запускаем анализ коллекции каждый раз при открытии аналитики
-            if (!S.analyticsLoading) {
-                analyzeCollection();
-            }
+    if ("analytics" === S.view) {
+        // Запускаем анализ коллекции каждый раз при открытии аналитики
+        if (!S.analyticsLoading) {
+            analyzeCollection();
+        }
         
-            if (S.analyticsLoading) {
-                e = `
-                    <div class="flex flex-col items-center justify-center h-full p-8 text-center">
-                        <div class="loader mb-4"></div>
-                        <h2 class="text-2xl font-bold text-gray-200 mb-2">Анализ коллекции</h2>
-                        <p class="text-gray-400">Анализируем редкость деталей и статистику...</p>
-                    </div>
-                `;
-            } else if (S.analyticsData) {
-                e = renderAnalyticsContent(S.analyticsData);
-            } else {
-                e = `
-                    <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
-                        <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📊</div>
-                        <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Аналитика коллекции</h2>
-                        <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Добавьте детали в коллекцию, чтобы увидеть аналитику</p>
-                    </div>
-                `;
-            }
+        if (S.analyticsLoading) {
+            e = `
+                <div class="flex flex-col items-center justify-center h-full p-8 text-center">
+                    <div class="loader mb-4"></div>
+                    <h2 class="text-2xl font-bold text-gray-200 mb-2">Анализ коллекции</h2>
+                    <p class="text-gray-400">Анализируем редкость деталей и статистику...</p>
+                </div>
+            `;
+        } else if (S.analyticsData) {
+            e = renderAnalyticsContent(S.analyticsData);
         } else {
-            // Показываем заглушку для других инструментов
             e = `
                 <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
-                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">🔧</div>
-                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Инструменты</h2>
-                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Выберите инструмент в боковой панели</p>
+                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📊</div>
+                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Аналитика коллекции</h2>
+                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Добавьте детали в коллекцию, чтобы увидеть аналитику</p>
                 </div>
             `;
         }
@@ -12927,16 +12902,6 @@ document.addEventListener("click", async e => {
         localStorage.setItem('collectionSummaryExpanded', String(S.collectionSummaryExpanded));
         // Перерисовываем боковую панель для обновления UI
         renderSidebar();
-        return;
-    }
-    
-    // Обработка кликов по инструментам
-    if (t.closest('[data-tool]')) {
-        e.preventDefault();
-        e.stopPropagation();
-        const tool = t.closest('[data-tool]').dataset.tool;
-        S.tool = tool;
-        updateUI();
         return;
     }
     
