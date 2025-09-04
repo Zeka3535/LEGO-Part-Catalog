@@ -298,6 +298,13 @@
     border-bottom-right-radius: 0.5rem;
 }
 
+/* Ограничение палитры цветов на мобильных устройствах до 3 рядов */
+@media (max-width: 768px) {
+    .color-palette-container {
+        max-height: 7.5rem; /* 3 ряда * (32px иконка + 12px gap) + 12px padding = 120px = 7.5rem */
+    }
+}
+
 /* Стили для индикаторов в палитре цветов */
 .indicator-white {
     width: 0.5rem;
