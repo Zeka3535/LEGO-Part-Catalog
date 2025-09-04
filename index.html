@@ -3254,6 +3254,7 @@ const API_PART_COLOR_FETCH_LIMIT = 100;
 let lastApiRequestTime = 0;
 const I_Cat = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>`;
 const I_Coll = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polygon points="2 17 12 22 22 17"></polygon><polygon points="2 12 12 17 22 12"></polygon></svg>`;
+const I_Analytics = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path></svg>`;
 const I_Set = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
 const I_Plus = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
 const I_Minus = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
@@ -3554,6 +3555,7 @@ const modalManager = new ModalManager();
 let S = {
     view: 'collection',
     subView: 'parts',
+    tool: 'analytics',
     catTree: [],
     expCats: new Set,
     selCatId: null,
@@ -3572,6 +3574,11 @@ let S = {
     totalPartsInCatalog: 0, // Общее количество всех деталей в каталоге (не изменяется при смене категории/темы)
     totalSetsInCatalog: 0, // Общее количество всех наборов в каталоге (не изменяется при смене темы)
     collectionSummaryExpanded: false, // Сворачивание/разворачивание сводки коллекции
+    analyticsData: null, // Кэшированные данные аналитики
+    analyticsLoading: false, // Флаг загрузки аналитики
+    tempRarityFilter: null, // Временный фильтр по редкости
+    tempColorFilter: null, // Временный фильтр по цвету
+    tempCategoryFilter: null, // Временный фильтр по категории
     searchSetRes: null,
     searchMinifigRes: null,
     loading: !1,
@@ -3744,6 +3751,534 @@ function saveState() {
         
     // Все данные будут загружены заново из CSV файлов при каждом запуске
     console.log('User collections and favorites saved to localStorage');
+}
+
+// Функции аналитики и определения редкости деталей
+// Новая система определения редкости на основе анализа коллекции
+function calculatePartRarity(partNum, colorId) {
+    if (!PART_MAP[partNum]) {
+        return 'unknown';
+    }
+    
+    const part = PART_MAP[partNum];
+    
+    // Используем комбинацию факторов для определения редкости
+    let rarityScore = 0;
+    
+    // Фактор 1: Количество наборов (если доступно)
+    const numSets = parseInt(part.num_sets) || 0;
+    if (numSets > 0) {
+        if (numSets <= 10) rarityScore += 40;      // Очень редкие в наборах
+        else if (numSets <= 50) rarityScore += 30; // Редкие в наборах
+        else if (numSets <= 200) rarityScore += 20; // Средние в наборах
+        else if (numSets <= 500) rarityScore += 10; // Распространенные в наборах
+        // Очень распространенные не добавляют очков
+    }
+    
+    // Фактор 2: Размер детали (маленькие детали обычно более распространены)
+    const partName = part.name || '';
+    if (partName.includes('1 x 1') || partName.includes('1x1')) {
+        rarityScore -= 10; // Маленькие детали менее редкие
+    } else if (partName.includes('1 x 2') || partName.includes('1x2')) {
+        rarityScore -= 5; // Средние детали
+    } else if (partName.includes('2 x 2') || partName.includes('2x2')) {
+        rarityScore += 5; // Большие детали более редкие
+    } else if (partName.includes('4 x 4') || partName.includes('4x4') || 
+               partName.includes('6 x 6') || partName.includes('6x6')) {
+        rarityScore += 15; // Очень большие детали
+    }
+    
+    // Фактор 3: Тип детали (специальные детали более редкие)
+    if (partName.includes('Tile') || partName.includes('Plate')) {
+        rarityScore -= 5; // Плитки и пластины более распространены
+    } else if (partName.includes('Brick')) {
+        // Кирпичи нейтральны
+    } else if (partName.includes('Technic') || partName.includes('Hinge') || 
+               partName.includes('Gear') || partName.includes('Axle')) {
+        rarityScore += 10; // Технические детали более редкие
+    } else if (partName.includes('Minifig') || partName.includes('Figure')) {
+        rarityScore += 20; // Детали минифигурок очень редкие
+    }
+    
+    // Фактор 4: Цвет (редкие цвета увеличивают редкость)
+    if (COLOR_MAP[colorId]) {
+        const colorName = COLOR_MAP[colorId].name || '';
+        if (colorName.includes('Trans') || colorName.includes('Chrome') || 
+            colorName.includes('Pearl') || colorName.includes('Metallic')) {
+            rarityScore += 15; // Прозрачные и металлические цвета редкие
+        } else if (colorName.includes('Bright') || colorName.includes('Neon')) {
+            rarityScore += 5; // Яркие цвета немного более редкие
+        }
+    }
+    
+    // Определяем редкость на основе итогового балла
+    if (rarityScore >= 50) return 'legendary';    // Легендарная (≥50 баллов)
+    if (rarityScore >= 30) return 'epic';         // Эпическая (30-49 баллов)
+    if (rarityScore >= 15) return 'rare';         // Редкая (15-29 баллов)
+    if (rarityScore >= 5) return 'uncommon';      // Необычная (5-14 баллов)
+    return 'common';                               // Обычная (<5 баллов)
+}
+
+function getRarityColor(rarity) {
+    const colors = {
+        'legendary': '#FFD700',  // Золотой
+        'epic': '#9D4EDD',      // Фиолетовый
+        'rare': '#0077BE',      // Синий
+        'uncommon': '#2ECC71',  // Зеленый
+        'common': '#95A5A6',    // Серый
+        'unknown': '#7F8C8D'    // Темно-серый
+    };
+    return colors[rarity] || colors['unknown'];
+}
+
+function getRarityName(rarity) {
+    const names = {
+        'legendary': 'Легендарная',
+        'epic': 'Эпическая',
+        'rare': 'Редкая',
+        'uncommon': 'Необычная',
+        'common': 'Обычная',
+        'unknown': 'Неизвестно'
+    };
+    return names[rarity] || names['unknown'];
+}
+
+function analyzeCollection() {
+    if (S.analyticsLoading) return;
+    
+    S.analyticsLoading = true;
+    
+    // Отладочная информация для понимания новой системы редкости
+    const rarityDistribution = {
+        legendary: 0,
+        epic: 0,
+        rare: 0,
+        uncommon: 0,
+        common: 0,
+        unknown: 0
+    };
+    
+    const sampleParts = [];
+    let count = 0;
+    for (const [partNum, colors] of Object.entries(S.coll)) {
+        if (count >= 10) break; // Берем только первые 10 для примера
+        const part = PART_MAP[partNum];
+        if (part) {
+            for (const [colorId, quantity] of Object.entries(colors)) {
+                const rarity = calculatePartRarity(partNum, colorId);
+                rarityDistribution[rarity]++;
+                if (count < 5) {
+                    sampleParts.push({
+                        name: part.name,
+                        color: COLOR_MAP[colorId]?.name || 'Unknown',
+                        rarity: rarity,
+                        numSets: parseInt(part.num_sets) || 0
+                    });
+                }
+                count++;
+            }
+        }
+    }
+    
+    console.log('📊 Новая система редкости - распределение:', rarityDistribution);
+    console.log('📊 Примеры деталей:', sampleParts);
+    
+    try {
+        const analytics = {
+            totalParts: 0,
+            totalUniqueParts: 0,
+            totalSets: Object.keys(S.setColl).length,
+            totalMinifigs: Object.keys(S.minifigColl).length,
+            rarityStats: {
+                legendary: 0,
+                epic: 0,
+                rare: 0,
+                uncommon: 0,
+                common: 0,
+                unknown: 0
+            },
+            rareParts: [],
+            colorStats: {},
+            categoryStats: {},
+            yearStats: {},
+            topRareParts: []
+        };
+        
+        // Анализируем детали в коллекции
+        for (const [partNum, colors] of Object.entries(S.coll)) {
+            const part = PART_MAP[partNum];
+            if (!part) continue;
+            
+            analytics.totalUniqueParts++;
+            
+            for (const [colorId, quantity] of Object.entries(colors)) {
+                analytics.totalParts += quantity;
+                
+                const rarity = calculatePartRarity(partNum, colorId);
+                analytics.rarityStats[rarity] += quantity;
+                
+                // Собираем редкие детали
+                if (['legendary', 'epic', 'rare'].includes(rarity)) {
+                    const color = COLOR_MAP[colorId];
+                    analytics.rareParts.push({
+                        partNum,
+                        partName: part.name,
+                        colorId,
+                        colorName: color?.name || 'Неизвестный цвет',
+                        quantity,
+                        rarity,
+                        rarityName: getRarityName(rarity),
+                        rarityColor: getRarityColor(rarity)
+                    });
+                }
+                
+                // Статистика по цветам
+                const colorName = COLOR_MAP[colorId]?.name || 'Неизвестный';
+                analytics.colorStats[colorName] = (analytics.colorStats[colorName] || 0) + quantity;
+                
+                // Статистика по категориям
+                const category = flatCategories.find(cat => cat.id === part.part_cat_id);
+                const categoryName = category?.name || 'Неизвестная';
+                analytics.categoryStats[categoryName] = (analytics.categoryStats[categoryName] || 0) + quantity;
+            }
+        }
+        
+        // Анализируем наборы в коллекции
+        for (const [setNum, setData] of Object.entries(S.setColl)) {
+            const set = SET_MAP[setNum];
+            if (set) {
+                const year = set.year;
+                analytics.yearStats[year] = (analytics.yearStats[year] || 0) + setData.qty;
+            }
+        }
+        
+        // Сортируем редкие детали по редкости и количеству
+        analytics.rareParts.sort((a, b) => {
+            const rarityOrder = { 'legendary': 0, 'epic': 1, 'rare': 2 };
+            const aOrder = rarityOrder[a.rarity] ?? 999;
+            const bOrder = rarityOrder[b.rarity] ?? 999;
+            if (aOrder !== bOrder) return aOrder - bOrder;
+            return b.quantity - a.quantity;
+        });
+        
+        // Топ-10 самых редких деталей
+        analytics.topRareParts = analytics.rareParts.slice(0, 10);
+        
+        // Вычисляем общее количество уникальных цветов и категорий
+        analytics.totalColors = Object.keys(analytics.colorStats).length;
+        analytics.totalCategories = Object.keys(analytics.categoryStats).length;
+        
+        S.analyticsData = analytics;
+        console.log('✅ Анализ коллекции завершен:', analytics);
+        
+    } catch (error) {
+        console.error('❌ Ошибка при анализе коллекции:', error);
+        S.analyticsData = null;
+    } finally {
+        S.analyticsLoading = false;
+    }
+}
+
+// Функция для применения временных фильтров к коллекции
+function applyTemporaryFilters() {
+    // Сбрасываем предыдущие фильтры
+    S.selCollCatId = null;
+    S.q = '';
+    
+    // Применяем временные фильтры
+    if (S.tempRarityFilter) {
+        console.log('🎯 Применяем фильтр по редкости:', S.tempRarityFilter);
+    }
+    
+    if (S.tempColorFilter) {
+        console.log('🎯 Применяем фильтр по цвету:', S.tempColorFilter);
+    }
+    
+    if (S.tempCategoryFilter) {
+        console.log('🎯 Применяем фильтр по категории:', S.tempCategoryFilter);
+        S.selCollCatId = parseInt(S.tempCategoryFilter);
+    }
+    
+    // Обновляем UI
+    renderSidebar();
+}
+
+// Функция для показа временного сообщения
+function showTemporaryMessage(message) {
+    // Создаем элемент уведомления
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity';
+    notification.style.opacity = '0';
+    notification.textContent = message;
+    
+    // Добавляем в DOM
+    document.body.appendChild(notification);
+    
+    // Анимируем появление
+    setTimeout(() => {
+        notification.style.opacity = '1';
+    }, 100);
+    
+    // Убираем через 3 секунды
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Функция для очистки временных фильтров
+function clearTemporaryFilters() {
+    S.tempRarityFilter = null;
+    S.tempColorFilter = null;
+    S.tempCategoryFilter = null;
+}
+
+function renderAnalyticsContent(analytics) {
+    // Отладочная информация убрана
+    
+    const rarityStatsHtml = Object.entries(analytics.rarityStats)
+        .filter(([rarity, count]) => count > 0)
+        .map(([rarity, count]) => {
+            const color = getRarityColor(rarity);
+            const name = getRarityName(rarity);
+            const percentage = analytics.totalParts > 0 ? ((count / analytics.totalParts) * 100) : 0;
+            return `
+                <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+                     style="--hover-shadow-color: ${color}40;"
+                     onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+                     onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+                     data-action="filter-by-rarity" data-rarity="${rarity}" title="Показать все ${name.toLowerCase()} детали">
+                    <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                        <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 shadow-lg" style="background-color: ${color}"></div>
+                        <div class="min-w-0 flex-1">
+                            <span class="text-gray-200 font-medium text-sm sm:text-base xl:text-lg truncate">${name}</span>
+                            <div class="mt-1">
+                                <div style="width: 100%; height: 8px; background-color: #2d3748; border-radius: 4px; overflow: hidden;">
+                                    <div style="height: 100%; background-color: ${color}; width: ${Math.max(percentage, 1)}%; border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-2">
+                        <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${count}</div>
+                        <div class="text-xs xl:text-sm text-gray-400">${percentage.toFixed(1)}%</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    const topRarePartsHtml = analytics.topRareParts.map(part => `
+        <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+             style="--hover-shadow-color: ${part.rarityColor}40;"
+             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             data-action="open-part-modal" data-part-id="${part.partNum}" data-color-id="${part.colorId}" 
+             title="Открыть деталь: ${part.partName} (${part.colorName})">
+            <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 shadow-lg" style="background-color: ${part.rarityColor}"></div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-white font-medium text-xs sm:text-sm xl:text-base truncate">${part.partName}</div>
+                    <div class="text-xs xl:text-sm text-gray-400 truncate">${part.colorName}</div>
+                    <div class="mt-1">
+                        <span class="inline-block px-2 py-1 text-xs rounded-full" style="background-color: ${part.rarityColor}20; color: ${part.rarityColor}">${part.rarityName}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+                <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${part.quantity}</div>
+            </div>
+        </div>
+    `).join('');
+
+    const colorStatsHtml = Object.entries(analytics.colorStats)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([colorName, count]) => {
+            // Находим colorId по имени цвета
+            const colorId = Object.keys(COLOR_MAP).find(id => COLOR_MAP[id]?.name === colorName);
+            const maxCount = Math.max(...Object.values(analytics.colorStats));
+            const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+            const totalPercentage = analytics.totalParts > 0 ? ((count / analytics.totalParts) * 100) : 0;
+            const totalPercentageDisplay = totalPercentage.toFixed(1);
+            const colorHex = COLOR_MAP[colorId]?.rgb ? `#${COLOR_MAP[colorId].rgb}` : '#666666';
+            
+            
+            return `
+                <div class="flex items-center justify-between p-1.5 sm:p-2 xl:p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+                     style="--hover-shadow-color: ${colorHex}40;"
+                     onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+                     onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+                     data-action="filter-by-color" data-color-id="${colorId || ''}" data-color-name="${colorName}" 
+                     title="Показать все детали цвета: ${colorName}">
+                    <div class="flex items-center gap-1.5 sm:gap-2 xl:gap-3 min-w-0 flex-1">
+                        <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 xl:w-4 xl:h-4 rounded-full flex-shrink-0 shadow-lg" style="background-color: ${colorHex}"></div>
+                        <div class="min-w-0 flex-1">
+                            <span class="text-gray-200 text-xs sm:text-sm xl:text-base truncate">${colorName}</span>
+                            <div class="mt-0.5 sm:mt-1">
+                                <div style="width: 100%; height: 6px; background-color: #2d3748; border-radius: 3px; overflow: hidden;">
+                                    <div style="height: 100%; background-color: ${colorHex}; width: ${Math.max(totalPercentage, 1)}%; border-radius: 3px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-1.5 sm:ml-2">
+                        <div class="text-white font-bold text-xs sm:text-sm xl:text-lg">${count}</div>
+                        <div class="text-xs xl:text-sm text-gray-400">${totalPercentageDisplay}%</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    const categoryStatsHtml = Object.entries(analytics.categoryStats)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([categoryName, count]) => {
+            // Находим categoryId по имени категории
+            const categoryId = flatCategories.find(cat => cat.name === categoryName)?.id;
+            const maxCount = Math.max(...Object.values(analytics.categoryStats));
+            const percentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+            const totalPercentage = analytics.totalParts > 0 ? ((count / analytics.totalParts) * 100) : 0;
+            const totalPercentageDisplay = totalPercentage.toFixed(1);
+            
+            return `
+                <div class="flex items-center justify-between p-1.5 sm:p-2 xl:p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+                     style="--hover-shadow-color: #3b82f640;"
+                     onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+                     onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+                     data-action="filter-by-category" data-category-id="${categoryId || ''}" data-category-name="${categoryName}" 
+                     title="Показать все детали категории: ${categoryName}">
+                    <div class="flex items-center gap-1.5 sm:gap-2 xl:gap-3 min-w-0 flex-1">
+                        <div class="w-2.5 h-2.5 sm:w-3 sm:h-3 xl:w-4 xl:h-4 rounded-full flex-shrink-0 bg-blue-500 shadow-lg"></div>
+                        <div class="min-w-0 flex-1">
+                            <span class="text-gray-200 text-xs sm:text-sm xl:text-base truncate">${categoryName}</span>
+                            <div class="mt-0.5 sm:mt-1">
+                                <div style="width: 100%; height: 6px; background-color: #2d3748; border-radius: 3px; overflow: hidden;">
+                                    <div style="height: 100%; background-color: #3b82f6; width: ${Math.max(totalPercentage, 1)}%; border-radius: 3px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right flex-shrink-0 ml-1.5 sm:ml-2">
+                        <div class="text-white font-bold text-xs sm:text-sm xl:text-lg">${count}</div>
+                        <div class="text-xs xl:text-sm text-gray-400">${totalPercentageDisplay}%</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+    return `
+        <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
+            <!-- Общая статистика -->
+            <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 sm:gap-3 xl:gap-6">
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-blue-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalParts}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Всего деталей</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-green-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalUniqueParts}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Уникальных</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Set("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-green-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalSets}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Наборов</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Minifig("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-purple-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalMinifigs}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Минифигурок</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Tech("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalColors || 0}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Цветов</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Cat("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-orange-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalCategories || 0}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Категорий</div>
+                </div>
+            </div>
+
+            <!-- Основной контент в две колонки на больших экранах -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 xl:gap-8">
+                <!-- Левая колонка -->
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Редкие детали -->
+                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                            <span class="text-xl sm:text-2xl xl:text-3xl">💎</span>
+                            <span class="hidden sm:inline">Редкие детали в коллекции</span>
+                            <span class="sm:hidden">Редкие детали</span>
+                        </h3>
+                        <div class="space-y-2 sm:space-y-3 xl:space-y-4">
+                            ${analytics.rareParts.length > 0 ? rarityStatsHtml : '<p class="text-gray-400 text-center py-3 sm:py-4 xl:py-6 text-sm xl:text-base">Редких деталей не найдено</p>'}
+                        </div>
+                    </div>
+
+                    <!-- Топ редких деталей -->
+                    ${analytics.topRareParts.length > 0 ? `
+                        <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                            <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                                <span class="text-xl sm:text-2xl xl:text-3xl">🏆</span>
+                                <span class="hidden sm:inline">Топ-10 самых редких деталей</span>
+                                <span class="sm:hidden">Топ редких деталей</span>
+                            </h3>
+                            <div class="space-y-2 sm:space-y-3 xl:space-y-4">
+                                ${topRarePartsHtml}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Правая колонка -->
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Статистика по цветам -->
+                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                            <span class="text-xl sm:text-2xl xl:text-3xl">🎨</span>
+                            <span class="hidden sm:inline">Топ-10 цветов</span>
+                            <span class="sm:hidden">Топ цветов</span>
+                        </h3>
+                        <div class="space-y-1 sm:space-y-2 xl:space-y-3">
+                            ${colorStatsHtml}
+                        </div>
+                    </div>
+
+                    <!-- Статистика по категориям -->
+                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                            <span class="text-xl sm:text-2xl xl:text-3xl">📦</span>
+                            <span class="hidden sm:inline">Топ-10 категорий</span>
+                            <span class="sm:hidden">Топ категорий</span>
+                        </h3>
+                        <div class="space-y-1 sm:space-y-2 xl:space-y-3">
+                            ${categoryStatsHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    `;
 }
 const sidebarEl = document.getElementById('sidebar-container'),
     backdropEl = document.getElementById('sidebar-backdrop'),
@@ -6027,6 +6562,19 @@ function renderSidebar() {
         }).join("")
             }
         }
+    } else if ("tools" === S.view) {
+        d = "Инструменты";
+        c = `
+            <div class="space-y-1">
+                <button data-tool="analytics" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${S.tool === "analytics" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"}">
+                    <div class="flex items-center">
+                        ${I_Analytics("w-5 h-5 mr-3 text-blue-400 flex-shrink-0")}
+                        <span class="font-semibold text-gray-200 break-words leading-tight">Аналитика</span>
+                    </div>
+                </button>
+                <!-- Место для будущих инструментов -->
+            </div>
+        `;
     }
     sidebarEl.innerHTML = `
         <div class="flex items-center justify-between mb-4 flex-shrink-0">
@@ -6048,8 +6596,10 @@ function renderSidebar() {
         <div class="space-y-2 mb-4 flex-shrink-0">
             <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3")}<span>Каталог</span></button>
             <button data-view="collection" class="${n("collection")}" title="Переключиться на просмотр вашей личной коллекции">${I_Coll("w-5 h-5 mr-3")}<span>Коллекция</span></button>
+            <button data-view="tools" class="${n("tools")}" title="Инструменты для анализа и работы с коллекцией">${I_Analytics("w-5 h-5 mr-3")}<span>Инструменты</span></button>
         </div>
 
+        ${S.view !== "tools" ? `
         <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1">
             <button data-sub-view="parts" class="${r("parts")}" title="Показать детали" data-long-press="parts">
                 ${I_Brick("w-5 h-5")}
@@ -6068,15 +6618,18 @@ function renderSidebar() {
                 ${s("minifigs",a,i)}
             </button>
         </div>
+        ` : ''}
         
 
         
+        ${S.view !== "tools" ? `
         <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar">
           <h2 class="text-lg font-semibold text-white mb-3">${d}</h2>
           <nav>
             <ul id="category-list" class="space-y-1">${c}</ul>
           </nav>
         </div>
+        ` : ''}
         
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4 space-y-4">
             ${"collection"===S.view?`
@@ -6159,10 +6712,21 @@ function renderSidebar() {
                 </div>
             </div>
             `:""}
+            ${S.view !== "tools" ? `
+            <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
+                ${I_Settings("w-5 h-5 mr-2")} Настройки
+            </button>
+            ` : ''}
+        </div>
+        
+        ${S.view === "tools" ? `
+        <!-- Кнопка настроек внизу только для аналитики -->
+        <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
                 ${I_Settings("w-5 h-5 mr-2")} Настройки
             </button>
         </div>
+        ` : ''}
       `
     // Восстанавливаем позицию прокрутки после перерисовки
     const scrollEl = document.getElementById('sidebar-scroll-container');
@@ -6340,6 +6904,17 @@ function renderPartCard(e, t, o, l, a = 0) {
         s = ""; // ВРЕМЕННО ОТКЛЮЧЕНО: l ? S.getAnimationDelay(a) : "";
     let c = "";
     o > 0 && (c = `<div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md pointer-events-none">${o}</div>`);
+    
+    // Добавляем индикатор редкости для деталей в коллекции
+    let rarityIndicator = "";
+    if (i && t) {
+        const rarity = calculatePartRarity(e.id, t.id);
+        if (['legendary', 'epic', 'rare'].includes(rarity)) {
+            const rarityColor = getRarityColor(rarity);
+            const rarityName = getRarityName(rarity);
+            rarityIndicator = `<div class="absolute top-3 right-3 w-3 h-3 rounded-full border-2 border-white shadow-md pointer-events-none" style="background-color: ${rarityColor}" title="${rarityName}"></div>`;
+        }
+    }
             // ИСПРАВЛЕНО: Теперь правильно использует part_img_url из inventory_parts.csv как основной источник изображения
     let d = e.part_img_url || e.rebrickable_img_url;
     
@@ -6379,6 +6954,7 @@ function renderPartCard(e, t, o, l, a = 0) {
             <div data-group-id="${n}" data-part-id="${e.id}" ${i && t ?`data-color-id="${t.id}"`:""} style="${s}" class="part-card ${r} relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
                 ${i && t ?"" :""}
                 ${c}
+                ${rarityIndicator}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg card-image-container">
                     <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
                         <img ${getPartImageAttrs(e.id, d)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
@@ -6495,7 +7071,37 @@ function renderAppliedFilters() {
                     <button data-action="remove-filter" data-filter-type="sortBy" class="text-gray-200 hover:bg-gray-500/50 rounded-full p-0.5">${I_X("w-4 h-4")}</button>
                 </div>
             `;
-        e = [c, i, n].filter(Boolean).join(""), o = (!t && S.sortBy !== "popularity" && !S.selFigNum) || (l.length > 0 && !S.selFigNum) || (a && "catalog" === S.view && a === true && !S.selFigNum)
+        // Добавляем временные фильтры из аналитики
+        const tempFilters = [];
+        if (S.tempRarityFilter) {
+            tempFilters.push(`
+                <div class="flex items-center bg-purple-900/50 text-purple-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">Редкость: ${getRarityName(S.tempRarityFilter)}</span>
+                    <button data-action="clear-temp-filters" class="text-purple-200 hover:bg-purple-500/50 rounded-full p-0.5">${I_X("w-4 h-4")}</button>
+                </div>
+            `);
+        }
+        if (S.tempColorFilter) {
+            const colorName = COLOR_MAP[S.tempColorFilter]?.name || 'Неизвестный цвет';
+            tempFilters.push(`
+                <div class="flex items-center bg-purple-900/50 text-purple-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">Цвет: ${colorName}</span>
+                    <button data-action="clear-temp-filters" class="text-purple-200 hover:bg-purple-500/50 rounded-full p-0.5">${I_X("w-4 h-4")}</button>
+                </div>
+            `);
+        }
+        if (S.tempCategoryFilter) {
+            const category = flatCategories.find(cat => cat.id === parseInt(S.tempCategoryFilter));
+            const categoryName = category?.name || 'Неизвестная';
+            tempFilters.push(`
+                <div class="flex items-center bg-purple-900/50 text-purple-200 rounded-full pl-3 pr-2 py-1 text-sm">
+                    <span class="mr-2">Категория: ${categoryName}</span>
+                    <button data-action="clear-temp-filters" class="text-purple-200 hover:bg-purple-500/50 rounded-full p-0.5">${I_X("w-4 h-4")}</button>
+                </div>
+            `);
+        }
+        
+        e = [c, i, n, ...tempFilters].filter(Boolean).join(""), o = (!t && S.sortBy !== "popularity" && !S.selFigNum) || (l.length > 0 && !S.selFigNum) || (a && "catalog" === S.view && a === true && !S.selFigNum) || tempFilters.length > 0
     }
     // Дополнительная проверка: не показывать кнопку "Очистить все" при показе связанных наборов
     // Также проверяем, что есть хотя бы один активный фильтр для отображения
@@ -7080,6 +7686,22 @@ function renderMainContent() {
             i && (filteredParts = e.filter(({
                 part: e
             }) => e.name.toLowerCase().includes(i) || e.id.toLowerCase().includes(i)));
+            
+            // Применяем временные фильтры из аналитики
+            if (S.tempRarityFilter) {
+                filteredParts = filteredParts.filter(({part, color}) => 
+                    calculatePartRarity(part.id, color.id) === S.tempRarityFilter
+                );
+            }
+            
+            if (S.tempColorFilter) {
+                filteredParts = filteredParts.filter(({color}) => 
+                    color.id === S.tempColorFilter
+                );
+            }
+            
+            // tempCategoryFilter уже обрабатывается через S.selCollCatId
+            
             t = filteredParts;
             switch (S.sortBy) {
                 case "alpha_asc":
@@ -7263,6 +7885,43 @@ function renderMainContent() {
                 e = `<div class="${n} p-4">${shown.map((e,t)=>o(e,true,t)).join("")}</div>`;
             }
             // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
+        }
+    } 
+    if ("tools" === S.view) {
+        if (S.tool === "analytics") {
+            // Запускаем анализ коллекции каждый раз при открытии аналитики
+            if (!S.analyticsLoading) {
+                analyzeCollection();
+            }
+        
+            if (S.analyticsLoading) {
+                e = `
+                    <div class="flex flex-col items-center justify-center h-full p-8 text-center">
+                        <div class="loader mb-4"></div>
+                        <h2 class="text-2xl font-bold text-gray-200 mb-2">Анализ коллекции</h2>
+                        <p class="text-gray-400">Анализируем редкость деталей и статистику...</p>
+                    </div>
+                `;
+            } else if (S.analyticsData) {
+                e = renderAnalyticsContent(S.analyticsData);
+            } else {
+                e = `
+                    <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
+                        <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📊</div>
+                        <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Аналитика коллекции</h2>
+                        <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Добавьте детали в коллекцию, чтобы увидеть аналитику</p>
+                    </div>
+                `;
+            }
+        } else {
+            // Показываем заглушку для других инструментов
+            e = `
+                <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
+                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">🔧</div>
+                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Инструменты</h2>
+                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Выберите инструмент в боковой панели</p>
+                </div>
+            `;
         }
     }
     mainEl.innerHTML = renderAppliedFilters() + e;
@@ -11787,6 +12446,95 @@ document.addEventListener("click", async e => {
         return handleFeelingLucky();
     }
     
+    
+    // Фильтрация по редкости из аналитики
+    if (t.closest('[data-action="filter-by-rarity"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const rarity = t.closest('[data-action="filter-by-rarity"]').dataset.rarity;
+        const rarityName = getRarityName(rarity);
+        
+        // Переключаемся на коллекцию и применяем фильтр по редкости
+        clearTemporaryFilters();
+        S.view = 'collection';
+        S.subView = 'parts';
+        S.tempRarityFilter = rarity;
+        
+        applyTemporaryFilters();
+        updateUI();
+        return;
+    }
+    
+    // Фильтрация по цвету из аналитики
+    if (t.closest('[data-action="filter-by-color"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const colorId = t.closest('[data-action="filter-by-color"]').dataset.colorId;
+        const colorName = t.closest('[data-action="filter-by-color"]').dataset.colorName;
+        
+        // Переключаемся на коллекцию и применяем фильтр по цвету
+        clearTemporaryFilters();
+        S.view = 'collection';
+        S.subView = 'parts';
+        S.tempColorFilter = colorId;
+        
+        applyTemporaryFilters();
+        updateUI();
+        return;
+    }
+    
+    // Фильтрация по категории из аналитики
+    if (t.closest('[data-action="filter-by-category"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const categoryId = t.closest('[data-action="filter-by-category"]').dataset.categoryId;
+        const categoryName = t.closest('[data-action="filter-by-category"]').dataset.categoryName;
+        
+        // Переключаемся на коллекцию и применяем фильтр по категории
+        clearTemporaryFilters();
+        S.view = 'collection';
+        S.subView = 'parts';
+        S.tempCategoryFilter = categoryId;
+        
+        applyTemporaryFilters();
+        updateUI();
+        return;
+    }
+    
+    // Открытие модалки детали из аналитики
+    if (t.closest('[data-action="open-part-modal"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const partId = t.closest('[data-action="open-part-modal"]').dataset.partId;
+        const colorId = t.closest('[data-action="open-part-modal"]').dataset.colorId;
+        
+        if (partId) {
+            const part = PART_MAP[partId];
+            if (part) {
+                const groupId = getGroupId(part.part_num || partId);
+                openModalForPart(part.id || part.part_num || partId, groupId, [part]);
+                
+                // Устанавливаем выбранный цвет, если указан
+                if (colorId) {
+                    S.partModal.selColorId = String(colorId);
+                    S.partModal.qty = S.coll[part.id]?.[S.partModal.selColorId] || 0;
+                    updateModalPartially({ controls: true, image: true });
+                    fetchPartColorSpecifics(part.id, S.partModal.selColorId);
+                }
+            }
+        }
+        return;
+    }
+    
+    // Очистка временных фильтров
+    if (t.closest('[data-action="clear-temp-filters"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        clearTemporaryFilters();
+        updateUI();
+        return;
+    }
+    
     // Открытие модалки детали из инвентаря набора/минифигурки
     const invPartEl = t.closest('[data-action="open-part-from-inventory"]');
     const clickedActionEl = t.closest('[data-action]');
@@ -11939,6 +12687,10 @@ document.addEventListener("click", async e => {
             updateLoadingStatus("Переключение на коллекцию...", 50, "Загрузка данных коллекции");
         } else if (e === 'catalog') {
             updateLoadingStatus("Переключение на каталог...", 50, "Загрузка каталога");
+        } else if (e === 'analytics') {
+            // Очищаем временные фильтры при переключении на аналитику
+            clearTemporaryFilters();
+            updateLoadingStatus("Переключение на аналитику...", 50, "Подготовка анализа коллекции");
         }
         
         // Отключаем анимации при переключении вкладок для улучшения производительности
@@ -11960,9 +12712,9 @@ document.addEventListener("click", async e => {
         const shouldKeepSelFigNum = (e === 'catalog' && S.subView === 'sets' && S.selFigNum);
         const newSelFigNum = shouldKeepSelFigNum ? S.selFigNum : null;
         
-        // Если переключаемся на каталог, принудительно закрываем все модальные окна
-        if (e === 'catalog') {
-            console.log('Switching to catalog, force closing all modals');
+        // Если переключаемся на каталог или аналитику, принудительно закрываем все модальные окна
+        if (e === 'catalog' || e === 'analytics') {
+            console.log(`Switching to ${e}, force closing all modals`);
             modalManager.closeAllModals();
             
             // Скрываем указатель при переключении на каталог (всегда, так как закрываем все модальные окна)
@@ -12175,6 +12927,16 @@ document.addEventListener("click", async e => {
         localStorage.setItem('collectionSummaryExpanded', String(S.collectionSummaryExpanded));
         // Перерисовываем боковую панель для обновления UI
         renderSidebar();
+        return;
+    }
+    
+    // Обработка кликов по инструментам
+    if (t.closest('[data-tool]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const tool = t.closest('[data-tool]').dataset.tool;
+        S.tool = tool;
+        updateUI();
         return;
     }
     
@@ -13171,6 +13933,9 @@ document.addEventListener("click", async e => {
             S.filters.inCollectionOnly = !1;
             S.sortBy = S.q ? "relevance" : "popularity";
         }
+        
+        // Очищаем временные фильтры из аналитики
+        clearTemporaryFilters();
         
         // Сбрасываем случайное изображение минифигурки при удалении всех фильтров
         resetRandomMinifigImage();
@@ -16877,6 +17642,7 @@ function animateCloseButtonClick(button) {
 
     console.log('🏁 КОНЕЦ СКРИПТА СИСТЕМЫ НЕАКТИВНОСТИ');
 
+
   </script>
   
   <!-- Указатель для sidebar-toggle на малых устройствах -->
@@ -16886,6 +17652,7 @@ function animateCloseButtonClick(button) {
       <div class="sidebar-hint-title">Навигация</div>
       <div class="sidebar-hint-text">Используйте кнопку меню для открытия боковой панели с каталогом и категориями</div>
   </div>
+
 
 </body>
 </html>
