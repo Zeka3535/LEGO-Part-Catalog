@@ -3576,6 +3576,9 @@ let S = {
     collectionSummaryExpanded: false, // Сворачивание/разворачивание сводки коллекции
     analyticsData: null, // Кэшированные данные аналитики
     analyticsLoading: false, // Флаг загрузки аналитики
+    analyticsSubView: 'parts', // Подкатегория аналитики: 'parts', 'sets', 'minifigs'
+    analyticsLastUpdate: 0, // Время последнего обновления аналитики
+    collectionLastUpdate: 0, // Время последнего изменения коллекции
     tempRarityFilter: null, // Временный фильтр по редкости
     tempColorFilter: null, // Временный фильтр по цвету
     tempCategoryFilter: null, // Временный фильтр по категории
@@ -3901,7 +3904,25 @@ function analyzeCollection() {
             colorStats: {},
             categoryStats: {},
             yearStats: {},
-            topRareParts: []
+            topRareParts: [],
+            // Новая аналитика для наборов
+            setsStats: {
+                totalSets: 0,
+                totalPieces: 0,
+                averagePieces: 0,
+                themeStats: {},
+                yearStats: {},
+                topThemes: [],
+                topSets: []
+            },
+            // Новая аналитика для минифигурок
+            minifigsStats: {
+                totalMinifigs: 0,
+                themeStats: {},
+                yearStats: {},
+                topThemes: [],
+                topMinifigs: []
+            }
         };
         
         // Анализируем детали в коллекции
@@ -3948,7 +3969,40 @@ function analyzeCollection() {
             const set = SET_MAP[setNum];
             if (set) {
                 const year = set.year;
+                const theme = THEME_MAP[set.theme_id];
+                const themeName = theme?.name || 'Неизвестная тема';
+                
+                // Общая статистика наборов
+                analytics.setsStats.totalSets += setData.qty;
+                analytics.setsStats.totalPieces += (set.num_parts || 0) * setData.qty;
+                
+                // Статистика по темам наборов
+                analytics.setsStats.themeStats[themeName] = (analytics.setsStats.themeStats[themeName] || 0) + setData.qty;
+                
+                // Статистика по годам наборов
+                analytics.setsStats.yearStats[year] = (analytics.setsStats.yearStats[year] || 0) + setData.qty;
+                
+                // Статистика по годам деталей (для совместимости)
                 analytics.yearStats[year] = (analytics.yearStats[year] || 0) + setData.qty;
+            }
+        }
+        
+        // Анализируем минифигурки в коллекции
+        for (const [minifigNum, minifigData] of Object.entries(S.minifigColl)) {
+            const minifig = MINIFIG_MAP[minifigNum];
+            if (minifig) {
+                const year = minifig.year;
+                const theme = THEME_MAP[minifig.theme_id];
+                const themeName = theme?.name || 'Неизвестная тема';
+                
+                // Общая статистика минифигурок
+                analytics.minifigsStats.totalMinifigs += minifigData.qty;
+                
+                // Статистика по темам минифигурок
+                analytics.minifigsStats.themeStats[themeName] = (analytics.minifigsStats.themeStats[themeName] || 0) + minifigData.qty;
+                
+                // Статистика по годам минифигурок
+                analytics.minifigsStats.yearStats[year] = (analytics.minifigsStats.yearStats[year] || 0) + minifigData.qty;
             }
         }
         
@@ -3964,11 +4018,66 @@ function analyzeCollection() {
         // Топ-10 самых редких деталей
         analytics.topRareParts = analytics.rareParts.slice(0, 10);
         
+        // Создаем топ-списки для наборов
+        analytics.setsStats.topThemes = Object.entries(analytics.setsStats.themeStats)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 10)
+            .map(([themeName, count]) => ({ themeName, count }));
+            
+        console.log('📊 S.setColl entries:', Object.entries(S.setColl).length);
+        analytics.setsStats.topSets = Object.entries(S.setColl)
+            .map(([setNum, setData]) => {
+                const set = SET_MAP[setNum];
+                return set ? {
+                    setNum,
+                    setName: set.name,
+                    year: set.year,
+                    numParts: set.num_parts || 0,
+                    quantity: setData.qty,
+                    theme: THEME_MAP[set.theme_id]?.name || 'Неизвестная тема'
+                } : null;
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.numParts - a.numParts)
+            .slice(0, 10);
+            
+        console.log('📊 Top sets generated:', analytics.setsStats.topSets.length);
+            
+        // Вычисляем среднее количество деталей в наборах
+        analytics.setsStats.averagePieces = analytics.setsStats.totalSets > 0 
+            ? Math.round(analytics.setsStats.totalPieces / analytics.setsStats.totalSets) 
+            : 0;
+        
+        // Создаем топ-списки для минифигурок
+        analytics.minifigsStats.topThemes = Object.entries(analytics.minifigsStats.themeStats)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 10)
+            .map(([themeName, count]) => ({ themeName, count }));
+            
+        console.log('📊 S.minifigColl entries:', Object.entries(S.minifigColl).length);
+        analytics.minifigsStats.topMinifigs = Object.entries(S.minifigColl)
+            .map(([minifigNum, minifigData]) => {
+                const minifig = MINIFIG_MAP[minifigNum];
+                return minifig ? {
+                    minifigNum,
+                    minifigName: minifig.name,
+                    year: minifig.year,
+                    quantity: minifigData.qty,
+                    theme: THEME_MAP[minifig.theme_id]?.name || 'Неизвестная тема'
+                } : null;
+            })
+            .filter(Boolean)
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 10);
+            
+        console.log('📊 Top minifigs generated:', analytics.minifigsStats.topMinifigs.length);
+        
         // Вычисляем общее количество уникальных цветов и категорий
         analytics.totalColors = Object.keys(analytics.colorStats).length;
         analytics.totalCategories = Object.keys(analytics.categoryStats).length;
         
         S.analyticsData = analytics;
+        S.analyticsLastUpdate = Date.now();
         console.log('✅ Анализ коллекции завершен:', analytics);
         
     } catch (error) {
@@ -4040,6 +4149,53 @@ function clearTemporaryFilters() {
 function renderAnalyticsContent(analytics) {
     // Отладочная информация убрана
     
+    // HTML для переключения подкатегорий
+    const subViewTabs = `
+        <div class="flex bg-gray-800 rounded-lg p-1 mb-4 sm:mb-6">
+            <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                S.analyticsSubView === 'parts' 
+                    ? 'bg-blue-600 text-white shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+            }" data-action="switch-analytics-subview" data-subview="parts">
+                <div class="flex items-center justify-center gap-2">
+                    ${I_Brick("w-4 h-4")}
+                    <span class="hidden sm:inline">Детали</span>
+                </div>
+            </button>
+            <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                S.analyticsSubView === 'sets' 
+                    ? 'bg-blue-600 text-white shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+            }" data-action="switch-analytics-subview" data-subview="sets">
+                <div class="flex items-center justify-center gap-2">
+                    ${I_Set("w-4 h-4")}
+                    <span class="hidden sm:inline">Наборы</span>
+                </div>
+            </button>
+            <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                S.analyticsSubView === 'minifigs' 
+                    ? 'bg-blue-600 text-white shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+            }" data-action="switch-analytics-subview" data-subview="minifigs">
+                <div class="flex items-center justify-center gap-2">
+                    ${I_Minifig("w-4 h-4")}
+                    <span class="hidden sm:inline">Минифигурки</span>
+                </div>
+            </button>
+        </div>
+    `;
+    
+    // Если выбрана подкатегория "Наборы"
+    if (S.analyticsSubView === 'sets') {
+        return renderSetsAnalytics(analytics, subViewTabs);
+    }
+    
+    // Если выбрана подкатегория "Минифигурки"
+    if (S.analyticsSubView === 'minifigs') {
+        return renderMinifigsAnalytics(analytics, subViewTabs);
+    }
+    
+    // По умолчанию показываем аналитику деталей
     const rarityStatsHtml = Object.entries(analytics.rarityStats)
         .filter(([rarity, count]) => count > 0)
         .map(([rarity, count]) => {
@@ -4172,6 +4328,7 @@ function renderAnalyticsContent(analytics) {
 
     return `
         <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
+            ${subViewTabs}
             <!-- Общая статистика -->
             <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 sm:gap-3 xl:gap-6">
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
@@ -4280,6 +4437,225 @@ function renderAnalyticsContent(analytics) {
         </div>
     `;
 }
+
+function renderSetsAnalytics(analytics, subViewTabs) {
+    const setsStats = analytics.setsStats;
+    
+    const topThemesHtml = setsStats.topThemes.map(theme => `
+        <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+             style="--hover-shadow-color: #3b82f640;"
+             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             title="Показать наборы темы: ${theme.themeName}">
+            <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-blue-500 shadow-lg"></div>
+                <div class="min-w-0 flex-1">
+                    <span class="text-gray-200 font-medium text-sm sm:text-base xl:text-lg truncate">${theme.themeName}</span>
+                </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+                <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${theme.count}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    const topSetsHtml = setsStats.topSets.map(set => `
+        <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+             style="--hover-shadow-color: #10b98140;"
+             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             data-action="open-set-modal" data-set-id="${set.setNum}" 
+             title="Открыть набор: ${set.setName}">
+            <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-green-500 shadow-lg"></div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-white font-medium text-xs sm:text-sm xl:text-base truncate">${set.setName}</div>
+                    <div class="text-xs xl:text-sm text-gray-400 truncate">${set.theme} (${set.year})</div>
+                </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+                <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${set.numParts}</div>
+                <div class="text-xs xl:text-sm text-gray-400">деталей</div>
+            </div>
+        </div>
+    `).join('');
+    
+    return `
+        <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
+            ${subViewTabs}
+            <!-- Общая статистика наборов -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-3 xl:gap-6">
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Set("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-green-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${setsStats.totalSets}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Всего наборов</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-blue-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${setsStats.totalPieces}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Всего деталей</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Tech("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${setsStats.averagePieces}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Среднее</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Cat("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-orange-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${Object.keys(setsStats.themeStats).length}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Тем</div>
+                </div>
+            </div>
+
+            <!-- Основной контент в две колонки -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 xl:gap-8">
+                <!-- Левая колонка -->
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Топ темы наборов -->
+                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                            <span class="text-xl sm:text-2xl xl:text-3xl">🎭</span>
+                            <span class="hidden sm:inline">Топ-10 тем наборов</span>
+                            <span class="sm:hidden">Топ темы</span>
+                        </h3>
+                        <div class="space-y-2 sm:space-y-3 xl:space-y-4">
+                            ${topThemesHtml}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Правая колонка -->
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Топ наборы по количеству деталей -->
+                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                            <span class="text-xl sm:text-2xl xl:text-3xl">🏗️</span>
+                            <span class="hidden sm:inline">Топ-10 наборов по деталям</span>
+                            <span class="sm:hidden">Топ наборы</span>
+                        </h3>
+                        <div class="space-y-2 sm:space-y-3 xl:space-y-4">
+                            ${topSetsHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderMinifigsAnalytics(analytics, subViewTabs) {
+    const minifigsStats = analytics.minifigsStats;
+    
+    const topThemesHtml = minifigsStats.topThemes.map(theme => `
+        <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+             style="--hover-shadow-color: #8b5cf640;"
+             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             title="Показать минифигурки темы: ${theme.themeName}">
+            <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-purple-500 shadow-lg"></div>
+                <div class="min-w-0 flex-1">
+                    <span class="text-gray-200 font-medium text-sm sm:text-base xl:text-lg truncate">${theme.themeName}</span>
+                </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+                <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${theme.count}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    const topMinifigsHtml = minifigsStats.topMinifigs.map(minifig => `
+        <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+             style="--hover-shadow-color: #f59e0b40;"
+             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             data-action="open-minifig-modal" data-minifig-id="${minifig.minifigNum}" 
+             title="Открыть минифигурку: ${minifig.minifigName}">
+            <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-amber-500 shadow-lg"></div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-white font-medium text-xs sm:text-sm xl:text-base truncate">${minifig.minifigName}</div>
+                    <div class="text-xs xl:text-sm text-gray-400 truncate">${minifig.theme} (${minifig.year})</div>
+                </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+                <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${minifig.quantity}</div>
+            </div>
+        </div>
+    `).join('');
+    
+    return `
+        <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
+            ${subViewTabs}
+            <!-- Общая статистика минифигурок -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-3 xl:gap-6">
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Minifig("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-purple-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${minifigsStats.totalMinifigs}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Всего минифигурок</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Cat("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-orange-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${Object.keys(minifigsStats.themeStats).length}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Тем</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Tech("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${Object.keys(minifigsStats.yearStats).length}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Лет</div>
+                </div>
+            </div>
+
+            <!-- Основной контент в две колонки -->
+            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 xl:gap-8">
+                <!-- Левая колонка -->
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Топ темы минифигурок -->
+                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                            <span class="text-xl sm:text-2xl xl:text-3xl">🎭</span>
+                            <span class="hidden sm:inline">Топ-10 тем минифигурок</span>
+                            <span class="sm:hidden">Топ темы</span>
+                        </h3>
+                        <div class="space-y-2 sm:space-y-3 xl:space-y-4">
+                            ${topThemesHtml}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Правая колонка -->
+                <div class="space-y-4 sm:space-y-6">
+                    <!-- Топ минифигурки по количеству -->
+                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                            <span class="text-xl sm:text-2xl xl:text-3xl">👥</span>
+                            <span class="hidden sm:inline">Топ-10 минифигурок</span>
+                            <span class="sm:hidden">Топ минифигурки</span>
+                        </h3>
+                        <div class="space-y-2 sm:space-y-3 xl:space-y-4">
+                            ${topMinifigsHtml}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 const sidebarEl = document.getElementById('sidebar-container'),
     backdropEl = document.getElementById('sidebar-backdrop'),
     headerEl = document.getElementById('header-container'),
@@ -7931,8 +8307,14 @@ function renderMainContent() {
     if ("tools" === S.view) {
         // Обрабатываем разные подкатегории инструментов
         if (S.toolSubView === 'analytics') {
-            // Запускаем анализ коллекции каждый раз при открытии аналитики
-            if (!S.analyticsLoading) {
+            // Запускаем анализ коллекции только если он еще не был выполнен или коллекция изменилась
+            const needsUpdate = !S.analyticsData || S.collectionLastUpdate > S.analyticsLastUpdate;
+            if (!S.analyticsLoading && needsUpdate) {
+                console.log('📊 Запускаем анализ коллекции...', {
+                    hasData: !!S.analyticsData,
+                    collectionUpdated: S.collectionLastUpdate,
+                    analyticsUpdated: S.analyticsLastUpdate
+                });
                 analyzeCollection();
             }
         } else if (S.toolSubView === 'export') {
@@ -10687,7 +11069,7 @@ async function processCsvData(content) {
 
 async function handleUpdateCollection(e, t, o) {
     S.coll[e] || (S.coll[e] = {});
-    o > 0 ? S.coll[e][t] = o : (delete S.coll[e][t], 0 === Object.keys(S.coll[e]).length && delete S.coll[e]), o > 0 && !PART_MAP[e]?.colorImages && await fetchColorDetailsForPart(e), saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), (function(){
+    o > 0 ? S.coll[e][t] = o : (delete S.coll[e][t], 0 === Object.keys(S.coll[e]).length && delete S.coll[e]), o > 0 && !PART_MAP[e]?.colorImages && await fetchColorDetailsForPart(e), S.collectionLastUpdate = Date.now(), saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), (function(){
         const card = mainEl.querySelector(`.part-card[data-part-id="${e}"]`);
         if (card && o > 0) {
             card.classList.add('collection-added');
@@ -10755,7 +11137,7 @@ function handleUpdateSetCollection(e, t) {
     const o = (S.setColl[e]?.qty || 0) > 0;
     t > 0 ? (S.setColl[e] = {
         qty: t
-        }, o || (fetchAllSetInventory(e).catch(t => console.error(`Failed to proactively fetch inventory for ${e}`, t)), fetchSetMinifigs(e).catch(t => console.error(`Failed to proactively fetch minifigs for ${e}`, t)))) : delete S.setColl[e], saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), mainEl.querySelector(`.set-card[data-set-num="${e}"]`)?.prepend(function() {
+        }, o || (fetchAllSetInventory(e).catch(t => console.error(`Failed to proactively fetch inventory for ${e}`, t)), fetchSetMinifigs(e).catch(t => console.error(`Failed to proactively fetch minifigs for ${e}`, t)))) : delete S.setColl[e], S.collectionLastUpdate = Date.now(), saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), mainEl.querySelector(`.set-card[data-set-num="${e}"]`)?.prepend(function() {
         if (t > 0) {
             let o = document.createElement("div");
             return o.className = "absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md", o.textContent = String(t), o
@@ -10812,7 +11194,7 @@ async function handleUpdateMinifigCollection(e, t, o = !0) {
     }
     t > 0 ? (S.minifigColl[e] = {
         qty: t
-    }, o && !MINIFIG_MAP[e]?.name && await fetchMinifigDetails(e)) : delete S.minifigColl[e], saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), (function(){
+    }, o && !MINIFIG_MAP[e]?.name && await fetchMinifigDetails(e)) : delete S.minifigColl[e], S.collectionLastUpdate = Date.now(), saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), (function(){
         const card = mainEl.querySelector(`.minifig-card[data-fig-num="${e}"]`);
         if (card && t > 0) {
             card.classList.add('collection-added');
@@ -12428,6 +12810,12 @@ document.addEventListener("click", async e => {
     
     // Логируем все клики для отладки
     console.log('🖱️ Click detected on:', t.tagName, t.className, t.dataset);
+    
+    // Проверяем, есть ли data-action у элемента или его родителей
+    const actionElement = t.closest('[data-action]');
+    if (actionElement) {
+        console.log('🎯 Found data-action:', actionElement.dataset.action, 'on element:', actionElement);
+    }
     // Мультивыбор: переключение
     const selBtn = t.closest('[data-action="toggle-select"]');
     if (selBtn) {
@@ -12576,6 +12964,66 @@ document.addEventListener("click", async e => {
                     fetchPartColorSpecifics(part.id, S.partModal.selColorId);
                 }
             }
+        }
+        return;
+    }
+    
+    // Открытие модалки набора из аналитики
+    if (t.closest('[data-action="open-set-modal"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const setId = t.closest('[data-action="open-set-modal"]').dataset.setId;
+        console.log('🎯 Opening set modal for setId:', setId);
+        
+        if (setId) {
+            const set = SET_MAP[setId];
+            console.log('🎯 Found set:', set);
+            console.log('🎯 SET_MAP keys count:', Object.keys(SET_MAP).length);
+            if (set) {
+                S.selSetNum = setId;
+                S.setModal = { set, inventory: null, loadState: 'pending' };
+                updateUI();
+                loadSetInventory(setId);
+            } else {
+                console.log('❌ Set not found in SET_MAP for setId:', setId);
+            }
+        }
+        return;
+    }
+    
+    // Открытие модалки минифигурки из аналитики
+    if (t.closest('[data-action="open-minifig-modal"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const minifigId = t.closest('[data-action="open-minifig-modal"]').dataset.minifigId;
+        console.log('🎯 Opening minifig modal for minifigId:', minifigId);
+        
+        if (minifigId) {
+            const minifig = MINIFIG_MAP[minifigId];
+            console.log('🎯 Found minifig:', minifig);
+            console.log('🎯 MINIFIG_MAP keys count:', Object.keys(MINIFIG_MAP).length);
+            if (minifig) {
+                S.selFigNum = minifigId;
+                S.minifigModal = { minifig, parts: null, loadState: 'pending' };
+                updateUI();
+                loadMinifigParts(minifigId);
+            } else {
+                console.log('❌ Minifig not found in MINIFIG_MAP for minifigId:', minifigId);
+            }
+        }
+        return;
+    }
+    
+    // Переключение подкатегорий аналитики
+    if (t.closest('[data-action="switch-analytics-subview"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const subview = t.closest('[data-action="switch-analytics-subview"]').dataset.subview;
+        console.log('🎯 Switching analytics subview to:', subview);
+        
+        if (subview && ['parts', 'sets', 'minifigs'].includes(subview)) {
+            S.analyticsSubView = subview;
+            updateUI();
         }
         return;
     }
