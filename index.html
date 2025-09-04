@@ -2981,6 +2981,7 @@ body.tab-switching .minifig-card {
         filter: blur(0) !important;
     }
 
+
     /* Стили для кнопки "Поднять на верх" - точно как у кнопок в меню настроек */
     #scroll-to-top-btn:not(.opacity-0) {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
@@ -3051,6 +3052,7 @@ body.tab-switching .minifig-card {
           <button class="inactivity-close" id="inactivity-close" title="Закрыть подсказку"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
   </div>
+
   <script type="module">
 const DEBUG = false;
 if (!DEBUG) {
@@ -3205,7 +3207,6 @@ function simpleInactivityInit() {
         
         activityEvents.forEach(event => {
             document.addEventListener(event, () => {
-                console.log(`🎯 Активность пользователя: ${event}`);
                 resetInactivityTimer();
             }, { passive: true });
         });
@@ -3221,10 +3222,247 @@ const REBRICKABLE_API_URL = 'https://rebrickable.com/api/v3/lego';
 const REBRICKABLE_API_KEYS = ['20c78cc607d6059c8d2a61338d851590', '04a7405ad41f1dd484a562f6e0c57312', 'd93f5c0989f63afa9b1c29ef8ad66002', 'b4179c1b8bd3c022ec9fc0e713e96b77', 'd32527bc33b575b8825a0ba04ba4add5'];
 let currentApiKeyIndex = 0;
 
+// Система прокси для обхода блокировки API
+const PROXY_CONFIG = {
+    currentProxyIndex: 0,
+    proxies: [
+        // Бесплатные прокси серверы (могут быть нестабильными)
+        'https://api.allorigins.win/raw?url=',
+        'https://cors-anywhere.herokuapp.com/',
+        'https://api.codetabs.com/v1/proxy?quest=',
+        'https://thingproxy.freeboard.io/fetch/',
+        'https://corsproxy.io/?',
+        // Альтернативные CORS прокси
+        'https://yacdn.org/proxy/',
+        'https://cors.bridged.cc/',
+        'https://api.allorigins.win/get?url='
+    ],
+    maxRetries: 2,
+    retryDelay: 1000
+};
+
+// Кэш для отслеживания недоступных прокси
+const FAILED_PROXIES = new Set();
+
+// Кэш для отслеживания заблокированных IP
+const BLOCKED_IP_CACHE = new Set();
+let lastBlockedTime = 0;
+
+// Принудительное включение прокси для тестирования
+let forceProxy = false;
+
+// Глобальный перехватчик CORS ошибок
+window.addEventListener('error', (event) => {
+    if (event.message && event.message.includes('CORS')) {
+        console.log('🚫 Глобальная CORS ошибка обнаружена, включаем прокси');
+        lastBlockedTime = Date.now();
+        forceProxy = true;
+    }
+});
+
+// Перехватчик для unhandled promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+    if (event.reason && event.reason.message && event.reason.message.includes('CORS')) {
+        console.log('🚫 CORS ошибка в Promise, включаем прокси');
+        lastBlockedTime = Date.now();
+        forceProxy = true;
+    }
+});
+
 function getApiKey() {
     const key = REBRICKABLE_API_KEYS[currentApiKeyIndex];
     currentApiKeyIndex = (currentApiKeyIndex + 1) % REBRICKABLE_API_KEYS.length;
     return key;
+}
+
+// Функция для детекции блокировки API
+function isApiBlocked(response, error) {
+    if (error) {
+        // CORS ошибки, сетевые ошибки
+        if (error.name === 'TypeError' || 
+            error.message.includes('CORS') || 
+            error.message.includes('NetworkError') ||
+            error.message.includes('Failed to fetch') ||
+            error.message.includes('blocked by CORS policy')) {
+            console.log('🔍 Обнаружена блокировка по CORS:', error.message);
+            return true;
+        }
+        return false;
+    }
+    
+    if (response) {
+        // HTTP статусы, указывающие на блокировку
+        const blockedStatuses = [429, 403, 503, 0]; // Rate limit, Forbidden, Service Unavailable, CORS block
+        const isBlocked = blockedStatuses.includes(response.status);
+        if (isBlocked) {
+            console.log(`🔍 Обнаружена блокировка по HTTP статусу: ${response.status}`);
+        }
+        return isBlocked;
+    }
+    
+    return false;
+}
+
+// Функция для проверки, нужно ли использовать прокси
+function shouldUseProxy() {
+    // Принудительное включение прокси
+    if (forceProxy) {
+        console.log('Принудительное использование прокси включено');
+        return true;
+    }
+    
+    // Если IP недавно был заблокирован, используем прокси
+    const timeSinceBlocked = Date.now() - lastBlockedTime;
+    const shouldUse = timeSinceBlocked < 300000; // 5 минут
+    
+    if (shouldUse) {
+        console.log(`IP заблокирован, используем прокси. Время с блокировки: ${Math.round(timeSinceBlocked / 1000)}с`);
+    }
+    
+    return shouldUse;
+}
+
+// Функции для работы с прокси
+function getNextProxy() {
+    const availableProxies = PROXY_CONFIG.proxies.filter((_, index) => !FAILED_PROXIES.has(index));
+    if (availableProxies.length === 0) {
+        console.warn('Все прокси недоступны, сбрасываем кэш');
+        FAILED_PROXIES.clear();
+        return PROXY_CONFIG.proxies[0];
+    }
+    
+    const proxy = availableProxies[PROXY_CONFIG.currentProxyIndex % availableProxies.length];
+    PROXY_CONFIG.currentProxyIndex = (PROXY_CONFIG.currentProxyIndex + 1) % availableProxies.length;
+    return proxy;
+}
+
+function markProxyAsFailed(proxyUrl) {
+    const index = PROXY_CONFIG.proxies.indexOf(proxyUrl);
+    if (index !== -1) {
+        FAILED_PROXIES.add(index);
+        console.warn(`Прокси ${proxyUrl} помечен как недоступный`);
+    }
+}
+
+function buildProxyUrl(originalUrl, proxyUrl) {
+    if (!proxyUrl) return originalUrl;
+    
+    // Разные прокси требуют разного формата URL
+    if (proxyUrl.includes('allorigins.win/raw')) {
+        return `${proxyUrl}${encodeURIComponent(originalUrl)}`;
+    } else if (proxyUrl.includes('allorigins.win/get')) {
+        return `${proxyUrl}${encodeURIComponent(originalUrl)}`;
+    } else if (proxyUrl.includes('codetabs.com')) {
+        return `${proxyUrl}${encodeURIComponent(originalUrl)}`;
+    } else if (proxyUrl.includes('thingproxy.freeboard.io')) {
+        return `${proxyUrl}${originalUrl}`;
+    } else if (proxyUrl.includes('corsproxy.io')) {
+        return `${proxyUrl}${originalUrl}`;
+    } else if (proxyUrl.includes('yacdn.org')) {
+        return `${proxyUrl}${originalUrl}`;
+    } else if (proxyUrl.includes('cors.bridged.cc')) {
+        return `${proxyUrl}${originalUrl}`;
+    } else {
+        return `${proxyUrl}${originalUrl}`;
+    }
+}
+
+async function fetchWithProxy(url, options = {}, retryCount = 0) {
+    // Если превышено количество попыток, используем только прямой запрос
+    if (retryCount >= PROXY_CONFIG.maxRetries) {
+        console.log('Превышено количество попыток, используем прямой запрос:', url);
+        return await fetch(url, options);
+    }
+
+    // Если принудительно включен прокси или IP заблокирован, сразу используем прокси
+    if (shouldUseProxy()) {
+        console.log('🔄 Используем прокси (IP заблокирован или принудительно включен)');
+    } else if (retryCount === 0) {
+        // Если это первая попытка и IP не заблокирован, пробуем прямой запрос
+        try {
+            console.log('Попытка прямого запроса:', url);
+            const directResponse = await fetch(url, options);
+            
+            // Если запрос успешен, возвращаем результат
+            if (directResponse.ok) {
+                console.log('✓ Прямой запрос успешен');
+                return directResponse;
+            }
+            
+            // Проверяем, заблокирован ли API
+            if (isApiBlocked(directResponse)) {
+                console.warn(`Прямой запрос заблокирован (${directResponse.status}), переключаемся на прокси`);
+                lastBlockedTime = Date.now();
+                BLOCKED_IP_CACHE.add(url);
+                // Переходим к прокси
+                return await fetchWithProxy(url, options, retryCount + 1);
+            } else {
+                // Для других ошибок (404, 500 и т.д.) возвращаем ответ как есть
+                console.log(`Прямой запрос вернул ${directResponse.status}, возвращаем ответ`);
+                return directResponse;
+            }
+        } catch (error) {
+            // Проверяем, является ли это блокировкой
+            if (isApiBlocked(null, error)) {
+                console.warn('Прямой запрос заблокирован (CORS/сеть), переключаемся на прокси:', error.message);
+                lastBlockedTime = Date.now();
+                BLOCKED_IP_CACHE.add(url);
+                // Переходим к прокси
+                return await fetchWithProxy(url, options, retryCount + 1);
+            } else {
+                // Для других ошибок пробрасываем их дальше
+                throw error;
+            }
+        }
+    }
+
+    // Если дошли сюда, значит нужен прокси
+    const proxy = getNextProxy();
+    if (!proxy) {
+        console.log('Прокси недоступны, используем прямой запрос:', url);
+        return await fetch(url, options);
+    }
+
+    const proxyUrl = buildProxyUrl(url, proxy);
+    console.log(`Попытка ${retryCount + 1}: Используем прокси ${proxy} для ${url}`);
+
+    try {
+        const response = await fetch(proxyUrl, {
+            ...options,
+            // Некоторые прокси требуют особых заголовков
+            headers: {
+                ...options.headers,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // Если прокси вернул обернутый ответ (например, allorigins.win/get)
+        if (proxy.includes('allorigins.win/get')) {
+            const data = await response.json();
+            if (data.contents) {
+                // Создаем новый Response с содержимым
+                return new Response(data.contents, {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: response.headers
+                });
+            }
+        }
+
+        console.log('✓ Прокси запрос успешен');
+        return response;
+    } catch (error) {
+        console.warn(`Ошибка с прокси ${proxy}:`, error.message);
+        markProxyAsFailed(proxy);
+        
+        // Рекурсивный вызов с увеличением счетчика попыток
+        await new Promise(resolve => setTimeout(resolve, PROXY_CONFIG.retryDelay));
+        return await fetchWithProxy(url, options, retryCount + 1);
+    }
 }
 const CACHE_NAME = 'lego-catalog-cache-v14';
 const COLOR_COLLAPSE_THRESHOLD = 18;
@@ -3972,6 +4210,11 @@ function analyzeCollection() {
                 const theme = THEME_MAP[set.theme_id];
                 const themeName = theme?.name || 'Неизвестная тема';
                 
+                // Логируем наборы Star Wars в коллекции
+                if (themeName.toLowerCase().includes('star wars')) {
+                    console.log('🎯 Star Wars set in collection:', setNum, set.name, 'theme:', themeName, 'theme_id:', set.theme_id);
+                }
+                
                 // Общая статистика наборов
                 analytics.setsStats.totalSets += setData.qty;
                 analytics.setsStats.totalPieces += (set.num_parts || 0) * setData.qty;
@@ -4022,7 +4265,12 @@ function analyzeCollection() {
         analytics.setsStats.topThemes = Object.entries(analytics.setsStats.themeStats)
             .sort(([,a], [,b]) => b - a)
             .slice(0, 10)
-            .map(([themeName, count]) => ({ themeName, count }));
+            .map(([themeName, count]) => {
+                // Находим themeId по themeName
+                const themeId = Object.keys(THEME_MAP).find(id => THEME_MAP[id]?.name === themeName);
+                console.log('🎯 Creating topThemes for sets:', themeName, 'themeId:', themeId, 'count:', count);
+                return { themeName, count, themeId: themeId ? parseInt(themeId, 10) : null };
+            });
             
         console.log('📊 S.setColl entries:', Object.entries(S.setColl).length);
         analytics.setsStats.topSets = Object.entries(S.setColl)
@@ -4052,7 +4300,11 @@ function analyzeCollection() {
         analytics.minifigsStats.topThemes = Object.entries(analytics.minifigsStats.themeStats)
             .sort(([,a], [,b]) => b - a)
             .slice(0, 10)
-            .map(([themeName, count]) => ({ themeName, count }));
+            .map(([themeName, count]) => {
+                // Находим themeId по themeName
+                const themeId = Object.keys(THEME_MAP).find(id => THEME_MAP[id]?.name === themeName);
+                return { themeName, count, themeId: themeId ? parseInt(themeId, 10) : null };
+            });
             
         console.log('📊 S.minifigColl entries:', Object.entries(S.minifigColl).length);
         analytics.minifigsStats.topMinifigs = Object.entries(S.minifigColl)
@@ -4060,8 +4312,8 @@ function analyzeCollection() {
                 const minifig = MINIFIG_MAP[minifigNum];
                 return minifig ? {
                     minifigNum,
-                    minifigName: minifig.name,
-                    year: minifig.year,
+                    minifigName: minifig.name || `Минифигурка ${minifigNum}`,
+                    year: minifig.year || 'Неизвестный год',
                     quantity: minifigData.qty,
                     theme: THEME_MAP[minifig.theme_id]?.name || 'Неизвестная тема'
                 } : null;
@@ -4187,12 +4439,12 @@ function renderAnalyticsContent(analytics) {
     
     // Если выбрана подкатегория "Наборы"
     if (S.analyticsSubView === 'sets') {
-        return renderSetsAnalytics(analytics, subViewTabs);
+        return `<div data-analytics-subview="sets">${renderSetsAnalytics(analytics, subViewTabs)}</div>`;
     }
     
     // Если выбрана подкатегория "Минифигурки"
     if (S.analyticsSubView === 'minifigs') {
-        return renderMinifigsAnalytics(analytics, subViewTabs);
+        return `<div data-analytics-subview="minifigs">${renderMinifigsAnalytics(analytics, subViewTabs)}</div>`;
     }
     
     // По умолчанию показываем аналитику деталей
@@ -4441,23 +4693,24 @@ function renderAnalyticsContent(analytics) {
 function renderSetsAnalytics(analytics, subViewTabs) {
     const setsStats = analytics.setsStats;
     
-    const topThemesHtml = setsStats.topThemes.map(theme => `
+                 const topThemesHtml = setsStats.topThemes.map(theme => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
              style="--hover-shadow-color: #3b82f640;"
              onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
              onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             data-action="go-to-theme" data-theme-id="${theme.themeId}"
              title="Показать наборы темы: ${theme.themeName}">
-            <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
-                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-blue-500 shadow-lg"></div>
-                <div class="min-w-0 flex-1">
-                    <span class="text-gray-200 font-medium text-sm sm:text-base xl:text-lg truncate">${theme.themeName}</span>
-                </div>
-            </div>
-            <div class="text-right flex-shrink-0 ml-2">
-                <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${theme.count}</div>
-            </div>
-        </div>
-    `).join('');
+             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                 <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-blue-500 shadow-lg"></div>
+                 <div class="min-w-0 flex-1">
+                     <span class="text-gray-200 font-medium text-sm sm:text-base xl:text-lg truncate">${theme.themeName}</span>
+                 </div>
+             </div>
+             <div class="text-right flex-shrink-0 ml-2">
+                 <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${theme.count}</div>
+             </div>
+         </div>
+     `).join('');
     
     const topSetsHtml = setsStats.topSets.map(set => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
@@ -4554,23 +4807,24 @@ function renderSetsAnalytics(analytics, subViewTabs) {
 function renderMinifigsAnalytics(analytics, subViewTabs) {
     const minifigsStats = analytics.minifigsStats;
     
-    const topThemesHtml = minifigsStats.topThemes.map(theme => `
-        <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
-             style="--hover-shadow-color: #8b5cf640;"
-             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
-             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
-             title="Показать минифигурки темы: ${theme.themeName}">
-            <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
-                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-purple-500 shadow-lg"></div>
-                <div class="min-w-0 flex-1">
-                    <span class="text-gray-200 font-medium text-sm sm:text-base xl:text-lg truncate">${theme.themeName}</span>
-                </div>
-            </div>
-            <div class="text-right flex-shrink-0 ml-2">
-                <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${theme.count}</div>
-            </div>
-        </div>
-    `).join('');
+         const topThemesHtml = minifigsStats.topThemes.map(theme => `
+         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+              style="--hover-shadow-color: #8b5cf640;"
+              onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+              onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+              data-action="go-to-theme" data-theme-id="${theme.themeId}"
+              title="Показать минифигурки темы: ${theme.themeName}">
+             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                 <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-purple-500 shadow-lg"></div>
+                 <div class="min-w-0 flex-1">
+                     <span class="text-gray-200 font-medium text-sm sm:text-base xl:text-lg truncate">${theme.themeName}</span>
+                 </div>
+             </div>
+             <div class="text-right flex-shrink-0 ml-2">
+                 <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${theme.count}</div>
+             </div>
+         </div>
+     `).join('');
     
     const topMinifigsHtml = minifigsStats.topMinifigs.map(minifig => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
@@ -4681,7 +4935,7 @@ async function apiFetchPaginated(e) {
         
         console.log(`API call: ${a}`);
         
-        const i = await fetch(a, {
+        const i = await fetchWithProxy(a, {
             headers: {
                 Authorization: `key ${getApiKey()}`
             }
@@ -5050,9 +5304,59 @@ async function fetchSets() {
         results = searchInCSVData(S.q, 'sets');
         } else if (S.selThemeId) {
             // Фильтруем по теме из данных CSV
-            results = Object.values(SET_MAP).filter(set => 
-                set.theme_id === S.selThemeId
+            console.log('🎯 Filtering sets by theme ID:', S.selThemeId);
+            const allSets = Object.values(SET_MAP);
+            console.log('🎯 Total sets in SET_MAP:', allSets.length);
+            
+            // Получаем название темы по ID
+            const selectedTheme = THEME_MAP[S.selThemeId];
+            const themeName = selectedTheme?.name || 'Unknown Theme';
+            console.log('🎯 Selected theme name:', themeName);
+            
+            // Ищем все темы с таким же названием (включая подтемы)
+            console.log('🎯 Searching for all themes with name:', themeName);
+            
+            // Находим все темы с таким же названием
+            const themesWithSameName = Object.entries(THEME_MAP).filter(([id, theme]) => 
+                theme.name && theme.name === themeName
             );
+            console.log('🎯 All themes with same name found:', themesWithSameName.map(([id, theme]) => ({ id, name: theme.name })));
+            
+            if (themesWithSameName.length > 1) {
+                console.log('🎯 Multiple themes with same name detected, searching all...');
+                
+                // Получаем ID всех тем с таким же названием
+                const themeIds = themesWithSameName.map(([id]) => parseInt(id, 10));
+                console.log('🎯 Theme IDs:', themeIds);
+                
+                // Фильтруем наборы по всем темам с таким же названием
+                results = allSets.filter(set => {
+                    const matches = themeIds.includes(set.theme_id);
+                    if (matches) {
+                        console.log('🎯 Found matching set:', set.set_num, set.name, 'theme_id:', set.theme_id);
+                    }
+                    return matches;
+                });
+                
+                // Показываем статистику по темам
+                themesWithSameName.forEach(([themeId, theme]) => {
+                    const setsInTheme = results.filter(set => set.theme_id === parseInt(themeId, 10));
+                    console.log(`🎯 Theme "${theme.name}" (ID: ${themeId}): ${setsInTheme.length} sets`);
+                });
+            } else {
+                // Если только одна тема с таким названием, фильтруем только по выбранной теме
+                console.log('🎯 Single theme with this name, filtering by selected theme ID only');
+                results = allSets.filter(set => {
+                    const matches = set.theme_id === S.selThemeId;
+                    if (matches) {
+                        console.log('🎯 Found matching set:', set.set_num, set.name, 'theme_id:', set.theme_id);
+                    }
+                    return matches;
+                });
+            }
+            
+            console.log('🎯 Filtered results count:', results.length);
+            console.log('🎯 Sample results:', results.slice(0, 5).map(s => ({ set_num: s.set_num, name: s.name, theme_id: s.theme_id })));
         } else {
                     // Получаем все наборы из CSV
         results = Object.values(SET_MAP);
@@ -5258,7 +5562,7 @@ async function fetchPartColorSpecifics(e, t) {
         
         lastApiRequestTime = Date.now();
         o = `${REBRICKABLE_API_URL}/parts/${e}/colors/${t}/`;
-        l = await fetch(o, {
+        l = await fetchWithProxy(o, {
             headers: {
                 Authorization: `key ${getApiKey()}`
             }
@@ -5527,7 +5831,7 @@ async function fetchMissingCollectionSetDetails() {
 async function fetchMinifigDetails(e) {
     if (MINIFIG_MAP[e]?.name) return;
     try {
-        const t = await fetch(`${REBRICKABLE_API_URL}/minifigs/${e}/`, {
+        const t = await fetchWithProxy(`${REBRICKABLE_API_URL}/minifigs/${e}/`, {
             headers: {
                 Authorization: `key ${getApiKey()}`
             }
@@ -5568,7 +5872,7 @@ async function fetchSetInventory(e, t = 1) {
     if (S.setModal.loading = !0, t === 1 && (S.setModal.inv = []), updateSetModalView(), !S.selSetNum) return;
     try {
         const o = `/sets/${e}/parts/?page=${t}&page_size=50`,
-            l = await fetch(`${REBRICKABLE_API_URL}${o}`, {
+            l = await fetchWithProxy(`${REBRICKABLE_API_URL}${o}`, {
                 headers: {
                     Authorization: `key ${getApiKey()}`
                 }
@@ -5613,7 +5917,7 @@ async function fetchAllSetInventory(e) {
     let o = 1;
     for (;;) {
         const l = `/sets/${e}/parts/?page=${o}&page_size=500`,
-            a = await fetch(`${REBRICKABLE_API_URL}${l}`, {
+            a = await fetchWithProxy(`${REBRICKABLE_API_URL}${l}`, {
                 headers: {
                     Authorization: `key ${getApiKey()}`
                 }
@@ -5765,7 +6069,7 @@ async function fetchMissingMinifigPartImages(minifigParts) {
             
             lastApiRequestTime = Date.now();
             
-            const response = await fetch(`${REBRICKABLE_API_URL}/parts/${partInfo.part.part_num}/?key=${getApiKey()}`);
+            const response = await fetchWithProxy(`${REBRICKABLE_API_URL}/parts/${partInfo.part.part_num}/?key=${getApiKey()}`);
             
             if (response.status === 429) {
                 console.warn('Превышен лимит запросов API, останавливаем загрузку изображений деталей');
@@ -6370,7 +6674,7 @@ window.onSetImgError = async (setNum, imgEl) => {
             SET_IMAGE_FETCHING.add(setNum);
             try {
                 
-                const resp = await fetch(`${REBRICKABLE_API_URL}/sets/${setNum}/`, {
+                const resp = await fetchWithProxy(`${REBRICKABLE_API_URL}/sets/${setNum}/`, {
                     headers: { Authorization: `key ${getApiKey()}` }
                 });
                 if (!resp.ok) return undefined;
@@ -7219,7 +7523,7 @@ function renderSetCard(e, t, o = 0) {
             try {
                 API_IMAGE_FETCH_COUNT++;
                 
-                const resp = await fetch(`${REBRICKABLE_API_URL}/sets/${e.set_num}/`, { headers: { Authorization: `key ${getApiKey()}` }});
+                const resp = await fetchWithProxy(`${REBRICKABLE_API_URL}/sets/${e.set_num}/`, { headers: { Authorization: `key ${getApiKey()}` }});
                 if (resp.ok) {
                     const data = await resp.json();
                     if (data && data.set_img_url) {
@@ -12816,6 +13120,111 @@ document.addEventListener("click", async e => {
     if (actionElement) {
         console.log('🎯 Found data-action:', actionElement.dataset.action, 'on element:', actionElement);
     }
+
+    // ПРИОРИТЕТНЫЕ ОБРАБОТЧИКИ - проверяем сначала специальные действия из аналитики
+    
+    // Открытие модалки набора из аналитики
+    if (t.closest('[data-action="open-set-modal"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const setId = t.closest('[data-action="open-set-modal"]').dataset.setId;
+        console.log('🎯 Opening set modal for setId:', setId);
+        
+        if (setId) {
+            const set = SET_MAP[setId];
+            console.log('🎯 Found set:', set);
+            console.log('🎯 SET_MAP keys count:', Object.keys(SET_MAP).length);
+            if (set) {
+                openModalForSet(setId);
+            } else {
+                console.log('❌ Set not found in SET_MAP for setId:', setId);
+            }
+        }
+        return;
+    }
+    
+    // Открытие модалки минифигурки из аналитики
+    if (t.closest('[data-action="open-minifig-modal"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const minifigId = t.closest('[data-action="open-minifig-modal"]').dataset.minifigId;
+        console.log('🎯 Opening minifig modal for minifigId:', minifigId);
+        
+        if (minifigId) {
+            const minifig = MINIFIG_MAP[minifigId];
+            console.log('🎯 Found minifig:', minifig);
+            console.log('🎯 MINIFIG_MAP keys count:', Object.keys(MINIFIG_MAP).length);
+            if (minifig) {
+                // Используем существующую функцию для открытия модалки минифигурки
+                openModalForMinifig(minifigId);
+            } else {
+                console.log('❌ Minifig not found in MINIFIG_MAP for minifigId:', minifigId);
+            }
+        }
+        return;
+    }
+    
+    // Переход к теме из аналитики (как в модалке наборов)
+    if (t.closest('[data-action="go-to-theme"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const themeId = t.closest('[data-action="go-to-theme"]').dataset.themeId;
+        console.log('🎯 Going to theme with themeId:', themeId);
+        console.log('🎯 Theme ID type:', typeof themeId, 'parsed:', parseInt(themeId, 10));
+        
+        if (themeId) {
+            closeSetModal();
+            S.view = "catalog";
+            S.multiSelect.active = false;
+            S.multiSelect.items = new Set();
+            S.selThemeId = parseInt(themeId, 10);
+            S.selFigNum = null;
+            S.showRelatedSets = false;
+            
+            // Определяем, откуда был клик - из аналитики наборов или минифигурок
+            const clickedElement = t.closest('[data-action="go-to-theme"]');
+            if (clickedElement && clickedElement.closest('#analytics-content')) {
+                // Если клик из аналитики, определяем по контексту
+                const analyticsContent = clickedElement.closest('#analytics-content');
+                if (analyticsContent && analyticsContent.querySelector('[data-analytics-subview="sets"]')) {
+                    S.subView = "sets";
+                    fetchSets();
+                } else if (analyticsContent && analyticsContent.querySelector('[data-analytics-subview="minifigs"]')) {
+                    S.subView = "minifigs";
+                    fetchMinifigs();
+                } else {
+                    // По умолчанию наборы
+                    S.subView = "sets";
+                    fetchSets();
+                }
+            } else {
+                // Если клик из модалки набора, то наборы
+                S.subView = "sets";
+                fetchSets();
+            }
+            
+            // Обновляем статистику после перехода к теме
+            setTimeout(() => updateFeelingLuckyStats(), 500);
+        }
+        return;
+    }
+    
+    // Переключение подкатегорий аналитики
+    if (t.closest('[data-action="switch-analytics-subview"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const subview = t.closest('[data-action="switch-analytics-subview"]').dataset.subview;
+        console.log('🎯 Switching analytics subview to:', subview);
+        
+        if (subview && ['parts', 'sets', 'minifigs'].includes(subview)) {
+            S.analyticsSubView = subview;
+            updateUI();
+        }
+        return;
+    }
+    
+    // СТАНДАРТНЫЕ ОБРАБОТЧИКИ - после специальных действий
+    
     // Мультивыбор: переключение
     const selBtn = t.closest('[data-action="toggle-select"]');
     if (selBtn) {
@@ -12968,65 +13377,6 @@ document.addEventListener("click", async e => {
         return;
     }
     
-    // Открытие модалки набора из аналитики
-    if (t.closest('[data-action="open-set-modal"]')) {
-        e.preventDefault();
-        e.stopPropagation();
-        const setId = t.closest('[data-action="open-set-modal"]').dataset.setId;
-        console.log('🎯 Opening set modal for setId:', setId);
-        
-        if (setId) {
-            const set = SET_MAP[setId];
-            console.log('🎯 Found set:', set);
-            console.log('🎯 SET_MAP keys count:', Object.keys(SET_MAP).length);
-            if (set) {
-                S.selSetNum = setId;
-                S.setModal = { set, inventory: null, loadState: 'pending' };
-                updateUI();
-                loadSetInventory(setId);
-            } else {
-                console.log('❌ Set not found in SET_MAP for setId:', setId);
-            }
-        }
-        return;
-    }
-    
-    // Открытие модалки минифигурки из аналитики
-    if (t.closest('[data-action="open-minifig-modal"]')) {
-        e.preventDefault();
-        e.stopPropagation();
-        const minifigId = t.closest('[data-action="open-minifig-modal"]').dataset.minifigId;
-        console.log('🎯 Opening minifig modal for minifigId:', minifigId);
-        
-        if (minifigId) {
-            const minifig = MINIFIG_MAP[minifigId];
-            console.log('🎯 Found minifig:', minifig);
-            console.log('🎯 MINIFIG_MAP keys count:', Object.keys(MINIFIG_MAP).length);
-            if (minifig) {
-                S.selFigNum = minifigId;
-                S.minifigModal = { minifig, parts: null, loadState: 'pending' };
-                updateUI();
-                loadMinifigParts(minifigId);
-            } else {
-                console.log('❌ Minifig not found in MINIFIG_MAP for minifigId:', minifigId);
-            }
-        }
-        return;
-    }
-    
-    // Переключение подкатегорий аналитики
-    if (t.closest('[data-action="switch-analytics-subview"]')) {
-        e.preventDefault();
-        e.stopPropagation();
-        const subview = t.closest('[data-action="switch-analytics-subview"]').dataset.subview;
-        console.log('🎯 Switching analytics subview to:', subview);
-        
-        if (subview && ['parts', 'sets', 'minifigs'].includes(subview)) {
-            S.analyticsSubView = subview;
-            updateUI();
-        }
-        return;
-    }
     
     // Очистка временных фильтров
     if (t.closest('[data-action="clear-temp-filters"]')) {
@@ -14849,11 +15199,6 @@ document.addEventListener("click", async e => {
             case "delete-from-set-collection-modal":
                 S.selSetNum && (handleUpdateSetCollection(S.selSetNum, 0), S.setModal.qty = 0);
                 break;
-            case "go-to-theme":
-                l && (closeSetModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "sets", S.selThemeId = parseInt(l, 10), S.selFigNum = null, S.showRelatedSets = false, fetchSets());
-                // Обновляем статистику после перехода к теме
-                setTimeout(() => updateFeelingLuckyStats(), 500);
-                break;
             case "bulk-add-parts":
                 S.selSetNum && handleBulkUpdatePartsFromSet(S.selSetNum, "add");
                 break;
@@ -16426,7 +16771,7 @@ async function fetchMissingMinifigImages() {
         }
         
         try {
-            const response = await fetch(`${REBRICKABLE_API_URL}/minifigs/${minifig.set_num}/?key=${getApiKey()}`);
+            const response = await fetchWithProxy(`${REBRICKABLE_API_URL}/minifigs/${minifig.set_num}/?key=${getApiKey()}`);
             if (response.ok) {
                 const data = await response.json();
                 if (data.results && data.results[0] && data.results[0].set_img_url) {
@@ -17631,7 +17976,7 @@ async function fetchPartColorDetailsFromAPI(partNum, colorId) {
             await new Promise(r => setTimeout(r, API_REQUEST_DELAY - since));
         }
         lastApiRequestTime = Date.now();
-        const response = await fetch(`${REBRICKABLE_API_URL}/parts/${partNum}/colors/${colorId}/`, {
+        const response = await fetchWithProxy(`${REBRICKABLE_API_URL}/parts/${partNum}/colors/${colorId}/`, {
             headers: {
                 Authorization: `key ${getApiKey()}`
             }
@@ -17966,10 +18311,7 @@ function animateCloseButtonClick(button) {
 
     // Функция для показа подсказки по порядку
     function showRandomTip() {
-        console.log('💡 showRandomTip вызвана, стек вызовов:', new Error().stack);
-        
         if (!inactivityOverlay) {
-            console.log('❌ inactivityOverlay не найден');
             return;
         }
         
@@ -17986,8 +18328,6 @@ function animateCloseButtonClick(button) {
         
         // Запускаем автоматическую смену подсказок каждые 5 секунд
         startTipRotation();
-        
-        console.log('💡 Подсказка показана:', inactivityTips[currentTipIndex]);
     }
 
     // Функция для автоматической смены подсказок
@@ -18036,10 +18376,7 @@ function animateCloseButtonClick(button) {
 
     // Функция для сброса таймера неактивности
     function resetInactivityTimer() {
-        console.log('🔄 resetInactivityTimer вызвана');
-        
         if (inactivityTimer) {
-            console.log('⏰ Очищаем предыдущий таймер:', inactivityTimer);
             clearTimeout(inactivityTimer);
         }
         
@@ -18048,20 +18385,14 @@ function animateCloseButtonClick(button) {
         
         // Запускаем таймер на 90 секунд (для тестирования)
         inactivityTimer = setTimeout(() => {
-            console.log('⏰ Таймер сработал! Показываем подсказку');
             showRandomTip();
         }, 90000);
-        
-        console.log('🔄 Таймер неактивности сброшен, следующий показ через 90 секунд. ID таймера:', inactivityTimer);
     }
 
     // Функция для инициализации системы неактивности
     function initInactivitySystem() {
-        console.log('🚀 initInactivitySystem вызвана');
-        
         // Проверяем, не инициализирована ли уже система
         if (document.hasAttribute('data-inactivity-initialized')) {
-            console.log('⚠️ Система неактивности уже инициализирована');
             return;
         }
         
@@ -18075,14 +18406,7 @@ function animateCloseButtonClick(button) {
             closeBtn: !!inactivityCloseBtn
         });
         
-        // Дополнительная проверка элементов
-        console.log('🔍 Проверяем элементы в DOM:');
-        console.log('  - inactivity-overlay:', document.getElementById('inactivity-overlay'));
-        console.log('  - inactivity-tip:', document.getElementById('inactivity-tip'));
-        console.log('  - inactivity-close:', document.getElementById('inactivity-close'));
-        
         if (!inactivityOverlay || !inactivityTip || !inactivityCloseBtn) {
-            console.log('❌ Не все элементы найдены, выходим');
             return;
         }
         
@@ -18105,14 +18429,9 @@ function animateCloseButtonClick(button) {
             
             activityEvents.forEach(event => {
                 document.addEventListener(event, () => {
-                    console.log(`🎯 Активность пользователя: ${event}`);
                     resetInactivityTimer();
                 }, { passive: true });
             });
-            
-            console.log('✅ Обработчики активности добавлены');
-        } else {
-            console.log('⚠️ Обработчики активности уже добавлены');
         }
         
         // Запускаем таймер при инициализации
@@ -18146,7 +18465,83 @@ function animateCloseButtonClick(button) {
         initInactivitySystem();
     }
 
+    // Функции для управления прокси через консоль
+    window.enableProxy = () => {
+        forceProxy = true;
+        console.log('✅ Прокси принудительно включен');
+    };
+    
+    window.disableProxy = () => {
+        forceProxy = false;
+        console.log('❌ Прокси отключен, будет использоваться автоматическое определение');
+    };
+    
+    window.testProxy = async () => {
+        console.log('🧪 Тестируем прокси...');
+        const testUrl = `${REBRICKABLE_API_URL}/colors/?page=1&page_size=1`;
+        try {
+            const response = await fetchWithProxy(testUrl);
+            console.log('✅ Прокси работает:', response.status);
+        } catch (error) {
+            console.error('❌ Прокси не работает:', error.message);
+        }
+    };
+    
+    window.resetProxyCache = () => {
+        FAILED_PROXIES.clear();
+        BLOCKED_IP_CACHE.clear();
+        lastBlockedTime = 0;
+        PROXY_CONFIG.currentProxyIndex = 0;
+        console.log('🔄 Кэш прокси сброшен');
+    };
+    
+    window.proxyStatus = () => {
+        const timeSinceBlocked = Date.now() - lastBlockedTime;
+        console.log('📊 Статус прокси:');
+        console.log(`  Принудительно включен: ${forceProxy}`);
+        console.log(`  IP заблокирован: ${timeSinceBlocked < 300000 ? 'Да' : 'Нет'}`);
+        console.log(`  Время с блокировки: ${Math.round(timeSinceBlocked / 1000)}с`);
+        console.log(`  Недоступных прокси: ${FAILED_PROXIES.size}`);
+        console.log(`  Заблокированных URL: ${BLOCKED_IP_CACHE.size}`);
+    };
+    
+    window.simulateBlock = () => {
+        lastBlockedTime = Date.now();
+        console.log('🚫 Имитация блокировки IP включена');
+    };
+
+    // Автоматическое включение прокси при загрузке, если API заблокирован
+    setTimeout(() => {
+        console.log('🔍 Проверяем доступность API...');
+        fetch(`${REBRICKABLE_API_URL}/colors/?page=1&page_size=1`)
+            .then(response => {
+                if (response.ok) {
+                    console.log('✅ API доступен, прокси не нужен');
+                } else {
+                    console.log(`⚠️ API недоступен (${response.status}), включаем прокси`);
+                    forceProxy = true;
+                    lastBlockedTime = Date.now();
+                }
+            })
+            .catch(error => {
+                if (error.message.includes('CORS') || error.name === 'TypeError') {
+                    console.log('🚫 API заблокирован CORS, включаем прокси');
+                    forceProxy = true;
+                    lastBlockedTime = Date.now();
+                } else {
+                    console.log('❌ Ошибка проверки API:', error.message);
+                }
+            });
+    }, 2000);
+
     console.log('🏁 КОНЕЦ СКРИПТА СИСТЕМЫ НЕАКТИВНОСТИ');
+    console.log('🔧 Команды для управления прокси:');
+    console.log('  enableProxy() - принудительно включить прокси');
+    console.log('  disableProxy() - отключить принудительный прокси');
+    console.log('  simulateBlock() - имитировать блокировку IP');
+    console.log('  testProxy() - протестировать прокси');
+    console.log('  resetProxyCache() - сбросить кэш прокси');
+    console.log('  proxyStatus() - показать статус прокси');
 
 
   </script>
