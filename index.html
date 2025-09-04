@@ -3555,6 +3555,7 @@ const modalManager = new ModalManager();
 let S = {
     view: 'collection',
     subView: 'parts',
+    toolSubView: 'analytics',
     catTree: [],
     expCats: new Set,
     selCatId: null,
@@ -6363,7 +6364,7 @@ function renderSidebar() {
         } else {
             c = t + l(e);
         }
-            } else if ("minifigs" === S.subView) {
+        } else if ("minifigs" === S.subView) {
                 d = "Минифигурки";
                 let minifigContent = '';
                 
@@ -6395,8 +6396,53 @@ function renderSidebar() {
                 }
                 
                 c = minifigContent;
-            }
-    else {
+        } else if ("tools" === S.view) {
+            d = "Инструменты";
+            let toolsContent = '';
+            
+            // Создаем структуру подкатегорий для инструментов
+            const toolsCategories = [
+                {
+                    id: 'analytics',
+                    name: 'Аналитика',
+                    icon: '📊',
+                    description: 'Статистика и анализ коллекции'
+                },
+                {
+                    id: 'export',
+                    name: 'Экспорт',
+                    icon: '📤',
+                    description: 'Экспорт данных коллекции'
+                },
+                {
+                    id: 'import',
+                    name: 'Импорт',
+                    icon: '📥',
+                    description: 'Импорт данных в коллекцию'
+                }
+            ];
+            
+            toolsContent = toolsCategories.map(tool => {
+                const isActive = S.toolSubView === tool.id;
+                const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
+                
+                return `
+                    <li>
+                        <button data-tool-sub-view="${tool.id}" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}">
+                            <div class="flex items-center">
+                                <span class="text-lg mr-3">${tool.icon}</span>
+                                <div>
+                                    <span class="break-words leading-tight font-medium">${tool.name}</span>
+                                    <div class="text-xs text-gray-400 mt-1">${tool.description}</div>
+                                </div>
+                            </div>
+                        </button>
+                    </li>
+                `;
+            }).join('');
+            
+            c = toolsContent;
+    } else {
         d = "Категории";
         let e = S.catTree;
         let t = "";
@@ -6582,10 +6628,10 @@ function renderSidebar() {
         <div class="space-y-2 mb-4 flex-shrink-0">
             <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3")}<span>Каталог</span></button>
             <button data-view="collection" class="${n("collection")}" title="Переключиться на просмотр вашей личной коллекции">${I_Coll("w-5 h-5 mr-3")}<span>Коллекция</span></button>
-            <button data-view="analytics" class="${n("analytics")}" title="Аналитика и статистика коллекции, редкие детали">${I_Analytics("w-5 h-5 mr-3")}<span>Аналитика</span></button>
+            <button data-view="tools" class="${n("tools")}" title="Инструменты для анализа и работы с коллекцией">${I_Tech("w-5 h-5 mr-3")}<span>Инструменты</span></button>
         </div>
 
-        ${S.view !== "analytics" ? `
+        ${S.view !== "tools" ? `
         <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1">
             <button data-sub-view="parts" class="${r("parts")}" title="Показать детали" data-long-press="parts">
                 ${I_Brick("w-5 h-5")}
@@ -6608,7 +6654,16 @@ function renderSidebar() {
         
 
         
-        ${S.view !== "analytics" ? `
+        ${S.view !== "tools" ? `
+        <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar">
+          <h2 class="text-lg font-semibold text-white mb-3">${d}</h2>
+          <nav>
+            <ul id="category-list" class="space-y-1">${c}</ul>
+          </nav>
+        </div>
+        ` : ''}
+        
+        ${S.view === "tools" ? `
         <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar">
           <h2 class="text-lg font-semibold text-white mb-3">${d}</h2>
           <nav>
@@ -6698,14 +6753,14 @@ function renderSidebar() {
                 </div>
             </div>
             `:""}
-            ${S.view !== "analytics" ? `
+            ${S.view !== "tools" ? `
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
                 ${I_Settings("w-5 h-5 mr-2")} Настройки
             </button>
             ` : ''}
         </div>
         
-        ${S.view === "analytics" ? `
+        ${S.view === "tools" ? `
         <!-- Кнопка настроек внизу только для аналитики -->
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
@@ -7873,30 +7928,54 @@ function renderMainContent() {
             // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
         }
     } 
-    if ("analytics" === S.view) {
-        // Запускаем анализ коллекции каждый раз при открытии аналитики
-        if (!S.analyticsLoading) {
-            analyzeCollection();
-        }
-        
-        if (S.analyticsLoading) {
-            e = `
-                <div class="flex flex-col items-center justify-center h-full p-8 text-center">
-                    <div class="loader mb-4"></div>
-                    <h2 class="text-2xl font-bold text-gray-200 mb-2">Анализ коллекции</h2>
-                    <p class="text-gray-400">Анализируем редкость деталей и статистику...</p>
-                </div>
-            `;
-        } else if (S.analyticsData) {
-            e = renderAnalyticsContent(S.analyticsData);
-        } else {
+    if ("tools" === S.view) {
+        // Обрабатываем разные подкатегории инструментов
+        if (S.toolSubView === 'analytics') {
+            // Запускаем анализ коллекции каждый раз при открытии аналитики
+            if (!S.analyticsLoading) {
+                analyzeCollection();
+            }
+        } else if (S.toolSubView === 'export') {
+            // Логика для экспорта
             e = `
                 <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
-                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📊</div>
-                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Аналитика коллекции</h2>
-                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Добавьте детали в коллекцию, чтобы увидеть аналитику</p>
+                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📤</div>
+                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Экспорт данных</h2>
+                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Функция экспорта будет добавлена в будущих версиях</p>
                 </div>
             `;
+        } else if (S.toolSubView === 'import') {
+            // Логика для импорта
+            e = `
+                <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
+                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📥</div>
+                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Импорт данных</h2>
+                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Функция импорта будет добавлена в будущих версиях</p>
+                </div>
+            `;
+        }
+        
+        // Показываем аналитику только для подкатегории 'analytics'
+        if (S.toolSubView === 'analytics') {
+            if (S.analyticsLoading) {
+                e = `
+                    <div class="flex flex-col items-center justify-center h-full p-8 text-center">
+                        <div class="loader mb-4"></div>
+                        <h2 class="text-2xl font-bold text-gray-200 mb-2">Анализ коллекции</h2>
+                        <p class="text-gray-400">Анализируем редкость деталей и статистику...</p>
+                    </div>
+                `;
+            } else if (S.analyticsData) {
+                e = renderAnalyticsContent(S.analyticsData);
+            } else {
+                e = `
+                    <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
+                        <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📊</div>
+                        <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Аналитика</h2>
+                        <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Добавьте детали в коллекцию, чтобы увидеть аналитику</p>
+                    </div>
+                `;
+            }
         }
     }
     mainEl.innerHTML = renderAppliedFilters() + e;
@@ -12662,10 +12741,10 @@ document.addEventListener("click", async e => {
             updateLoadingStatus("Переключение на коллекцию...", 50, "Загрузка данных коллекции");
         } else if (e === 'catalog') {
             updateLoadingStatus("Переключение на каталог...", 50, "Загрузка каталога");
-        } else if (e === 'analytics') {
-            // Очищаем временные фильтры при переключении на аналитику
+        } else if (e === 'tools') {
+            // Очищаем временные фильтры при переключении на инструменты
             clearTemporaryFilters();
-            updateLoadingStatus("Переключение на аналитику...", 50, "Подготовка анализа коллекции");
+            updateLoadingStatus("Переключение на инструменты...", 50, "Подготовка инструментов");
         }
         
         // Отключаем анимации при переключении вкладок для улучшения производительности
@@ -12687,8 +12766,8 @@ document.addEventListener("click", async e => {
         const shouldKeepSelFigNum = (e === 'catalog' && S.subView === 'sets' && S.selFigNum);
         const newSelFigNum = shouldKeepSelFigNum ? S.selFigNum : null;
         
-        // Если переключаемся на каталог или аналитику, принудительно закрываем все модальные окна
-        if (e === 'catalog' || e === 'analytics') {
+        // Если переключаемся на каталог или инструменты, принудительно закрываем все модальные окна
+        if (e === 'catalog' || e === 'tools') {
             console.log(`Switching to ${e}, force closing all modals`);
             modalManager.closeAllModals();
             
@@ -12893,6 +12972,20 @@ document.addEventListener("click", async e => {
         
         // Настраиваем слушатель прокрутки для автоматической загрузки изображений
         setupScrollListener();
+        return;
+    }
+    
+    // Обработчик для подкатегорий инструментов
+    const toolSubViewBtn = t.closest("[data-tool-sub-view]");
+    if (toolSubViewBtn?.dataset.toolSubView) {
+        const toolSubView = toolSubViewBtn.dataset.toolSubView;
+        if (S.toolSubView === toolSubView) return;
+        
+        S.toolSubView = toolSubView;
+        S.gridStale = true;
+        
+        // Обновляем UI
+        updateUI();
         return;
     }
     // Обработка сворачивания/разворачивания сводки коллекции
