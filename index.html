@@ -3054,7 +3054,7 @@ body.tab-switching .minifig-card {
   </div>
 
   <script type="module">
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -3793,7 +3793,7 @@ const modalManager = new ModalManager();
 let S = {
     view: 'collection',
     subView: 'parts',
-    toolSubView: 'analytics',
+    toolSubView: '',
     catTree: [],
     expCats: new Set,
     selCatId: null,
@@ -7080,6 +7080,13 @@ function renderSidebar() {
             d = "Инструменты";
             let toolsContent = '';
             
+            console.log('🔧 Rendering tools sidebar, toolSubView:', S.toolSubView, 'view:', S.view);
+            
+            // Проверяем, что toolSubView действительно пустой
+            if (S.toolSubView && S.toolSubView !== '') {
+                console.log('⚠️ WARNING: toolSubView is not empty in renderSidebar:', S.toolSubView);
+            }
+            
             // Создаем структуру подкатегорий для инструментов
             const toolsCategories = [
                 {
@@ -7121,6 +7128,8 @@ function renderSidebar() {
                 `;
             }).join('');
             
+            console.log('🔧 Tools content generated:', toolsContent.length, 'characters');
+            console.log('🔧 Tools content preview:', toolsContent.substring(0, 200) + '...');
             c = toolsContent;
     } else {
         d = "Категории";
@@ -7448,13 +7457,16 @@ function renderSidebar() {
             </button>
         </div>
         ` : ''}
-      `
+      `;
+    
     // Восстанавливаем позицию прокрутки после перерисовки
     const scrollEl = document.getElementById('sidebar-scroll-container');
     if (scrollEl) scrollEl.scrollTop = prevScrollTop;
     
     // Настраиваем обработчики долгого нажатия для кнопок бокового меню
     setupLongPressHandlers();
+    
+    return sidebarEl.innerHTML;
 }
 
 function renderHeader() {
@@ -7728,7 +7740,7 @@ function renderAppliedFilters() {
         };
         Object.assign(c, s);
         t = S.q ? "relevance" === S.sortBy : "year_desc" === S.sortBy;
-        const d = t || !s[S.sortBy] ? "" : `
+        const d = t || !s[S.sortBy] || s[S.sortBy] === undefined ? "" : `
                 <div class="flex items-center bg-gray-600 text-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
                     <span class="mr-2">Сортировка: ${s[S.sortBy]}</span>
                 </div>
@@ -7748,7 +7760,7 @@ function renderAppliedFilters() {
         };
         Object.assign(a, l);
         t = S.q ? "relevance" === S.sortBy : "name_asc" === S.sortBy;
-        const i = t || !l[S.sortBy] ? "" : `
+        const i = t || !l[S.sortBy] || l[S.sortBy] === undefined ? "" : `
                 <div class="flex items-center bg-gray-600 text-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
                     <span class="mr-2">Сортировка: ${l[S.sortBy]}</span>
                 </div>
@@ -7786,7 +7798,7 @@ function renderAppliedFilters() {
         };
         Object.assign(s, r);
         t = S.q ? "relevance" === S.sortBy : "popularity" === S.sortBy;
-        const c = t ? "" : `
+        const c = t || !r[S.sortBy] || r[S.sortBy] === undefined ? "" : `
                 <div class="flex items-center bg-gray-600 text-gray-200 rounded-full pl-3 pr-2 py-1 text-sm">
                     <span class="mr-2">Сортировка: ${r[S.sortBy]}</span>
                     <button data-action="remove-filter" data-filter-type="sortBy" class="text-gray-200 hover:bg-gray-500/50 rounded-full p-0.5">${I_X("w-4 h-4")}</button>
@@ -8609,8 +8621,19 @@ function renderMainContent() {
         }
     } 
     if ("tools" === S.view) {
-        // Обрабатываем разные подкатегории инструментов
-        if (S.toolSubView === 'analytics') {
+        console.log('🔧 Rendering tools main content, toolSubView:', S.toolSubView);
+        // Показываем список инструментов, если не выбран конкретный подраздел
+        if (!S.toolSubView || S.toolSubView === '') {
+            e = `
+                <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
+                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">🛠️</div>
+                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Инструменты</h2>
+                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Выберите инструмент в боковой панели для начала работы</p>
+                </div>
+            `;
+        } else {
+            // Обрабатываем разные подкатегории инструментов
+            if (S.toolSubView === 'analytics') {
             // Запускаем анализ коллекции только если он еще не был выполнен или коллекция изменилась
             const needsUpdate = !S.analyticsData || S.collectionLastUpdate > S.analyticsLastUpdate;
             if (!S.analyticsLoading && needsUpdate) {
@@ -8662,6 +8685,7 @@ function renderMainContent() {
                     </div>
                 `;
             }
+        }
         }
     }
     mainEl.innerHTML = renderAppliedFilters() + e;
@@ -13542,7 +13566,36 @@ document.addEventListener("click", async e => {
         } else if (e === 'tools') {
             // Очищаем временные фильтры при переключении на инструменты
             clearTemporaryFilters();
+            // Принудительно сбрасываем подраздел инструментов, чтобы показать список инструментов
+            console.log('🔧 Switching to tools, resetting toolSubView from:', S.toolSubView, 'to empty string');
+            console.log('🔧 Previous view was:', S.view, 'subView was:', S.subView);
+            S.toolSubView = '';
+            // Сбрасываем subView при переключении на tools
+            S.subView = '';
+            console.log('🔧 Resetting subView to empty string for tools');
+            // Принудительно обновляем UI сразу после сброса
+            S.gridStale = true;
             updateLoadingStatus("Переключение на инструменты...", 50, "Подготовка инструментов");
+            // Принудительно обновляем боковую панель
+            console.log('🔧 Forcing sidebar update after toolSubView reset');
+            const sidebarEl = document.getElementById('sidebar');
+            if (sidebarEl) {
+                const newHTML = renderSidebar();
+                console.log('🔧 New sidebar HTML length:', newHTML.length);
+                sidebarEl.innerHTML = newHTML;
+                console.log('🔧 Sidebar updated, current innerHTML length:', sidebarEl.innerHTML.length);
+                // Проверяем, что HTML действительно содержит инструменты
+                if (newHTML.includes('Аналитика') && newHTML.includes('Экспорт') && newHTML.includes('Импорт')) {
+                    console.log('✅ Tools list found in sidebar HTML');
+                } else {
+                    console.log('❌ Tools list NOT found in sidebar HTML');
+                }
+            }
+            // Дополнительно принудительно обновляем UI через небольшую задержку
+            setTimeout(() => {
+                console.log('🔧 Delayed UI update for tools');
+                updateUI();
+            }, 100);
         }
         
         // Отключаем анимации при переключении вкладок для улучшения производительности
@@ -13553,6 +13606,16 @@ document.addEventListener("click", async e => {
         
         // Сбрасываем мультивыбор только при переключении Каталог/Коллекция
         S.multiSelect.active = false; S.multiSelect.items = new Set();
+        
+        // Сбрасываем подраздел инструментов при переключении с инструментов на другие виды
+        if (S.view === 'tools' && e !== 'tools') {
+            S.toolSubView = '';
+            // Сбрасываем subView на значение по умолчанию при переключении с инструментов
+            S.subView = 'parts';
+            // Устанавливаем сортировку для деталей на популярные
+            S.sortBy = 'popularity';
+            console.log('🔧 Resetting subView to parts and sortBy to popularity when switching from tools');
+        }
         
         // Скрываем указатель при переключении представлений (только если нет активных модальных окон)
         const activeModal = document.querySelector('[id$="-modal-container"]:not(.modal-hidden)');
@@ -13650,6 +13713,26 @@ document.addEventListener("click", async e => {
         }
         
         S.subView = e;
+        
+        // Сбрасываем подраздел инструментов при переключении между подразделами
+        if (S.view === 'tools') {
+            console.log('🔧 Resetting toolSubView in subview handler, current toolSubView:', S.toolSubView);
+            console.log('🔧 Current subView being set to:', e);
+            S.toolSubView = '';
+            // Принудительно обновляем боковую панель
+            const sidebarEl = document.getElementById('sidebar');
+            if (sidebarEl) {
+                const newHTML = renderSidebar();
+                console.log('🔧 Subview handler: New sidebar HTML length:', newHTML.length);
+                sidebarEl.innerHTML = newHTML;
+                // Проверяем, что HTML действительно содержит инструменты
+                if (newHTML.includes('Аналитика') && newHTML.includes('Экспорт') && newHTML.includes('Импорт')) {
+                    console.log('✅ Subview handler: Tools list found in sidebar HTML');
+                } else {
+                    console.log('❌ Subview handler: Tools list NOT found in sidebar HTML');
+                }
+            }
+        }
         
         // Останавливаем автоматическую смену подсказок при переключении вкладок
         if (window.stopTipRotation) {
