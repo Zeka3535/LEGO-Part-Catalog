@@ -2995,6 +2995,143 @@ body.tab-switching .minifig-card {
     #scroll-to-top-btn:active {
         transform: scale(0.98) !important;
     }
+    
+    /* Стили для автодополнения */
+    #autocomplete-dropdown {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(8px);
+        background: linear-gradient(135deg, rgba(31, 41, 55, 0.95) 0%, rgba(17, 24, 39, 0.95) 100%);
+        border: 1px solid rgba(75, 85, 99, 0.3);
+        z-index: 50;
+        max-height: 16rem;
+        overflow-y: auto;
+        display: none;
+    }
+    
+    /* Скрываем скроллбары для автодополнения */
+    #autocomplete-dropdown::-webkit-scrollbar {
+        display: none;
+    }
+    
+    #autocomplete-dropdown {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    
+    .autocomplete-item {
+        padding: 0.875rem 1rem;
+        cursor: pointer;
+        border-bottom: 1px solid rgba(75, 85, 99, 0.2);
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    
+    .autocomplete-item::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        transform: scaleY(0);
+        transition: transform 0.2s ease;
+    }
+    
+    .autocomplete-item:hover {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%);
+        transform: translateX(2px);
+    }
+    
+    .autocomplete-item:hover::before {
+        transform: scaleY(1);
+    }
+    
+    .autocomplete-item.selected {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%);
+        transform: translateX(4px);
+    }
+    
+    .autocomplete-item.selected::before {
+        transform: scaleY(1);
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    }
+    
+    .autocomplete-item-icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.375rem;
+        flex-shrink: 0;
+    }
+    
+    .autocomplete-item-icon.part {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+    }
+    
+    .autocomplete-item-icon.set {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        color: white;
+        box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+    
+    .autocomplete-item-icon.minifig {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: white;
+        box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+    }
+    
+    .autocomplete-item-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .autocomplete-item-text {
+        color: #e5e7eb;
+        font-size: 0.875rem;
+        line-height: 1.4;
+        font-weight: 500;
+        word-wrap: break-word;
+        hyphens: auto;
+        flex: 1;
+    }
+    
+    .autocomplete-item-text .highlight {
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        color: #1f2937;
+        font-weight: 700;
+        padding: 0.125rem 0.25rem;
+        border-radius: 0.25rem;
+        box-shadow: 0 1px 2px rgba(251, 191, 36, 0.3);
+    }
+    
+    .autocomplete-item-id {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        font-family: 'Courier New', monospace;
+        margin-top: 0.25rem;
+        font-weight: 400;
+    }
+    
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
@@ -8356,10 +8493,13 @@ function renderSidebar() {
 
 function renderHeader() {
     const {
-        subView: e
+        view: currentView
     } = S;
-    let t = "Поиск по деталям...";
-    "sets" === e && (t = "Поиск по наборам..."), "minifigs" === e && (t = "Поиск по минифигуркам...");
+    
+    // Определяем контекст поиска
+    const searchContext = currentView === 'collection' ? 'в коллекции' : 'в каталоге';
+    
+    let t = `Поиск ${searchContext}...`;
     
     const selCount = S.multiSelect.items?.size || 0;
     const showMultiselectBar = S.multiSelect.active && !((S.view === 'collection') && !S.collectionMultiSelectEnabled);
@@ -8390,8 +8530,11 @@ function renderHeader() {
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
-                        <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Поиск по деталям"/>
+                        <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Поиск по деталям" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off"/>
                         <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.q?"":"hidden"}" title="Очистить поисковый запрос">${I_X("w-5 h-5")}</button>
+                        <div id="autocomplete-dropdown">
+                            <!-- Предложения автодополнения будут добавлены здесь -->
+                        </div>
                     </div>
                      <button id="search-button" class="px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0" aria-label="Поиск" title="Выполнить поиск по введенному запросу">
                         ${I_Search("w-5 h-5")}
@@ -11408,8 +11551,80 @@ function updateUI() {
             S.q = e.target.value;
             // Сбрасываем случайное изображение минифигурки при изменении поискового запроса
             resetRandomMinifigImage();
+            
+            // Показываем автодополнение с дебаунсингом
+            if (S.q && S.q.trim().length > 0) {
+                // Очищаем предыдущий таймаут
+                if (autocompleteTimeout) {
+                    clearTimeout(autocompleteTimeout);
+                }
+                
+                // Устанавливаем новый таймаут для дебаунсинга
+                autocompleteTimeout = setTimeout(() => {
+                    const suggestions = generateAutocompleteSuggestions(S.q);
+                    showAutocompleteSuggestions(suggestions, S.q);
+                    selectedAutocompleteIndex = -1;
+                }, 150); // 150ms задержка для оптимизации
+            } else {
+                // Очищаем таймаут при пустом запросе
+                if (autocompleteTimeout) {
+                    clearTimeout(autocompleteTimeout);
+                }
+                hideAutocomplete();
+            }
+        });
+        
+        // Добавляем обработчики для навигации по автодополнению
+        searchInput.addEventListener('keydown', (e) => {
+            const dropdown = document.getElementById('autocomplete-dropdown');
+            if (!dropdown || dropdown.style.display === 'none') return;
+            
+            const items = dropdown.querySelectorAll('.autocomplete-item');
+            if (items.length === 0) return;
+            
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, items.length - 1);
+                    updateAutocompleteSelection(items);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, -1);
+                    updateAutocompleteSelection(items);
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (selectedAutocompleteIndex >= 0 && selectedAutocompleteIndex < items.length) {
+                        const item = items[selectedAutocompleteIndex];
+                        const suggestion = {
+                            text: item.querySelector('.autocomplete-item-text').textContent,
+                            type: item.dataset.type,
+                            id: item.dataset.id
+                        };
+                        selectAutocompleteSuggestion(suggestion);
+                    } else {
+                        triggerSearch();
+                    }
+                    break;
+                case 'Escape':
+                    hideAutocomplete();
+                    selectedAutocompleteIndex = -1;
+                    break;
+            }
+        });
+        
+        // Добавляем обработчик клика вне поля поиска для скрытия автодополнения
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#search-input') && !e.target.closest('#autocomplete-dropdown')) {
+                hideAutocomplete();
+                selectedAutocompleteIndex = -1;
+            }
         });
     }
+    
+    // Настраиваем обработчики клика для автодополнения
+    setupAutocompleteClickHandlers();
     
     // Настраиваем управление боковой панелью
     setupSidebarManagement();
@@ -12578,6 +12793,15 @@ function triggerSearch(e = !1) {
         S.selCollCatId = null;
         S.selCollThemeId = null;
         updateUI();
+    } else if ("tools" === S.view) {
+        // В режиме инструментов переключаемся на каталог для поиска
+        S.view = "catalog";
+        S.subView = "parts";
+        S.selCatId = null;
+        S.selFigNum = null;
+        S.showRelatedSets = false;
+        console.log('Switching from tools to catalog for search, calling searchRebrickableParts with:', S.q.trim());
+        searchRebrickableParts(S.q.trim());
     } else if ("sets" === S.subView) {
         S.selThemeId = null;
         S.selFigNum = null;
@@ -18660,25 +18884,268 @@ function searchInCSVData(query, type = 'parts') {
 function calculateSearchScore(item, searchTerm) {
     let score = 0;
     
-            // Точное совпадение получает наивысший балл
+    // Точное совпадение получает наивысший балл
     if (item.name && item.name.toLowerCase() === searchTerm) score += 100;
     if (item.id && item.id.toLowerCase() === searchTerm) score += 100;
     if (item.set_num && item.set_num.toLowerCase() === searchTerm) score += 100;
     
-            // Начинается с поискового запроса
+    // Начинается с поискового запроса
     if (item.name && item.name.toLowerCase().startsWith(searchTerm)) score += 50;
     if (item.id && item.id.toLowerCase().startsWith(searchTerm)) score += 50;
     if (item.set_num && item.set_num.toLowerCase().startsWith(searchTerm)) score += 50;
     
-    // Contains search term
+    // Содержит поисковый запрос
     if (item.name && item.name.toLowerCase().includes(searchTerm)) score += 25;
     if (item.id && item.id.toLowerCase().includes(searchTerm)) score += 25;
     if (item.set_num && item.set_num.toLowerCase().includes(searchTerm)) score += 25;
     
-
+    // Бонус за короткие названия (более релевантные)
+    if (item.name && item.name.length < 20) score += 5;
+    
+    // Бонус за популярность (если есть данные о количестве наборов)
+    if (item.num_sets && item.num_sets > 0) {
+        score += Math.min(item.num_sets / 10, 10); // Максимум 10 баллов за популярность
+    }
+    
+    // Бонус за недавние элементы (если есть год)
+    if (item.year && item.year > 2020) score += 3;
     
     return score;
 }
+
+// Функция для генерации предложений автодополнения
+function generateAutocompleteSuggestions(query, maxSuggestions = 8) {
+    if (!query || query.trim().length < 1) return [];
+    
+    const searchTerm = query.toLowerCase().trim();
+    const suggestions = [];
+    
+    // Определяем, в каком режиме мы находимся
+    const isCollectionMode = S.view === 'collection';
+    const currentSubView = S.subView;
+    
+    // Поиск в деталях (всегда включаем, так как детали есть везде)
+    Object.values(PART_MAP).forEach(part => {
+        if ((part.name && part.name.toLowerCase().includes(searchTerm)) || 
+            (part.id && part.id.toLowerCase().includes(searchTerm))) {
+            // В режиме коллекции показываем только детали из коллекции
+            if (isCollectionMode && !S.coll[part.id]) return;
+            
+            suggestions.push({
+                text: part.name,
+                type: 'part',
+                id: part.id,
+                score: calculateSearchScore(part, searchTerm)
+            });
+        }
+    });
+    
+    // Дополнительный поиск по частичным словам для деталей
+    if (searchTerm.length > 2) {
+        const words = searchTerm.split(' ').filter(word => word.length > 1);
+        if (words.length > 0) {
+            Object.values(PART_MAP).forEach(part => {
+                if (part.name && words.some(word => part.name.toLowerCase().includes(word))) {
+                    if (isCollectionMode && !S.coll[part.id]) return;
+                    
+                    // Проверяем, что элемент еще не добавлен
+                    if (!suggestions.some(s => s.id === part.id && s.type === 'part')) {
+                        suggestions.push({
+                            text: part.name,
+                            type: 'part',
+                            id: part.id,
+                            score: calculateSearchScore(part, searchTerm) * 0.7 // Снижаем релевантность для частичных совпадений
+                        });
+                    }
+                }
+            });
+        }
+    }
+    
+    // Поиск в наборах (всегда включаем)
+    Object.values(SET_MAP).forEach(set => {
+        if ((set.name && set.name.toLowerCase().includes(searchTerm)) || 
+            (set.set_num && set.set_num.toLowerCase().includes(searchTerm))) {
+            // В режиме коллекции показываем только наборы из коллекции
+            if (isCollectionMode && !S.setColl[set.set_num]) return;
+            
+            suggestions.push({
+                text: set.name,
+                type: 'set',
+                id: set.set_num,
+                score: calculateSearchScore(set, searchTerm)
+            });
+        }
+    });
+    
+    // Дополнительный поиск по частичным словам для наборов
+    if (searchTerm.length > 2) {
+        const words = searchTerm.split(' ').filter(word => word.length > 1);
+        if (words.length > 0) {
+            Object.values(SET_MAP).forEach(set => {
+                if (set.name && words.some(word => set.name.toLowerCase().includes(word))) {
+                    if (isCollectionMode && !S.setColl[set.set_num]) return;
+                    
+                    if (!suggestions.some(s => s.id === set.set_num && s.type === 'set')) {
+                        suggestions.push({
+                            text: set.name,
+                            type: 'set',
+                            id: set.set_num,
+                            score: calculateSearchScore(set, searchTerm) * 0.7
+                        });
+                    }
+                }
+            });
+        }
+    }
+    
+    // Поиск в минифигурках (всегда включаем)
+    Object.values(MINIFIG_MAP).forEach(minifig => {
+        if ((minifig.name && minifig.name.toLowerCase().includes(searchTerm)) || 
+            (minifig.set_num && minifig.set_num.toLowerCase().includes(searchTerm))) {
+            // В режиме коллекции показываем только минифигурки из коллекции
+            if (isCollectionMode && !S.minifigColl[minifig.set_num]) return;
+            
+            suggestions.push({
+                text: minifig.name,
+                type: 'minifig',
+                id: minifig.set_num,
+                score: calculateSearchScore(minifig, searchTerm)
+            });
+        }
+    });
+    
+    // Дополнительный поиск по частичным словам для минифигурок
+    if (searchTerm.length > 2) {
+        const words = searchTerm.split(' ').filter(word => word.length > 1);
+        if (words.length > 0) {
+            Object.values(MINIFIG_MAP).forEach(minifig => {
+                if (minifig.name && words.some(word => minifig.name.toLowerCase().includes(word))) {
+                    if (isCollectionMode && !S.minifigColl[minifig.set_num]) return;
+                    
+                    if (!suggestions.some(s => s.id === minifig.set_num && s.type === 'minifig')) {
+                        suggestions.push({
+                            text: minifig.name,
+                            type: 'minifig',
+                            id: minifig.set_num,
+                            score: calculateSearchScore(minifig, searchTerm) * 0.7
+                        });
+                    }
+                }
+            });
+        }
+    }
+    
+    // Сортируем по релевантности и ограничиваем количество
+    return suggestions
+        .sort((a, b) => b.score - a.score)
+        .slice(0, maxSuggestions);
+}
+
+// Функция для подсветки совпадающего текста
+function highlightText(text, searchTerm) {
+    if (!searchTerm) return text;
+    const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<span class="highlight">$1</span>');
+}
+
+// Функция для обрезки длинных названий
+function truncateText(text, maxLength = 50) {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
+}
+
+// Функция для отображения предложений автодополнения
+function showAutocompleteSuggestions(suggestions, searchTerm) {
+    const dropdown = document.getElementById('autocomplete-dropdown');
+    if (!dropdown) return;
+    
+    if (suggestions.length === 0) {
+        dropdown.classList.add('hidden');
+        return;
+    }
+    
+    const items = suggestions.map((suggestion, index) => {
+        const truncatedText = truncateText(suggestion.text, 50);
+        const highlightedText = highlightText(truncatedText, searchTerm);
+        const typeIcons = {
+            'part': I_Brick("w-5 h-5"),
+            'set': I_Set("w-5 h-5"),
+            'minifig': I_Minifig("w-5 h-5")
+        };
+        
+        return `
+            <div class="autocomplete-item" data-index="${index}" data-type="${suggestion.type}" data-id="${suggestion.id}">
+                <div class="autocomplete-item-icon ${suggestion.type}">${typeIcons[suggestion.type]}</div>
+                <div class="autocomplete-item-content">
+                    <div class="autocomplete-item-text">${highlightedText}</div>
+                    <div class="autocomplete-item-id">${suggestion.id}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    dropdown.innerHTML = items;
+    dropdown.style.display = 'block';
+    
+    // Настраиваем обработчики клика для новых элементов
+    setupAutocompleteClickHandlers();
+}
+
+// Функция для скрытия автодополнения
+function hideAutocomplete() {
+    const dropdown = document.getElementById('autocomplete-dropdown');
+    if (dropdown) {
+        dropdown.style.display = 'none';
+    }
+}
+
+// Функция для выбора предложения автодополнения
+function selectAutocompleteSuggestion(suggestion) {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput && suggestion) {
+        searchInput.value = suggestion.text;
+        S.q = suggestion.text;
+        hideAutocomplete();
+        triggerSearch();
+    }
+}
+
+// Переменная для отслеживания выбранного элемента в автодополнении
+let selectedAutocompleteIndex = -1;
+
+// Переменная для дебаунсинга автодополнения
+let autocompleteTimeout = null;
+
+// Функция для обновления выделения в автодополнении
+function updateAutocompleteSelection(items) {
+    items.forEach((item, index) => {
+        if (index === selectedAutocompleteIndex) {
+            item.classList.add('selected');
+        } else {
+            item.classList.remove('selected');
+        }
+    });
+}
+
+// Функция для настройки обработчиков клика по элементам автодополнения
+function setupAutocompleteClickHandlers() {
+    const dropdown = document.getElementById('autocomplete-dropdown');
+    if (!dropdown) return;
+    
+    dropdown.addEventListener('click', (e) => {
+        const item = e.target.closest('.autocomplete-item');
+        if (item) {
+            const suggestion = {
+                text: item.querySelector('.autocomplete-item-text').textContent,
+                type: item.dataset.type,
+                id: item.dataset.id
+            };
+            selectAutocompleteSuggestion(suggestion);
+        }
+    });
+}
+
 // (Removed) Background data check/download functions kept for future use
 // Function to fetch missing images from CSV data
 async function fetchMissingImagesFromCSV() {
