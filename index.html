@@ -3132,7 +3132,6 @@ function simpleInactivityInit() {
         
         // Функция для сброса таймера
         function resetInactivityTimer() {
-            console.log('🔄 Сбрасываем таймер неактивности');
             if (inactivityTimer) {
                 clearTimeout(inactivityTimer);
             }
@@ -3151,8 +3150,6 @@ function simpleInactivityInit() {
                 // Запускаем автоматическую смену подсказок
                 startTipRotation();
             }, 90000);
-            
-            console.log('🔄 Таймер неактивности установлен на 90 секунд');
         }
         
         // Функция для автоматической смены подсказок
@@ -4084,10 +4081,808 @@ function getRarityName(rarity) {
     return names[rarity] || names['unknown'];
 }
 
-function analyzeCollection() {
-    if (S.analyticsLoading) return;
+// Функция для правильного склонения слов
+function pluralize(count, forms) {
+    const cases = [2, 0, 1, 1, 1, 2];
+    const index = (count % 100 > 4 && count % 100 < 20) ? 2 : cases[Math.min(count % 10, 5)];
+    return forms[index];
+}
+
+// Тестовая функция для проверки логики редкости
+function testRarityLogic() {
+    console.log('🧪 Тестирование логики редкости минифигурок...');
     
+    // Тестовые данные
+    const testMinifigs = [
+        {
+            name: 'VIP Exclusive Gold Minifigure',
+            set_num: 'VIP-001',
+            theme_id: 1,
+            year: 2010,
+            num_parts: 25,
+            minifig_img_url: 'test.jpg'
+        },
+        {
+            name: 'Collectible Minifigure Series 1',
+            set_num: 'COL-001',
+            theme_id: 2,
+            year: 2020,
+            num_parts: 5,
+            minifig_img_url: 'test.jpg'
+        },
+        {
+            name: 'Regular Minifigure',
+            set_num: 'REG-123',
+            theme_id: 3,
+            year: 2023,
+            num_parts: 3,
+            minifig_img_url: 'test.jpg'
+        },
+        {
+            name: 'Star Wars Darth Vader',
+            set_num: 'SW-456',
+            theme_id: 4,
+            year: 2015,
+            num_parts: 8,
+            minifig_img_url: 'test.jpg'
+        }
+    ];
+    
+    testMinifigs.forEach((minifig, index) => {
+        console.log(`\n🧪 Тест ${index + 1}: ${minifig.name}`);
+        
+        // Временно сохраняем оригинальную функцию
+        const originalCalculate = calculateMinifigRarity;
+        
+        // Создаем тестовую версию
+        function testCalculateMinifigRarity(testMinifig) {
+            let rarityScore = 0;
+            const debugInfo = {
+                name: testMinifig.name,
+                set_num: testMinifig.set_num,
+                theme_id: testMinifig.theme_id,
+                year: testMinifig.year,
+                num_parts: testMinifig.num_parts,
+                factors: {}
+            };
+            
+            // Фактор 1: Количество деталей
+            const numParts = testMinifig.num_parts || 0;
+            if (numParts > 0) {
+                if (numParts >= 20) {
+                    rarityScore += 30;
+                    debugInfo.factors.numParts = { score: 30, reason: 'Очень сложные (20+ деталей)' };
+                } else if (numParts >= 15) {
+                    rarityScore += 25;
+                    debugInfo.factors.numParts = { score: 25, reason: 'Сложные (15-19 деталей)' };
+                } else if (numParts >= 10) {
+                    rarityScore += 15;
+                    debugInfo.factors.numParts = { score: 15, reason: 'Средние (10-14 деталей)' };
+                } else if (numParts >= 5) {
+                    rarityScore += 5;
+                    debugInfo.factors.numParts = { score: 5, reason: 'Простые (5-9 деталей)' };
+                }
+            }
+            
+            // Фактор 2: Название
+            const minifigName = testMinifig.name || '';
+            if (minifigName.includes('VIP') || minifigName.includes('Promotional')) {
+                rarityScore += 35;
+                debugInfo.factors.name = { score: 35, reason: 'VIP/промо названия' };
+            } else if (minifigName.includes('Gold') || minifigName.includes('Silver')) {
+                rarityScore += 30;
+                debugInfo.factors.name = { score: 30, reason: 'Золотые/серебряные названия' };
+            } else if (minifigName.includes('Collectible') || minifigName.includes('Collector')) {
+                rarityScore += 25;
+                debugInfo.factors.name = { score: 25, reason: 'Коллекционные названия' };
+            } else {
+                debugInfo.factors.name = { score: 0, reason: 'Обычное название' };
+            }
+            
+            // Фактор 3: Год
+            const year = testMinifig.year || 0;
+            if (year > 0) {
+                const currentYear = new Date().getFullYear();
+                const age = currentYear - year;
+                if (age >= 20) {
+                    rarityScore += 20;
+                    debugInfo.factors.year = { score: 20, reason: `Очень старые (${age} лет)` };
+                } else if (age >= 15) {
+                    rarityScore += 15;
+                    debugInfo.factors.year = { score: 15, reason: `Старые (${age} лет)` };
+                } else if (age >= 10) {
+                    rarityScore += 10;
+                    debugInfo.factors.year = { score: 10, reason: `Средние (${age} лет)` };
+                } else if (age >= 5) {
+                    rarityScore += 5;
+                    debugInfo.factors.year = { score: 5, reason: `Новые (${age} лет)` };
+                }
+            }
+            
+            // Фактор 4: Тема (отключено)
+            debugInfo.factors.theme = { score: 0, reason: 'Тема не учитывается' };
+            
+            // Фактор 5: Номер серии
+            const setNum = testMinifig.set_num || '';
+            let setNumScore = 0;
+            if (setNum.includes('VIP') || setNum.includes('PROMO')) {
+                setNumScore += 35;
+            } else if (setNum.includes('COL') || setNum.includes('COLLECTIBLE')) {
+                setNumScore += 25;
+            } else if (setNum.includes('SW')) {
+                setNumScore += 10;
+            }
+            
+            // Специальные номера
+            if (setNum.match(/^(\d{3,4})$/)) {
+                const num = parseInt(setNum.match(/^(\d{3,4})$/)[1], 10);
+                if (num === 1 || num === 10 || num === 100 || num === 1000) {
+                    setNumScore += 25;
+                } else if (num === 2 || num === 20 || num === 200 || num === 2000) {
+                    setNumScore += 20;
+                }
+            }
+            
+            rarityScore += setNumScore;
+            debugInfo.factors.setNum = { score: setNumScore, reason: `Номер: ${setNum}` };
+            
+            // Определяем редкость
+            let rarity;
+            if (rarityScore >= 100) rarity = 'legendary';
+            else if (rarityScore >= 80) rarity = 'epic';
+            else if (rarityScore >= 60) rarity = 'rare';
+            else if (rarityScore >= 40) rarity = 'uncommon';
+            else rarity = 'common';
+            
+            debugInfo.totalScore = rarityScore;
+            debugInfo.rarity = rarity;
+            
+            return { rarity, debugInfo };
+        }
+        
+        const result = testCalculateMinifigRarity(minifig);
+        console.log('📊 Результат:', result.debugInfo);
+        console.log('🎯 Итоговая редкость:', result.rarity, `(${result.debugInfo.totalScore} баллов)`);
+    });
+    
+    console.log('\n✅ Тестирование завершено!');
+}
+
+// Функция для тестирования реальных минифигурок пользователя
+function testUserMinifigs() {
+    console.log('🧪 Тестирование реальных минифигурок пользователя...');
+    
+    // Данные из CSV пользователя
+    const userMinifigs = [
+        { id: 'fig-014293', name: 'Ahsoka Tano', parts: 4 },
+        { id: 'fig-014806', name: 'Arc Trooper Fives', parts: 7 },
+        { id: 'fig-012921', name: 'Astromech Droid, R4-P17, Light Blue Rectangles', parts: 4 },
+        { id: 'fig-015729', name: 'Astromech Droid, R5-D4, Dark Blue Center Panel', parts: 4 },
+        { id: 'fig-015705', name: 'Astronomer Kid', parts: 4 },
+        { id: 'fig-002330', name: 'Battle Droid, One Bent Arm, One Straight Arm', parts: 5 },
+        { id: 'fig-003867', name: 'Clone ARC Trooper / Elite Clone Trooper with Neck Bracket (Commander Hammer)', parts: 8 },
+        { id: 'fig-003866', name: 'Clone ARF Trooper / Elite Clone Trooper (Rancor Battalion)', parts: 4 },
+        { id: 'fig-014993', name: 'Clone Trooper, 501st Legion, White Arms', parts: 4 },
+        { id: 'fig-002506', name: 'Commando Droid', parts: 5 },
+        { id: 'fig-015710', name: 'Cupid', parts: 6 },
+        { id: 'fig-010514', name: 'Draco Malfoy, Closed Slytherin Robes with Crest, Short Legs', parts: 4 },
+        { id: 'fig-015004', name: 'Droideka / Destroyer Droid', parts: 30 },
+        { id: 'fig-015902', name: 'Gilderoy Lockhart, Light Bluish Gray Duelling Suit', parts: 5 },
+        { id: 'fig-010525', name: 'Grogu / The Child (Baby Yoda)', parts: 2 },
+        { id: 'fig-014647', name: 'Harpy', parts: 9 },
+        { id: 'fig-011589', name: 'Harry Potter, Gryffindor Robes Open, Short Legs (3626c Head)', parts: 4 },
+        { id: 'fig-015064', name: 'Imperial Praetorian Guard', parts: 4 },
+        { id: 'fig-015704', name: 'Jetpack Racer', parts: 5 },
+        { id: 'fig-015455', name: 'Leia - Ugly Christmas Sweater', parts: 4 },
+        { id: 'fig-015457', name: 'Luke Skywalker - Ugly Christmas Sweater', parts: 4 },
+        { id: 'fig-001061', name: 'Magician (CMF)', parts: 5 },
+        { id: 'fig-012924', name: 'Obi-Wan Kenobi - Reddish Brown Robe, Long Hair', parts: 4 },
+        { id: 'fig-015711', name: 'Pirate Quartermaster', parts: 5 },
+        { id: 'fig-015094', name: 'Professor Severus Snape, Long Robes over Black Vest', parts: 4 },
+        { id: 'fig-010827', name: 'Spider-Man, Printed Arms', parts: 3 },
+        { id: 'fig-002118', name: 'Steve', parts: 3 },
+        { id: 'fig-004063', name: 'Stormtrooper, Dark Azure Helmet Vents, Angry (Rebels)', parts: 4 },
+        { id: 'fig-014665', name: 'Super Battle Droid, Updated Version', parts: 4 },
+        { id: 'fig-012922', name: 'Taun We', parts: 3 },
+        { id: 'fig-015880', name: 'The Mandalorian / Din Djarin, Dark Brown Outfit, 87610pr0012 Helmet', parts: 5 },
+        { id: 'fig-005492', name: 'Venom with Open Mouth', parts: 3 }
+    ];
+    
+    // Тестируем каждую минифигурку
+    const results = userMinifigs.map(minifig => {
+        // Создаем тестовую минифигурку с данными из CSV
+        const testMinifig = {
+            name: minifig.name,
+            set_num: minifig.id,
+            theme_id: undefined, // Нет данных о теме
+            year: undefined, // Нет данных о годе
+            num_parts: minifig.parts,
+            minifig_img_url: 'test.jpg'
+        };
+        
+        // Рассчитываем редкость
+        let rarityScore = 0;
+        const debugInfo = {
+            name: testMinifig.name,
+            set_num: testMinifig.set_num,
+            theme_id: testMinifig.theme_id,
+            year: testMinifig.year,
+            num_parts: testMinifig.num_parts,
+            factors: {}
+        };
+        
+        // Фактор 1: Количество деталей
+        const numParts = testMinifig.num_parts || 0;
+        if (numParts > 0) {
+            if (numParts >= 20) {
+                rarityScore += 30;
+                debugInfo.factors.numParts = { score: 30, reason: 'Очень сложные (20+ деталей)' };
+            } else if (numParts >= 15) {
+                rarityScore += 25;
+                debugInfo.factors.numParts = { score: 25, reason: 'Сложные (15-19 деталей)' };
+            } else if (numParts >= 10) {
+                rarityScore += 15;
+                debugInfo.factors.numParts = { score: 15, reason: 'Средние (10-14 деталей)' };
+            } else if (numParts >= 5) {
+                rarityScore += 5;
+                debugInfo.factors.numParts = { score: 5, reason: 'Простые (5-9 деталей)' };
+            }
+        }
+        
+        // Фактор 2: Название
+        const minifigName = testMinifig.name || '';
+        if (minifigName.includes('VIP') || minifigName.includes('Promotional')) {
+            rarityScore += 35;
+            debugInfo.factors.name = { score: 35, reason: 'VIP/промо названия' };
+        } else if (minifigName.includes('Gold') || minifigName.includes('Silver')) {
+            rarityScore += 30;
+            debugInfo.factors.name = { score: 30, reason: 'Золотые/серебряные названия' };
+        } else if (minifigName.includes('Collectible') || minifigName.includes('Collector') || minifigName.includes('CMF')) {
+            rarityScore += 25;
+            debugInfo.factors.name = { score: 25, reason: 'Коллекционные названия' };
+        } else {
+            debugInfo.factors.name = { score: 0, reason: 'Обычное название' };
+        }
+        
+        // Фактор 3: Год (симулируем данные из связанных наборов)
+        // Для тестирования используем примерные годы на основе названий
+        let year = 0;
+        let yearSource = 'симуляция';
+        
+        // Симулируем годы на основе названий минифигурок
+        if (minifigName.includes('Clone') || minifigName.includes('Battle Droid') || minifigName.includes('Commando Droid')) {
+            year = 2008; // Старые Star Wars минифигурки
+        } else if (minifigName.includes('Harry Potter') || minifigName.includes('Draco') || minifigName.includes('Gilderoy') || minifigName.includes('Severus')) {
+            year = 2010; // Harry Potter минифигурки
+        } else if (minifigName.includes('Spider-Man') || minifigName.includes('Venom')) {
+            year = 2012; // Marvel минифигурки
+        } else if (minifigName.includes('Steve')) {
+            year = 2014; // Minecraft минифигурки
+        } else if (minifigName.includes('The Mandalorian') || minifigName.includes('Grogu')) {
+            year = 2020; // Новые Star Wars минифигурки
+        } else if (minifigName.includes('Christmas') || minifigName.includes('Ugly')) {
+            year = 2021; // Праздничные минифигурки
+        } else if (minifigName.includes('CMF') || minifigName.includes('Magician')) {
+            year = 2015; // Коллекционные минифигурки
+        } else {
+            year = 2018; // Остальные минифигурки
+        }
+        
+        if (year > 0) {
+            const currentYear = new Date().getFullYear();
+            const age = currentYear - year;
+            if (age >= 20) {
+                rarityScore += 20;
+                debugInfo.factors.year = { score: 20, reason: `Очень старые (${age} лет, ${yearSource})` };
+            } else if (age >= 15) {
+                rarityScore += 15;
+                debugInfo.factors.year = { score: 15, reason: `Старые (${age} лет, ${yearSource})` };
+            } else if (age >= 10) {
+                rarityScore += 10;
+                debugInfo.factors.year = { score: 10, reason: `Средние (${age} лет, ${yearSource})` };
+            } else if (age >= 5) {
+                rarityScore += 5;
+                debugInfo.factors.year = { score: 5, reason: `Новые (${age} лет, ${yearSource})` };
+            } else {
+                debugInfo.factors.year = { score: 0, reason: `Очень новые (${age} лет, ${yearSource})` };
+            }
+        } else {
+            debugInfo.factors.year = { score: 0, reason: 'Нет данных о годе' };
+        }
+        
+        // Фактор 4: Тема (отключено)
+        debugInfo.factors.theme = { score: 0, reason: 'Тема не учитывается' };
+        
+        // Фактор 5: Номер серии
+        const setNum = testMinifig.set_num || '';
+        let setNumScore = 0;
+        if (setNum.includes('VIP') || setNum.includes('PROMO')) {
+            setNumScore += 35;
+        } else if (setNum.includes('COL') || setNum.includes('COLLECTIBLE')) {
+            setNumScore += 25;
+        } else if (setNum.includes('SW')) {
+            setNumScore += 10;
+        }
+        
+        // Специальные номера
+        if (setNum.match(/^(\d{3,4})$/)) {
+            const num = parseInt(setNum.match(/^(\d{3,4})$/)[1], 10);
+            if (num === 1 || num === 10 || num === 100 || num === 1000) {
+                setNumScore += 25;
+            } else if (num === 2 || num === 20 || num === 200 || num === 2000) {
+                setNumScore += 20;
+            }
+        }
+        
+        rarityScore += setNumScore;
+        debugInfo.factors.setNum = { score: setNumScore, reason: `Номер: ${setNum}` };
+        
+        // Фактор 6: Коллекционные серии по названию
+        let nameScore = 0;
+        if (minifigName.includes('Collectible') || minifigName.includes('Collector')) {
+            nameScore += 25;
+        } else if (minifigName.includes('Series') || minifigName.includes('Serie')) {
+            nameScore += 20;
+        } else if (minifigName.includes('Blind') || minifigName.includes('Bag')) {
+            nameScore += 15;
+        } else if (minifigName.includes('Polybag') || minifigName.includes('Poly')) {
+            nameScore += 10;
+        }
+        
+        rarityScore += nameScore;
+        debugInfo.factors.nameSeries = { score: nameScore, reason: `Название: ${minifigName}` };
+        
+        // Фактор 7: Изображение
+        debugInfo.factors.image = { score: 0, reason: 'Есть изображение' };
+        
+        // Определяем редкость
+        let rarity;
+        if (rarityScore >= 100) rarity = 'legendary';
+        else if (rarityScore >= 80) rarity = 'epic';
+        else if (rarityScore >= 60) rarity = 'rare';
+        else if (rarityScore >= 40) rarity = 'uncommon';
+        else rarity = 'common';
+        
+        // Обновляем debugInfo с итоговым баллом
+        debugInfo.totalScore = rarityScore;
+        debugInfo.rarity = rarity;
+        
+        return {
+            id: minifig.id,
+            name: minifig.name,
+            parts: minifig.parts,
+            rarity: rarity,
+            score: rarityScore,
+            debugInfo: debugInfo
+        };
+    });
+    
+    // Сортируем по редкости и баллам
+    results.sort((a, b) => {
+        const rarityOrder = { 'legendary': 0, 'epic': 1, 'rare': 2, 'uncommon': 3, 'common': 4 };
+        const aOrder = rarityOrder[a.rarity] || 999;
+        const bOrder = rarityOrder[b.rarity] || 999;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return b.score - a.score;
+    });
+    
+    console.log('\n📊 Топ минифигурок по редкости:');
+    results.forEach((minifig, index) => {
+        console.log(`${index + 1}. ${minifig.name} (${minifig.parts} деталей) - ${minifig.rarity} (${minifig.score} баллов)`);
+    });
+    
+    console.log('\n🔍 Детальный анализ топ-5:');
+    results.slice(0, 5).forEach((minifig, index) => {
+        console.log(`\n${index + 1}. ${minifig.name} (${minifig.parts} деталей):`);
+        console.log(`   Итоговый балл: ${minifig.score}`);
+        console.log(`   Редкость: ${minifig.rarity}`);
+        console.log('   Факторы:');
+        Object.entries(minifig.debugInfo.factors).forEach(([key, factor]) => {
+            console.log(`     ${key}: ${factor.score} баллов - ${factor.reason}`);
+        });
+    });
+    
+    return results;
+}
+
+// Функция для принудительного обновления аналитики
+function forceUpdateAnalytics() {
+    console.log('🔄 Принудительно обновляем аналитику...');
+    S.analyticsData = null;
+    S.analyticsLastUpdate = 0;
+    S.analyticsLoading = false;
+    analyzeCollection();
+}
+
+// Функция для проверки текущего состояния аналитики
+function checkAnalyticsState() {
+    console.log('🔍 Проверяем состояние аналитики:');
+    console.log('S.analyticsData:', S.analyticsData ? 'есть' : 'нет');
+    console.log('S.analyticsLoading:', S.analyticsLoading);
+    console.log('S.analyticsLastUpdate:', S.analyticsLastUpdate);
+    
+    if (S.analyticsData && S.analyticsData.minifigsStats) {
+        console.log('📊 Топ-5 минифигурок по редкости:');
+        S.analyticsData.minifigsStats.topRareMinifigs?.slice(0, 5).forEach((minifig, index) => {
+            console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarityName} (${minifig.rarity})`);
+        });
+    }
+}
+
+// Добавляем тестовые функции в глобальную область для вызова из консоли
+window.testRarityLogic = testRarityLogic;
+window.testUserMinifigs = testUserMinifigs;
+window.forceUpdateAnalytics = forceUpdateAnalytics;
+window.checkAnalyticsState = checkAnalyticsState;
+
+// Дублируем функции для надежности
+window.forceUpdateAnalytics = function() {
+    console.log('🔄 Принудительно обновляем аналитику...');
+    S.analyticsData = null;
+    S.analyticsLastUpdate = 0;
+    S.analyticsLoading = false;
+    analyzeCollection();
+};
+
+window.checkAnalyticsState = function() {
+    console.log('🔍 Проверяем состояние аналитики:');
+    console.log('S.analyticsData:', S.analyticsData ? 'есть' : 'нет');
+    console.log('S.analyticsLoading:', S.analyticsLoading);
+    console.log('S.analyticsLastUpdate:', S.analyticsLastUpdate);
+    
+    if (S.analyticsData && S.analyticsData.minifigsStats) {
+        console.log('📊 Топ-5 минифигурок по редкости:');
+        S.analyticsData.minifigsStats.topRareMinifigs?.slice(0, 5).forEach((minifig, index) => {
+            console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarityName} (${minifig.rarity})`);
+        });
+    }
+};
+
+// Функция для расчета редкости минифигурки
+function calculateMinifigRarity(minifigNum) {
+    const minifig = MINIFIG_MAP[minifigNum];
+    if (!minifig) return 'unknown';
+    
+    let rarityScore = 0;
+    const debugInfo = {
+        minifigNum,
+        name: minifig.name,
+        set_num: minifig.set_num,
+        theme_id: minifig.theme_id,
+        year: minifig.year,
+        num_parts: minifig.num_parts,
+        factors: {}
+    };
+    
+    // Фактор 1: Количество деталей (больше деталей = более редкая)
+    const numParts = minifig.num_parts || 0;
+    if (numParts > 0) {
+        if (numParts >= 20) {
+            rarityScore += 30;      // Очень сложные минифигурки
+            debugInfo.factors.numParts = { score: 30, reason: 'Очень сложные (20+ деталей)' };
+        } else if (numParts >= 15) {
+            rarityScore += 25;  // Сложные минифигурки
+            debugInfo.factors.numParts = { score: 25, reason: 'Сложные (15-19 деталей)' };
+        } else if (numParts >= 10) {
+            rarityScore += 15;  // Средние минифигурки
+            debugInfo.factors.numParts = { score: 15, reason: 'Средние (10-14 деталей)' };
+        } else if (numParts >= 5) {
+            rarityScore += 5;    // Простые минифигурки
+            debugInfo.factors.numParts = { score: 5, reason: 'Простые (5-9 деталей)' };
+        }
+    } else {
+        debugInfo.factors.numParts = { score: 0, reason: 'Нет данных о деталях' };
+    }
+    
+    // Фактор 2: Название минифигурки (специальные названия более редкие)
+    const minifigName = minifig.name || '';
+    if (minifigName.includes('Exclusive') || minifigName.includes('Limited') || minifigName.includes('Special')) {
+        rarityScore += 25; // Эксклюзивные минифигурки
+        debugInfo.factors.name = { score: 25, reason: 'Эксклюзивные названия' };
+    } else if (minifigName.includes('Chrome') || minifigName.includes('Metallic') || minifigName.includes('Pearl')) {
+        rarityScore += 20; // Металлические минифигурки
+        debugInfo.factors.name = { score: 20, reason: 'Металлические названия' };
+    } else if (minifigName.includes('Transparent') || minifigName.includes('Clear')) {
+        rarityScore += 15; // Прозрачные минифигурки
+        debugInfo.factors.name = { score: 15, reason: 'Прозрачные названия' };
+    } else if (minifigName.includes('Gold') || minifigName.includes('Silver')) {
+        rarityScore += 30; // Золотые и серебряные минифигурки
+        debugInfo.factors.name = { score: 30, reason: 'Золотые/серебряные названия' };
+    } else if (minifigName.includes('VIP') || minifigName.includes('Promotional')) {
+        rarityScore += 35; // VIP и промо минифигурки
+        debugInfo.factors.name = { score: 35, reason: 'VIP/промо названия' };
+    } else {
+        debugInfo.factors.name = { score: 0, reason: 'Обычное название' };
+    }
+    
+    // Фактор 3: Год выпуска (старые минифигурки более редкие)
+    // Определяем год по самому старому связанному набору
+    let year = minifig.year || 0;
+    let yearSource = 'API';
+    
+    // Если нет года из API, ищем в связанных наборах
+    if (!year) {
+        const relatedSets = Object.values(S.setColl).filter(set => 
+            set.minifigs && set.minifigs.some(m => m.minifigNum === minifigNum)
+        );
+        
+        if (relatedSets.length > 0) {
+            // Находим самый старый набор
+            const oldestSet = relatedSets.reduce((oldest, current) => {
+                const currentYear = parseInt(current.year) || 0;
+                const oldestYear = parseInt(oldest.year) || 0;
+                return currentYear > 0 && (oldestYear === 0 || currentYear < oldestYear) ? current : oldest;
+            });
+            
+            year = parseInt(oldestSet.year) || 0;
+            yearSource = 'связанный набор';
+            debugInfo.factors.year = { 
+                score: 0, 
+                reason: `Год найден в связанном наборе: ${oldestSet.setNum} (${year})` 
+            };
+        } else {
+            // Если нет связанных наборов, симулируем год на основе названия
+            const minifigName = minifig.name || '';
+            if (minifigName.includes('Clone') || minifigName.includes('Battle Droid') || minifigName.includes('Commando Droid')) {
+                year = 2008; // Старые Star Wars минифигурки
+                yearSource = 'симуляция (Star Wars)';
+            } else if (minifigName.includes('Harry Potter') || minifigName.includes('Draco') || minifigName.includes('Gilderoy') || minifigName.includes('Severus')) {
+                year = 2010; // Harry Potter минифигурки
+                yearSource = 'симуляция (Harry Potter)';
+            } else if (minifigName.includes('Spider-Man') || minifigName.includes('Venom')) {
+                year = 2012; // Marvel минифигурки
+                yearSource = 'симуляция (Marvel)';
+            } else if (minifigName.includes('Steve')) {
+                year = 2014; // Minecraft минифигурки
+                yearSource = 'симуляция (Minecraft)';
+            } else if (minifigName.includes('The Mandalorian') || minifigName.includes('Grogu')) {
+                year = 2020; // Новые Star Wars минифигурки
+                yearSource = 'симуляция (Mandalorian)';
+            } else if (minifigName.includes('Christmas') || minifigName.includes('Ugly')) {
+                year = 2021; // Праздничные минифигурки
+                yearSource = 'симуляция (Christmas)';
+            } else if (minifigName.includes('CMF') || minifigName.includes('Magician')) {
+                year = 2015; // Коллекционные минифигурки
+                yearSource = 'симуляция (CMF)';
+            } else {
+                year = 2018; // Остальные минифигурки
+                yearSource = 'симуляция (общие)';
+            }
+            
+            debugInfo.factors.year = { 
+                score: 0, 
+                reason: `Год симулирован: ${year} (${yearSource})` 
+            };
+        }
+    }
+    
+    if (year > 0) {
+        const currentYear = new Date().getFullYear();
+        const age = currentYear - year;
+        if (age >= 20) {
+            rarityScore += 20;      // Очень старые (20+ лет)
+            debugInfo.factors.year = { score: 20, reason: `Очень старые (${age} лет, ${yearSource})` };
+        } else if (age >= 15) {
+            rarityScore += 15; // Старые (15-19 лет)
+            debugInfo.factors.year = { score: 15, reason: `Старые (${age} лет, ${yearSource})` };
+        } else if (age >= 10) {
+            rarityScore += 10; // Средние (10-14 лет)
+            debugInfo.factors.year = { score: 10, reason: `Средние (${age} лет, ${yearSource})` };
+        } else if (age >= 5) {
+            rarityScore += 5;   // Новые (5-9 лет)
+            debugInfo.factors.year = { score: 5, reason: `Новые (${age} лет, ${yearSource})` };
+        } else {
+            debugInfo.factors.year = { score: 0, reason: `Очень новые (${age} лет, ${yearSource})` };
+        }
+    } else {
+        debugInfo.factors.year = { score: 0, reason: 'Нет данных о годе' };
+    }
+    
+    // Фактор 4: Тематическая редкость (отключено по запросу пользователя)
+    // Тема не учитывается в расчете редкости
+    debugInfo.factors.theme = { score: 0, reason: 'Тема не учитывается' };
+    
+    // Фактор 5: Номер серии минифигурки и коллекционные серии
+    const setNum = minifig.set_num || '';
+    let setNumScore = 0;
+    
+    if (setNum) {
+        // Специальные номера серий
+        if (setNum.includes('VIP') || setNum.includes('PROMO')) {
+            setNumScore += 35; // VIP и промо номера
+        } else if (setNum.includes('EXCLUSIVE') || setNum.includes('LIMITED')) {
+            setNumScore += 30; // Эксклюзивные номера
+        } else if (setNum.includes('CONVENTION') || setNum.includes('EVENT')) {
+            setNumScore += 40; // Конвенционные номера
+        } else if (setNum.includes('COLLECTIBLE') || setNum.includes('COLLECTOR')) {
+            setNumScore += 25; // Коллекционные номера
+        }
+        
+        // Номера с особыми префиксами
+        if (setNum.startsWith('VIP') || setNum.startsWith('PROMO')) {
+            setNumScore += 30; // VIP/PROMO префиксы
+        } else if (setNum.startsWith('EX') || setNum.startsWith('LIM')) {
+            setNumScore += 25; // EXCLUSIVE/LIMITED префиксы
+        } else if (setNum.startsWith('CON') || setNum.startsWith('EVT')) {
+            setNumScore += 35; // CONVENTION/EVENT префиксы
+        }
+        
+        // Коллекционные серии минифигурок
+        if (setNum.includes('COLLECTIBLE') || setNum.includes('COLLECTOR')) {
+            setNumScore += 25; // Коллекционные серии
+        } else if (setNum.includes('SERIES') || setNum.includes('SERIE')) {
+            setNumScore += 20; // Серии минифигурок
+        } else if (setNum.includes('BLIND') || setNum.includes('BAG')) {
+            setNumScore += 15; // Слепые пакеты
+        } else if (setNum.includes('POLYBAG') || setNum.includes('POLY')) {
+            setNumScore += 10; // Полипакеты
+        }
+        
+        // Номера серий (например, 001, 002, 003...)
+        const seriesMatch = setNum.match(/(\d{3,4})/);
+        if (seriesMatch) {
+            const seriesNum = parseInt(seriesMatch[1], 10);
+            if (seriesNum >= 1 && seriesNum <= 10) {
+                setNumScore += 20; // Первые 10 номеров серии (очень редкие)
+            } else if (seriesNum >= 11 && seriesNum <= 20) {
+                setNumScore += 15; // Номера 11-20 (редкие)
+            } else if (seriesNum >= 21 && seriesNum <= 50) {
+                setNumScore += 10; // Номера 21-50 (необычные)
+            } else if (seriesNum >= 51 && seriesNum <= 100) {
+                setNumScore += 5; // Номера 51-100 (обычные)
+            }
+        }
+        
+        // Редкие номера (например, с особыми цифрами)
+        if (setNum.match(/\d{4}/) && setNum.includes('000')) {
+            setNumScore += 15; // Номера с нулями (например, 1000, 2000)
+        } else if (setNum.match(/\d{3}/) && setNum.includes('00')) {
+            setNumScore += 10; // Номера с двойными нулями (например, 100, 200)
+        }
+        
+        // Специальные номера (например, 001, 010, 100, 1000)
+        if (setNum.match(/^(\d{3,4})$/)) {
+            const num = parseInt(setNum, 10);
+            if (num === 1 || num === 10 || num === 100 || num === 1000) {
+                setNumScore += 25; // Специальные номера
+            } else if (num === 2 || num === 20 || num === 200 || num === 2000) {
+                setNumScore += 20; // Вторые номера
+            } else if (num === 3 || num === 30 || num === 300 || num === 3000) {
+                setNumScore += 15; // Третьи номера
+            }
+        }
+        
+        rarityScore += setNumScore;
+        debugInfo.factors.setNum = { score: setNumScore, reason: `Номер: ${setNum}` };
+    } else {
+        debugInfo.factors.setNum = { score: 0, reason: 'Нет номера' };
+    }
+    
+    // Фактор 6: Коллекционные серии по названию
+    let nameScore = 0;
+    if (minifigName) {
+        // Коллекционные серии
+        if (minifigName.includes('Collectible') || minifigName.includes('Collector')) {
+            nameScore += 25; // Коллекционные серии
+        } else if (minifigName.includes('Series') || minifigName.includes('Serie')) {
+            nameScore += 20; // Серии минифигурок
+        } else if (minifigName.includes('Blind') || minifigName.includes('Bag')) {
+            nameScore += 15; // Слепые пакеты
+        } else if (minifigName.includes('Polybag') || minifigName.includes('Poly')) {
+            nameScore += 10; // Полипакеты
+        }
+        
+        // Специальные коллекционные серии
+        if (minifigName.includes('Minifigure Series') || minifigName.includes('Minifig Series')) {
+            nameScore += 30; // Серии минифигурок
+        } else if (minifigName.includes('Collectible Minifigure') || minifigName.includes('Collector Minifigure')) {
+            nameScore += 35; // Коллекционные минифигурки
+        } else if (minifigName.includes('Blind Bag') || minifigName.includes('Mystery Bag')) {
+            nameScore += 20; // Слепые пакеты
+        } else if (minifigName.includes('Polybag') || minifigName.includes('Poly Bag')) {
+            nameScore += 15; // Полипакеты
+        }
+        
+        // Номера в названии (например, "Minifigure Series 1", "Collectible Minifigure 001")
+        const nameSeriesMatch = minifigName.match(/(\d{1,4})/);
+        if (nameSeriesMatch) {
+            const seriesNum = parseInt(nameSeriesMatch[1], 10);
+            if (seriesNum >= 1 && seriesNum <= 5) {
+                nameScore += 25; // Первые 5 номеров серии
+            } else if (seriesNum >= 6 && seriesNum <= 10) {
+                nameScore += 20; // Номера 6-10
+            } else if (seriesNum >= 11 && seriesNum <= 20) {
+                nameScore += 15; // Номера 11-20
+            } else if (seriesNum >= 21 && seriesNum <= 50) {
+                nameScore += 10; // Номера 21-50
+            }
+        }
+        
+        rarityScore += nameScore;
+        debugInfo.factors.nameSeries = { score: nameScore, reason: `Название: ${minifigName}` };
+    } else {
+        debugInfo.factors.nameSeries = { score: 0, reason: 'Нет названия' };
+    }
+    
+    // Фактор 7: Количество связанных наборов (чем меньше, тем реже)
+    const relatedSets = Object.values(S.setColl).filter(set => 
+        set.minifigs && set.minifigs.some(m => m.minifigNum === minifigNum)
+    );
+    const relatedSetsCount = relatedSets.length;
+    
+    let relatedSetsScore = 0;
+    if (relatedSetsCount === 0) {
+        relatedSetsScore += 15; // Очень редкая - нет связанных наборов
+        debugInfo.factors.relatedSets = { score: 15, reason: 'Нет связанных наборов (очень редкая)' };
+    } else if (relatedSetsCount === 1) {
+        relatedSetsScore += 10; // Редкая - только в одном наборе
+        debugInfo.factors.relatedSets = { score: 10, reason: `Только в 1 наборе (редкая)` };
+    } else if (relatedSetsCount <= 3) {
+        relatedSetsScore += 5; // Необычная - в 2-3 наборах
+        debugInfo.factors.relatedSets = { score: 5, reason: `В ${relatedSetsCount} наборах (необычная)` };
+    } else if (relatedSetsCount <= 5) {
+        relatedSetsScore += 2; // Обычная - в 4-5 наборах
+        debugInfo.factors.relatedSets = { score: 2, reason: `В ${relatedSetsCount} наборах (обычная)` };
+    } else {
+        debugInfo.factors.relatedSets = { score: 0, reason: `В ${relatedSetsCount} наборах (очень распространенная)` };
+    }
+    rarityScore += relatedSetsScore;
+    
+    // Фактор 8: Наличие изображения (минифигурки без изображения могут быть более редкими)
+    let imageScore = 0;
+    if (!minifig.minifig_img_url && !minifig.set_img_url) {
+        imageScore += 10; // Минифигурки без изображения могут быть редкими
+        debugInfo.factors.image = { score: 10, reason: 'Нет изображения' };
+    } else {
+        debugInfo.factors.image = { score: 0, reason: 'Есть изображение' };
+    }
+    rarityScore += imageScore;
+    
+    // Определяем редкость на основе итогового балла
+    let rarity;
+    if (rarityScore >= 100) rarity = 'legendary';   // Легендарная (≥100 баллов)
+    else if (rarityScore >= 80) rarity = 'epic';         // Эпическая (80-99 баллов)
+    else if (rarityScore >= 60) rarity = 'rare';         // Редкая (60-79 баллов)
+    else if (rarityScore >= 40) rarity = 'uncommon';     // Необычная (40-59 баллов)
+    else rarity = 'common';                               // Обычная (<40 баллов)
+    
+    // Логируем информацию о редкости для отладки
+    debugInfo.totalScore = rarityScore;
+    debugInfo.rarity = rarity;
+    
+    // Логируем все минифигурки для отладки
+    console.log('🔍 Rarity calculation for minifig:', minifigNum, minifig.name);
+    console.log('🔍 Score breakdown:', {
+        numParts: debugInfo.factors.numParts?.score || 0,
+        name: debugInfo.factors.name?.score || 0,
+        year: debugInfo.factors.year?.score || 0,
+        theme: debugInfo.factors.theme?.score || 0,
+        setNum: debugInfo.factors.setNum?.score || 0,
+        nameSeries: debugInfo.factors.nameSeries?.score || 0,
+        relatedSets: debugInfo.factors.relatedSets?.score || 0,
+        image: debugInfo.factors.image?.score || 0,
+        total: debugInfo.totalScore,
+        rarity: debugInfo.rarity
+    });
+    
+    return rarity;
+}
+
+function analyzeCollection() {
+    console.log('🚀 analyzeCollection START');
+    
+    if (S.analyticsLoading) {
+        console.log('⚠️ analyzeCollection already loading, skipping');
+        return;
+    }
+    
+    console.log('🔍 analyzeCollection called, minifigColl size:', Object.keys(S.minifigColl).length);
+    console.log('🔄 Принудительно обновляем аналитику...');
     S.analyticsLoading = true;
+    
+    // Сбрасываем кэш аналитики для принудительного пересчета
+    S.analyticsData = null;
+    S.analyticsLastUpdate = 0;
     
     // Отладочная информация для понимания новой системы редкости
     const rarityDistribution = {
@@ -4187,7 +4982,8 @@ function analyzeCollection() {
                         quantity,
                         rarity,
                         rarityName: getRarityName(rarity),
-                        rarityColor: getRarityColor(rarity)
+                        rarityColor: getRarityColor(rarity),
+                        partImgUrl: part.part_img_url || part.set_img_url
                     });
                 }
                 
@@ -4282,7 +5078,8 @@ function analyzeCollection() {
                     year: set.year,
                     numParts: set.num_parts || 0,
                     quantity: setData.qty,
-                    theme: THEME_MAP[set.theme_id]?.name || 'Неизвестная тема'
+                    theme: THEME_MAP[set.theme_id]?.name || 'Неизвестная тема',
+                    setImgUrl: set.set_img_url
                 } : null;
             })
             .filter(Boolean)
@@ -4307,20 +5104,74 @@ function analyzeCollection() {
             });
             
         console.log('📊 S.minifigColl entries:', Object.entries(S.minifigColl).length);
-        analytics.minifigsStats.topMinifigs = Object.entries(S.minifigColl)
+        
+        // Создаем массив всех минифигурок с расчетом редкости
+        console.log('🔍 Creating allMinifigs array, processing', Object.entries(S.minifigColl).length, 'minifigs');
+        const allMinifigs = Object.entries(S.minifigColl)
             .map(([minifigNum, minifigData]) => {
                 const minifig = MINIFIG_MAP[minifigNum];
-                return minifig ? {
+                if (!minifig) return null;
+                
+                console.log('🔍 Processing minifig:', minifigNum, minifig.name, {
+                    theme_id: minifig.theme_id,
+                    year: minifig.year,
+                    num_parts: minifig.num_parts,
+                    hasImage: !!(minifig.minifig_img_url || minifig.set_img_url)
+                });
+                
+                        // Если у минифигурки нет темы или года, попробуем загрузить данные
+        if (!minifig.theme_id || !minifig.year) {
+            console.log('🔍 Minifig missing theme/year data, fetching details for:', minifigNum);
+            fetchMinifigDetails(minifigNum).catch(console.error);
+        }
+        
+        // Принудительно пересчитываем редкость для каждой минифигурки
+        console.log('🔄 Пересчитываем редкость для:', minifigNum, minifig.name);
+                
+                const rarity = calculateMinifigRarity(minifigNum);
+                return {
                     minifigNum,
                     minifigName: minifig.name || `Минифигурка ${minifigNum}`,
                     year: minifig.year || 'Неизвестный год',
                     quantity: minifigData.qty,
-                    theme: THEME_MAP[minifig.theme_id]?.name || 'Неизвестная тема'
-                } : null;
+                    theme: THEME_MAP[minifig.theme_id]?.name || 'Неизвестная тема',
+                    minifigImgUrl: minifig.minifig_img_url || minifig.set_img_url,
+                    rarity: rarity,
+                    rarityName: getRarityName(rarity),
+                    rarityColor: getRarityColor(rarity),
+                    numParts: parseInt(minifig.num_parts) || 0
+                };
             })
-            .filter(Boolean)
+            .filter(Boolean);
+        
+        // Топ по количеству
+        analytics.minifigsStats.topMinifigs = allMinifigs
             .sort((a, b) => b.quantity - a.quantity)
             .slice(0, 10);
+            
+        // Топ по редкости - исправленная логика
+        console.log('🔄 Создаем топ по редкости...');
+        console.log('Всего минифигурок для сортировки:', allMinifigs.length);
+        
+        // Сначала показываем все минифигурки с их редкостью
+        allMinifigs.forEach((minifig, index) => {
+            console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarity} (${minifig.rarityName})`);
+        });
+        
+        analytics.minifigsStats.topRareMinifigs = allMinifigs
+            .sort((a, b) => {
+                const rarityOrder = { 'legendary': 0, 'epic': 1, 'rare': 2, 'uncommon': 3, 'common': 4, 'unknown': 5 };
+                const aOrder = rarityOrder[a.rarity] ?? 999;
+                const bOrder = rarityOrder[b.rarity] ?? 999;
+                if (aOrder !== bOrder) return aOrder - bOrder;
+                return b.quantity - a.quantity; // При одинаковой редкости сортируем по количеству
+            })
+            .slice(0, 10);
+            
+        console.log('📊 Топ-10 по редкости после сортировки:');
+        analytics.minifigsStats.topRareMinifigs.forEach((minifig, index) => {
+            console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarity} (${minifig.rarityName})`);
+        });
             
         console.log('📊 Top minifigs generated:', analytics.minifigsStats.topMinifigs.length);
         
@@ -4332,11 +5183,16 @@ function analyzeCollection() {
         S.analyticsLastUpdate = Date.now();
         console.log('✅ Анализ коллекции завершен:', analytics);
         
+        // Принудительно обновляем UI после пересчета аналитики
+        console.log('🔄 Обновляем UI после пересчета аналитики...');
+        updateUI();
+        
     } catch (error) {
         console.error('❌ Ошибка при анализе коллекции:', error);
         S.analyticsData = null;
     } finally {
         S.analyticsLoading = false;
+        console.log('🏁 analyzeCollection END');
     }
 }
 
@@ -4487,7 +5343,15 @@ function renderAnalyticsContent(analytics) {
              data-action="open-part-modal" data-part-id="${part.partNum}" data-color-id="${part.colorId}" 
              title="Открыть деталь: ${part.partName} (${part.colorName})">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
-                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 shadow-lg" style="background-color: ${part.rarityColor}"></div>
+                <div class="w-8 h-8 sm:w-10 sm:h-10 xl:w-12 xl:h-12 rounded-lg flex-shrink-0 shadow-lg overflow-hidden bg-white">
+                    <img src="${part.partImgUrl || `https://cdn.rebrickable.com/media/parts/${part.partNum}/${part.colorId}.jpg`}" 
+                         alt="${part.partName}"
+                         class="w-full h-full object-contain"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-full h-full flex items-center justify-center" style="background-color: ${part.rarityColor}; display: none;">
+                        ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-white")}
+                    </div>
+                </div>
                 <div class="min-w-0 flex-1">
                     <div class="text-white font-medium text-xs sm:text-sm xl:text-base truncate">${part.partName}</div>
                     <div class="text-xs xl:text-sm text-gray-400 truncate">${part.colorName}</div>
@@ -4588,14 +5452,14 @@ function renderAnalyticsContent(analytics) {
                         ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-blue-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalParts}</div>
-                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Всего деталей</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">${pluralize(analytics.totalParts, ['деталь', 'детали', 'деталей'])}</div>
                 </div>
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
                         ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-green-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalUniqueParts}</div>
-                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Уникальных</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">${pluralize(analytics.totalUniqueParts, ['уникальная', 'уникальные', 'уникальных'])}</div>
                 </div>
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
@@ -4720,7 +5584,15 @@ function renderSetsAnalytics(analytics, subViewTabs) {
              data-action="open-set-modal" data-set-id="${set.setNum}" 
              title="Открыть набор: ${set.setName}">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
-                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-green-500 shadow-lg"></div>
+                <div class="w-8 h-8 sm:w-10 sm:h-10 xl:w-12 xl:h-12 rounded-lg flex-shrink-0 shadow-lg overflow-hidden bg-white">
+                    <img src="${set.setImgUrl || `https://cdn.rebrickable.com/media/sets/${set.setNum}.jpg`}" 
+                         alt="${set.setName}"
+                         class="w-full h-full object-contain"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="w-full h-full bg-green-500 flex items-center justify-center" style="display: none;">
+                        ${I_Set("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-white")}
+                    </div>
+                </div>
                 <div class="min-w-0 flex-1">
                     <div class="text-white font-medium text-xs sm:text-sm xl:text-base truncate">${set.setName}</div>
                     <div class="text-xs xl:text-sm text-gray-400 truncate">${set.theme} (${set.year})</div>
@@ -4743,14 +5615,14 @@ function renderSetsAnalytics(analytics, subViewTabs) {
                         ${I_Set("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-green-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${setsStats.totalSets}</div>
-                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Всего наборов</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">${pluralize(setsStats.totalSets, ['набор', 'набора', 'наборов'])}</div>
                 </div>
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
                         ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-blue-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${setsStats.totalPieces}</div>
-                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Всего деталей</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">${pluralize(setsStats.totalPieces, ['деталь', 'детали', 'деталей'])}</div>
                 </div>
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
@@ -4764,7 +5636,7 @@ function renderSetsAnalytics(analytics, subViewTabs) {
                         ${I_Cat("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-orange-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${Object.keys(setsStats.themeStats).length}</div>
-                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Тем</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">${pluralize(Object.keys(setsStats.themeStats).length, ['тема', 'темы', 'тем'])}</div>
                 </div>
             </div>
 
@@ -4807,25 +5679,20 @@ function renderSetsAnalytics(analytics, subViewTabs) {
 function renderMinifigsAnalytics(analytics, subViewTabs) {
     const minifigsStats = analytics.minifigsStats;
     
-         const topThemesHtml = minifigsStats.topThemes.map(theme => `
-         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
-              style="--hover-shadow-color: #8b5cf640;"
-              onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
-              onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
-              data-action="go-to-theme" data-theme-id="${theme.themeId}"
-              title="Показать минифигурки темы: ${theme.themeName}">
-             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
-                 <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-purple-500 shadow-lg"></div>
-                 <div class="min-w-0 flex-1">
-                     <span class="text-gray-200 font-medium text-sm sm:text-base xl:text-lg truncate">${theme.themeName}</span>
-                 </div>
-             </div>
-             <div class="text-right flex-shrink-0 ml-2">
-                 <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${theme.count}</div>
-             </div>
-         </div>
-     `).join('');
+    console.log('🎨 renderMinifigsAnalytics called with:', {
+        topMinifigs: minifigsStats.topMinifigs?.length || 0,
+        topRareMinifigs: minifigsStats.topRareMinifigs?.length || 0,
+        totalMinifigs: minifigsStats.totalMinifigs || 0
+    });
     
+    // Логируем топ-5 минифигурок по редкости
+    if (minifigsStats.topRareMinifigs && minifigsStats.topRareMinifigs.length > 0) {
+        console.log('📊 Топ-5 минифигурок по редкости в UI:');
+        minifigsStats.topRareMinifigs.slice(0, 5).forEach((minifig, index) => {
+            console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarityName} (${minifig.rarity})`);
+        });
+    }
+
     const topMinifigsHtml = minifigsStats.topMinifigs.map(minifig => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
              style="--hover-shadow-color: #f59e0b40;"
@@ -4834,14 +5701,48 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
              data-action="open-minifig-modal" data-minifig-id="${minifig.minifigNum}" 
              title="Открыть минифигурку: ${minifig.minifigName}">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
-                <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 bg-amber-500 shadow-lg"></div>
+                <div class="w-8 h-8 sm:w-10 sm:h-10 xl:w-12 xl:h-12 rounded-lg flex-shrink-0 bg-white overflow-hidden">
+                    <img src="${minifig.minifigImgUrl || `https://cdn.rebrickable.com/media/minifigs/${minifig.minifigNum}.jpg`}" 
+                         alt="${minifig.minifigName}" 
+                         class="w-full h-full object-contain rounded-lg"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRkZGRkZGIi8+CjxwYXRoIGQ9Ik0yNCA4QzI2LjIwOTEgOCAyOCA5Ljc5MDkgMjggMTJDMjggMTQuMjA5MSAyNi4yMDkxIDE2IDI0IDE2QzIxLjc5MDkgMTYgMjAgMTQuMjA5MSAyMCAxMkMyMCA5Ljc5MDkgMjEuNzkwOSA4IDI0IDhaIiBmaWxsPSIjRkZCNzAwIi8+CjxwYXRoIGQ9Ik0yNCAyMEMyNi4yMDkxIDIwIDI4IDIxLjc5MDkgMjggMjRDMjggMjYuMjA5MSAyNi4yMDkxIDI4IDI0IDI4QzIxLjc5MDkgMjggMjAgMjYuMjA5MSAyMCAyNEMyMCAyMS43OTA5IDIxLjc5MDkgMjAgMjQgMjBaIiBmaWxsPSIjRkZCNzAwIi8+CjxwYXRoIGQ9Ik0yNCAzMkMyNi4yMDkxIDMyIDI4IDMzLjc5MDkgMjggMzZDMjggMzguMjA5MSAyNi4yMDkxIDQwIDI0IDQwQzIxLjc5MDkgNDAgMjAgMzguMjA5MSAyMCAzNkMyMCAzMy43OTA5IDIxLjc5MDkgMzIgMjQgMzJaIiBmaWxsPSIjRkZCNzAwIi8+Cjwvc3ZnPgo='">
+                </div>
                 <div class="min-w-0 flex-1">
                     <div class="text-white font-medium text-xs sm:text-sm xl:text-base truncate">${minifig.minifigName}</div>
-                    <div class="text-xs xl:text-sm text-gray-400 truncate">${minifig.theme} (${minifig.year})</div>
                 </div>
             </div>
             <div class="text-right flex-shrink-0 ml-2">
                 <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${minifig.quantity}</div>
+            </div>
+        </div>
+    `).join('');
+
+    const topRareMinifigsHtml = minifigsStats.topRareMinifigs.map(minifig => `
+        <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
+             style="--hover-shadow-color: ${minifig.rarityColor}40;"
+             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
+             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             data-action="open-minifig-modal" data-minifig-id="${minifig.minifigNum}" 
+             title="Открыть минифигурку: ${minifig.minifigName} (${minifig.rarityName})">
+            <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
+                <div class="w-8 h-8 sm:w-10 sm:h-10 xl:w-12 xl:h-12 rounded-lg flex-shrink-0 bg-white overflow-hidden">
+                    <img src="${minifig.minifigImgUrl || `https://cdn.rebrickable.com/media/minifigs/${minifig.minifigNum}.jpg`}" 
+                         alt="${minifig.minifigName}" 
+                         class="w-full h-full object-contain rounded-lg"
+                         onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDgiIGhlaWdodD0iNDgiIHZpZXdCb3g9IjAgMCA0OCA0OCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4IiBmaWxsPSIjRkZGRkZGIi8+CjxwYXRoIGQ9Ik0yNCA4QzI2LjIwOTEgOCAyOCA5Ljc5MDkgMjggMTJDMjggMTQuMjA5MSAyNi4yMDkxIDE2IDI0IDE2QzIxLjc5MDkgMTYgMjAgMTQuMjA5MSAyMCAxMkMyMCA5Ljc5MDkgMjEuNzkwOSA4IDI0IDhaIiBmaWxsPSIjRkZCNzAwIi8+CjxwYXRoIGQ9Ik0yNCAyMEMyNi4yMDkxIDIwIDI4IDIxLjc5MDkgMjggMjRDMjggMjYuMjA5MSAyNi4yMDkxIDI4IDI0IDI4QzIxLjc5MDkgMjggMjAgMjYuMjA5MSAyMCAyNEMyMCAyMS43OTA5IDIxLjc5MDkgMjAgMjQgMjBaIiBmaWxsPSIjRkZCNzAwIi8+CjxwYXRoIGQ9Ik0yNCAzMkMyNi4yMDkxIDMyIDI4IDMzLjc5MDkgMjggMzZDMjggMzguMjA5MSAyNi4yMDkxIDQwIDI0IDQwQzIxLjc5MDkgNDAgMjAgMzguMjA5MSAyMCAzNkMyMCAzMy43OTA5IDIxLjc5MDkgMzIgMjQgMzJaIiBmaWxsPSIjRkZCNzAwIi8+Cjwvc3ZnPgo='">
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-white font-medium text-xs sm:text-sm xl:text-base truncate">${minifig.minifigName}</div>
+                    <div class="flex items-center gap-2 mt-1">
+                        <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${minifig.rarityColor}"></div>
+                        <div class="text-xs text-gray-400 truncate">${minifig.rarityName}</div>
+                        ${minifig.theme && minifig.theme !== 'Неизвестная тема' ? `<div class="text-xs text-gray-500 truncate">• ${minifig.theme}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="text-right flex-shrink-0 ml-2">
+                <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${minifig.quantity}</div>
+                <div class="text-xs text-gray-400">${minifig.numParts} pcs</div>
             </div>
         </div>
     `).join('');
@@ -4850,60 +5751,37 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
         <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
             ${subViewTabs}
             <!-- Общая статистика минифигурок -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5 sm:gap-3 xl:gap-6">
+            <div class="grid grid-cols-1 gap-1.5 sm:gap-3 xl:gap-6">
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
                         ${I_Minifig("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-purple-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${minifigsStats.totalMinifigs}</div>
-                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Всего минифигурок</div>
-                </div>
-                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
-                    <div class="flex items-center justify-center mb-2">
-                        ${I_Cat("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-orange-400")}
-                    </div>
-                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${Object.keys(minifigsStats.themeStats).length}</div>
-                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Тем</div>
-                </div>
-                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
-                    <div class="flex items-center justify-center mb-2">
-                        ${I_Tech("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
-                    </div>
-                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${Object.keys(minifigsStats.yearStats).length}</div>
-                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Лет</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">${pluralize(minifigsStats.totalMinifigs, ['минифигурка', 'минифигурки', 'минифигурок'])}</div>
                 </div>
             </div>
 
-            <!-- Основной контент в две колонки -->
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 xl:gap-8">
-                <!-- Левая колонка -->
-                <div class="space-y-4 sm:space-y-6">
-                    <!-- Топ темы минифигурок -->
-                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
-                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                            <span class="text-xl sm:text-2xl xl:text-3xl">🎭</span>
-                            <span class="hidden sm:inline">Топ-10 тем минифигурок</span>
-                            <span class="sm:hidden">Топ темы</span>
-                        </h3>
-                        <div class="space-y-2 sm:space-y-3 xl:space-y-4">
-                            ${topThemesHtml}
-                        </div>
-                    </div>
+            <!-- Топ минифигурки по количеству -->
+            <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                    <span class="text-xl sm:text-2xl xl:text-3xl">👥</span>
+                    <span class="hidden sm:inline">Топ-10 минифигурок по количеству</span>
+                    <span class="sm:hidden">Топ по количеству</span>
+                </h3>
+                <div class="space-y-2 sm:space-y-3 xl:space-y-4">
+                    ${topMinifigsHtml}
                 </div>
+            </div>
 
-                <!-- Правая колонка -->
-                <div class="space-y-4 sm:space-y-6">
-                    <!-- Топ минифигурки по количеству -->
-                    <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
-                        <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                            <span class="text-xl sm:text-2xl xl:text-3xl">👥</span>
-                            <span class="hidden sm:inline">Топ-10 минифигурок</span>
-                            <span class="sm:hidden">Топ минифигурки</span>
-                        </h3>
-                        <div class="space-y-2 sm:space-y-3 xl:space-y-4">
-                            ${topMinifigsHtml}
-                        </div>
-                    </div>
+            <!-- Топ минифигурки по редкости -->
+            <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
+                <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                    <span class="text-xl sm:text-2xl xl:text-3xl">💎</span>
+                    <span class="hidden sm:inline">Топ-10 минифигурок по редкости</span>
+                    <span class="sm:hidden">Топ по редкости</span>
+                </h3>
+                <div class="space-y-2 sm:space-y-3 xl:space-y-4">
+                    ${topRareMinifigsHtml}
                 </div>
             </div>
         </div>
@@ -5831,6 +6709,7 @@ async function fetchMissingCollectionSetDetails() {
 async function fetchMinifigDetails(e) {
     if (MINIFIG_MAP[e]?.name) return;
     try {
+        console.log('🔍 Fetching minifig details for:', e);
         const t = await fetchWithProxy(`${REBRICKABLE_API_URL}/minifigs/${e}/`, {
             headers: {
                 Authorization: `key ${getApiKey()}`
@@ -5838,6 +6717,12 @@ async function fetchMinifigDetails(e) {
         });
         if (!t.ok) throw new Error(`Minifig ${e} not found.`);
         const o = await t.json();
+        console.log('🔍 Minifig details received:', e, {
+            name: o.name,
+            theme_id: o.theme_id,
+            year: o.year,
+            num_parts: o.num_parts
+        });
         MINIFIG_MAP[e] = o
         
         // Обновляем статистику загрузки API: один раз на минифиг с данным id
@@ -8642,6 +9527,7 @@ function renderMainContent() {
                     collectionUpdated: S.collectionLastUpdate,
                     analyticsUpdated: S.analyticsLastUpdate
                 });
+                console.log('🔍 Calling analyzeCollection from renderMainContent');
                 analyzeCollection();
             }
         } else if (S.toolSubView === 'export') {
