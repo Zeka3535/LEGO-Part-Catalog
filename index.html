@@ -8370,6 +8370,7 @@ function renderHeader() {
                 <span class="text-sm text-gray-300">Выбрано: <strong>${selCount}</strong></span>
             </div>
             <div class="flex items-center gap-2 flex-nowrap flex-shrink-0">
+                ${S.view==='collection' ? `<button data-action="select-all-visible" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded-md transition-colors duration-150 shadow-lg hover:shadow-blue-500/25" title="Добавить все видимые элементы в мультивыбор">+ Все</button>` : ''}
                 <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded-md transition-colors duration-150 shadow-lg hover:shadow-gray-500/25" title="Поделиться выбранными элементами через CSV файл и изображение">${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span></button>
                 ${S.view==='catalog' ? `<button data-action="add-multiselect-to-collection" class="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-3 py-2 rounded-md transition-colors duration-150 shadow-lg hover:shadow-green-500/25" title="Добавить выбранные элементы в коллекцию">+ В коллекцию</button>` : `<button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-md transition-colors duration-150 shadow-lg hover:shadow-red-500/25" title="Удалить выбранные элементы из коллекции">${I_Trash('w-5 h-5')} <span class=\"hidden sm:inline\">Удалить</span></button>`}
             </div>
@@ -12928,6 +12929,7 @@ function openColorsModalForPart(partId) {
                 <span class="text-sm text-gray-300">Выбрано: <strong>${selCount}</strong></span>
             </div>
             <div class="flex items-center gap-2 flex-nowrap flex-shrink-0">
+                <button data-action="select-all-visible" class="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-3 py-2 rounded-md transition-colors duration-150 shadow-lg hover:shadow-blue-500/25" title="Добавить все видимые элементы в мультивыбор">+ Все</button>
                 <button data-action="share-multiselect" class="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-semibold px-3 py-2 rounded-md transition-colors duration-150 shadow-lg hover:shadow-gray-500/25" title="Поделиться выбранными элементами через CSV файл и изображение">${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span></button>
                 <button data-action="delete-multiselect" class="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-3 py-2 rounded-md transition-colors duration-150 shadow-lg hover:shadow-red-500/25" title="Удалить выбранные элементы из коллекции">${I_Trash('w-5 h-5')} <span class="hidden sm:inline">Удалить</span></button>
             </div>
@@ -15454,6 +15456,57 @@ document.addEventListener("click", async e => {
         }
         return;
     }
+    
+    // Добавить все видимые элементы в мультивыбор
+    if (t.closest('[data-action="select-all-visible"]')) {
+        if (!S.multiSelect.active) {
+            S.multiSelect.active = true;
+            S.multiSelect.justActivated = true;
+        }
+        
+        // Получаем все видимые элементы на странице
+        const visibleElements = [];
+        
+        // Находим все карточки с кнопками мультивыбора
+        const selectButtons = document.querySelectorAll('[data-action="toggle-select"]');
+        selectButtons.forEach(button => {
+            const itemType = button.getAttribute('data-item-type');
+            const itemId = button.getAttribute('data-item-id');
+            const colorId = button.getAttribute('data-color-id');
+            
+            if (itemType && itemId) {
+                let key = '';
+                if (itemType === 'set') {
+                    key = `sets:${itemId}`;
+                } else if (itemType === 'minifig') {
+                    key = `minifigs:${itemId}`;
+                } else if (itemType === 'part') {
+                    key = `parts:${itemId}:${colorId || ''}`;
+                } else if (itemType === 'part-folder') {
+                    key = `parts-folder:${itemId}`;
+                }
+                
+                if (key && !S.multiSelect.items.has(key)) {
+                    visibleElements.push(key);
+                }
+            }
+        });
+        
+        // Добавляем все видимые элементы в мультивыбор
+        visibleElements.forEach(key => {
+            S.multiSelect.items.add(key);
+        });
+        
+        // Обновляем UI
+        renderHeader();
+        updateUI();
+        
+        // Сбрасываем флаг активации
+        queueMicrotask(() => { S.multiSelect.justActivated = false; });
+        
+        return;
+    }
+    
     // Share buttons in modals
     if (t.closest('[data-action="share-part"]')) {
         (async () => {
