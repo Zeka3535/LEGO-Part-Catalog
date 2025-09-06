@@ -964,8 +964,8 @@
         background-color: rgba(34, 197, 94, 0.25) !important;
         z-index: 1000 !important;
         position: relative !important;
-        min-width: 100px !important;
-        max-width: 180px !important;
+        min-width: 80px !important;
+        max-width: 140px !important;
         font-size: 10px !important;
     }
     
@@ -3668,7 +3668,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v14';
+const CACHE_NAME = 'lego-catalog-cache-v20';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -9218,13 +9218,13 @@ function renderHeader() {
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
                     <div class="relative flex-grow">
-                        <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Поиск по деталям" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off"/>
+                        <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Поиск ${searchContext}" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off"/>
                         <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.q?"":"hidden"}" title="Очистить поисковый запрос">${I_X("w-5 h-5")}</button>
                         <div id="autocomplete-dropdown">
                             <!-- Предложения автодополнения будут добавлены здесь -->
                         </div>
                     </div>
-                     <button id="search-button" class="px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0" aria-label="Поиск" title="Выполнить поиск по введенному запросу">
+                     <button id="search-button" class="px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0" aria-label="Поиск" title="Выполнить поиск ${searchContext}">
                         ${I_Search("w-5 h-5")}
                     </button>
                     <button id="filter-button" class="px-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors duration-150 shadow-lg hover:shadow-gray-500/25 flex-shrink-0" aria-label="Фильтры" title="Открыть панель фильтров и сортировки">
@@ -9708,8 +9708,17 @@ function renderMainContent() {
     if (S.loading) e = '<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>';
     else if (S.err) e = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${S.err}</p></div>`;
     else if ("catalog" === S.view) {
-        let t, o, l, a = "sets-minifigs-grid";
-        if ("parts" === S.subView) {
+        // Проверяем, нужно ли показать универсальные результаты поиска
+        if (S.showUniversalSearch && S.universalSearchResults) {
+            // Устанавливаем значения для правильного расчета прогресса прокрутки
+            const { parts, sets, minifigs } = S.universalSearchResults;
+            const totalResults = parts.length + sets.length + minifigs.length;
+            S.totalItems = totalResults;
+            S.loadedItems = totalResults; // Все результаты поиска загружены сразу
+            e = renderUniversalSearchResults(S.universalSearchResults, S.universalSearchTerm);
+        } else {
+            let t, o, l, a = "sets-minifigs-grid";
+            if ("parts" === S.subView) {
             let i = {};
             l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском";
             
@@ -10109,6 +10118,7 @@ function renderMainContent() {
             }
 
             // Кнопка "Показать еще" убрана — используется авто-догрузка при прокрутке
+        }
         }
     } else {
         let t, o, l = `В вашей коллекции нет ${"parts"===S.subView?"деталей":"sets"===S.subView?"наборов":"минифигурок"}`,
@@ -13184,7 +13194,7 @@ async function processCsvData(content) {
                     }
             }
         }
-        saveState(), t(`Импорт CSV завершен. Добавлено: ${n.parts} деталей, ${n.sets} наборов, ${n.minifigs} минифигурок.`, "success")
+        saveState(), t(`Импорт: ${n.parts} деталей, ${n.sets} наборов, ${n.minifigs} минифигурок`, "success")
     } catch (e) {
         console.error("CSV Import failed:", e), t(`${e.message}`, "error");
         // Не перебрасываем ошибку, чтобы она обрабатывалась в вызывающем коде
@@ -13454,11 +13464,61 @@ function triggerSearch(e = !1) {
     // Сбрасываем случайное изображение минифигурки при поиске
     resetRandomMinifigImage();
     
+    // Сначала пытаемся найти и открыть элемент напрямую по точному совпадению
+    if (S.q && S.q.trim().length > 0) {
+        if (searchAndOpenElement(S.q.trim())) {
+            console.log('Element found and opened directly:', S.q.trim());
+            return; // Если элемент найден и открыт, выходим из функции
+        }
+    }
+    
     // Показываем индикатор загрузки для поиска
     if (S.q && S.q.trim().length > 0) {
         updateLoadingStatus("Поиск...", 70, `Поиск по запросу: "${S.q}"`);
     }
     
+    // Выполняем контекстный поиск в зависимости от текущей вкладки
+    if (S.q && S.q.trim().length > 0) {
+        let searchResults;
+        let searchContext;
+        
+        if (S.view === "collection") {
+            // Поиск только в коллекции пользователя
+            searchResults = searchCollectionElements(S.q.trim());
+            searchContext = "коллекции";
+        } else {
+            // Поиск в полном каталоге
+            searchResults = searchAllElements(S.q.trim());
+            searchContext = "каталоге";
+        }
+        
+        const totalResults = searchResults.parts.length + searchResults.sets.length + searchResults.minifigs.length;
+        
+        if (totalResults > 0) {
+            // Сохраняем текущий контекст для отображения результатов
+            const originalView = S.view;
+            S.view = "catalog"; // Переключаемся в режим каталога для отображения результатов
+            S.subView = "parts";
+            S.selCatId = null;
+            S.selFigNum = null;
+            S.showRelatedSets = false;
+            
+            // Устанавливаем результаты поиска в глобальное состояние
+            S.universalSearchResults = searchResults;
+            S.universalSearchTerm = S.q.trim();
+            S.showUniversalSearch = true;
+            S.originalSearchContext = originalView; // Сохраняем оригинальный контекст
+            
+            // Обновляем UI
+            S.gridStale = true;
+            updateUI();
+            
+            console.log(`Search in ${searchContext} completed: ${totalResults} results found`);
+            return;
+        }
+    }
+    
+    // Если нет результатов универсального поиска, выполняем обычный поиск
     if (!e) {
         if ("sets" === S.subView) {
             S.sortBy = S.q ? "relevance" : "year_desc";
@@ -13476,6 +13536,7 @@ function triggerSearch(e = !1) {
             S.filters.inCollectionOnly = !1;
         }
     }
+    
     // Отключаем анимации при поиске для улучшения производительности
     document.body.classList.add('searching');
     setTimeout(() => {
@@ -15353,6 +15414,11 @@ document.addEventListener("click", async e => {
         const e = i.dataset.view;
         if (S.view === e) return;
         
+        // Сбрасываем значения для прогресса прокрутки при переключении разделов
+        S.totalItems = null;
+        S.loadedItems = null;
+        S.originalSearchContext = null;
+        
         // Показываем индикатор загрузки при переключении представлений
         if (e === 'collection' && Object.keys(S.coll).length > 0) {
             updateLoadingStatus("Переключение на коллекцию...", 50, "Загрузка данных коллекции");
@@ -15990,6 +16056,14 @@ document.addEventListener("click", async e => {
         S.q = "";
         S.selFigNum = null;
         S.showRelatedSets = false;
+        // Сбрасываем универсальный поиск
+        S.showUniversalSearch = false;
+        S.universalSearchResults = null;
+        S.universalSearchTerm = "";
+        S.originalSearchContext = null;
+        // Сбрасываем значения для прогресса прокрутки
+        S.totalItems = null;
+        S.loadedItems = null;
         // Сбрасываем случайное изображение минифигурки при очистке поиска
         resetRandomMinifigImage();
         document.getElementById("search-input")?.focus();
@@ -19601,13 +19675,14 @@ function generateAutocompleteSuggestions(query, maxSuggestions = 8) {
     const isCollectionMode = S.view === 'collection';
     const currentSubView = S.subView;
     
+    // Для поиска и автодополнения всегда ищем по всем типам элементов
+    // независимо от текущего режима (Каталог/Коллекция)
+    
     // Поиск в деталях (всегда включаем, так как детали есть везде)
     Object.values(PART_MAP).forEach(part => {
         if ((part.name && part.name.toLowerCase().includes(searchTerm)) || 
             (part.id && part.id.toLowerCase().includes(searchTerm))) {
-            // В режиме коллекции показываем только детали из коллекции
-            if (isCollectionMode && !S.coll[part.id]) return;
-            
+            // Для автодополнения показываем все детали, независимо от режима
             suggestions.push({
                 text: part.name,
                 type: 'part',
@@ -19623,7 +19698,7 @@ function generateAutocompleteSuggestions(query, maxSuggestions = 8) {
         if (words.length > 0) {
             Object.values(PART_MAP).forEach(part => {
                 if (part.name && words.some(word => part.name.toLowerCase().includes(word))) {
-                    if (isCollectionMode && !S.coll[part.id]) return;
+                    // Для автодополнения показываем все детали, независимо от режима
                     
                     // Проверяем, что элемент еще не добавлен
                     if (!suggestions.some(s => s.id === part.id && s.type === 'part')) {
@@ -19643,9 +19718,7 @@ function generateAutocompleteSuggestions(query, maxSuggestions = 8) {
     Object.values(SET_MAP).forEach(set => {
         if ((set.name && set.name.toLowerCase().includes(searchTerm)) || 
             (set.set_num && set.set_num.toLowerCase().includes(searchTerm))) {
-            // В режиме коллекции показываем только наборы из коллекции
-            if (isCollectionMode && !S.setColl[set.set_num]) return;
-            
+            // Для автодополнения показываем все наборы, независимо от режима
             suggestions.push({
                 text: set.name,
                 type: 'set',
@@ -19661,7 +19734,7 @@ function generateAutocompleteSuggestions(query, maxSuggestions = 8) {
         if (words.length > 0) {
             Object.values(SET_MAP).forEach(set => {
                 if (set.name && words.some(word => set.name.toLowerCase().includes(word))) {
-                    if (isCollectionMode && !S.setColl[set.set_num]) return;
+                    // Для автодополнения показываем все наборы, независимо от режима
                     
                     if (!suggestions.some(s => s.id === set.set_num && s.type === 'set')) {
                         suggestions.push({
@@ -19680,9 +19753,7 @@ function generateAutocompleteSuggestions(query, maxSuggestions = 8) {
     Object.values(MINIFIG_MAP).forEach(minifig => {
         if ((minifig.name && minifig.name.toLowerCase().includes(searchTerm)) || 
             (minifig.set_num && minifig.set_num.toLowerCase().includes(searchTerm))) {
-            // В режиме коллекции показываем только минифигурки из коллекции
-            if (isCollectionMode && !S.minifigColl[minifig.set_num]) return;
-            
+            // Для автодополнения показываем все минифигурки, независимо от режима
             suggestions.push({
                 text: minifig.name,
                 type: 'minifig',
@@ -19698,7 +19769,7 @@ function generateAutocompleteSuggestions(query, maxSuggestions = 8) {
         if (words.length > 0) {
             Object.values(MINIFIG_MAP).forEach(minifig => {
                 if (minifig.name && words.some(word => minifig.name.toLowerCase().includes(word))) {
-                    if (isCollectionMode && !S.minifigColl[minifig.set_num]) return;
+                    // Для автодополнения показываем все минифигурки, независимо от режима
                     
                     if (!suggestions.some(s => s.id === minifig.set_num && s.type === 'minifig')) {
                         suggestions.push({
@@ -19777,6 +19848,283 @@ function hideAutocomplete() {
     }
 }
 
+// Универсальная функция для открытия любого типа элемента
+function openElementModal(type, id) {
+    console.log(`openElementModal: Opening ${type} with id ${id}`);
+    
+    switch (type) {
+        case 'part':
+            const part = PART_MAP[id];
+            if (part) {
+                const groupId = getGroupId(part.part_num || id);
+                openModalForPart(part.id || part.part_num || id, groupId, [part]);
+            } else {
+                console.warn(`Part with id ${id} not found in PART_MAP`);
+            }
+            break;
+            
+        case 'set':
+            if (SET_MAP[id]) {
+                openModalForSet(id);
+            } else {
+                console.warn(`Set with id ${id} not found in SET_MAP`);
+            }
+            break;
+            
+        case 'minifig':
+            if (MINIFIG_MAP[id]) {
+                openModalForMinifig(id);
+            } else {
+                console.warn(`Minifig with id ${id} not found in MINIFIG_MAP`);
+            }
+            break;
+            
+        default:
+            console.warn(`Unknown element type: ${type}`);
+    }
+}
+
+// Функция для поиска и открытия элемента напрямую по точному совпадению
+function searchAndOpenElement(searchTerm) {
+    if (!searchTerm || searchTerm.trim().length < 1) return false;
+    
+    const term = searchTerm.toLowerCase().trim();
+    
+    // Поиск по точному совпадению ID или названия
+    // Сначала проверяем детали
+    for (const [id, part] of Object.entries(PART_MAP)) {
+        if (part && (
+            (part.id && part.id.toLowerCase() === term) ||
+            (part.part_num && part.part_num.toLowerCase() === term) ||
+            (part.name && part.name.toLowerCase() === term)
+        )) {
+            openElementModal('part', id);
+            return true;
+        }
+    }
+    
+    // Затем проверяем наборы
+    for (const [id, set] of Object.entries(SET_MAP)) {
+        if (set && (
+            (set.set_num && set.set_num.toLowerCase() === term) ||
+            (set.name && set.name.toLowerCase() === term)
+        )) {
+            openElementModal('set', id);
+            return true;
+        }
+    }
+    
+    // Затем проверяем минифигурки
+    for (const [id, minifig] of Object.entries(MINIFIG_MAP)) {
+        if (minifig && (
+            (minifig.set_num && minifig.set_num.toLowerCase() === term) ||
+            (minifig.name && minifig.name.toLowerCase() === term)
+        )) {
+            openElementModal('minifig', id);
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+// Функция поиска в коллекции пользователя
+function searchCollectionElements(searchTerm) {
+    if (!searchTerm || searchTerm.trim().length < 1) return { parts: [], sets: [], minifigs: [] };
+    
+    const term = searchTerm.toLowerCase().trim();
+    const results = { parts: [], sets: [], minifigs: [] };
+    
+    // Поиск в деталях коллекции
+    Object.entries(S.coll).forEach(([partId, qty]) => {
+        const part = PART_MAP[partId];
+        if (part && qty > 0 && (
+            (part.name && part.name.toLowerCase().includes(term)) ||
+            (part.id && part.id.toLowerCase().includes(term)) ||
+            (part.part_num && part.part_num.toLowerCase().includes(term))
+        )) {
+            results.parts.push(part);
+        }
+    });
+    
+    // Поиск в наборах коллекции
+    Object.entries(S.setColl).forEach(([setId, qty]) => {
+        const set = SET_MAP[setId];
+        if (set && qty > 0 && (
+            (set.name && set.name.toLowerCase().includes(term)) ||
+            (set.set_num && set.set_num.toLowerCase().includes(term))
+        )) {
+            results.sets.push(set);
+        }
+    });
+    
+    // Поиск в минифигурках коллекции
+    Object.entries(S.minifigColl).forEach(([minifigId, qty]) => {
+        const minifig = MINIFIG_MAP[minifigId];
+        if (minifig && qty > 0 && (
+            (minifig.name && minifig.name.toLowerCase().includes(term)) ||
+            (minifig.set_num && minifig.set_num.toLowerCase().includes(term))
+        )) {
+            results.minifigs.push(minifig);
+        }
+    });
+    
+    // Если в коллекции нет результатов по какой-то категории, показываем пустую категорию
+    // Это обеспечивает отображение всех категорий как в каталоге
+    if (results.parts.length === 0 && results.sets.length === 0 && results.minifigs.length === 0) {
+        // Если вообще ничего не найдено, возвращаем пустые массивы
+        return results;
+    }
+    
+    return results;
+}
+
+// Универсальная функция поиска по всем типам элементов (для каталога)
+function searchAllElements(searchTerm) {
+    if (!searchTerm || searchTerm.trim().length < 1) return { parts: [], sets: [], minifigs: [] };
+    
+    const term = searchTerm.toLowerCase().trim();
+    const results = { parts: [], sets: [], minifigs: [] };
+    
+    // Поиск в деталях
+    Object.values(PART_MAP).forEach(part => {
+        if (part && (
+            (part.name && part.name.toLowerCase().includes(term)) ||
+            (part.id && part.id.toLowerCase().includes(term)) ||
+            (part.part_num && part.part_num.toLowerCase().includes(term))
+        )) {
+            results.parts.push(part);
+        }
+    });
+    
+    // Поиск в наборах
+    Object.values(SET_MAP).forEach(set => {
+        if (set && (
+            (set.name && set.name.toLowerCase().includes(term)) ||
+            (set.set_num && set.set_num.toLowerCase().includes(term))
+        )) {
+            results.sets.push(set);
+        }
+    });
+    
+    // Поиск в минифигурках
+    Object.values(MINIFIG_MAP).forEach(minifig => {
+        if (minifig && (
+            (minifig.name && minifig.name.toLowerCase().includes(term)) ||
+            (minifig.set_num && minifig.set_num.toLowerCase().includes(term))
+        )) {
+            results.minifigs.push(minifig);
+        }
+    });
+    
+    return results;
+}
+
+// Функция для рендеринга универсальных результатов поиска
+function renderUniversalSearchResults(searchResults, searchTerm) {
+    const { parts, sets, minifigs } = searchResults;
+    const totalResults = parts.length + sets.length + minifigs.length;
+    
+    if (totalResults === 0) {
+        return `
+            <div class="text-center py-8">
+                <div class="text-gray-400 text-lg mb-2">🔍</div>
+                <div class="text-gray-300 text-lg font-medium">Ничего не найдено</div>
+                <div class="text-gray-500 text-sm mt-1">Попробуйте изменить поисковый запрос</div>
+            </div>
+        `;
+    }
+    
+    // Определяем контекст поиска
+    const searchContext = (S.originalSearchContext || S.view) === "collection" ? "коллекции" : "каталоге";
+    
+    let html = `
+        <div class="space-y-6 px-2 sm:px-4">
+            <div class="mb-6">
+            </div>
+    `;
+    
+    // Детали
+    html += `
+        <div class="bg-gray-700/20 rounded-lg p-4 mx-2 sm:mx-4">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                ${I_Brick('text-green-500 w-5 h-5')}
+                Детали (${parts.length})
+            </h3>
+            ${parts.length > 0 ? `
+                <div class="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
+                    ${parts.slice(0, 24).map((part, index) => {
+                        const groupId = getGroupId(part.id);
+                        return renderPartCard(part, null, 0, false, index);
+                    }).join('')}
+                </div>
+                ${parts.length > 24 ? `<div class="text-center mt-3"><span class="text-gray-400 text-sm">И еще ${parts.length - 24} деталей...</span></div>` : ''}
+            ` : `
+                <div class="text-center py-8">
+                    <div class="text-gray-400 text-sm">В ${searchContext} не найдено деталей по запросу "${searchTerm}"</div>
+                </div>
+            `}
+        </div>
+    `;
+    
+    // Наборы
+    html += `
+        <div class="bg-gray-700/20 rounded-lg p-4 mx-2 sm:mx-4">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                ${I_Set('text-blue-500 w-5 h-5')}
+                Наборы (${sets.length})
+            </h3>
+            ${sets.length > 0 ? `
+                <div class="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
+                    ${sets.slice(0, 24).map((set, index) => {
+                        // Временно отключаем отображение количества для результатов поиска
+                        const originalView = S.view;
+                        S.view = "catalog";
+                        const result = renderSetCard(set, false, index);
+                        S.view = originalView;
+                        return result;
+                    }).join('')}
+                </div>
+                ${sets.length > 24 ? `<div class="text-center mt-3"><span class="text-gray-400 text-sm">И еще ${sets.length - 24} наборов...</span></div>` : ''}
+            ` : `
+                <div class="text-center py-8">
+                    <div class="text-gray-400 text-sm">В ${searchContext} не найдено наборов по запросу "${searchTerm}"</div>
+                </div>
+            `}
+        </div>
+    `;
+    
+    // Минифигурки
+    html += `
+        <div class="bg-gray-700/20 rounded-lg p-4 mx-2 sm:mx-4">
+            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                ${I_Minifig('text-purple-500 w-5 h-5')}
+                Минифигурки (${minifigs.length})
+            </h3>
+            ${minifigs.length > 0 ? `
+                <div class="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4 p-4">
+                    ${minifigs.slice(0, 24).map((minifig, index) => {
+                        // Временно отключаем отображение количества для результатов поиска
+                        const originalView = S.view;
+                        S.view = "catalog";
+                        const result = renderMinifigCard(minifig, false, index);
+                        S.view = originalView;
+                        return result;
+                    }).join('')}
+                </div>
+                ${minifigs.length > 24 ? `<div class="text-center mt-3"><span class="text-gray-400 text-sm">И еще ${minifigs.length - 24} минифигурок...</span></div>` : ''}
+            ` : `
+                <div class="text-center py-8">
+                    <div class="text-gray-400 text-sm">В ${searchContext} не найдено минифигурок по запросу "${searchTerm}"</div>
+                </div>
+            `}
+        </div>
+    `;
+    
+    html += `</div>`;
+    return html;
+}
+
 // Функция для выбора предложения автодополнения
 function selectAutocompleteSuggestion(suggestion) {
     const searchInput = document.getElementById('search-input');
@@ -19784,7 +20132,14 @@ function selectAutocompleteSuggestion(suggestion) {
         searchInput.value = suggestion.text;
         S.q = suggestion.text;
         hideAutocomplete();
-        triggerSearch();
+        
+        // Открываем элемент напрямую, если это возможно
+        if (suggestion.type && suggestion.id) {
+            openElementModal(suggestion.type, suggestion.id);
+        } else {
+            // Если нет прямого ID, выполняем обычный поиск
+            triggerSearch();
+        }
     }
 }
 
