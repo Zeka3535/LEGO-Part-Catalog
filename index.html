@@ -22,6 +22,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- remoteStorage.js library -->
+  <script src="https://unpkg.com/remotestoragejs/release/remotestorage.js"></script>
+  <script>
+    // Проверяем загрузку RemoteStorage
+    window.addEventListener('load', function() {
+      if (typeof RemoteStorage !== 'undefined') {
+        console.log('✅ RemoteStorage loaded successfully');
+        window.remoteStorageAvailable = true;
+      } else {
+        console.warn('⚠️ RemoteStorage not loaded, using fallback');
+        window.remoteStorageAvailable = false;
+      }
+    });
+  </script>
   <script>
     tailwind.config = {
       theme: {
@@ -3713,6 +3727,20 @@ const I_Brick = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 const I_Plate = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="15" width="18" height="6" rx="1"></rect><circle cx="8" cy="18" r="1"></circle><circle cx="16" cy="18" r="1"></circle></svg>`;
 const I_Tech = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.85-.93 3.53-2.28a3.99 3.99 0 0 0-7.06 0c.68 1.35 2.03 2.28 3.53 2.28z"></path><path d="M12 3.06c-1.5 0-2.85.93-3.53 2.28a3.99 3.99 0 0 0 7.06 0C14.85 3.99 13.5 3.06 12 3.06z"></path><path d="M3.06 12c0-1.5.93-2.85 2.28-3.53a3.99 3.99 0 0 0 0 7.06C3.99 14.85 3.06 13.5 3.06 12z"></path><path d="M20.94 12c0 1.5-.93 2.85-2.28 3.53a3.99 3.99 0 0 0 0-7.06c1.35.68 2.28 2.03 2.28 3.53z"></path><circle cx="12" cy="12" r="1"></circle></svg>`;
 const I_Slope = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18L3 4v16z"></path></svg>`;
+const I_Cloud = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`;
+const I_CloudUpload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line></svg>`;
+const I_CloudDownload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="16" x2="12" y2="7"></line></svg>`;
+const I_Link = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
+const I_Unlink = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.84 12.25l1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"></path><path d="M5.17 11.75l-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"></path><line x1="8" y1="2" x2="8" y2="5"></line><line x1="2" y1="8" x2="5" y2="8"></line><line x1="16" y1="19" x2="16" y2="22"></line><line x1="19" y1="16" x2="22" y2="16"></line></svg>`;
+const I_Logout = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`;
+const I_Info = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+const I_ChevronDown = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+const I_ChevronUp = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+const I_Clock = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+const I_History = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>`;
+const I_Archive = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg>`;
+const I_FileText = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+const I_Calendar = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`;
 const I_Tile = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>`;
 const I_Win = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 12h18"></path><path d="M12 3v18"></path></svg>`;
 const I_Wheel = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`;
@@ -3994,6 +4022,1124 @@ class ModalManager {
 
 // Создаем экземпляр ModalManager
 const modalManager = new ModalManager();
+
+// Функции для работы с облачным хранилищем
+let cloudStorageClient = null;
+let cloudStorageConnected = false;
+let remoteStorageWidget = null;
+let disableAutoLoad = false; // Флаг для отключения автозагрузки при очистке коллекции
+
+// Ключи для localStorage
+const REMOTESTORAGE_KEYS = {
+    CONNECTION_STATE: 'remotestorage_connection_state',
+    USER_ACCOUNT: 'remotestorage_user_account',
+    CACHED_DATA: 'remotestorage_cached_data'
+};
+
+// Переменные для системы неактивности
+let inactivityOverlay = null;
+let inactivityTip = null;
+let inactivityCloseBtn = null;
+
+// Функции для работы с localStorage
+function saveRemoteStorageState(connected, account = null) {
+    const state = {
+        connected: connected,
+        account: account,
+        timestamp: new Date().toISOString()
+    };
+    localStorage.setItem(REMOTESTORAGE_KEYS.CONNECTION_STATE, JSON.stringify(state));
+    console.log('💾 RemoteStorage state saved:', state);
+}
+
+function loadRemoteStorageState() {
+    try {
+        const state = localStorage.getItem(REMOTESTORAGE_KEYS.CONNECTION_STATE);
+        if (state) {
+            const parsed = JSON.parse(state);
+            console.log('📂 RemoteStorage state loaded:', parsed);
+            return parsed;
+        }
+    } catch (error) {
+        console.error('❌ Failed to load RemoteStorage state:', error);
+    }
+    return null;
+}
+
+function saveUserAccount(account) {
+    localStorage.setItem(REMOTESTORAGE_KEYS.USER_ACCOUNT, account);
+    console.log('👤 User account saved:', account);
+}
+
+function loadUserAccount() {
+    return localStorage.getItem(REMOTESTORAGE_KEYS.USER_ACCOUNT);
+}
+
+function saveCachedData(data) {
+    const cacheData = {
+        data: data,
+        timestamp: new Date().toISOString()
+    };
+    localStorage.setItem(REMOTESTORAGE_KEYS.CACHED_DATA, JSON.stringify(cacheData));
+    console.log('💾 Data cached locally:', cacheData.timestamp);
+}
+
+function loadCachedData() {
+    try {
+        const cached = localStorage.getItem(REMOTESTORAGE_KEYS.CACHED_DATA);
+        if (cached) {
+            const parsed = JSON.parse(cached);
+            console.log('📂 Cached data loaded:', parsed.timestamp);
+            return parsed.data;
+        }
+    } catch (error) {
+        console.error('❌ Failed to load cached data:', error);
+    }
+    return null;
+}
+
+
+function clearRemoteStorageCache() {
+    localStorage.removeItem(REMOTESTORAGE_KEYS.CONNECTION_STATE);
+    localStorage.removeItem(REMOTESTORAGE_KEYS.USER_ACCOUNT);
+    localStorage.removeItem(REMOTESTORAGE_KEYS.CACHED_DATA);
+    console.log('🗑️ RemoteStorage cache cleared');
+}
+
+function clearCollectionCache() {
+    // Очищаем только кэш коллекции, не трогая настройки подключения
+    localStorage.removeItem(REMOTESTORAGE_KEYS.CACHED_DATA);
+    console.log('🗑️ Collection cache cleared');
+}
+
+function getCacheInfo() {
+    const state = loadRemoteStorageState();
+    const account = loadUserAccount();
+    const cached = loadCachedData();
+    
+    return {
+        connected: state ? state.connected : false,
+        account: account,
+        hasCachedData: !!cached
+    };
+}
+
+function updateCloudStorageStatus(message, type = 'info') {
+    const statusElement = document.getElementById('cloud-backup-status');
+    if (!statusElement) return;
+    
+    const baseClasses = 'px-3 py-2 text-sm rounded-md border';
+    let statusClasses = '';
+    let statusText = message;
+    
+    switch (type) {
+        case 'success':
+            statusClasses = `${baseClasses} bg-green-900/50 text-green-200 border-green-600/50`;
+            break;
+        case 'error':
+            statusClasses = `${baseClasses} bg-red-900/50 text-red-200 border-red-600/50`;
+            break;
+        case 'info':
+            statusClasses = `${baseClasses} bg-blue-900/50 text-blue-200 border-blue-600/50`;
+            break;
+        default:
+            statusClasses = `${baseClasses} bg-gray-700/50 text-gray-300 border-gray-600/50`;
+    }
+    
+    statusElement.className = statusClasses;
+    statusElement.textContent = statusText;
+    
+    // Показываем/скрываем кнопку переподключения при ошибках авторизации
+    const reconnectContainer = document.getElementById('reconnect-container');
+    if (reconnectContainer) {
+        if (message.includes('авторизация истекла') || message.includes('Авторизация истекла')) {
+            reconnectContainer.classList.remove('hidden');
+        } else {
+            reconnectContainer.classList.add('hidden');
+        }
+    }
+}
+
+// Функция для рендеринга контента облачного резервного копирования
+function renderCloudBackupContent() {
+    const cacheInfo = getCacheInfo();
+    
+        // Проверяем сохраненное состояние при рендеринге
+        const savedState = loadRemoteStorageState();
+        const savedAccount = loadUserAccount();
+        const isConnected = cloudStorageConnected || (savedState && savedState.connected && savedAccount);
+        
+        // Автоматически загружаем список версий при рендеринге, если подключены
+        if (isConnected) {
+            setTimeout(() => {
+                loadBackupsList();
+            }, 100);
+        }
+    
+    return `
+        <div class="min-h-full p-4 sm:p-6 lg:p-8">
+            <!-- Заголовок и описание -->
+            <div class="text-center mb-6 sm:mb-8">
+                <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-200 mb-2 sm:mb-3">Резервное копирование в облако</h2>
+                <p class="text-gray-400 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto px-4">
+                    Сохраняйте и загружайте вашу коллекцию LEGO в облачном хранилище для доступа с любых устройств
+                </p>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="max-w-4xl mx-auto space-y-6">
+                <!-- Статус подключения -->
+                <div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="mr-3">${I_Cloud('w-5 h-5 text-cyan-400')}</span>
+                            <div>
+                                <h3 class="text-sm font-semibold text-gray-300">Статус подключения</h3>
+                                <p id="cloud-backup-status" class="text-sm text-gray-400 mt-1">
+                                    ${isConnected ? `Подключено: ${savedAccount || cacheInfo.account || 'Аккаунт'}` : 'Не подключено'}
+                                </p>
+                            </div>
+                        </div>
+                        ${isConnected ? `
+                            <button id="logout-cloud-storage" class="flex items-center px-3 py-2 text-xs font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-500 text-white">
+                                <span class="mr-1">${I_Logout('w-3 h-3')}</span>
+                                Выйти
+                            </button>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Кнопка переподключения (показывается при ошибке авторизации) -->
+                    <div id="reconnect-container" class="hidden mt-3">
+                        <button id="reconnect-cloud-storage" class="w-full flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-500 text-white">
+                            <span class="mr-2">${I_ChevronDown('w-4 h-4')}</span>
+                            Переподключиться
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Основные действия -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    ${!isConnected ? `
+                        <button id="connect-cloud-storage" class="flex flex-col items-center justify-center p-4 sm:p-6 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
+                            <span class="mb-2">${I_Link('w-6 h-6')}</span>
+                            <span class="text-sm font-semibold text-center">Подключить хранилище</span>
+                        </button>
+                    ` : `
+                        <button id="disconnect-cloud-storage" class="flex flex-col items-center justify-center p-4 sm:p-6 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors duration-150 shadow-lg hover:shadow-red-500/25">
+                            <span class="mb-2">${I_Unlink('w-6 h-6')}</span>
+                            <span class="text-sm font-semibold text-center">Отключить</span>
+                        </button>
+                    `}
+                    
+                    <button id="backup-to-cloud" class="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg transition-colors duration-150 shadow-lg ${!isConnected ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white hover:shadow-green-500/25'}" ${!isConnected ? 'disabled' : ''}>
+                        <span class="mb-2">${I_CloudUpload('w-6 h-6')}</span>
+                        <span class="text-sm font-semibold text-center">Сохранить в облако</span>
+                    </button>
+                    
+                    <button id="restore-from-cloud" class="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg transition-colors duration-150 shadow-lg ${!isConnected ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 text-white hover:shadow-purple-500/25'}" ${!isConnected ? 'disabled' : ''}>
+                        <span class="mb-2">${I_CloudDownload('w-6 h-6')}</span>
+                        <span class="text-sm font-semibold text-center">Загрузить из облака</span>
+                    </button>
+                    
+                    <!-- Дополнительная информация -->
+                    <div class="flex flex-col items-center justify-center p-4 sm:p-6 bg-gray-700/50 rounded-lg border border-gray-600/50">
+                        <span class="mb-2">${I_Info('w-6 h-6 text-cyan-400')}</span>
+                        <span class="text-sm font-semibold text-center text-gray-300">Инструкция</span>
+                        <button id="toggle-instruction" class="mt-2 text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
+                            Показать подробности
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Контейнер для виджета подключения -->
+                <div id="cloud-backup-widget-container" class="hidden"></div>
+                
+                <!-- Управление версиями резервных копий -->
+                ${isConnected ? `
+                    <div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4 sm:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <span class="mr-3">${I_History('w-5 h-5 text-cyan-400')}</span>
+                                <div>
+                                    <h3 class="text-sm font-semibold text-gray-300">Версии резервных копий</h3>
+                                    <p class="text-xs text-gray-400">Управление сохраненными версиями данных</p>
+                                </div>
+                            </div>
+                            <button id="refresh-backups" class="flex items-center px-3 py-2 text-xs font-semibold rounded-md transition-colors duration-150 bg-blue-600 hover:bg-blue-500 text-white">
+                                <span class="mr-1">${I_ChevronDown('w-3 h-3')}</span>
+                                Обновить
+                            </button>
+                        </div>
+                        
+                        <div id="backups-list" class="space-y-2">
+                            <div class="text-center text-gray-500 py-4">
+                                <span class="mr-2">${I_Clock('w-4 h-4')}</span>
+                                Загрузка списка версий...
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Сворачиваемая инструкция -->
+                <div id="instruction-content" class="hidden bg-gray-800/50 rounded-lg border border-gray-700/50 p-4 sm:p-6">
+                    <div class="space-y-4 text-sm text-gray-400">
+                        <div class="space-y-3">
+                            <p class="font-medium text-gray-300 text-base">1. Регистрация на 5apps.com:</p>
+                            <ul class="ml-4 space-y-2 list-disc">
+                                <li>Перейдите на <a href="https://5apps.com" target="_blank" class="text-cyan-400 hover:text-cyan-300 underline">5apps.com</a></li>
+                                <li>Нажмите "Sign up" и создайте аккаунт</li>
+                                <li>Подтвердите email адрес</li>
+                                <li>Войдите в аккаунт</li>
+                            </ul>
+                        </div>
+                        <div class="space-y-3">
+                            <p class="font-medium text-gray-300 text-base">2. Подключение к сайту:</p>
+                            <ul class="ml-4 space-y-2 list-disc">
+                                <li>Нажмите "Подключить хранилище" выше</li>
+                                <li>Введите ваш email с 5apps.com (например: user@5apps.com)</li>
+                                <li>Нажмите "Подключить"</li>
+                                <li>Разрешите доступ в открывшемся окне</li>
+                            </ul>
+                        </div>
+                        <div class="pt-4 border-t border-gray-700">
+                            <div class="flex items-center">
+                                <span class="text-green-400 mr-2">${I_Info('w-4 h-4')}</span>
+                                <p class="text-gray-300"><strong>5apps.com</strong> - Рекомендуемый провайдер (бесплатно, надежно)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function saveToCloud() {
+    try {
+        updateCloudStorageStatus('Сохранение...', 'info');
+        
+        // Собираем данные для сохранения - только коллекция и localStorage
+        const backupData = {
+            timestamp: new Date().toISOString(),
+            version: "1.0",
+            collection: {
+                parts: S.coll || {},
+                sets: S.setColl || {},
+                minifigs: S.minifigColl || {}
+            },
+            localStorage: {
+                // Сохраняем только критически важные данные из localStorage
+                coll: S.coll || {},
+                setColl: S.setColl || {},
+                minifigColl: S.minifigColl || {}
+            }
+        };
+        
+        // Проверяем подключение к облачному хранилищу
+        if (window.remoteStorageAvailable && cloudStorageClient) {
+            // Проверяем, что клиент подключен и авторизован
+            if (!cloudStorageConnected || !cloudStorageClient.remote || !cloudStorageClient.remote.userAddress) {
+                console.log('⚠️ Not connected to cloud storage, using fallback');
+                throw new Error('Не подключено к облачному хранилищу');
+            }
+            
+            try {
+                // Создаем клиент для работы с данными согласно документации
+                const client = cloudStorageClient.scope('/lego-catalog/');
+                
+                // Сохраняем данные как JSON файл с уникальным именем
+                const timestamp = Date.now();
+                const jsonData = JSON.stringify(backupData, null, 2);
+                console.log('💾 Saving data type:', typeof jsonData, 'Length:', jsonData.length);
+                await client.storeFile('application/json', `backup-${timestamp}.json`, jsonData);
+                
+                // Сохраняем в localStorage для быстрого доступа
+                saveCachedData(backupData);
+                
+                updateCloudStorageStatus('Коллекция сохранена в облако и кэш', 'success');
+                
+                // Обновляем список версий после сохранения
+                setTimeout(() => {
+                    loadBackupsList();
+                }, 500);
+                
+            } catch (cloudError) {
+                console.error('❌ Cloud save failed:', cloudError);
+                
+                // Если ошибка авторизации, отключаемся и используем fallback
+                if (cloudError.name === 'UnauthorizedError' || cloudError.message.includes('401')) {
+                    console.log('🔄 Authorization expired, disconnecting and using fallback');
+                    cloudStorageConnected = false;
+                    saveRemoteStorageState(false);
+                    updateCloudStorageStatus('Авторизация истекла, используем локальное сохранение', 'info');
+                    
+                    // Переходим к fallback сохранению
+                    throw new Error('AUTHORIZATION_EXPIRED');
+                } else {
+                    throw cloudError;
+                }
+            }
+        } else {
+            throw new Error('Cloud storage not available');
+        }
+        
+        setTimeout(() => {
+            updateCloudStorageStatus('Готово', 'success');
+        }, 3000);
+        
+    } catch (error) {
+        console.error('Failed to save:', error);
+        
+        // Fallback: сохраняем как JSON файл
+        try {
+            const backupData = {
+                timestamp: new Date().toISOString(),
+                version: "1.0",
+                collection: {
+                    parts: S.coll || {},
+                    sets: S.setColl || {},
+                    minifigs: S.minifigColl || {}
+                },
+                localStorage: {
+                    coll: S.coll || {},
+                    setColl: S.setColl || {},
+                    minifigColl: S.minifigColl || {}
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `lego-collection-backup-${backupData.timestamp}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Также сохраняем в localStorage
+            const backupKey = `collection_backup_${backupData.timestamp}`;
+            localStorage.setItem(backupKey, JSON.stringify(backupData));
+            
+            if (error.message === 'AUTHORIZATION_EXPIRED') {
+                updateCloudStorageStatus('Сохранено локально (авторизация истекла)', 'info');
+            } else {
+                updateCloudStorageStatus('Сохранено как файл (облако недоступно)', 'success');
+            }
+            
+        } catch (fallbackError) {
+            console.error('❌ Fallback save also failed:', fallbackError);
+            updateCloudStorageStatus('Ошибка сохранения', 'error');
+        }
+    }
+}
+
+async function loadFromCloud() {
+    try {
+        updateCloudStorageStatus('Загрузка...', 'info');
+        
+        console.log('🔄 Manual load from cloud requested');
+        
+        // Проверяем подключение к облачному хранилищу
+        if (window.remoteStorageAvailable && cloudStorageClient) {
+            // Проверяем, что клиент подключен и авторизован
+            if (!cloudStorageConnected || !cloudStorageClient.remote || !cloudStorageClient.remote.userAddress) {
+                console.log('⚠️ Not connected to cloud storage');
+                updateCloudStorageStatus('Не подключено к облачному хранилищу', 'error');
+                return;
+            }
+            
+            try {
+                // Создаем клиент для работы с данными согласно документации
+                const client = cloudStorageClient.scope('/lego-catalog/');
+                
+                // Загружаем данные из облака согласно документации
+                const data = await client.getFile('backup.json');
+                console.log('🔍 Loaded data type:', typeof data, data);
+                
+                // Проверяем тип данных и парсим соответственно
+                let backupData;
+                if (typeof data === 'string') {
+                    backupData = JSON.parse(data);
+                } else if (typeof data === 'object' && data !== null) {
+                    // Если это объект с полем data, извлекаем JSON из него
+                    if (data.data && typeof data.data === 'string') {
+                        backupData = JSON.parse(data.data);
+                    } else {
+                        // Если это уже готовый объект данных, используем его напрямую
+                        backupData = data;
+                    }
+                } else {
+                    throw new Error('Неожиданный тип данных: ' + typeof data);
+                }
+                
+                // Сохраняем загруженные данные в кэш
+                saveCachedData(backupData);
+                
+                // Показываем информацию о загруженных данных
+                const partsCount = Object.keys(backupData.collection?.parts || {}).length;
+                const setsCount = Object.keys(backupData.collection?.sets || {}).length;
+                const minifigsCount = Object.keys(backupData.collection?.minifigs || {}).length;
+                
+                const confirmed = confirm(
+                    `Загрузить данные из облака?\n\n` +
+                    `Детали: ${partsCount}\n` +
+                    `Наборы: ${setsCount}\n` +
+                    `Минифигурки: ${minifigsCount}\n\n` +
+                    `Это заменит текущую коллекцию!`
+                );
+                
+                if (!confirmed) {
+                    updateCloudStorageStatus('Отменено пользователем', 'info');
+                    return;
+                }
+                
+                // Загружаем данные в коллекцию
+                if (backupData.collection) {
+                    S.coll = backupData.collection.parts || {};
+                    S.setColl = backupData.collection.sets || {};
+                    S.minifigColl = backupData.collection.minifigs || {};
+                } else {
+                    // Fallback для старого формата
+                    S.coll = backupData.parts || {};
+                    S.setColl = backupData.sets || {};
+                    S.minifigColl = backupData.minifigs || {};
+                }
+                
+                // Сохраняем состояние
+                saveState();
+                
+                // Обновляем UI
+                S.gridStale = true;
+                updateUI();
+                
+                updateCloudStorageStatus('Данные загружены из облака', 'success');
+                
+            } catch (cloudError) {
+                console.error('❌ Failed to load from cloud:', cloudError);
+                
+                // Если ошибка авторизации, отключаемся
+                if (cloudError.name === 'UnauthorizedError' || cloudError.message.includes('401')) {
+                    console.log('🔄 Authorization expired, disconnecting');
+                    cloudStorageConnected = false;
+                    saveRemoteStorageState(false);
+                    updateCloudStorageStatus('Авторизация истекла, переподключитесь', 'error');
+                } else {
+                    updateCloudStorageStatus('Ошибка загрузки: ' + cloudError.message, 'error');
+                }
+            }
+        } else {
+            updateCloudStorageStatus('Облачное хранилище не доступно', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Failed to load:', error);
+        updateCloudStorageStatus('Ошибка загрузки', 'error');
+    }
+}
+
+function initializeCloudStorage() {
+    // Эта функция теперь не используется, так как виджет инициализируется отдельно
+    console.log('Cloud storage initialization handled by widget');
+}
+
+function initializeRemoteStorageWidget() {
+    try {
+        // Проверяем, что RemoteStorage загружен
+        if (typeof RemoteStorage === 'undefined') {
+            console.error('❌ RemoteStorage library is not loaded');
+            showWidgetError('Библиотека RemoteStorage не загружена. Попробуйте обновить страницу.');
+            return;
+        }
+        
+        const container = document.getElementById('cloud-backup-widget-container');
+        if (!container) {
+            console.error('❌ Widget container not found');
+            return;
+        }
+        
+        console.log('🔧 Initializing RemoteStorage...');
+        
+        // Очищаем контейнер
+        container.innerHTML = '';
+        
+        // Создаем клиент remoteStorage согласно документации
+        cloudStorageClient = new RemoteStorage({
+            logging: 'warn',
+            cache: false
+        });
+        
+        // Настраиваем доступ к данным согласно документации
+        cloudStorageClient.access.claim('lego-catalog', 'rw');
+        
+        // Показываем контейнер
+        container.classList.remove('hidden');
+        
+        // Создаем простой интерфейс для подключения
+        container.innerHTML = `
+            <div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4 sm:p-6">
+                <div class="text-center text-gray-300 mb-6">
+                    <div class="mb-4 text-cyan-400">
+                        ${I_Cloud('w-12 h-12 sm:w-16 sm:h-16')}
+                    </div>
+                    <h4 class="text-lg sm:text-xl font-semibold mb-2">Подключение к облачному хранилищу</h4>
+                    <p class="text-sm text-gray-400">
+                        Введите ваш email адрес с 5apps.com для подключения
+                    </p>
+                </div>
+                
+                <div class="space-y-4">
+                    <!-- Информация о провайдере -->
+                    <div class="p-3 bg-green-900/20 border border-green-700/50 rounded-lg">
+                        <div class="flex items-center">
+                            <span class="text-green-400 mr-2">${I_Info('w-4 h-4')}</span>
+                            <span class="text-sm text-green-300">Рекомендуется использовать 5apps.com</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <input 
+                            type="text" 
+                            id="user-address" 
+                            placeholder="user@5apps.com" 
+                            class="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-cyan-500 focus:outline-none text-center"
+                        >
+                        <button 
+                            id="connect-address" 
+                            class="w-full px-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg transition-colors"
+                        >
+                            Подключить
+                        </button>
+                    </div>
+                    
+                    <div class="text-xs text-gray-500 text-center">
+                        <p>Рекомендуемый провайдер: <strong>5apps.com</strong> (бесплатно, надежно)</p>
+                    </div>
+                    
+                    <div class="flex justify-between items-center text-xs pt-2 border-t border-gray-700">
+                        <button 
+                            id="clear-cache" 
+                            class="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
+                        >
+                            Очистить кэш
+                        </button>
+                        <span id="cache-info" class="text-gray-400"></span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Добавляем обработчики для кнопок
+        const connectBtn = document.getElementById('connect-address');
+        const addressInput = document.getElementById('user-address');
+        
+        // Обработчик для кнопки подключения
+        connectBtn.addEventListener('click', () => {
+            const address = addressInput.value.trim();
+            if (address) {
+                connectToRemoteStorage(address);
+            } else {
+                alert('Пожалуйста, введите адрес');
+            }
+        });
+        
+        // Устанавливаем значение по умолчанию для 5apps.com
+        addressInput.value = 'user@5apps.com';
+        addressInput.focus();
+        
+        // Обработчик для очистки кэша
+        const clearCacheBtn = document.getElementById('clear-cache');
+        
+        if (clearCacheBtn) {
+            clearCacheBtn.addEventListener('click', () => {
+                if (confirm('Очистить весь кэш RemoteStorage? Это удалит сохраненные данные и настройки подключения.')) {
+                    clearRemoteStorageCache();
+                    cloudStorageConnected = false;
+                    updateCloudStorageStatus('Кэш очищен', 'info');
+                    updateCacheInfo();
+                }
+            });
+        }
+        
+        // Обновляем информацию о кэше
+        updateCacheInfo();
+        
+        console.log('✅ RemoteStorage initialized');
+        
+        // Обработчики событий согласно документации
+        cloudStorageClient.on('ready', () => {
+            console.log('✅ RemoteStorage ready');
+            cloudStorageConnected = true;
+            updateCloudStorageStatus('Готово к работе', 'success');
+        });
+        
+        cloudStorageClient.on('connected', () => {
+            console.log('✅ RemoteStorage connected');
+            cloudStorageConnected = true;
+            updateCloudStorageStatus('Подключено', 'success');
+            
+            // Сохраняем состояние подключения
+            saveRemoteStorageState(true);
+            const account = cloudStorageClient.remote?.userAddress;
+            if (account) {
+                saveUserAccount(account);
+            }
+            updateCacheInfo();
+        });
+        
+        cloudStorageClient.on('disconnected', () => {
+            console.log('⚠️ RemoteStorage disconnected');
+            cloudStorageConnected = false;
+            updateCloudStorageStatus('Отключено', 'error');
+            
+            // Сохраняем состояние отключения
+            saveRemoteStorageState(false);
+            updateCacheInfo();
+        });
+        
+        cloudStorageClient.on('error', (error) => {
+            console.error('❌ RemoteStorage error:', error);
+            cloudStorageConnected = false;
+            
+            // Обрабатываем разные типы ошибок
+            if (error.name === 'DiscoveryError') {
+                updateCloudStorageStatus('Ошибка обнаружения сервера', 'error');
+            } else if (error.name === 'UnauthorizedError') {
+                updateCloudStorageStatus('Ошибка авторизации', 'error');
+            } else {
+                updateCloudStorageStatus('Ошибка: ' + error.message, 'error');
+            }
+        });
+        
+    } catch (error) {
+        console.error('❌ Failed to initialize RemoteStorage:', error);
+        showWidgetError('Ошибка инициализации: ' + error.message);
+    }
+}
+
+function connectToRemoteStorage(address) {
+    try {
+        console.log('🔧 Connecting to RemoteStorage with address:', address);
+        updateCloudStorageStatus('Подключение...', 'info');
+        
+        cloudStorageClient.connect(address);
+    } catch (error) {
+        console.error('❌ Failed to connect:', error);
+        updateCloudStorageStatus('Ошибка подключения', 'error');
+    }
+}
+
+function showWidgetError(message) {
+    const container = document.getElementById('cloud-backup-widget-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center text-red-400">
+                <div class="text-4xl mb-2">⚠️</div>
+                <p class="text-sm mb-4">${message}</p>
+                <div class="space-y-2">
+                    <button id="retry-widget-init" class="mt-2 px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded">
+                        Попробовать снова
+                    </button>
+                    <div class="text-xs text-gray-400 mt-2">
+                        <p>Альтернатива: используйте экспорт/импорт CSV файлов</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function updateCacheInfo() {
+    const cacheInfo = getCacheInfo();
+    const cacheInfoElement = document.getElementById('cache-info');
+    if (cacheInfoElement) {
+        if (cacheInfo.hasCachedData) {
+            cacheInfoElement.textContent = 'Кэш: есть данные';
+        } else {
+            cacheInfoElement.textContent = 'Кэш пуст';
+        }
+    }
+}
+
+function showFallbackSolution() {
+    const container = document.getElementById('cloud-backup-widget-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="text-center text-gray-300">
+                <div class="text-4xl mb-4">📁</div>
+                <h4 class="text-lg font-semibold mb-2">Локальное резервное копирование</h4>
+                <p class="text-sm text-gray-400 mb-4">
+                    Облачное хранилище недоступно. Используйте локальное сохранение файлов.
+                </p>
+                <div class="space-y-3">
+                    <button 
+                        id="save-local-backup" 
+                        class="w-full px-4 py-2 bg-green-600 hover:bg-green-500 text-white text-sm rounded-lg transition-colors"
+                    >
+                        Сохранить как файл
+                    </button>
+                    <div class="text-xs text-gray-500">
+                        <p>Файл будет загружен на ваше устройство</p>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Добавляем обработчик для локального сохранения
+        const saveBtn = document.getElementById('save-local-backup');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                saveToCloud(); // Используем ту же функцию, но с fallback
+            });
+        }
+    }
+}
+
+// Функция выхода из учётной записи
+function logoutFromCloudStorage() {
+    if (confirm('Вы уверены, что хотите выйти из учётной записи? Это отключит вас от облачного хранилища.')) {
+        try {
+            // Отключаемся от облачного хранилища
+            if (cloudStorageClient) {
+                cloudStorageClient.disconnect();
+            }
+            
+            // Очищаем все сохраненные данные
+            clearRemoteStorageCache();
+            
+            // Сбрасываем состояние
+            cloudStorageConnected = false;
+            cloudStorageClient = null;
+            
+            // Обновляем UI
+            updateCloudStorageStatus('Вы вышли из учётной записи', 'info');
+            
+            // Перерисовываем интерфейс
+            if (S.view === 'tools' && S.toolSubView === 'cloud-backup') {
+                const mainContent = document.getElementById('main-content');
+                if (mainContent) {
+                    mainContent.innerHTML = renderCloudBackupContent();
+                }
+            }
+            
+            console.log('✅ Successfully logged out from cloud storage');
+            
+        } catch (error) {
+            console.error('❌ Logout failed:', error);
+            updateCloudStorageStatus('Ошибка при выходе', 'error');
+        }
+    }
+}
+
+// Функция проверки сохраненного состояния подключения
+function checkSavedCloudStorageState() {
+    try {
+        const savedState = loadRemoteStorageState();
+        const savedAccount = loadUserAccount();
+        
+        if (savedState && savedState.connected && savedAccount) {
+            console.log('✅ Found saved cloud storage state for:', savedAccount);
+            
+            // Обновляем состояние без переподключения
+            cloudStorageConnected = true;
+            updateCloudStorageStatus(`Подключено: ${savedAccount}`, 'success');
+            
+            // Инициализируем клиент только для работы с данными (без подключения)
+            if (!cloudStorageClient) {
+                cloudStorageClient = new RemoteStorage({
+                    logging: 'warn',
+                    cache: false
+                });
+                cloudStorageClient.access.claim('lego-catalog', 'rw');
+                setupRemoteStorageEventHandlers();
+            }
+            
+            return true;
+        } else {
+            console.log('📝 No saved cloud storage credentials found');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Check saved state failed:', error);
+        return false;
+    }
+}
+
+// Функция настройки обработчиков событий RemoteStorage
+function setupRemoteStorageEventHandlers() {
+    cloudStorageClient.on('ready', () => {
+        console.log('✅ RemoteStorage ready');
+        cloudStorageConnected = true;
+        updateCloudStorageStatus('Готово к работе', 'success');
+    });
+    
+    cloudStorageClient.on('connected', () => {
+        console.log('✅ RemoteStorage connected');
+        cloudStorageConnected = true;
+        updateCloudStorageStatus('Подключено', 'success');
+        
+        // Сохраняем состояние подключения
+        saveRemoteStorageState(true);
+        const account = cloudStorageClient.remote?.userAddress;
+        if (account) {
+            saveUserAccount(account);
+        }
+        updateCacheInfo();
+        
+        // Загружаем список версий при подключении
+        setTimeout(() => {
+            loadBackupsList();
+        }, 1000);
+    });
+    
+    cloudStorageClient.on('disconnected', () => {
+        console.log('⚠️ RemoteStorage disconnected');
+        cloudStorageConnected = false;
+        updateCloudStorageStatus('Отключено', 'error');
+        
+        // Сохраняем состояние отключения
+        saveRemoteStorageState(false);
+        updateCacheInfo();
+    });
+    
+    cloudStorageClient.on('error', (error) => {
+        console.error('❌ RemoteStorage error:', error);
+        cloudStorageConnected = false;
+        
+        // Обрабатываем разные типы ошибок
+        if (error.name === 'DiscoveryError') {
+            updateCloudStorageStatus('Ошибка обнаружения сервера', 'error');
+        } else if (error.name === 'UnauthorizedError') {
+            updateCloudStorageStatus('Ошибка авторизации', 'error');
+        } else {
+            updateCloudStorageStatus('Ошибка: ' + error.message, 'error');
+        }
+    });
+}
+
+// Функция для загрузки списка версий резервных копий
+async function loadBackupsList() {
+    try {
+        const backupsList = document.getElementById('backups-list');
+        if (!backupsList) return;
+
+        if (!cloudStorageConnected || !cloudStorageClient) {
+            console.log('⚠️ Cloud storage not connected');
+            backupsList.innerHTML = `
+                <div class="text-center text-gray-500 py-4">
+                    <span class="mr-2">${I_Cloud('w-4 h-4')}</span>
+                    Подключитесь к облачному хранилищу для просмотра версий
+                </div>
+            `;
+            return;
+        }
+
+        // Показываем индикатор загрузки
+        backupsList.innerHTML = `
+            <div class="text-center text-gray-500 py-4">
+                <span class="mr-2">${I_Clock('w-4 h-4')}</span>
+                Загрузка списка версий...
+            </div>
+        `;
+
+        // Получаем список файлов из облачного хранилища
+        const client = cloudStorageClient.scope('/lego-catalog/');
+        const files = await client.getAll('');
+        
+        // Фильтруем только файлы резервных копий
+        const backupFiles = Object.keys(files)
+            .filter(key => key.startsWith('backup-') && key.endsWith('.json'))
+            .map(key => {
+                const timestamp = key.replace('backup-', '').replace('.json', '');
+                return {
+                    key,
+                    timestamp,
+                    date: new Date(parseInt(timestamp))
+                };
+            })
+            .sort((a, b) => b.date - a.date); // Сортируем по дате (новые сверху)
+
+        if (backupFiles.length === 0) {
+            backupsList.innerHTML = `
+                <div class="text-center text-gray-500 py-4">
+                    <span class="mr-2">${I_Archive('w-4 h-4')}</span>
+                    Резервные копии не найдены
+                </div>
+            `;
+            return;
+        }
+
+        // Отображаем список версий
+        backupsList.innerHTML = backupFiles.map((file, index) => {
+            const isLatest = index === 0;
+            const dateStr = file.date.toLocaleString('ru-RU', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            return `
+                <div class="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg border border-gray-600/50">
+                    <div class="flex items-center">
+                        <span class="mr-3">${I_FileText('w-4 h-4 text-cyan-400')}</span>
+                        <div>
+                            <div class="flex items-center">
+                                <span class="text-sm font-medium text-gray-300">Версия ${backupFiles.length - index}</span>
+                                ${isLatest ? '<span class="ml-2 px-2 py-1 text-xs bg-green-600 text-white rounded">Последняя</span>' : ''}
+                            </div>
+                            <div class="flex items-center text-xs text-gray-400 mt-1">
+                                <span class="mr-1">${I_Calendar('w-3 h-3')}</span>
+                                ${dateStr}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button 
+                            class="load-backup-btn flex items-center px-3 py-1 text-xs font-semibold rounded transition-colors duration-150 bg-purple-600 hover:bg-purple-500 text-white"
+                            data-key="${file.key}"
+                        >
+                            <span class="mr-1">${I_CloudDownload('w-3 h-3')}</span>
+                            Загрузить
+                        </button>
+                        ${!isLatest ? `
+                            <button 
+                                class="delete-backup-btn flex items-center px-3 py-1 text-xs font-semibold rounded transition-colors duration-150 bg-red-600 hover:bg-red-500 text-white"
+                                data-key="${file.key}"
+                            >
+                                <span class="mr-1">${I_Trash('w-3 h-3')}</span>
+                                Удалить
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Добавляем обработчики для кнопок
+        addBackupButtonsHandlers();
+
+    } catch (error) {
+        console.error('❌ Error loading backups list:', error);
+        const backupsList = document.getElementById('backups-list');
+        if (backupsList) {
+            backupsList.innerHTML = `
+                <div class="text-center text-red-400 py-4">
+                    <span class="mr-2">${I_X('w-4 h-4')}</span>
+                    Ошибка загрузки списка версий
+                </div>
+            `;
+        }
+    }
+}
+
+// Функция для добавления обработчиков кнопок версий
+function addBackupButtonsHandlers() {
+    // Обработчик для кнопки загрузки версии
+    document.querySelectorAll('.load-backup-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const key = btn.getAttribute('data-key');
+            await loadSpecificBackup(key);
+        });
+    });
+
+    // Обработчик для кнопки удаления версии
+    document.querySelectorAll('.delete-backup-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const key = btn.getAttribute('data-key');
+            await deleteBackup(key);
+        });
+    });
+}
+
+// Функция для загрузки конкретной версии резервной копии
+async function loadSpecificBackup(key) {
+    try {
+        if (!cloudStorageConnected || !cloudStorageClient) {
+            alert('Облачное хранилище не подключено');
+            return;
+        }
+
+        updateCloudStorageStatus('Загрузка версии...', 'info');
+
+        const client = cloudStorageClient.scope('/lego-catalog/');
+        const backupData = await client.getFile(key);
+        
+        if (!backupData) {
+            alert('Файл резервной копии не найден');
+            updateCloudStorageStatus('Ошибка загрузки', 'error');
+            return;
+        }
+
+        const data = JSON.parse(backupData);
+        
+        // Подтверждение от пользователя
+        const confirmMessage = `Загрузить версию от ${new Date(parseInt(key.replace('backup-', '').replace('.json', ''))).toLocaleString('ru-RU')}?\n\nЭто заменит текущие данные коллекции.`;
+        if (!confirm(confirmMessage)) {
+            updateCloudStorageStatus('Отменено пользователем', 'info');
+            return;
+        }
+
+        // Восстанавливаем данные
+        if (data.collection) {
+            S.coll = data.collection;
+            S.setColl = data.setColl || {};
+            S.minifigColl = data.minifigColl || {};
+        }
+
+        // Обновляем UI
+        updateUI();
+        updateCloudStorageStatus('Версия успешно загружена', 'success');
+        
+        // Обновляем список версий
+        setTimeout(() => {
+            loadBackupsList();
+        }, 1000);
+
+    } catch (error) {
+        console.error('❌ Error loading specific backup:', error);
+        updateCloudStorageStatus('Ошибка загрузки версии', 'error');
+        alert('Ошибка при загрузке версии: ' + error.message);
+    }
+}
+
+// Функция для удаления версии резервной копии
+async function deleteBackup(key) {
+    try {
+        if (!cloudStorageConnected || !cloudStorageClient) {
+            alert('Облачное хранилище не подключено');
+            return;
+        }
+
+        const dateStr = new Date(parseInt(key.replace('backup-', '').replace('.json', ''))).toLocaleString('ru-RU');
+        const confirmMessage = `Удалить версию от ${dateStr}?\n\nЭто действие нельзя отменить.`;
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        updateCloudStorageStatus('Удаление версии...', 'info');
+
+        const client = cloudStorageClient.scope('/lego-catalog/');
+        await client.remove(key);
+
+        updateCloudStorageStatus('Версия удалена', 'success');
+        
+        // Обновляем список версий
+        setTimeout(() => {
+            loadBackupsList();
+        }, 500);
+
+    } catch (error) {
+        console.error('❌ Error deleting backup:', error);
+        updateCloudStorageStatus('Ошибка удаления версии', 'error');
+        alert('Ошибка при удалении версии: ' + error.message);
+    }
+}
 
 let S = {
     view: 'collection',
@@ -8224,11 +9370,20 @@ async function handleFeelingLucky(type = null) {
 function updateFeelingLuckyStats() {
     console.log('🔍 updateFeelingLuckyStats called, subView:', S.subView, 'loading:', S.loading);
     
+    // Защита от циклических вызовов
+    if (window.updatingFeelingLuckyStats) {
+        console.log('⚠️ updateFeelingLuckyStats already running, skipping');
+        return;
+    }
+    
+    window.updatingFeelingLuckyStats = true;
+    
     const statsElement = document.getElementById('feeling-lucky-stats');
     const tipElement = document.getElementById('feeling-lucky-tip');
     
     if (!statsElement) {
         console.log('❌ statsElement not found');
+        window.updatingFeelingLuckyStats = false;
         return;
     }
     
@@ -8288,6 +9443,9 @@ function updateFeelingLuckyStats() {
         if (tipElement) {
             tipElement.textContent = '💡 Подсказка недоступна';
         }
+    } finally {
+        // Сбрасываем флаг в любом случае
+        window.updatingFeelingLuckyStats = false;
     }
 }
 
@@ -8806,16 +9964,10 @@ function renderSidebar() {
                     description: 'Статистика и анализ коллекции'
                 },
                 {
-                    id: 'export',
-                    name: 'Экспорт',
-                    icon: '📤',
-                    description: 'Экспорт данных коллекции'
-                },
-                {
-                    id: 'import',
-                    name: 'Импорт',
-                    icon: '📥',
-                    description: 'Импорт данных в коллекцию'
+                    id: 'cloud-backup',
+                    name: 'Резервное копирование в облако',
+                    icon: '☁️',
+                    description: 'Синхронизация данных с облачным хранилищем'
                 }
             ];
             
@@ -9688,6 +10840,14 @@ function renderMainContent() {
         return;
     }
     
+    // Защита от циклических вызовов
+    if (window.renderingMainContent) {
+        console.log('⚠️ renderMainContent already running, skipping');
+        return;
+    }
+    
+    window.renderingMainContent = true;
+    
     let e = "";
     
     console.log('🎨 renderMainContent called:', {
@@ -10378,24 +11538,23 @@ function renderMainContent() {
                 console.log('🔍 Calling analyzeCollection from renderMainContent');
                 analyzeCollection();
             }
-        } else if (S.toolSubView === 'export') {
-            // Логика для экспорта
-            e = `
-                <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
-                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📤</div>
-                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Экспорт данных</h2>
-                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Функция экспорта будет добавлена в будущих версиях</p>
-                </div>
-            `;
-        } else if (S.toolSubView === 'import') {
-            // Логика для импорта
-            e = `
-                <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
-                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📥</div>
-                    <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Импорт данных</h2>
-                    <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Функция импорта будет добавлена в будущих версиях</p>
-                </div>
-            `;
+        } else if (S.toolSubView === 'cloud-backup') {
+            // Логика для облачного резервного копирования
+            e = renderCloudBackupContent();
+            
+            // Проверяем сохраненное состояние, если пользователь еще не подключен
+            if (!cloudStorageConnected && window.remoteStorageAvailable) {
+                setTimeout(() => {
+                    checkSavedCloudStorageState();
+                }, 200);
+            }
+            
+            // Автоматически загружаем список версий при рендеринге, если подключены
+            if (cloudStorageConnected && window.remoteStorageAvailable) {
+                setTimeout(() => {
+                    loadBackupsList();
+                }, 300);
+            }
         }
         
         // Показываем аналитику только для подкатегории 'analytics'
@@ -10454,7 +11613,8 @@ function renderMainContent() {
     requestAnimationFrame(() => {
         if (!S.loading && S.hasMoreItems && mainEl.scrollHeight <= mainEl.clientHeight) {
             S.toDisplay += S.increment;
-            renderMainContent();
+            // Используем updateUI вместо рекурсивного вызова renderMainContent
+            updateUI();
         }
         // Обновляем прогресс после автоподгрузки/проверки
         if (typeof window.refreshScrollProgress === 'function') {
@@ -10465,7 +11625,11 @@ function renderMainContent() {
     // Убрана автоматическая загрузка изображений для предотвращения постоянных обновлений UI
     
     // Обновляем статистику кнопки "Мне повезёт" после рендеринга
-    setTimeout(() => updateFeelingLuckyStats(), 100);
+    setTimeout(() => {
+        updateFeelingLuckyStats();
+        // Сбрасываем флаг после завершения обновления статистики
+        window.renderingMainContent = false;
+    }, 100);
 }
 // Добавляем слушатель события прокрутки для автоматической загрузки дополнительных элементов
 function setupScrollListener() {
@@ -15446,7 +16610,7 @@ document.addEventListener("click", async e => {
                 sidebarEl.innerHTML = newHTML;
                 console.log('🔧 Sidebar updated, current innerHTML length:', sidebarEl.innerHTML.length);
                 // Проверяем, что HTML действительно содержит инструменты
-                if (newHTML.includes('Аналитика') && newHTML.includes('Экспорт') && newHTML.includes('Импорт')) {
+                if (newHTML.includes('Аналитика')) {
                     console.log('✅ Tools list found in sidebar HTML');
                 } else {
                     console.log('❌ Tools list NOT found in sidebar HTML');
@@ -15587,7 +16751,7 @@ document.addEventListener("click", async e => {
                 console.log('🔧 Subview handler: New sidebar HTML length:', newHTML.length);
                 sidebarEl.innerHTML = newHTML;
                 // Проверяем, что HTML действительно содержит инструменты
-                if (newHTML.includes('Аналитика') && newHTML.includes('Экспорт') && newHTML.includes('Импорт')) {
+                if (newHTML.includes('Аналитика')) {
                     console.log('✅ Subview handler: Tools list found in sidebar HTML');
                 } else {
                     console.log('❌ Subview handler: Tools list NOT found in sidebar HTML');
@@ -15726,8 +16890,114 @@ document.addEventListener("click", async e => {
         S.toolSubView = toolSubView;
         S.gridStale = true;
         
+        // Проверяем сохраненное состояние подключения при открытии вкладки
+        if (toolSubView === 'cloud-backup') {
+            console.log('☁️ Cloud backup tab opened, checking saved state');
+            setTimeout(() => {
+                if (window.remoteStorageAvailable) {
+                    checkSavedCloudStorageState();
+                    // Автоматически загружаем список версий при открытии вкладки
+                    setTimeout(() => {
+                        loadBackupsList();
+                    }, 500);
+                } else {
+                    console.log('⚠️ RemoteStorage not available');
+                }
+            }, 100);
+        }
+        
         // Обновляем UI
         updateUI();
+        return;
+    }
+    
+    // Обработчики для облачного резервного копирования
+    if (t.closest('#connect-cloud-storage')) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Инициализируем виджет после рендеринга
+        setTimeout(() => {
+            if (window.remoteStorageAvailable) {
+                console.log('🔧 Initializing RemoteStorage widget...');
+                initializeRemoteStorageWidget();
+            } else {
+                console.log('🔧 RemoteStorage not available, showing fallback solution');
+                showFallbackSolution();
+            }
+        }, 500);
+        return;
+    }
+    
+    if (t.closest('#disconnect-cloud-storage')) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (cloudStorageClient) {
+            cloudStorageClient.disconnect();
+        }
+        return;
+    }
+    
+    if (t.closest('#backup-to-cloud')) {
+        e.preventDefault();
+        e.stopPropagation();
+        saveToCloud();
+        return;
+    }
+    
+    if (t.closest('#restore-from-cloud')) {
+        e.preventDefault();
+        e.stopPropagation();
+        loadFromCloud();
+        return;
+    }
+    
+    if (t.closest('#reconnect-cloud-storage')) {
+        e.preventDefault();
+        e.stopPropagation();
+        // Очищаем состояние и переподключаемся
+        cloudStorageConnected = false;
+        saveRemoteStorageState(false);
+        // Инициализируем виджет заново
+        setTimeout(() => {
+            if (window.remoteStorageAvailable) {
+                console.log('🔧 Reconnecting RemoteStorage widget...');
+                initializeRemoteStorageWidget();
+            }
+        }, 500);
+        return;
+    }
+    
+    if (t.closest('#logout-cloud-storage')) {
+        e.preventDefault();
+        e.stopPropagation();
+        logoutFromCloudStorage();
+        return;
+    }
+    
+    // Обработчик для сворачивания инструкции
+    if (t.closest('#toggle-instruction')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const content = document.getElementById('instruction-content');
+        const button = t.closest('#toggle-instruction');
+        
+        if (content && button) {
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                button.textContent = 'Скрыть подробности';
+            } else {
+                content.classList.add('hidden');
+                button.textContent = 'Показать подробности';
+            }
+        }
+        return;
+    }
+    
+    // Обработчик для обновления списка резервных копий
+    if (t.closest('#refresh-backups')) {
+        e.preventDefault();
+        e.stopPropagation();
+        loadBackupsList();
         return;
     }
     // Обработка сворачивания/разворачивания сводки коллекции
@@ -17437,7 +18707,7 @@ document.addEventListener("click", async e => {
 
     if (isAtBottom && !S.loading && S.hasMoreItems) {
         S.toDisplay += S.increment;
-        renderMainContent();
+        updateUI();
     }
     
     const e = mainEl.scrollTop > 300;
@@ -21172,7 +22442,22 @@ function animateCloseButtonClick(button) {
     
     // Глобальная функция для принудительного запуска hover-эффектов
     window.setupPieChartHover = setupPieChartHover;
+    
+    // Инициализация remoteStorage для облачного резервного копирования
+    // Ждем загрузки всех библиотек
+    function initCloudBackup() {
+        if (window.remoteStorageAvailable) {
+            console.log('🔧 Initializing RemoteStorage after library load...');
+            // Не инициализируем сразу, только при нажатии кнопки
+        } else {
+            console.log('🔧 RemoteStorage not available, using fallback');
+        }
+    }
+    
+    // Запускаем инициализацию после загрузки страницы
+    window.addEventListener('load', initCloudBackup);
   </script>
 
 </body>
+</html>
 </html>
