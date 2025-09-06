@@ -3132,6 +3132,86 @@ body.tab-switching .minifig-card {
         font-weight: 400;
     }
     
+    /* Анимации для дашборда */
+    .animate-dashboardIn {
+        animation: dashboardIn 0.6s ease-out;
+    }
+    
+    @keyframes dashboardIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    .animate-chartIn {
+        animation: chartIn 0.8s ease-out;
+    }
+    
+    @keyframes chartIn {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+    
+    /* Стили для круговых диаграмм */
+    .pie-chart-container {
+        background: linear-gradient(135deg, rgba(31, 41, 55, 0.1) 0%, rgba(17, 24, 39, 0.1) 100%);
+        border-radius: 16px;
+        padding: 1rem;
+        backdrop-filter: blur(8px);
+    }
+    
+    /* Убираем тени с SVG */
+    
+    /* Стили для кнопок дашборда с цветным свечением */
+    .group:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
+                    0 4px 6px -2px rgba(0, 0, 0, 0.05),
+                    0 0 20px rgba(0, 0, 0, 0.1),
+                    0 0 40px color-mix(in srgb, var(--item-color, rgb(107, 114, 128)) 30%, transparent);
+    }
+    
+    .pie-sector-group {
+        transition: all 0.3s ease;
+        transform-origin: center;
+    }
+    
+    .percentage-group {
+        transition: all 0.3s ease;
+        transform-origin: center;
+    }
+    
+    .pie-sector-group:hover {
+        filter: brightness(1.2);
+        z-index: 10;
+    }
+    
+    .percentage-container {
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+    
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
@@ -3191,7 +3271,7 @@ body.tab-switching .minifig-card {
   </div>
 
   <script type="module">
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -3251,21 +3331,14 @@ const inactivityTips = [
 ];
 
 function simpleInactivityInit() {
-    console.log('🎯 ПРОСТАЯ ИНИЦИАЛИЗАЦИЯ СИСТЕМЫ НЕАКТИВНОСТИ');
     
     // Проверяем элементы
     const overlay = document.getElementById('inactivity-overlay');
     const tip = document.getElementById('inactivity-tip');
     const closeBtn = document.getElementById('inactivity-close');
     
-    console.log('🎯 Элементы найдены:', {
-        overlay: !!overlay,
-        tip: !!tip,
-        closeBtn: !!closeBtn
-    });
     
     if (overlay && tip && closeBtn) {
-        console.log('🎯 Все элементы найдены, запускаем простую систему');
         
         // Функция для сброса таймера
         function resetInactivityTimer() {
@@ -3278,7 +3351,6 @@ function simpleInactivityInit() {
             
             // Запускаем новый таймер на 90 секунд
             inactivityTimer = setTimeout(() => {
-                console.log('🎯 Показываем подсказку!');
                 // Выбираем случайную подсказку
                 const randomIndex = Math.floor(Math.random() * inactivityTips.length);
                 tip.textContent = inactivityTips[randomIndex];
@@ -3315,7 +3387,6 @@ function simpleInactivityInit() {
         
         // Обработчик закрытия по кнопке
         closeBtn.addEventListener('click', () => {
-            console.log('🎯 Закрываем подсказку по кнопке');
             overlay.classList.remove('show');
             overlay.classList.add('hidden');
             stopTipRotation();
@@ -3327,7 +3398,6 @@ function simpleInactivityInit() {
         overlay.addEventListener('click', (event) => {
             // Проверяем, что клик был именно по оверлею, а не по его содержимому
             if (event.target === overlay) {
-                console.log('🎯 Закрываем подсказку по клику на пустое место');
                 overlay.classList.remove('show');
                 overlay.classList.add('hidden');
                 stopTipRotation();
@@ -3674,6 +3744,7 @@ const I_Share = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 const I_Settings = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
 const I_Heart = (c, f = !1) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const I_Refresh = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>`;
+const I_Chart = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path><circle cx="18" cy="8" r="2"></circle><circle cx="13" cy="13" r="2"></circle><circle cx="10" cy="10" r="2"></circle><circle cx="7" cy="14" r="2"></circle></svg>`;
 
 // Класс для управления модальными окнами
 class ModalManager {
@@ -3948,7 +4019,7 @@ let S = {
     collectionSummaryExpanded: false, // Сворачивание/разворачивание сводки коллекции
     analyticsData: null, // Кэшированные данные аналитики
     analyticsLoading: false, // Флаг загрузки аналитики
-    analyticsSubView: 'parts', // Подкатегория аналитики: 'parts', 'sets', 'minifigs'
+    analyticsSubView: 'dashboard', // Подкатегория аналитики: 'dashboard', 'parts', 'sets', 'minifigs'
     analyticsLastUpdate: 0, // Время последнего обновления аналитики
     collectionLastUpdate: 0, // Время последнего изменения коллекции
     tempRarityFilter: null, // Временный фильтр по редкости
@@ -4378,8 +4449,6 @@ function testRarityLogic() {
         }
         
         const result = testCalculateMinifigRarity(minifig);
-        console.log('📊 Результат:', result.debugInfo);
-        console.log('🎯 Итоговая редкость:', result.rarity, `(${result.debugInfo.totalScore} баллов)`);
     });
     
     console.log('\n✅ Тестирование завершено!');
@@ -4603,7 +4672,6 @@ function testUserMinifigs() {
         return b.score - a.score;
     });
     
-    console.log('\n📊 Топ минифигурок по редкости:');
     results.forEach((minifig, index) => {
         console.log(`${index + 1}. ${minifig.name} (${minifig.parts} деталей) - ${minifig.rarity} (${minifig.score} баллов)`);
     });
@@ -4639,7 +4707,6 @@ function checkAnalyticsState() {
     console.log('S.analyticsLastUpdate:', S.analyticsLastUpdate);
     
     if (S.analyticsData && S.analyticsData.minifigsStats) {
-        console.log('📊 Топ-5 минифигурок по редкости:');
         S.analyticsData.minifigsStats.topRareMinifigs?.slice(0, 5).forEach((minifig, index) => {
             console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarityName} (${minifig.rarity})`);
         });
@@ -4668,7 +4735,6 @@ window.checkAnalyticsState = function() {
     console.log('S.analyticsLastUpdate:', S.analyticsLastUpdate);
     
     if (S.analyticsData && S.analyticsData.minifigsStats) {
-        console.log('📊 Топ-5 минифигурок по редкости:');
         S.analyticsData.minifigsStats.topRareMinifigs?.slice(0, 5).forEach((minifig, index) => {
             console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarityName} (${minifig.rarity})`);
         });
@@ -5053,8 +5119,6 @@ function analyzeCollection() {
         }
     }
     
-    console.log('📊 Новая система редкости - распределение:', rarityDistribution);
-    console.log('📊 Примеры деталей:', sampleParts);
     
     try {
         const analytics = {
@@ -5145,7 +5209,6 @@ function analyzeCollection() {
                 
                 // Логируем наборы Star Wars в коллекции
                 if (themeName.toLowerCase().includes('star wars')) {
-                    console.log('🎯 Star Wars set in collection:', setNum, set.name, 'theme:', themeName, 'theme_id:', set.theme_id);
                 }
                 
                 // Общая статистика наборов
@@ -5201,11 +5264,9 @@ function analyzeCollection() {
             .map(([themeName, count]) => {
                 // Находим themeId по themeName
                 const themeId = Object.keys(THEME_MAP).find(id => THEME_MAP[id]?.name === themeName);
-                console.log('🎯 Creating topThemes for sets:', themeName, 'themeId:', themeId, 'count:', count);
                 return { themeName, count, themeId: themeId ? parseInt(themeId, 10) : null };
             });
             
-        console.log('📊 S.setColl entries:', Object.entries(S.setColl).length);
         analytics.setsStats.topSets = Object.entries(S.setColl)
             .map(([setNum, setData]) => {
                 const set = SET_MAP[setNum];
@@ -5223,7 +5284,6 @@ function analyzeCollection() {
             .sort((a, b) => b.numParts - a.numParts)
             .slice(0, 10);
             
-        console.log('📊 Top sets generated:', analytics.setsStats.topSets.length);
             
         // Вычисляем среднее количество деталей в наборах
         analytics.setsStats.averagePieces = analytics.setsStats.totalSets > 0 
@@ -5240,7 +5300,6 @@ function analyzeCollection() {
                 return { themeName, count, themeId: themeId ? parseInt(themeId, 10) : null };
             });
             
-        console.log('📊 S.minifigColl entries:', Object.entries(S.minifigColl).length);
         
         // Создаем массив всех минифигурок с расчетом редкости
         console.log('🔍 Creating allMinifigs array, processing', Object.entries(S.minifigColl).length, 'minifigs');
@@ -5305,12 +5364,10 @@ function analyzeCollection() {
             })
             .slice(0, 10);
             
-        console.log('📊 Топ-10 по редкости после сортировки:');
         analytics.minifigsStats.topRareMinifigs.forEach((minifig, index) => {
             console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarity} (${minifig.rarityName})`);
         });
             
-        console.log('📊 Top minifigs generated:', analytics.minifigsStats.topMinifigs.length);
         
         // Вычисляем общее количество уникальных цветов и категорий
         analytics.totalColors = Object.keys(analytics.colorStats).length;
@@ -5341,15 +5398,12 @@ function applyTemporaryFilters() {
     
     // Применяем временные фильтры
     if (S.tempRarityFilter) {
-        console.log('🎯 Применяем фильтр по редкости:', S.tempRarityFilter);
     }
     
     if (S.tempColorFilter) {
-        console.log('🎯 Применяем фильтр по цвету:', S.tempColorFilter);
     }
     
     if (S.tempCategoryFilter) {
-        console.log('🎯 Применяем фильтр по категории:', S.tempCategoryFilter);
         S.selCollCatId = parseInt(S.tempCategoryFilter);
     }
     
@@ -5396,7 +5450,17 @@ function renderAnalyticsContent(analytics) {
     
     // HTML для переключения подкатегорий
     const subViewTabs = `
-        <div class="flex bg-gray-800 rounded-lg p-1 mb-4 sm:mb-6">
+        <div class="flex bg-gray-800 rounded-lg p-1 mb-4 sm:mb-6 gap-1">
+            <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
+                S.analyticsSubView === 'dashboard' 
+                    ? 'bg-blue-600 text-white shadow-lg' 
+                    : 'text-gray-400 hover:text-white hover:bg-gray-700'
+            }" data-action="switch-analytics-subview" data-subview="dashboard">
+                <div class="flex items-center justify-center gap-2">
+                    ${I_Chart("w-4 h-4")}
+                    <span class="hidden sm:inline">Дашборд</span>
+                </div>
+            </button>
             <button class="flex-1 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ${
                 S.analyticsSubView === 'parts' 
                     ? 'bg-blue-600 text-white shadow-lg' 
@@ -5430,6 +5494,15 @@ function renderAnalyticsContent(analytics) {
         </div>
     `;
     
+    // Если выбрана подкатегория "Дашборд"
+    if (S.analyticsSubView === 'dashboard') {
+        const dashboardContent = renderDashboardAnalytics(analytics, subViewTabs);
+        const result = `<div data-analytics-subview="dashboard">${dashboardContent}</div>`;
+        
+        
+        return result;
+    }
+    
     // Если выбрана подкатегория "Наборы"
     if (S.analyticsSubView === 'sets') {
         return `<div data-analytics-subview="sets">${renderSetsAnalytics(analytics, subViewTabs)}</div>`;
@@ -5449,9 +5522,7 @@ function renderAnalyticsContent(analytics) {
             const percentage = analytics.totalParts > 0 ? ((count / analytics.totalParts) * 100) : 0;
             return `
                 <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
-                     style="--hover-shadow-color: ${color}40;"
-                     onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
-                     onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+                     style="--item-color: ${color};"
                      data-action="filter-by-rarity" data-rarity="${rarity}" title="Показать все ${name.toLowerCase()} детали">
                     <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
                         <div class="w-3 h-3 sm:w-4 sm:h-4 xl:w-5 xl:h-5 rounded-full flex-shrink-0 shadow-lg" style="background-color: ${color}"></div>
@@ -5474,9 +5545,7 @@ function renderAnalyticsContent(analytics) {
 
     const topRarePartsHtml = analytics.topRareParts.map(part => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
-             style="--hover-shadow-color: ${part.rarityColor}40;"
-             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
-             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             style="--item-color: ${part.rarityColor};"
              data-action="open-part-modal" data-part-id="${part.partNum}" data-color-id="${part.colorId}" 
              title="Открыть деталь: ${part.partName} (${part.colorName})">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
@@ -5696,9 +5765,7 @@ function renderSetsAnalytics(analytics, subViewTabs) {
     
                  const topThemesHtml = setsStats.topThemes.map(theme => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
-             style="--hover-shadow-color: #3b82f640;"
-             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
-             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             style="--item-color: #3b82f6;"
              data-action="go-to-theme" data-theme-id="${theme.themeId}"
              title="Показать наборы темы: ${theme.themeName}">
              <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
@@ -5715,9 +5782,7 @@ function renderSetsAnalytics(analytics, subViewTabs) {
     
     const topSetsHtml = setsStats.topSets.map(set => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
-             style="--hover-shadow-color: #10b98140;"
-             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
-             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             style="--item-color: #10b981;"
              data-action="open-set-modal" data-set-id="${set.setNum}" 
              title="Открыть набор: ${set.setName}">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
@@ -5824,7 +5889,6 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
     
     // Логируем топ-5 минифигурок по редкости
     if (minifigsStats.topRareMinifigs && minifigsStats.topRareMinifigs.length > 0) {
-        console.log('📊 Топ-5 минифигурок по редкости в UI:');
         minifigsStats.topRareMinifigs.slice(0, 5).forEach((minifig, index) => {
             console.log(`${index + 1}. ${minifig.minifigName} - ${minifig.rarityName} (${minifig.rarity})`);
         });
@@ -5832,9 +5896,7 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
 
     const topMinifigsHtml = minifigsStats.topMinifigs.map(minifig => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
-             style="--hover-shadow-color: #f59e0b40;"
-             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
-             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             style="--item-color: #f59e0b;"
              data-action="open-minifig-modal" data-minifig-id="${minifig.minifigNum}" 
              title="Открыть минифигурку: ${minifig.minifigName}">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
@@ -5856,9 +5918,7 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
 
     const topRareMinifigsHtml = minifigsStats.topRareMinifigs.map(minifig => `
         <div class="flex items-center justify-between p-2 sm:p-3 xl:p-4 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700 active:bg-gray-600 transition-all duration-150 touch-manipulation group shadow-lg" 
-             style="--hover-shadow-color: ${minifig.rarityColor}40;"
-             onmouseover="this.style.boxShadow='0 10px 15px -3px var(--hover-shadow-color), 0 4px 6px -2px var(--hover-shadow-color)'"
-             onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'"
+             style="--item-color: ${minifig.rarityColor};"
              data-action="open-minifig-modal" data-minifig-id="${minifig.minifigNum}" 
              title="Открыть минифигурку: ${minifig.minifigName} (${minifig.rarityName})">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
@@ -5923,6 +5983,650 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
             </div>
         </div>
     `;
+}
+
+function renderDashboardAnalytics(analytics, subViewTabs) {
+    
+    // Проверяем, что данные аналитики существуют
+    if (!analytics) {
+        console.error('❌ Analytics data is null or undefined');
+        return `
+            <div class="p-3 sm:p-4 lg:p-6 xl:p-8">
+                ${subViewTabs}
+                <div class="bg-gray-800 rounded-lg p-8 text-center">
+                    <div class="text-6xl mb-4">⚠️</div>
+                    <h3 class="text-xl font-bold text-white mb-2">Данные аналитики недоступны</h3>
+                    <p class="text-gray-400">Попробуйте обновить страницу или добавить элементы в коллекцию</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Подготавливаем данные для графиков
+    const yearData = prepareYearData(analytics);
+    const themeData = prepareThemeData(analytics);
+    const colorData = prepareColorData(analytics);
+    const categoryData = prepareCategoryData(analytics);
+    const rarityData = prepareRarityData(analytics);
+    const setSizeData = prepareSetSizeData(analytics);
+    const yearThemeData = prepareYearThemeData(analytics);
+    
+    
+    // Создаем HTML для дашборда
+    const dashboardHtml = `
+        <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
+            ${subViewTabs}
+            
+            <!-- Общая статистика -->
+            <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 sm:gap-3 xl:gap-6">
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-blue-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalParts}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">${pluralize(analytics.totalParts, ['деталь', 'детали', 'деталей'])}</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-green-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalUniqueParts}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">${pluralize(analytics.totalUniqueParts, ['уникальная', 'уникальные', 'уникальных'])}</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Set("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-green-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalSets}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Наборов</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Minifig("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-purple-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalMinifigs}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Минифигурок</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Tech("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalColors || 0}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Цветов</div>
+                </div>
+                <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
+                    <div class="flex items-center justify-center mb-2">
+                        ${I_Cat("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-orange-400")}
+                    </div>
+                    <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalCategories || 0}</div>
+                    <div class="text-xs sm:text-sm xl:text-base text-gray-400">Категорий</div>
+                </div>
+            </div>
+            
+            <!-- График по годам выпуска -->
+            <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
+                <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                    <span class="text-xl sm:text-2xl xl:text-3xl">📅</span>
+                    <span>Статистика по годам выпуска</span>
+                </h3>
+                <div class="bg-gray-700/20 rounded-lg p-3 sm:p-4 lg:p-6">
+                    ${yearData.length > 0 ? `
+                        <div class="h-50 sm:h-80 xl:h-96 relative">
+                            ${renderLineChart(yearData)}
+                        </div>
+                    ` : `
+                        <div class="h-64 sm:h-80 xl:h-96 flex items-center justify-center">
+                            <div class="text-gray-400 text-center">
+                                <div class="text-4xl mb-2">📊</div>
+                                <div>Нет данных о годах выпуска</div>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            </div>
+
+            <!-- График по темам (круговая диаграмма) -->
+            <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
+                <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                    <span class="text-xl sm:text-2xl xl:text-3xl">🎨</span>
+                    <span>Распределение по темам</span>
+                </h3>
+                <div class="bg-gray-700/20 rounded-lg p-4 sm:p-6">
+                    <div class="h-80 sm:h-96 flex items-center justify-center">
+                        ${themeData.length > 0 ? renderPieChart(themeData) : '<div class="text-gray-400 text-center">Нет данных</div>'}
+                    </div>
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                        ${themeData.length > 0 ? themeData.map((item, index) => `
+                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" style="--item-color: ${item.color};">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                    <div class="w-4 h-4 rounded-full flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow duration-200" style="background-color: ${item.color}"></div>
+                                    <span class="text-gray-200 text-sm sm:text-base truncate group-hover:text-white transition-colors duration-200">${item.name}</span>
+                                </div>
+                                <div class="text-right flex-shrink-0 ml-2">
+                                    <div class="text-white font-bold text-sm sm:text-base group-hover:text-blue-200 transition-colors duration-200">${item.count}</div>
+                                    <div class="text-xs text-gray-400 group-hover:text-gray-300 transition-colors duration-200">${item.percentage.toFixed(1)}%</div>
+                                </div>
+                            </div>
+                        `).join('') : '<div class="text-gray-400 text-center py-4">Нет данных о темах</div>'}
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- График по категориям деталей -->
+            <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
+                <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                    <span class="text-xl sm:text-2xl xl:text-3xl">🧩</span>
+                    <span>Распределение по категориям деталей</span>
+                </h3>
+                <div class="bg-gray-700/20 rounded-lg p-4 sm:p-6">
+                    <div class="h-80 sm:h-96 flex items-center justify-center">
+                        ${renderPieChart(categoryData)}
+                    </div>
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                        ${categoryData.map((item, index) => `
+                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" style="--item-color: ${item.color};">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                    <div class="w-4 h-4 rounded-full flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow duration-200" style="background-color: ${item.color}"></div>
+                                    <span class="text-gray-200 text-sm sm:text-base truncate group-hover:text-white transition-colors duration-200">${item.name}</span>
+                                </div>
+                                <div class="text-right flex-shrink-0 ml-2">
+                                    <div class="text-white font-bold text-sm sm:text-base group-hover:text-blue-200 transition-colors duration-200">${item.count}</div>
+                                    <div class="text-xs text-gray-400 group-hover:text-gray-300 transition-colors duration-200">${item.percentage.toFixed(1)}%</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+
+            <!-- График по размерам наборов -->
+            <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
+                <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
+                    <span class="text-xl sm:text-2xl xl:text-3xl">📦</span>
+                    <span>Распределение по размерам наборов</span>
+                </h3>
+                <div class="bg-gray-700/20 rounded-lg p-4 sm:p-6">
+                    <div class="h-80 sm:h-96 flex items-center justify-center">
+                        ${renderPieChart(setSizeData)}
+                    </div>
+                    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                        ${setSizeData.map((item, index) => `
+                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" style="--item-color: ${item.color};">
+                                <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                    <div class="w-4 h-4 rounded-full flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow duration-200" style="background-color: ${item.color}"></div>
+                                    <span class="text-gray-200 text-sm sm:text-base truncate group-hover:text-white transition-colors duration-200">${item.name}</span>
+                                </div>
+                                <div class="text-right flex-shrink-0 ml-2">
+                                    <div class="text-white font-bold text-sm sm:text-base group-hover:text-blue-200 transition-colors duration-200">${item.count}</div>
+                                    <div class="text-xs text-gray-400 group-hover:text-gray-300 transition-colors duration-200">${item.percentage.toFixed(1)}%</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    `;
+    
+    
+    return dashboardHtml;
+}
+
+// Вспомогательные функции для подготовки данных графиков
+function prepareYearData(analytics) {
+    const yearStats = analytics.setsStats?.yearStats || {};
+    const years = Object.keys(yearStats).map(Number).sort((a, b) => a - b);
+    const maxCount = Math.max(...Object.values(yearStats));
+    
+    return years.map(year => ({
+        year: year.toString(),
+        count: yearStats[year] || 0,
+        height: maxCount > 0 ? Math.max((yearStats[year] / maxCount) * 200, 4) : 4
+    }));
+}
+
+function prepareThemeData(analytics) {
+    const themeStats = analytics.setsStats?.themeStats || {};
+    const total = Object.values(themeStats).reduce((sum, count) => sum + count, 0);
+    // Высококонтрастная палитра цветов, оптимизированная для темного фона
+    const colors = [
+        '#60a5fa', '#f87171', '#34d399', '#fbbf24', '#a78bfa', '#22d3ee', '#a3e635', '#fb923c', '#f472b6', '#818cf8',
+        '#2dd4bf', '#fb7185', '#d97706', '#8b5cf6', '#38bdf8', '#4ade80', '#eab308', '#f97316', '#ec4899', '#6366f1',
+        '#14b8a6', '#f43f5e', '#a16207', '#7c3aed', '#0ea5e9', '#22c55e', '#eab308', '#f97316', '#ef4444', '#8b5cf6',
+        '#06b6d4', '#84cc16', '#f59e0b', '#ec4899', '#6366f1', '#14b8a6', '#f43f5e', '#8b5a2b', '#7c3aed', '#0ea5e9',
+        '#22c55e', '#eab308', '#f97316', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16', '#f59e0b', '#ec4899', '#6366f1'
+    ];
+    
+    return Object.entries(themeStats)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 15) // Увеличиваем количество тем до 15
+        .map(([name, count], index) => ({
+            name: name.length > 20 ? name.substring(0, 20) + '...' : name,
+            count,
+            percentage: total > 0 ? (count / total) * 100 : 0,
+            color: colors[index % colors.length]
+        }));
+}
+
+function prepareColorData(analytics) {
+    const colorStats = analytics.colorStats || {};
+    const total = Object.values(colorStats).reduce((sum, count) => sum + count, 0);
+    
+    return Object.entries(colorStats)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([name, count]) => {
+            const colorId = Object.keys(COLOR_MAP).find(id => COLOR_MAP[id]?.name === name);
+            const color = colorId ? COLOR_MAP[colorId]?.rgb : '#666666';
+            return {
+                name: name.length > 15 ? name.substring(0, 15) + '...' : name,
+                count,
+                percentage: total > 0 ? (count / total) * 100 : 0,
+                color: color
+            };
+        });
+}
+
+// Дополнительные функции для подготовки данных графиков
+function prepareCategoryData(analytics) {
+    const categoryStats = analytics.categoryStats || {};
+    const total = Object.values(categoryStats).reduce((sum, count) => sum + count, 0);
+    const colors = [
+        '#60a5fa', '#f87171', '#34d399', '#fbbf24', '#a78bfa', '#22d3ee', '#a3e635', '#fb923c', '#f472b6', '#818cf8',
+        '#2dd4bf', '#fb7185', '#d97706', '#8b5cf6', '#38bdf8', '#4ade80', '#eab308', '#f97316', '#ec4899', '#6366f1'
+    ];
+    
+    return Object.entries(categoryStats)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 12)
+        .map(([name, count], index) => ({
+            name: name.length > 25 ? name.substring(0, 25) + '...' : name,
+            count,
+            percentage: total > 0 ? (count / total) * 100 : 0,
+            color: colors[index % colors.length]
+        }));
+}
+
+function prepareRarityData(analytics) {
+    const rarityStats = analytics.rarityStats || {};
+    const total = Object.values(rarityStats).reduce((sum, count) => sum + count, 0);
+    const rarityColors = {
+        'legendary': '#ff6b6b',
+        'epic': '#4ecdc4',
+        'rare': '#45b7d1',
+        'uncommon': '#96ceb4',
+        'common': '#feca57',
+        'unknown': '#a4a4a4'
+    };
+    
+    return Object.entries(rarityStats)
+        .filter(([rarity, count]) => count > 0)
+        .sort(([,a], [,b]) => b - a)
+        .map(([rarity, count]) => ({
+            name: getRarityName(rarity),
+            count,
+            percentage: total > 0 ? (count / total) * 100 : 0,
+            color: rarityColors[rarity] || '#a4a4a4'
+        }));
+}
+
+function prepareSetSizeData(analytics) {
+    const setsStats = analytics.setsStats || {};
+    const setSizes = {
+        'Micro (1-50 деталей)': 0,
+        'Small (51-200 деталей)': 0,
+        'Medium (201-500 деталей)': 0,
+        'Large (501-1000 деталей)': 0,
+        'X-Large (1001-2000 деталей)': 0,
+        'XX-Large (2000+ деталей)': 0
+    };
+    
+    // Анализируем размеры наборов из коллекции
+    if (typeof S !== 'undefined' && S.setColl) {
+        Object.entries(S.setColl).forEach(([setNum, setData]) => {
+            const set = SET_MAP[setNum];
+            if (set && set.num_parts) {
+                const parts = set.num_parts;
+                if (parts <= 50) setSizes['Micro (1-50 деталей)'] += setData.qty;
+                else if (parts <= 200) setSizes['Small (51-200 деталей)'] += setData.qty;
+                else if (parts <= 500) setSizes['Medium (201-500 деталей)'] += setData.qty;
+                else if (parts <= 1000) setSizes['Large (501-1000 деталей)'] += setData.qty;
+                else if (parts <= 2000) setSizes['X-Large (1001-2000 деталей)'] += setData.qty;
+                else setSizes['XX-Large (2000+ деталей)'] += setData.qty;
+            }
+        });
+    }
+    
+    const total = Object.values(setSizes).reduce((sum, count) => sum + count, 0);
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
+    
+    return Object.entries(setSizes)
+        .filter(([,count]) => count > 0)
+        .sort(([,a], [,b]) => b - a)
+        .map(([name, count], index) => ({
+            name,
+            count,
+            percentage: total > 0 ? (count / total) * 100 : 0,
+            color: colors[index % colors.length]
+        }));
+}
+
+function prepareYearThemeData(analytics) {
+    const yearStats = analytics.setsStats?.yearStats || {};
+    const themeStats = analytics.setsStats?.themeStats || {};
+    
+    // Берем топ-5 тем и топ-10 лет
+    const topThemes = Object.entries(themeStats)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([name]) => name);
+    
+    const topYears = Object.entries(yearStats)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([year]) => parseInt(year));
+    
+    
+    // Создаем матрицу данных
+    const matrix = topYears.map(year => {
+        const yearData = { year, themes: {} };
+        topThemes.forEach(theme => {
+            yearData.themes[theme] = 0;
+        });
+        return yearData;
+    });
+    
+    // Заполняем данные из коллекции
+    if (typeof S !== 'undefined' && S.setColl) {
+        let processedSets = 0;
+        let matchedSets = 0;
+        Object.entries(S.setColl).forEach(([setNum, setData]) => {
+            processedSets++;
+            const set = SET_MAP[setNum];
+            if (set && set.year && set.theme) {
+                const year = parseInt(set.year);
+                const theme = set.theme;
+                if (topYears.includes(year) && topThemes.includes(theme)) {
+                    const yearIndex = topYears.indexOf(year);
+                    matrix[yearIndex].themes[theme] += setData.qty;
+                    matchedSets++;
+                } else {
+                }
+            } else {
+            }
+        });
+    } else {
+    }
+    
+    
+    
+    return { matrix, topThemes, topYears };
+}
+
+function renderPieChart(data) {
+    if (data.length === 0) return '<div class="text-gray-400 text-center">Нет данных</div>';
+    
+    // Фильтруем данные - убираем элементы с нулевым процентом
+    const filteredData = data.filter(item => item.percentage > 0);
+    
+    let cumulativePercentage = 0;
+    const radius = 100;
+    const centerX = 200;
+    const centerY = 200;
+    const svgSize = 400;
+    
+    // Создаем секторы и проценты одновременно для правильной синхронизации
+    const chartElements = filteredData.map((item, index) => {
+        const startAngle = (cumulativePercentage / 100) * 360;
+        const endAngle = ((cumulativePercentage + item.percentage) / 100) * 360;
+        const midAngle = (startAngle + endAngle) / 2;
+        cumulativePercentage += item.percentage;
+        
+        const startAngleRad = (startAngle - 90) * Math.PI / 180;
+        const endAngleRad = (endAngle - 90) * Math.PI / 180;
+        const midAngleRad = (midAngle - 90) * Math.PI / 180;
+        
+        // Координаты для сектора
+        const x1 = centerX + radius * Math.cos(startAngleRad);
+        const y1 = centerY + radius * Math.sin(startAngleRad);
+        const x2 = centerX + radius * Math.cos(endAngleRad);
+        const y2 = centerY + radius * Math.sin(endAngleRad);
+        
+        const largeArcFlag = item.percentage > 50 ? 1 : 0;
+        
+        const pathData = [
+            `M ${centerX} ${centerY}`,
+            `L ${x1} ${y1}`,
+            `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+            'Z'
+        ].join(' ');
+        
+        // Вычисляем направление движения для hover-эффекта
+        const moveDistance = 12;
+        const moveX = moveDistance * Math.cos(midAngleRad);
+        const moveY = moveDistance * Math.sin(midAngleRad);
+        
+        // Определяем, нужно ли выносить подпись за круг
+        const isSmallSector = item.percentage < 5;
+        const labelRadius = isSmallSector ? radius + 60 : radius + 40;
+        
+        const labelX = centerX + labelRadius * Math.cos(midAngleRad);
+        const labelY = centerY + labelRadius * Math.sin(midAngleRad);
+        
+        // Создаем соединительную линию для маленьких секторов
+        const connectorLine = isSmallSector ? 
+            `<line x1="${centerX + radius * Math.cos(midAngleRad)}" y1="${centerY + radius * Math.sin(midAngleRad)}" x2="${labelX}" y2="${labelY}" stroke="${item.color}" stroke-width="2" opacity="0.8" />` : '';
+        
+        // Создаем контейнер для процента
+        const containerPadding = 6;
+        const textWidth = item.percentage.toFixed(1).length * 6 + 4;
+        const containerWidth = textWidth + containerPadding * 2;
+        const containerHeight = 20;
+        
+        const containerX = labelX - containerWidth / 2;
+        const containerY = labelY - containerHeight / 2;
+        
+        const container = `
+            <rect x="${containerX}" y="${containerY}" width="${containerWidth}" height="${containerHeight}" 
+                  rx="10" ry="10" fill="rgba(0, 0, 0, 0.1)" stroke="${item.color}" stroke-width="1.5" 
+                  class="percentage-container" />
+        `;
+        
+        return {
+            sector: `<g class="pie-sector-group" data-move-x="${moveX}" data-move-y="${moveY}" data-sector-index="${index}">
+                        <path d="${pathData}" fill="${item.color}" stroke="#ffffff" stroke-width="2" 
+                              class="pie-sector cursor-pointer" 
+                              title="${item.name}: ${item.count} (${item.percentage.toFixed(1)}%)"></path>
+                     </g>`,
+            percentage: `<g class="percentage-group" data-sector-index="${index}">
+                            ${connectorLine}
+                            ${container}
+                            <text x="${labelX}" y="${labelY}" text-anchor="middle" dominant-baseline="middle" 
+                                  class="text-xs font-bold" fill="#ffffff" 
+                                  font-family="system-ui, sans-serif">
+                                ${item.percentage.toFixed(1)}%
+                            </text>
+                         </g>`
+        };
+    });
+    
+    // Разделяем секторы и проценты
+    const sectors = chartElements.map(el => el.sector).join('');
+    const percentages = chartElements.map(el => el.percentage).join('');
+    
+    const totalCount = data.reduce((sum, item) => sum + item.count, 0);
+    
+    return `
+        <div class="w-full h-full flex flex-col items-center justify-center">
+            <div class="flex-1 flex items-center justify-center">
+                <svg viewBox="0 0 ${svgSize} ${svgSize}" class="w-full h-full max-w-full max-h-full pie-chart-svg">
+                    ${sectors}
+                    ${percentages}
+                </svg>
+            </div>
+            <div class="mt-4 text-center text-gray-300 text-sm font-semibold">
+                ${totalCount} ${pluralize(totalCount, ['элемент', 'элемента', 'элементов'])}
+            </div>
+        </div>
+    `;
+}
+
+function renderLineChart(data) {
+    if (data.length === 0) return '<div class="text-gray-400 text-center">Нет данных</div>';
+    
+    const maxCount = Math.max(...data.map(item => item.count));
+    const minCount = Math.min(...data.map(item => item.count));
+    const range = maxCount - minCount;
+    
+    // Оптимизируем размеры SVG для лучшего использования ширины экрана
+    const width = Math.max(400, Math.min(800, data.length * 30)); // Адаптивная ширина
+    const height = 200; // Фиксированная высота для консистентности
+    const padding = { top: 20, right: 30, bottom: 50, left: 50 }; // Увеличиваем отступ снизу для подписи оси X
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+    
+    // Вычисляем точки для линии
+    const points = data.map((item, index) => {
+        const x = padding.left + (index / (data.length - 1)) * chartWidth;
+        const y = padding.top + chartHeight - ((item.count - minCount) / range) * chartHeight;
+        return `${x},${y}`;
+    }).join(' ');
+    
+    // Создаем градиент для линии
+    const gradientId = `lineGradient-${Date.now()}`;
+    
+    // Создаем точки на линии
+    const circles = data.map((item, index) => {
+        const x = padding.left + (index / (data.length - 1)) * chartWidth;
+        const y = padding.top + chartHeight - ((item.count - minCount) / range) * chartHeight;
+        return `<circle cx="${x}" cy="${y}" r="3" fill="#3b82f6" class="hover:r-4 transition-all duration-200 cursor-pointer" title="${item.year}: ${item.count} наборов" />`;
+    }).join('');
+    
+    // Создаем подписи осей Y (количественные значения)
+    const yAxisLabels = Array.from({length: 6}, (_, i) => {
+        const value = minCount + (i / 5) * range;
+        const y = padding.top + chartHeight - (i / 5) * chartHeight;
+        return `<text x="${padding.left - 8}" y="${y + 4}" text-anchor="end" class="text-xs fill-gray-400" font-family="system-ui, sans-serif">${Math.round(value)}</text>`;
+    }).join('');
+    
+    // Создаем подписи осей X (годы) - умное отображение для избежания наложения
+    const maxLabels = Math.min(8, data.length); // Максимум 8 подписей
+    const showEveryNth = Math.max(1, Math.floor(data.length / maxLabels));
+    const xAxisLabels = data.map((item, index) => {
+        if (index % showEveryNth !== 0 && index !== data.length - 1) return '';
+        const x = padding.left + (index / (data.length - 1)) * chartWidth;
+        return `<text x="${x}" y="${height - 25}" text-anchor="middle" class="text-xs fill-gray-400" font-family="system-ui, sans-serif">${item.year}</text>`;
+    }).join('');
+    
+    // Создаем линии сетки
+    const gridLines = Array.from({length: 6}, (_, i) => {
+        const y = padding.top + (i / 5) * chartHeight;
+        return `<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#374151" stroke-width="0.5" opacity="0.3" />`;
+    }).join('');
+    
+    // Создаем вертикальные линии сетки (только для отображаемых подписей)
+    const verticalGridLines = data.map((_, index) => {
+        if (index % showEveryNth !== 0 && index !== data.length - 1) return '';
+        const x = padding.left + (index / (data.length - 1)) * chartWidth;
+        return `<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${height - padding.bottom}" stroke="#374151" stroke-width="0.5" opacity="0.2" />`;
+    }).join('');
+    
+    return `
+        <div class="w-full h-full">
+            <svg viewBox="0 0 ${width} ${height}" class="w-full h-full" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                    <linearGradient id="${gradientId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:0.3" />
+                        <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:0.05" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- Сетка -->
+                <g>
+                    ${gridLines}
+                    ${verticalGridLines}
+                </g>
+                
+                <!-- Оси -->
+                <line x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" stroke="#6b7280" stroke-width="2" />
+                <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}" stroke="#6b7280" stroke-width="2" />
+                
+                <!-- Область под линией -->
+                <polygon 
+                    points="${padding.left},${padding.top + chartHeight} ${points} ${width - padding.right},${padding.top + chartHeight}" 
+                    fill="url(#${gradientId})"
+                />
+                
+                <!-- Линия -->
+                <polyline 
+                    points="${points}" 
+                    fill="none" 
+                    stroke="#3b82f6" 
+                    stroke-width="2" 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round"
+                    class="hover:stroke-blue-400 transition-colors duration-200"
+                />
+                
+                <!-- Точки на линии -->
+                ${circles}
+                
+                <!-- Подписи осей -->
+                <g>
+                    ${yAxisLabels}
+                    ${xAxisLabels}
+                </g>
+                
+                <!-- Заголовки осей -->
+                <text x="${width / 2}" y="${height - 2}" text-anchor="middle" class="text-xs fill-gray-300 font-medium" font-family="system-ui, sans-serif">Год выпуска</text>
+                <text x="15" y="${height / 2}" text-anchor="middle" class="text-xs fill-gray-300 font-medium" font-family="system-ui, sans-serif" transform="rotate(-90, 15, ${height / 2})">Количество наборов</text>
+            </svg>
+        </div>
+    `;
+}
+
+function renderHeatmap(data) {
+    const { matrix, topThemes, topYears } = data;
+    const colors = ['#1f2937', '#374151', '#4b5563', '#6b7280', '#9ca3af', '#d1d5db', '#f3f4f6'];
+    
+    const result = `
+        <div class="overflow-x-auto p-4">
+            <table class="w-full text-sm border-collapse border border-gray-600">
+                <thead>
+                    <tr class="bg-gray-700">
+                        <th class="text-left p-3 text-gray-200 border border-gray-600 font-bold">Год</th>
+                        ${topThemes.map(theme => `
+                            <th class="text-center p-3 text-gray-200 border border-gray-600 font-bold min-w-20" title="${theme}">${theme.length > 12 ? theme.substring(0, 12) + '...' : theme}</th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${matrix.map(row => `
+                        <tr class="hover:bg-gray-800">
+                            <td class="p-3 text-gray-300 font-bold border border-gray-600">${row.year}</td>
+                            ${topThemes.map(theme => {
+                                const value = row.themes[theme] || 0;
+                                const maxValue = Math.max(...matrix.flatMap(r => Object.values(r.themes)));
+                                const intensity = maxValue > 0 ? Math.min(value / maxValue, 1) : 0;
+                                const colorIndex = Math.floor(intensity * (colors.length - 1));
+                                
+                                
+                                return `
+                                    <td class="text-center p-3 border border-gray-600 font-bold" style="background-color: ${colors[colorIndex]}; color: ${intensity > 0.5 ? 'white' : 'black'}" title="${theme} в ${row.year}: ${value} наборов">
+                                        ${value > 0 ? value : '-'}
+                                    </td>
+                                `;
+                            }).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    return result;
 }
 
 const sidebarEl = document.getElementById('sidebar-container'),
@@ -6319,36 +7023,28 @@ async function fetchSets() {
         results = searchInCSVData(S.q, 'sets');
         } else if (S.selThemeId) {
             // Фильтруем по теме из данных CSV
-            console.log('🎯 Filtering sets by theme ID:', S.selThemeId);
             const allSets = Object.values(SET_MAP);
-            console.log('🎯 Total sets in SET_MAP:', allSets.length);
             
             // Получаем название темы по ID
             const selectedTheme = THEME_MAP[S.selThemeId];
             const themeName = selectedTheme?.name || 'Unknown Theme';
-            console.log('🎯 Selected theme name:', themeName);
             
             // Ищем все темы с таким же названием (включая подтемы)
-            console.log('🎯 Searching for all themes with name:', themeName);
             
             // Находим все темы с таким же названием
             const themesWithSameName = Object.entries(THEME_MAP).filter(([id, theme]) => 
                 theme.name && theme.name === themeName
             );
-            console.log('🎯 All themes with same name found:', themesWithSameName.map(([id, theme]) => ({ id, name: theme.name })));
             
             if (themesWithSameName.length > 1) {
-                console.log('🎯 Multiple themes with same name detected, searching all...');
                 
                 // Получаем ID всех тем с таким же названием
                 const themeIds = themesWithSameName.map(([id]) => parseInt(id, 10));
-                console.log('🎯 Theme IDs:', themeIds);
                 
                 // Фильтруем наборы по всем темам с таким же названием
                 results = allSets.filter(set => {
                     const matches = themeIds.includes(set.theme_id);
                     if (matches) {
-                        console.log('🎯 Found matching set:', set.set_num, set.name, 'theme_id:', set.theme_id);
                     }
                     return matches;
                 });
@@ -6356,22 +7052,17 @@ async function fetchSets() {
                 // Показываем статистику по темам
                 themesWithSameName.forEach(([themeId, theme]) => {
                     const setsInTheme = results.filter(set => set.theme_id === parseInt(themeId, 10));
-                    console.log(`🎯 Theme "${theme.name}" (ID: ${themeId}): ${setsInTheme.length} sets`);
                 });
             } else {
                 // Если только одна тема с таким названием, фильтруем только по выбранной теме
-                console.log('🎯 Single theme with this name, filtering by selected theme ID only');
                 results = allSets.filter(set => {
                     const matches = set.theme_id === S.selThemeId;
                     if (matches) {
-                        console.log('🎯 Found matching set:', set.set_num, set.name, 'theme_id:', set.theme_id);
                     }
                     return matches;
                 });
             }
             
-            console.log('🎯 Filtered results count:', results.length);
-            console.log('🎯 Sample results:', results.slice(0, 5).map(s => ({ set_num: s.set_num, name: s.name, theme_id: s.theme_id })));
         } else {
                     // Получаем все наборы из CSV
         results = Object.values(SET_MAP);
@@ -7196,7 +7887,6 @@ async function showRandomElement(type, originalUpdateUI, originalRenderMainConte
     
     try {
         if ("parts" === type) {
-            console.log('🎯 Opening random part modal...');
             // Показываем случайную деталь
             const hasCats = Array.isArray(flatCategories) && flatCategories.length > 0;
             let pool = [];
@@ -7225,7 +7915,6 @@ async function showRandomElement(type, originalUpdateUI, originalRenderMainConte
             openModalForPart(partId, groupId, variants.length ? variants : [randomPart]);
             
         } else if ("sets" === type) {
-            console.log('🎯 Opening random set modal...');
             // Небольшая задержка для лучшего UX
             await new Promise(resolve => setTimeout(resolve, 300));
             
@@ -7255,7 +7944,6 @@ async function showRandomElement(type, originalUpdateUI, originalRenderMainConte
             openModalForSet(randomSet.set_num);
             
         } else if ("minifigs" === type) {
-            console.log('🎯 Opening random minifig modal...');
             // Небольшая задержка для лучшего UX
             await new Promise(resolve => setTimeout(resolve, 300));
             
@@ -8992,6 +9680,8 @@ function renderCollectionFolderCard(part, colors) {
 }
 
 function renderMainContent() {
+    console.log('🎨 renderMainContent function called');
+    
     // Проверяем глобальный флаг блокировки
     if (window.UI_BLOCKED) {
         console.log('🚫 renderMainContent blocked by global flag');
@@ -9009,6 +9699,11 @@ function renderMainContent() {
         hasMoreItems: S.hasMoreItems,
         stack: new Error().stack?.split('\n').slice(1, 4).join('\n')
     });
+    
+    // Отладка для дашборда
+    
+    if (S.view === 'tools' && S.toolSubView === 'analytics' && S.analyticsSubView === 'dashboard') {
+    }
     
     if (S.loading) e = '<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>';
     else if (S.err) e = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${S.err}</p></div>`;
@@ -9041,7 +9736,6 @@ function renderMainContent() {
             
             // Автоматически сортируем все детали по популярности (частота использования в наборах) после инициализации
             if (S.catGroups && Object.keys(S.catGroups).length > 0) {
-                console.log('📊 Sorting parts by popularity (most used first)');
                 Object.keys(S.catGroups).forEach(key => {
                     if (Array.isArray(S.catGroups[key])) {
                         S.catGroups[key].sort((a, b) => {
@@ -9718,7 +10412,10 @@ function renderMainContent() {
         }
         }
     }
+    
     mainEl.innerHTML = renderAppliedFilters() + e;
+    
+    
     // После рендера контента обновляем индикатор прогресса, т.к. размеры могли измениться
     if (typeof window.refreshScrollProgress === 'function') {
         try { window.refreshScrollProgress(); } catch {}
@@ -11530,17 +12227,14 @@ function updateUI() {
                 const popularityB = parseInt(b.num_sets) || 0;
                 return popularityB - popularityA; // Популярные первыми
             });
-            console.log('✅ All parts sorted by popularity in updateUI');
         }
         
         window.globalSortingApplied = true;
-        console.log('🎯 Global sorting applied in updateUI!');
     }
     
     renderSidebar(), renderHeader(), renderMainContent();
     
     // Обновляем статистику кнопки "Мне повезёт"
-    console.log('📊 Calling updateFeelingLuckyStats from updateUI');
     updateFeelingLuckyStats();
     
     // Настраиваем слушатель событий для поискового ввода (только для обновления S.q, не для автопоиска)
@@ -14249,12 +14943,10 @@ document.addEventListener("click", async e => {
     const t = e.target;
     
     // Логируем все клики для отладки
-    console.log('🖱️ Click detected on:', t.tagName, t.className, t.dataset);
     
     // Проверяем, есть ли data-action у элемента или его родителей
     const actionElement = t.closest('[data-action]');
     if (actionElement) {
-        console.log('🎯 Found data-action:', actionElement.dataset.action, 'on element:', actionElement);
     }
 
     // ПРИОРИТЕТНЫЕ ОБРАБОТЧИКИ - проверяем сначала специальные действия из аналитики
@@ -14264,12 +14956,9 @@ document.addEventListener("click", async e => {
         e.preventDefault();
         e.stopPropagation();
         const setId = t.closest('[data-action="open-set-modal"]').dataset.setId;
-        console.log('🎯 Opening set modal for setId:', setId);
         
         if (setId) {
             const set = SET_MAP[setId];
-            console.log('🎯 Found set:', set);
-            console.log('🎯 SET_MAP keys count:', Object.keys(SET_MAP).length);
             if (set) {
                 openModalForSet(setId);
             } else {
@@ -14284,12 +14973,9 @@ document.addEventListener("click", async e => {
         e.preventDefault();
         e.stopPropagation();
         const minifigId = t.closest('[data-action="open-minifig-modal"]').dataset.minifigId;
-        console.log('🎯 Opening minifig modal for minifigId:', minifigId);
         
         if (minifigId) {
             const minifig = MINIFIG_MAP[minifigId];
-            console.log('🎯 Found minifig:', minifig);
-            console.log('🎯 MINIFIG_MAP keys count:', Object.keys(MINIFIG_MAP).length);
             if (minifig) {
                 // Используем существующую функцию для открытия модалки минифигурки
                 openModalForMinifig(minifigId);
@@ -14305,8 +14991,6 @@ document.addEventListener("click", async e => {
         e.preventDefault();
         e.stopPropagation();
         const themeId = t.closest('[data-action="go-to-theme"]').dataset.themeId;
-        console.log('🎯 Going to theme with themeId:', themeId);
-        console.log('🎯 Theme ID type:', typeof themeId, 'parsed:', parseInt(themeId, 10));
         
         if (themeId) {
             closeSetModal();
@@ -14350,9 +15034,8 @@ document.addEventListener("click", async e => {
         e.preventDefault();
         e.stopPropagation();
         const subview = t.closest('[data-action="switch-analytics-subview"]').dataset.subview;
-        console.log('🎯 Switching analytics subview to:', subview);
         
-        if (subview && ['parts', 'sets', 'minifigs'].includes(subview)) {
+        if (subview && ['parts', 'sets', 'minifigs', 'dashboard'].includes(subview)) {
             S.analyticsSubView = subview;
             updateUI();
         }
@@ -17065,12 +17748,10 @@ async function initializeApp() {
         startRotation();
         
         function startRotation() {
-            console.log('🎯 startRotation called, current tip:', tipElement.textContent);
             
             // Останавливаем предыдущий интервал, если он существует
             if (window.tipRotationInterval) {
                 clearInterval(window.tipRotationInterval);
-                console.log('🧹 Cleared previous tip rotation interval');
             }
             
             // Запускаем автоматическую смену подсказок каждые 5 секунд
@@ -17670,10 +18351,8 @@ async function loadDataFromCSV() {
                 const popularityB = parseInt(b.num_sets) || 0;
                 return popularityB - popularityA; // Популярные первыми
             });
-            console.log('✅ All parts sorted by popularity, most used first');
         }
         
-        console.log('🎯 Global sorting completed successfully!');
         
         // Инициализируем общее количество всех деталей в каталоге
         S.totalPartsInCatalog = Object.keys(PART_MAP).length;
@@ -17748,10 +18427,8 @@ async function loadDataFromCSV() {
                     const popularityB = parseInt(b.num_sets) || 0;
                     return popularityB - popularityA; // Популярные первыми
                 });
-                console.log('✅ All API parts sorted by popularity, most used first');
             }
             
-            console.log('🎯 Global API sorting completed successfully!');
             
             updateLoadingStatus("Загрузка из API завершена", 100, "Каталог готов к использованию");
             setTimeout(() => {
@@ -20043,6 +20720,104 @@ function animateCloseButtonClick(button) {
       <div class="sidebar-hint-text">Используйте кнопку меню для открытия боковой панели с каталогом и категориями</div>
   </div>
 
+  <script>
+    // Обработчики hover для круговых диаграмм
+    function setupPieChartHover() {
+        // Удаляем старые обработчики событий
+        const existingGroups = document.querySelectorAll('.pie-sector-group');
+        existingGroups.forEach(group => {
+            group.replaceWith(group.cloneNode(true));
+        });
+        
+        const sectorGroups = document.querySelectorAll('.pie-sector-group');
+        console.log('Настройка hover-эффектов для', sectorGroups.length, 'групп секторов');
+        
+        sectorGroups.forEach((group) => {
+            const moveX = parseFloat(group.getAttribute('data-move-x'));
+            const moveY = parseFloat(group.getAttribute('data-move-y'));
+            const sectorIndex = group.getAttribute('data-sector-index');
+            
+            if (!isNaN(moveX) && !isNaN(moveY) && sectorIndex !== null) {
+                // Находим соответствующий процент для этой группы
+                const percentageGroup = document.querySelector(`.percentage-group[data-sector-index="${sectorIndex}"]`);
+                
+                group.addEventListener('mouseenter', () => {
+                    // Двигаем группу сектора
+                    group.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                    group.style.filter = 'brightness(1.2)';
+                    group.style.zIndex = '10';
+                    
+                    // Двигаем соответствующую группу процентов если она существует
+                    if (percentageGroup) {
+                        percentageGroup.style.transform = `translate(${moveX}px, ${moveY}px)`;
+                        percentageGroup.style.zIndex = '10';
+                    }
+                });
+                
+                group.addEventListener('mouseleave', () => {
+                    // Возвращаем группу сектора
+                    group.style.transform = 'translate(0px, 0px)';
+                    group.style.filter = 'brightness(1)';
+                    group.style.zIndex = '1';
+                    
+                    // Возвращаем группу процентов если она существует
+                    if (percentageGroup) {
+                        percentageGroup.style.transform = 'translate(0px, 0px)';
+                        percentageGroup.style.zIndex = '1';
+                    }
+                });
+            }
+        });
+    }
+    
+    // Запускаем настройку hover-эффектов после загрузки
+    document.addEventListener('DOMContentLoaded', setupPieChartHover);
+    
+    // Также запускаем при обновлении дашборда
+    if (typeof window !== 'undefined') {
+        const originalCreateDashboard = window.createDashboard;
+        if (originalCreateDashboard) {
+            window.createDashboard = function(analytics) {
+                const result = originalCreateDashboard(analytics);
+                setTimeout(() => {
+                    console.log('Перезапуск hover-эффектов после обновления дашборда');
+                    setupPieChartHover();
+                }, 100);
+                return result;
+            };
+        }
+    }
+    
+    // Дополнительно запускаем через интервал для надежности
+    setInterval(() => {
+        const sectorGroups = document.querySelectorAll('.pie-sector-group');
+        if (sectorGroups.length > 0) {
+            // Проверяем, есть ли уже обработчики событий
+            const hasListeners = sectorGroups[0].onmouseenter !== null;
+            if (!hasListeners) {
+                console.log('Перезапуск hover-эффектов через интервал');
+                setupPieChartHover();
+            }
+        }
+    }, 2000);
+    
+    // Принудительно запускаем hover-эффекты при загрузке страницы
+    setTimeout(() => {
+        console.log('Принудительный запуск hover-эффектов при загрузке');
+        setupPieChartHover();
+    }, 1000);
+    
+    // Также запускаем при изменении размера окна
+    window.addEventListener('resize', () => {
+        setTimeout(() => {
+            console.log('Перезапуск hover-эффектов при изменении размера окна');
+            setupPieChartHover();
+        }, 100);
+    });
+    
+    // Глобальная функция для принудительного запуска hover-эффектов
+    window.setupPieChartHover = setupPieChartHover;
+  </script>
 
 </body>
 </html>
