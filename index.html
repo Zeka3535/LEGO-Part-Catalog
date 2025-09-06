@@ -3285,7 +3285,7 @@ body.tab-switching .minifig-card {
   </div>
 
   <script type="module">
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -3771,7 +3771,7 @@ const I_CheckCircle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c
 const I_Share = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.59 13.51l6.83 3.98"></path><path d="M15.41 6.51L8.59 10.49"></path></svg>`;
 const I_Settings = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
 const I_Heart = (c, f = !1) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-const I_Refresh = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"></path><path d="M1 20v-6h6"></path><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path></svg>`;
+const I_Refresh = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>`;
 const I_Chart = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path><circle cx="18" cy="8" r="2"></circle><circle cx="13" cy="13" r="2"></circle><circle cx="10" cy="10" r="2"></circle><circle cx="7" cy="14" r="2"></circle></svg>`;
 
 // Класс для управления модальными окнами
@@ -4128,7 +4128,7 @@ function updateCloudStorageStatus(message, type = 'info') {
     const statusElement = document.getElementById('cloud-backup-status');
     if (!statusElement) return;
     
-    const baseClasses = 'px-3 py-2 text-sm rounded-md border';
+    const baseClasses = 'px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-md border';
     let statusClasses = '';
     let statusText = message;
     
@@ -4189,66 +4189,59 @@ function renderCloudBackupContent() {
             <!-- Основной контент -->
             <div class="max-w-4xl mx-auto space-y-6">
                 <!-- Статус подключения -->
-                <div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4">
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 p-3 sm:p-5 shadow-lg">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
-                            <span class="mr-3">${I_Cloud('w-5 h-5 text-cyan-400')}</span>
-                            <div>
-                                <h3 class="text-sm font-semibold text-gray-300">Статус подключения</h3>
-                                <p id="cloud-backup-status" class="text-sm text-gray-400 mt-1">
+                            <div class="p-1.5 sm:p-2 bg-cyan-500/20 rounded-lg mr-3 sm:mr-4">
+                                <span class="text-cyan-400">${I_Cloud('w-5 h-5 sm:w-6 sm:h-6')}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-sm sm:text-base font-bold text-gray-200 mb-1">Статус подключения</h3>
+                                <p id="cloud-backup-status" class="text-xs sm:text-sm text-gray-400 truncate">
                                     ${isConnected ? `Подключено: ${savedAccount || cacheInfo.account || 'Аккаунт'}` : 'Не подключено'}
                                 </p>
                             </div>
                         </div>
                         ${isConnected ? `
-                            <button id="logout-cloud-storage" class="flex items-center px-3 py-2 text-xs font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-500 text-white">
-                                <span class="mr-1">${I_Logout('w-3 h-3')}</span>
-                                Выйти
+                            <button id="logout-cloud-storage" class="flex items-center px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25 transform hover:scale-105">
+                                <span class="mr-1 sm:mr-2">${I_Logout('w-4 h-4')}</span>
+                                <span class="hidden sm:inline">Выйти</span>
                             </button>
                         ` : ''}
                     </div>
                     
                     <!-- Кнопка переподключения (показывается при ошибке авторизации) -->
-                    <div id="reconnect-container" class="hidden mt-3">
-                        <button id="reconnect-cloud-storage" class="w-full flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-orange-600 hover:bg-orange-500 text-white">
-                            <span class="mr-2">${I_ChevronDown('w-4 h-4')}</span>
-                            Переподключиться
+                    <div id="reconnect-container" class="hidden mt-3 sm:mt-4">
+                        <button id="reconnect-cloud-storage" class="w-full flex items-center justify-center px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25">
+                            <span class="mr-1 sm:mr-2">${I_Link('w-4 h-4')}</span>
+                            <span class="hidden sm:inline">Переподключиться</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- Основные действия -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                     ${!isConnected ? `
-                        <button id="connect-cloud-storage" class="flex flex-col items-center justify-center p-4 sm:p-6 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
-                            <span class="mb-2">${I_Link('w-6 h-6')}</span>
-                            <span class="text-sm font-semibold text-center">Подключить хранилище</span>
+                        <button id="connect-cloud-storage" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105">
+                            <span class="mr-2 sm:mr-3">${I_Link('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                            <span class="text-sm sm:text-base font-semibold">Подключить хранилище</span>
                         </button>
                     ` : `
-                        <button id="disconnect-cloud-storage" class="flex flex-col items-center justify-center p-4 sm:p-6 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors duration-150 shadow-lg hover:shadow-red-500/25">
-                            <span class="mb-2">${I_Unlink('w-6 h-6')}</span>
-                            <span class="text-sm font-semibold text-center">Отключить</span>
+                        <button id="disconnect-cloud-storage" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
+                            <span class="mr-2 sm:mr-3">${I_Unlink('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                            <span class="text-sm sm:text-base font-semibold">Отключить</span>
                         </button>
                     `}
                     
-                    <button id="backup-to-cloud" class="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg transition-colors duration-150 shadow-lg ${!isConnected ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-500 text-white hover:shadow-green-500/25'}" ${!isConnected ? 'disabled' : ''}>
-                        <span class="mb-2">${I_CloudUpload('w-6 h-6')}</span>
-                        <span class="text-sm font-semibold text-center">Сохранить в облако</span>
+                    <button id="backup-to-cloud" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-lg transition-all duration-200 shadow-lg ${!isConnected ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white hover:shadow-green-500/25 transform hover:scale-105'}" ${!isConnected ? 'disabled' : ''}>
+                        <span class="mr-2 sm:mr-3">${I_CloudUpload('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                        <span class="text-sm sm:text-base font-semibold">Сохранить в облако</span>
                     </button>
                     
-                    <button id="restore-from-cloud" class="flex flex-col items-center justify-center p-4 sm:p-6 rounded-lg transition-colors duration-150 shadow-lg ${!isConnected ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 text-white hover:shadow-purple-500/25'}" ${!isConnected ? 'disabled' : ''}>
-                        <span class="mb-2">${I_CloudDownload('w-6 h-6')}</span>
-                        <span class="text-sm font-semibold text-center">Загрузить из облака</span>
+                    <button id="restore-from-cloud" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-lg transition-all duration-200 shadow-lg ${!isConnected ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white hover:shadow-purple-500/25 transform hover:scale-105'}" ${!isConnected ? 'disabled' : ''}>
+                        <span class="mr-2 sm:mr-3">${I_CloudDownload('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                        <span class="text-sm sm:text-base font-semibold">Загрузить из облака</span>
                     </button>
-                    
-                    <!-- Дополнительная информация -->
-                    <div class="flex flex-col items-center justify-center p-4 sm:p-6 bg-gray-700/50 rounded-lg border border-gray-600/50">
-                        <span class="mb-2">${I_Info('w-6 h-6 text-cyan-400')}</span>
-                        <span class="text-sm font-semibold text-center text-gray-300">Инструкция</span>
-                        <button id="toggle-instruction" class="mt-2 text-xs text-cyan-400 hover:text-cyan-300 transition-colors">
-                            Показать подробности
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Контейнер для виджета подключения -->
@@ -4256,29 +4249,44 @@ function renderCloudBackupContent() {
                 
                 <!-- Управление версиями резервных копий -->
                 ${isConnected ? `
-                    <div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4 sm:p-6">
-                        <div class="flex items-center justify-between mb-4">
+                    <div class="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 p-5 sm:p-6 shadow-xl">
+                        <div class="flex items-center justify-between mb-6">
                             <div class="flex items-center">
-                                <span class="mr-3">${I_History('w-5 h-5 text-cyan-400')}</span>
+                                <div class="p-2 bg-cyan-500/20 rounded-lg mr-4">
+                                    <span class="text-cyan-400">${I_History('w-6 h-6')}</span>
+                                </div>
                                 <div>
-                                    <h3 class="text-sm font-semibold text-gray-300">Версии резервных копий</h3>
-                                    <p class="text-xs text-gray-400">Управление сохраненными версиями данных</p>
+                                    <h3 class="text-lg font-bold text-gray-200 mb-1">Версии резервных копий</h3>
+                                    <p class="text-sm text-gray-400">Управление сохраненными версиями данных</p>
                                 </div>
                             </div>
-                            <button id="refresh-backups" class="flex items-center px-3 py-2 text-xs font-semibold rounded-md transition-colors duration-150 bg-blue-600 hover:bg-blue-500 text-white">
-                                <span class="mr-1">${I_ChevronDown('w-3 h-3')}</span>
-                                Обновить
+                            <button id="refresh-backups" class="flex items-center justify-center px-3 py-2.5 sm:px-4 text-sm font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white shadow-lg hover:shadow-cyan-500/25 transform hover:scale-105">
+                                <span class="flex items-center justify-center mr-0 sm:mr-2">${I_Refresh('w-4 h-4')}</span>
+                                <span class="hidden sm:inline">Обновить</span>
                             </button>
                         </div>
                         
-                        <div id="backups-list" class="space-y-2">
-                            <div class="text-center text-gray-500 py-4">
-                                <span class="mr-2">${I_Clock('w-4 h-4')}</span>
-                                Загрузка списка версий...
+                        <div id="backups-list" class="space-y-3">
+                            <div class="text-center text-gray-400 py-6">
+                                <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-700/50 rounded-full mb-3">
+                                    <span class="text-gray-500">${I_Clock('w-6 h-6')}</span>
+                                </div>
+                                <p class="text-sm">Загрузка списка версий...</p>
                             </div>
                         </div>
                     </div>
                 ` : ''}
+                
+                <!-- Кнопка инструкции -->
+                <div class="flex justify-center">
+                    <button id="toggle-instruction" class="group flex items-center px-6 py-3 bg-gradient-to-r from-gray-700/60 to-gray-800/60 rounded-lg border border-gray-600/50 hover:border-gray-500/50 transition-all duration-200">
+                        <span class="mr-3 text-cyan-400">${I_Info('w-5 h-5')}</span>
+                        <span class="text-sm font-semibold text-gray-200 mr-2">Инструкция по подключению</span>
+                        <span class="text-xs text-cyan-400 group-hover:text-cyan-300 transition-colors">
+                            Показать подробности
+                        </span>
+                    </button>
+                </div>
                 
                 <!-- Сворачиваемая инструкция -->
                 <div id="instruction-content" class="hidden bg-gray-800/50 rounded-lg border border-gray-700/50 p-4 sm:p-6">
@@ -4360,7 +4368,7 @@ async function saveToCloud() {
                 
                 // Обновляем список версий после сохранения
                 setTimeout(() => {
-                    loadBackupsList();
+                    loadBackupsList(true); // Принудительное обновление
                 }, 500);
                 
             } catch (cloudError) {
@@ -4917,8 +4925,13 @@ function setupRemoteStorageEventHandlers() {
     });
 }
 
+// Кэш для списка версий
+let backupsListCache = null;
+let backupsListCacheTime = 0;
+const BACKUPS_CACHE_DURATION = 30000; // 30 секунд
+
 // Функция для загрузки списка версий резервных копий
-async function loadBackupsList() {
+async function loadBackupsList(forceRefresh = false) {
     try {
         const backupsList = document.getElementById('backups-list');
         if (!backupsList) return;
@@ -4926,21 +4939,41 @@ async function loadBackupsList() {
         if (!cloudStorageConnected || !cloudStorageClient) {
             console.log('⚠️ Cloud storage not connected');
             backupsList.innerHTML = `
-                <div class="text-center text-gray-500 py-4">
-                    <span class="mr-2">${I_Cloud('w-4 h-4')}</span>
-                    Подключитесь к облачному хранилищу для просмотра версий
+                <div class="text-center py-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-700/50 rounded-full mb-4">
+                        <span class="text-gray-400">${I_Cloud('w-8 h-8')}</span>
+                    </div>
+                    <p class="text-gray-400 text-sm font-medium">Подключитесь к облачному хранилищу</p>
+                    <p class="text-gray-500 text-xs mt-1">для просмотра версий резервных копий</p>
                 </div>
             `;
             return;
         }
 
-        // Показываем индикатор загрузки
-        backupsList.innerHTML = `
-            <div class="text-center text-gray-500 py-4">
-                <span class="mr-2">${I_Clock('w-4 h-4')}</span>
-                Загрузка списка версий...
-            </div>
-        `;
+        // Проверяем кэш
+        const now = Date.now();
+        if (!forceRefresh && backupsListCache && (now - backupsListCacheTime) < BACKUPS_CACHE_DURATION) {
+            backupsList.innerHTML = backupsListCache;
+            return;
+        }
+
+        // Показываем индикатор загрузки только если список пустой или содержит только индикатор
+        const currentContent = backupsList.innerHTML.trim();
+        const isLoadingIndicator = currentContent.includes('Загрузка списка версий') || 
+                                 currentContent.includes('animate-pulse') ||
+                                 currentContent === '';
+        
+        if (isLoadingIndicator) {
+            backupsList.innerHTML = `
+                <div class="text-center py-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-500/20 rounded-full mb-4 animate-pulse">
+                        <span class="text-blue-400">${I_Clock('w-8 h-8')}</span>
+                    </div>
+                    <p class="text-gray-400 text-sm font-medium">Загрузка списка версий...</p>
+                    <p class="text-gray-500 text-xs mt-1">Пожалуйста, подождите</p>
+                </div>
+            `;
+        }
 
         // Получаем список файлов из облачного хранилища
         const client = cloudStorageClient.scope('/lego-catalog/');
@@ -4961,9 +4994,12 @@ async function loadBackupsList() {
 
         if (backupFiles.length === 0) {
             backupsList.innerHTML = `
-                <div class="text-center text-gray-500 py-4">
-                    <span class="mr-2">${I_Archive('w-4 h-4')}</span>
-                    Резервные копии не найдены
+                <div class="text-center py-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-700/50 rounded-full mb-4">
+                        <span class="text-gray-400">${I_Archive('w-8 h-8')}</span>
+                    </div>
+                    <p class="text-gray-400 text-sm font-medium">Резервные копии не найдены</p>
+                    <p class="text-gray-500 text-xs mt-1">Создайте первую резервную копию</p>
                 </div>
             `;
             return;
@@ -4981,41 +5017,51 @@ async function loadBackupsList() {
             });
             
             return `
-                <div class="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg border border-gray-600/50">
-                    <div class="flex items-center">
-                        <span class="mr-3">${I_FileText('w-4 h-4 text-cyan-400')}</span>
-                        <div>
-                            <div class="flex items-center">
-                                <span class="text-sm font-medium text-gray-300">Версия ${backupFiles.length - index}</span>
-                                ${isLatest ? '<span class="ml-2 px-2 py-1 text-xs bg-green-600 text-white rounded">Последняя</span>' : ''}
+                <div class="group bg-gradient-to-r from-gray-700/40 to-gray-800/40 rounded-xl border border-gray-600/30 p-3 hover:border-gray-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-gray-900/20">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center flex-1 min-w-0">
+                            <div class="p-1.5 bg-cyan-500/20 rounded-lg mr-3 group-hover:bg-cyan-500/30 transition-colors flex-shrink-0">
+                                <span class="text-cyan-400">${I_FileText('w-4 h-4')}</span>
                             </div>
-                            <div class="flex items-center text-xs text-gray-400 mt-1">
-                                <span class="mr-1">${I_Calendar('w-3 h-3')}</span>
-                                ${dateStr}
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center mb-1">
+                                    <span class="text-sm font-semibold text-gray-200 truncate">Версия ${backupFiles.length - index}</span>
+                                    ${isLatest ? '<span class="ml-2 px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full shadow-lg flex-shrink-0">Последняя</span>' : ''}
+                                </div>
+                                <div class="flex items-center text-xs text-gray-400">
+                                    <span class="mr-1.5 p-0.5 bg-gray-600/50 rounded flex-shrink-0">${I_Calendar('w-3 h-3')}</span>
+                                    <span class="font-medium truncate">${dateStr}</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <button 
-                            class="load-backup-btn flex items-center px-3 py-1 text-xs font-semibold rounded transition-colors duration-150 bg-purple-600 hover:bg-purple-500 text-white"
-                            data-key="${file.key}"
-                        >
-                            <span class="mr-1">${I_CloudDownload('w-3 h-3')}</span>
-                            Загрузить
-                        </button>
-                        ${!isLatest ? `
+                        <div class="flex items-center space-x-1.5 ml-2 flex-shrink-0">
                             <button 
-                                class="delete-backup-btn flex items-center px-3 py-1 text-xs font-semibold rounded transition-colors duration-150 bg-red-600 hover:bg-red-500 text-white"
+                                class="load-backup-btn flex items-center px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg hover:shadow-purple-500/25 transform hover:scale-105"
                                 data-key="${file.key}"
                             >
-                                <span class="mr-1">${I_Trash('w-3 h-3')}</span>
-                                Удалить
+                                <span class="mr-1">${I_CloudDownload('w-3 h-3')}</span>
+                                <span class="hidden sm:inline">Загрузить</span>
+                                <span class="sm:hidden">↓</span>
                             </button>
-                        ` : ''}
+                            <button 
+                                class="delete-backup-btn flex items-center px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${isLatest ? 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 shadow-orange-500/25' : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-red-500/25'} text-white shadow-lg hover:shadow-lg transform hover:scale-105"
+                                data-key="${file.key}"
+                                data-is-latest="${isLatest}"
+                                title="${isLatest ? 'Удалить последнюю версию (требует подтверждения)' : 'Удалить эту версию'}"
+                            >
+                                <span class="mr-1">${I_Trash('w-3 h-3')}</span>
+                                <span class="hidden sm:inline">Удалить</span>
+                                <span class="sm:hidden">×</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
         }).join('');
+
+        // Сохраняем в кэш
+        backupsListCache = backupsList.innerHTML;
+        backupsListCacheTime = Date.now();
 
         // Добавляем обработчики для кнопок
         addBackupButtonsHandlers();
@@ -5025,9 +5071,12 @@ async function loadBackupsList() {
         const backupsList = document.getElementById('backups-list');
         if (backupsList) {
             backupsList.innerHTML = `
-                <div class="text-center text-red-400 py-4">
-                    <span class="mr-2">${I_X('w-4 h-4')}</span>
-                    Ошибка загрузки списка версий
+                <div class="text-center py-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-red-500/20 rounded-full mb-4">
+                        <span class="text-red-400">${I_X('w-8 h-8')}</span>
+                    </div>
+                    <p class="text-red-400 text-sm font-medium">Ошибка загрузки списка версий</p>
+                    <p class="text-gray-500 text-xs mt-1">Попробуйте обновить или переподключиться</p>
                 </div>
             `;
         }
@@ -5036,25 +5085,95 @@ async function loadBackupsList() {
 
 // Функция для добавления обработчиков кнопок версий
 function addBackupButtonsHandlers() {
-    // Обработчик для кнопки загрузки версии
-    document.querySelectorAll('.load-backup-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const key = btn.getAttribute('data-key');
-            await loadSpecificBackup(key);
-        });
-    });
+    console.log('🔧 Adding backup button handlers...');
+    
+    // Используем делегирование событий для надежной работы
+    const backupsList = document.getElementById('backups-list');
+    if (!backupsList) {
+        console.log('❌ backups-list element not found');
+        return;
+    }
 
-    // Обработчик для кнопки удаления версии
-    document.querySelectorAll('.delete-backup-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const key = btn.getAttribute('data-key');
-            await deleteBackup(key);
-        });
-    });
+    console.log('✅ backups-list element found');
+
+    // Удаляем старые обработчики
+    backupsList.removeEventListener('click', handleBackupButtonClick);
+    
+    // Добавляем новый обработчик с делегированием
+    backupsList.addEventListener('click', handleBackupButtonClick);
+    
+    // Добавляем обработчик для кнопки обновления
+    const refreshBtn = document.getElementById('refresh-backups');
+    if (refreshBtn) {
+        console.log('✅ Refresh button found, adding handler');
+        // Удаляем старый обработчик
+        refreshBtn.removeEventListener('click', handleRefreshClick);
+        // Добавляем новый обработчик
+        refreshBtn.addEventListener('click', handleRefreshClick);
+    } else {
+        console.log('❌ Refresh button not found');
+    }
+    
+    console.log('✅ Event handlers added successfully');
+}
+
+// Обработчик для кнопки обновления
+function handleRefreshClick(e) {
+    console.log('🔄 Refresh button clicked');
+    e.preventDefault();
+    e.stopPropagation();
+    loadBackupsList(true); // Принудительное обновление
+}
+
+// Обработчик для всех кнопок в списке версий
+async function handleBackupButtonClick(e) {
+    console.log('🔍 Button click detected:', e.target);
+    
+    const target = e.target.closest('.load-backup-btn, .delete-backup-btn');
+    if (!target) {
+        console.log('❌ No target button found');
+        return;
+    }
+
+    console.log('✅ Target button found:', target.className, 'data-key:', target.getAttribute('data-key'));
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    const key = target.getAttribute('data-key');
+    if (!key) {
+        console.log('❌ No data-key found');
+        return;
+    }
+
+    if (target.classList.contains('load-backup-btn')) {
+        console.log('📥 Loading backup:', key);
+        // Обработка загрузки версии
+        await loadSpecificBackup(key);
+    } else if (target.classList.contains('delete-backup-btn')) {
+        console.log('🗑️ Deleting backup:', key);
+        // Обработка удаления версии
+        const isLatest = target.getAttribute('data-is-latest') === 'true';
+        
+        // Дополнительное предупреждение для последней версии
+        if (isLatest) {
+            const confirmed = confirm(
+                '⚠️ ВНИМАНИЕ!\n\n' +
+                'Вы собираетесь удалить ПОСЛЕДНЮЮ версию резервной копии.\n\n' +
+                'Это действие нельзя отменить!\n\n' +
+                'Продолжить удаление?'
+            );
+            if (!confirmed) return;
+        } else {
+            const confirmed = confirm(
+                'Удалить эту версию резервной копии?\n\n' +
+                'Это действие нельзя отменить!'
+            );
+            if (!confirmed) return;
+        }
+        
+        await deleteBackup(key);
+    }
 }
 
 // Функция для загрузки конкретной версии резервной копии
@@ -5076,7 +5195,29 @@ async function loadSpecificBackup(key) {
             return;
         }
 
-        const data = JSON.parse(backupData);
+        // Проверяем, нужно ли парсить JSON
+        console.log('📥 Backup data type:', typeof backupData);
+        console.log('📥 Backup data:', backupData);
+        
+        let data;
+        if (typeof backupData === 'string') {
+            console.log('📥 Parsing JSON string');
+            data = JSON.parse(backupData);
+        } else if (typeof backupData === 'object') {
+            console.log('📥 Using object directly');
+            // Проверяем, есть ли поле data с JSON строкой
+            if (backupData.data && typeof backupData.data === 'string') {
+                console.log('📥 Parsing JSON from data field');
+                data = JSON.parse(backupData.data);
+            } else {
+                data = backupData;
+            }
+        } else {
+            console.error('❌ Invalid backup data type:', typeof backupData);
+            throw new Error('Неверный формат данных резервной копии');
+        }
+        
+        console.log('📥 Parsed data:', data);
         
         // Подтверждение от пользователя
         const confirmMessage = `Загрузить версию от ${new Date(parseInt(key.replace('backup-', '').replace('.json', ''))).toLocaleString('ru-RU')}?\n\nЭто заменит текущие данные коллекции.`;
@@ -5086,10 +5227,22 @@ async function loadSpecificBackup(key) {
         }
 
         // Восстанавливаем данные
+        console.log('📥 Loading data into collection...');
+        console.log('📥 Data structure:', data);
+        
         if (data.collection) {
-            S.coll = data.collection;
-            S.setColl = data.setColl || {};
-            S.minifigColl = data.minifigColl || {};
+            console.log('📥 Found collection data:', data.collection);
+            S.coll = data.collection.parts || {};
+            S.setColl = data.collection.sets || {};
+            S.minifigColl = data.collection.minifigs || {};
+            
+            console.log('📥 Loaded parts:', Object.keys(S.coll).length);
+            console.log('📥 Loaded sets:', Object.keys(S.setColl).length);
+            console.log('📥 Loaded minifigs:', Object.keys(S.minifigColl).length);
+        } else {
+            console.log('❌ No collection data found in backup');
+            alert('В резервной копии не найдены данные коллекции');
+            return;
         }
 
         // Обновляем UI
@@ -5098,7 +5251,7 @@ async function loadSpecificBackup(key) {
         
         // Обновляем список версий
         setTimeout(() => {
-            loadBackupsList();
+            loadBackupsList(true); // Принудительное обновление
         }, 1000);
 
     } catch (error) {
@@ -5116,11 +5269,7 @@ async function deleteBackup(key) {
             return;
         }
 
-        const dateStr = new Date(parseInt(key.replace('backup-', '').replace('.json', ''))).toLocaleString('ru-RU');
-        const confirmMessage = `Удалить версию от ${dateStr}?\n\nЭто действие нельзя отменить.`;
-        if (!confirm(confirmMessage)) {
-            return;
-        }
+        // Подтверждение уже получено в обработчике кнопки
 
         updateCloudStorageStatus('Удаление версии...', 'info');
 
@@ -5131,7 +5280,7 @@ async function deleteBackup(key) {
         
         // Обновляем список версий
         setTimeout(() => {
-            loadBackupsList();
+            loadBackupsList(true); // Принудительное обновление
         }, 500);
 
     } catch (error) {
@@ -16982,12 +17131,13 @@ document.addEventListener("click", async e => {
         const button = t.closest('#toggle-instruction');
         
         if (content && button) {
+            const textSpan = button.querySelector('span:last-child');
             if (content.classList.contains('hidden')) {
                 content.classList.remove('hidden');
-                button.textContent = 'Скрыть подробности';
+                if (textSpan) textSpan.textContent = 'Скрыть подробности';
             } else {
                 content.classList.add('hidden');
-                button.textContent = 'Показать подробности';
+                if (textSpan) textSpan.textContent = 'Показать подробности';
             }
         }
         return;
@@ -16997,7 +17147,7 @@ document.addEventListener("click", async e => {
     if (t.closest('#refresh-backups')) {
         e.preventDefault();
         e.stopPropagation();
-        loadBackupsList();
+        loadBackupsList(true); // Принудительное обновление
         return;
     }
     // Обработка сворачивания/разворачивания сводки коллекции
