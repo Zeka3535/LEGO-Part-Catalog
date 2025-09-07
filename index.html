@@ -22804,7 +22804,7 @@ function animateCloseButtonClick(button) {
     // Функция для инициализации системы неактивности
     function initInactivitySystem() {
         // Проверяем, не инициализирована ли уже система
-        if (document.hasAttribute('data-inactivity-initialized')) {
+        if (document.documentElement.hasAttribute('data-inactivity-initialized')) {
             return;
         }
         
@@ -22836,8 +22836,8 @@ function animateCloseButtonClick(button) {
         const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
         
         // Проверяем, не добавлены ли уже обработчики
-        if (!document.hasAttribute('data-inactivity-listeners')) {
-            document.setAttribute('data-inactivity-listeners', 'true');
+        if (!document.documentElement.hasAttribute('data-inactivity-listeners')) {
+            document.documentElement.setAttribute('data-inactivity-listeners', 'true');
             
             activityEvents.forEach(event => {
                 document.addEventListener(event, () => {
@@ -22850,7 +22850,7 @@ function animateCloseButtonClick(button) {
         resetInactivityTimer();
         
         // Отмечаем, что система инициализирована
-        document.setAttribute('data-inactivity-initialized', 'true');
+        document.documentElement.setAttribute('data-inactivity-initialized', 'true');
         
         console.log('✅ Система неактивности инициализирована');
     }
