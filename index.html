@@ -1124,12 +1124,27 @@
     #sidebar-container button {
         transition: transform 0.15s ease-out, background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
         will-change: transform;
+        /* Предотвращаем подёргивание при быстрых переключениях */
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
     }
     #sidebar-container button:hover {
         transform: translateY(-1px);
     }
     #sidebar-container button:active {
         transform: translateY(0) scale(0.98);
+    }
+    
+    /* Предотвращаем подёргивание кнопок навигации */
+    button[data-view] {
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        transform: translateZ(0);
+        -webkit-transform: translateZ(0);
+        /* Оптимизируем переходы */
+        transition: all 0.2s ease-in-out;
     }
     #sidebar-container button:focus-visible {
         outline: none;
@@ -1879,6 +1894,14 @@ body.tab-switching .minifig-card {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+}
+
+/* Предотвращаем подёргивание кнопок навигации при переключении вкладок */
+body.tab-switching button[data-view] {
+    transition: none !important;
+    transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
 }
 
 /* ВРЕМЕННО ОТКЛЮЧЕНО: Анимация для результатов поиска и фильтрации */
@@ -3285,7 +3308,7 @@ body.tab-switching .minifig-card {
   </div>
 
   <script type="module">
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -3726,6 +3749,7 @@ const I_Dice = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" view
 const I_Brick = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect><path d="M7 11V7a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v4"></path><path d="M12 11V7"></path></svg>`;
 const I_Plate = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="15" width="18" height="6" rx="1"></rect><circle cx="8" cy="18" r="1"></circle><circle cx="16" cy="18" r="1"></circle></svg>`;
 const I_Tech = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.85-.93 3.53-2.28a3.99 3.99 0 0 0-7.06 0c.68 1.35 2.03 2.28 3.53 2.28z"></path><path d="M12 3.06c-1.5 0-2.85.93-3.53 2.28a3.99 3.99 0 0 0 7.06 0C14.85 3.99 13.5 3.06 12 3.06z"></path><path d="M3.06 12c0-1.5.93-2.85 2.28-3.53a3.99 3.99 0 0 0 0 7.06C3.99 14.85 3.06 13.5 3.06 12z"></path><path d="M20.94 12c0 1.5-.93 2.85-2.28 3.53a3.99 3.99 0 0 0 0-7.06c1.35.68 2.28 2.03 2.28 3.53z"></path><circle cx="12" cy="12" r="1"></circle></svg>`;
+const I_Toolbox = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`;
 const I_Slope = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18L3 4v16z"></path></svg>`;
 const I_Cloud = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`;
 const I_CloudUpload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line></svg>`;
@@ -3773,6 +3797,15 @@ const I_Settings = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" 
 const I_Heart = (c, f = !1) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const I_Refresh = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>`;
 const I_Chart = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path><circle cx="18" cy="8" r="2"></circle><circle cx="13" cy="13" r="2"></circle><circle cx="10" cy="10" r="2"></circle><circle cx="7" cy="14" r="2"></circle></svg>`;
+const I_Star = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
+const I_Users = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`;
+const I_Trophy = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21l-1 .5A3 3 0 0 1 5 15.5V14.66"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21l1 .5A3 3 0 0 0 19 15.5V14.66"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>`;
+const I_Puzzle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.439 13.269l-1.178-4.24a2.01 2.01 0 0 0-1.901-1.245H5.64a2.01 2.01 0 0 0-1.9 1.245l-1.179 4.24a2.01 2.01 0 0 0 1.9 2.563h12.72a2.01 2.01 0 0 0 1.9-2.563z"></path><path d="M8 12h8"></path><path d="M8 8h8"></path><path d="M8 16h8"></path><path d="M12 2v6"></path><path d="M12 18v4"></path></svg>`;
+const I_Package = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+const I_Palette = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>`;
+const I_Tags = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>`;
+const I_TrendingUp = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`;
+const I_Calculator = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`;
 
 // Класс для управления модальными окнами
 class ModalManager {
@@ -4028,6 +4061,7 @@ let cloudStorageClient = null;
 let cloudStorageConnected = false;
 let remoteStorageWidget = null;
 let disableAutoLoad = false; // Флаг для отключения автозагрузки при очистке коллекции
+let isReconnecting = false; // Флаг для предотвращения циклических переподключений
 
 // Ключи для localStorage
 const REMOTESTORAGE_KEYS = {
@@ -4076,6 +4110,38 @@ function loadUserAccount() {
 }
 
 function saveCachedData(data) {
+    // Сохраняем данные в основные ключи localStorage (как CSV импорт)
+    if (data.collection) {
+        if (data.collection.parts) {
+            localStorage.setItem('legoCollection', JSON.stringify(data.collection.parts));
+            console.log('💾 Parts saved to localStorage:', Object.keys(data.collection.parts).length);
+        }
+        
+        if (data.collection.sets) {
+            localStorage.setItem('legoSetCollection', JSON.stringify(data.collection.sets));
+            console.log('💾 Sets saved to localStorage:', Object.keys(data.collection.sets).length);
+        }
+        
+        if (data.collection.minifigs) {
+            localStorage.setItem('legoMinifigCollection', JSON.stringify(data.collection.minifigs));
+            console.log('💾 Minifigs saved to localStorage:', Object.keys(data.collection.minifigs).length);
+        }
+    }
+    
+    // Сохраняем избранные категории и темы
+    if (data.favorites) {
+        if (data.favorites.categories) {
+            localStorage.setItem('favoriteCategoryIds', JSON.stringify(data.favorites.categories));
+            console.log('💾 Favorite categories saved to localStorage:', data.favorites.categories.length);
+        }
+        
+        if (data.favorites.themes) {
+            localStorage.setItem('favoriteThemeIds', JSON.stringify(data.favorites.themes));
+            console.log('💾 Favorite themes saved to localStorage:', data.favorites.themes.length);
+        }
+    }
+    
+    // Также сохраняем в кэш для отладки
     const cacheData = {
         data: data,
         timestamp: new Date().toISOString()
@@ -4097,6 +4163,7 @@ function loadCachedData() {
     }
     return null;
 }
+
 
 
 function clearRemoteStorageCache() {
@@ -4124,30 +4191,100 @@ function getCacheInfo() {
     };
 }
 
+// Функция для подсчета элементов коллекции (как в сводке коллекции)
+function getCollectionCounts() {
+    const totalParts = Object.values(S.coll).reduce((sum, part) => sum + Object.values(part).reduce((partSum, qty) => partSum + qty, 0), 0);
+    const uniqueParts = Object.keys(S.coll).reduce((sum, partId) => sum + Object.keys(S.coll[partId]).length, 0);
+    const totalSets = Object.values(S.setColl).reduce((sum, set) => sum + set.qty, 0);
+    const uniqueSets = Object.keys(S.setColl).length;
+    const totalMinifigs = Object.values(S.minifigColl).reduce((sum, minifig) => sum + minifig.qty, 0);
+    const uniqueMinifigs = Object.keys(S.minifigColl).length;
+    
+    return {
+        totalParts,
+        uniqueParts,
+        totalSets,
+        uniqueSets,
+        totalMinifigs,
+        uniqueMinifigs
+    };
+}
+
 function updateCloudStorageStatus(message, type = 'info') {
     const statusElement = document.getElementById('cloud-backup-status');
     if (!statusElement) return;
     
-    const baseClasses = 'px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-md border';
+    // Очищаем предыдущий таймер, если он есть
+    if (window.cloudStatusTimer) {
+        clearTimeout(window.cloudStatusTimer);
+    }
+    
+    // Адаптивные классы для малых устройств
+    const baseClasses = 'px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-md border break-words leading-tight';
     let statusClasses = '';
     let statusText = message;
     
-    switch (type) {
-        case 'success':
-            statusClasses = `${baseClasses} bg-green-900/50 text-green-200 border-green-600/50`;
-            break;
-        case 'error':
-            statusClasses = `${baseClasses} bg-red-900/50 text-red-200 border-red-600/50`;
-            break;
-        case 'info':
-            statusClasses = `${baseClasses} bg-blue-900/50 text-blue-200 border-blue-600/50`;
-            break;
-        default:
-            statusClasses = `${baseClasses} bg-gray-700/50 text-gray-300 border-gray-600/50`;
+    // Для длинных сообщений с количеством элементов делаем текст еще меньше на мобильных
+    if (message.includes('деталей') || message.includes('наборов') || message.includes('минифигурок')) {
+        const mobileOptimizedClasses = 'px-1.5 py-1 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-md border break-words leading-tight';
+        switch (type) {
+            case 'success':
+                statusClasses = `${mobileOptimizedClasses} bg-green-900/50 text-green-200 border-green-600/50`;
+                break;
+            case 'error':
+                statusClasses = `${mobileOptimizedClasses} bg-red-900/50 text-red-200 border-red-600/50`;
+                break;
+            case 'info':
+                statusClasses = `${mobileOptimizedClasses} bg-blue-900/50 text-blue-200 border-blue-600/50`;
+                break;
+            default:
+                statusClasses = `${mobileOptimizedClasses} bg-gray-700/50 text-gray-300 border-gray-600/50`;
+        }
+    } else {
+        switch (type) {
+            case 'success':
+                statusClasses = `${baseClasses} bg-green-900/50 text-green-200 border-green-600/50`;
+                break;
+            case 'error':
+                statusClasses = `${baseClasses} bg-red-900/50 text-red-200 border-red-600/50`;
+                break;
+            case 'info':
+                statusClasses = `${baseClasses} bg-blue-900/50 text-blue-200 border-blue-600/50`;
+                break;
+            default:
+                statusClasses = `${baseClasses} bg-gray-700/50 text-gray-300 border-gray-600/50`;
+        }
     }
     
     statusElement.className = statusClasses;
     statusElement.textContent = statusText;
+    
+    // Автоматически скрываем сообщение через 3 секунды и показываем логин пользователя
+    window.cloudStatusTimer = setTimeout(() => {
+        // Получаем сохраненную информацию о подключении
+        const savedState = localStorage.getItem(REMOTESTORAGE_KEYS.CONNECTION_STATE);
+        const savedAccount = localStorage.getItem(REMOTESTORAGE_KEYS.USER_ACCOUNT);
+        
+        if (savedState && savedAccount) {
+            try {
+                const state = JSON.parse(savedState);
+                if (state.connected) {
+                    // Показываем логин пользователя
+                    statusElement.textContent = `Подключено: ${savedAccount}`;
+                    statusElement.className = 'text-xs sm:text-sm text-gray-400 break-words leading-tight';
+                } else {
+                    statusElement.textContent = 'Не подключено';
+                    statusElement.className = 'text-xs sm:text-sm text-gray-400 break-words leading-tight';
+                }
+            } catch (e) {
+                statusElement.textContent = 'Не подключено';
+                statusElement.className = 'text-xs sm:text-sm text-gray-400 break-words leading-tight';
+            }
+        } else {
+            statusElement.textContent = 'Не подключено';
+            statusElement.className = 'text-xs sm:text-sm text-gray-400 break-words leading-tight';
+        }
+    }, 3000);
     
     // Показываем/скрываем кнопку переподключения при ошибках авторизации
     const reconnectContainer = document.getElementById('reconnect-container');
@@ -4160,21 +4297,95 @@ function updateCloudStorageStatus(message, type = 'info') {
     }
 }
 
+// Функция для определения состояния подключения к облачному хранилищу
+function getCloudStorageConnectionState() {
+    const savedState = loadRemoteStorageState();
+    const savedAccount = loadUserAccount();
+    
+    // Определяем все возможные состояния
+    const hasSavedAccount = !!(savedAccount && savedAccount.trim() !== '');
+    const hasSavedConnection = !!(savedState && savedState.connected);
+    const isCurrentlyConnected = cloudStorageConnected;
+    const isCurrentlyReconnecting = isReconnecting;
+    
+    // Логика определения состояния
+    let isConnected = false;
+    let needsReconnection = false;
+    let showConnectButton = false;
+    let showReconnectButton = false;
+    let showMainActions = false;
+    let showVersionsBlock = false;
+    let showLogoutButton = false;
+    
+    if (isCurrentlyConnected) {
+        // Сценарий 3: Активно подключен
+        isConnected = true;
+        showMainActions = true;
+        showVersionsBlock = true;
+        showLogoutButton = true;
+    } else if (hasSavedAccount && hasSavedConnection && !isCurrentlyReconnecting) {
+        // Сценарий 2: Есть сохраненный аккаунт, но не подключен
+        needsReconnection = true;
+        showReconnectButton = true;
+    } else {
+        // Сценарий 1: Новый пользователь или нет сохраненного аккаунта
+        showConnectButton = true;
+    }
+    
+    return {
+        isConnected: isConnected,
+        account: savedAccount,
+        hasSavedState: hasSavedAccount,
+        needsReconnection: needsReconnection,
+        showConnectButton: showConnectButton,
+        showReconnectButton: showReconnectButton,
+        showMainActions: showMainActions,
+        showVersionsBlock: showVersionsBlock,
+        showLogoutButton: showLogoutButton
+    };
+}
+
+// Функция для обновления UI облачного хранилища
+function updateCloudStorageUI() {
+    // Обновляем UI только если пользователь на вкладке облачного резервного копирования
+    if (S.view === 'tools' && S.toolSubView === 'cloud-backup') {
+        const mainContent = document.getElementById('main-content');
+        if (mainContent) {
+            mainContent.innerHTML = renderCloudBackupContent();
+            addBackupButtonsHandlers();
+        }
+    }
+    
+    // Также обновляем статус в любом случае, если элемент существует
+    updateCloudStorageStatusDisplay();
+}
+
+// Функция для обновления отображения статуса облачного хранилища
+function updateCloudStorageStatusDisplay() {
+    const statusElement = document.getElementById('cloud-backup-status');
+    if (statusElement) {
+        const connectionState = getCloudStorageConnectionState();
+        const cacheInfo = getCacheInfo();
+        
+        statusElement.textContent = connectionState.isConnected ? 
+            `Подключено: ${connectionState.account || cacheInfo.account || 'Аккаунт'}` : 
+            connectionState.needsReconnection ? 
+                `Требуется переподключение: ${connectionState.account}` : 
+                'Не подключено';
+    }
+}
+
 // Функция для рендеринга контента облачного резервного копирования
 function renderCloudBackupContent() {
     const cacheInfo = getCacheInfo();
+    const connectionState = getCloudStorageConnectionState();
     
-        // Проверяем сохраненное состояние при рендеринге
-        const savedState = loadRemoteStorageState();
-        const savedAccount = loadUserAccount();
-        const isConnected = cloudStorageConnected || (savedState && savedState.connected && savedAccount);
-        
-        // Автоматически загружаем список версий при рендеринге, если подключены
-        if (isConnected) {
-            setTimeout(() => {
-                loadBackupsList();
-            }, 100);
-        }
+    // Автоматически загружаем список версий при рендеринге, если подключены
+    if (connectionState.isConnected) {
+        setTimeout(() => {
+            loadBackupsList(true); // Принудительное обновление при рендеринге
+        }, 100);
+    }
     
     return `
         <div class="min-h-full p-4 sm:p-6 lg:p-8">
@@ -4191,19 +4402,24 @@ function renderCloudBackupContent() {
                 <!-- Статус подключения -->
                 <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 p-3 sm:p-5 shadow-lg">
                     <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="p-1.5 sm:p-2 bg-cyan-500/20 rounded-lg mr-3 sm:mr-4">
+                        <div class="flex items-center min-w-0 flex-1">
+                            <div class="p-1.5 sm:p-2 bg-cyan-500/20 rounded-lg mr-3 sm:mr-4 flex-shrink-0">
                                 <span class="text-cyan-400">${I_Cloud('w-5 h-5 sm:w-6 sm:h-6')}</span>
                             </div>
                             <div class="min-w-0 flex-1">
                                 <h3 class="text-sm sm:text-base font-bold text-gray-200 mb-1">Статус подключения</h3>
-                                <p id="cloud-backup-status" class="text-xs sm:text-sm text-gray-400 truncate">
-                                    ${isConnected ? `Подключено: ${savedAccount || cacheInfo.account || 'Аккаунт'}` : 'Не подключено'}
+                                <p id="cloud-backup-status" class="text-xs sm:text-sm text-gray-400 break-words leading-tight">
+                                    ${connectionState.isConnected ? 
+                                        `Подключено: ${connectionState.account || cacheInfo.account || 'Аккаунт'}` : 
+                                        connectionState.needsReconnection ? 
+                                            `Требуется переподключение: ${connectionState.account}` : 
+                                            'Не подключено'
+                                    }
                                 </p>
                             </div>
                         </div>
-                        ${isConnected ? `
-                            <button id="logout-cloud-storage" class="flex items-center px-3 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25 transform hover:scale-105">
+                        ${connectionState.showLogoutButton ? `
+                            <button id="logout-cloud-storage" class="flex items-center px-2 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25 transform hover:scale-105 flex-shrink-0 ml-2">
                                 <span class="mr-1 sm:mr-2">${I_Logout('w-4 h-4')}</span>
                                 <span class="hidden sm:inline">Выйти</span>
                             </button>
@@ -4212,7 +4428,7 @@ function renderCloudBackupContent() {
                     
                     <!-- Кнопка переподключения (показывается при ошибке авторизации) -->
                     <div id="reconnect-container" class="hidden mt-3 sm:mt-4">
-                        <button id="reconnect-cloud-storage" class="w-full flex items-center justify-center px-3 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25">
+                        <button id="reconnect-cloud-storage" class="w-full flex items-center justify-center px-2 py-1.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25">
                             <span class="mr-1 sm:mr-2">${I_Link('w-4 h-4')}</span>
                             <span class="hidden sm:inline">Переподключиться</span>
                         </button>
@@ -4220,44 +4436,48 @@ function renderCloudBackupContent() {
                 </div>
 
                 <!-- Основные действия -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                    ${!isConnected ? `
-                        <button id="connect-cloud-storage" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105">
+                <div class="${connectionState.showMainActions ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2' : 'flex justify-center'} gap-3 sm:gap-4">
+                    ${connectionState.showConnectButton ? `
+                        <button id="connect-cloud-storage" class="group flex items-center justify-center px-6 py-4 sm:px-8 sm:py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105">
                             <span class="mr-2 sm:mr-3">${I_Link('w-4 h-4 sm:w-5 sm:h-5')}</span>
                             <span class="text-sm sm:text-base font-semibold">Подключить хранилище</span>
                         </button>
-                    ` : `
-                        <button id="disconnect-cloud-storage" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
-                            <span class="mr-2 sm:mr-3">${I_Unlink('w-4 h-4 sm:w-5 sm:h-5')}</span>
-                            <span class="text-sm sm:text-base font-semibold">Отключить</span>
+                    ` : ''}
+                    
+                    ${connectionState.showReconnectButton ? `
+                        <button id="connect-cloud-storage" class="group flex items-center justify-center px-6 py-4 sm:px-8 sm:py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105">
+                            <span class="mr-2 sm:mr-3">${I_Link('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                            <span class="text-sm sm:text-base font-semibold">Переподключить хранилище</span>
                         </button>
-                    `}
+                    ` : ''}
                     
-                    <button id="backup-to-cloud" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-lg transition-all duration-200 shadow-lg ${!isConnected ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white hover:shadow-green-500/25 transform hover:scale-105'}" ${!isConnected ? 'disabled' : ''}>
-                        <span class="mr-2 sm:mr-3">${I_CloudUpload('w-4 h-4 sm:w-5 sm:h-5')}</span>
-                        <span class="text-sm sm:text-base font-semibold">Сохранить в облако</span>
-                    </button>
-                    
-                    <button id="restore-from-cloud" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-lg transition-all duration-200 shadow-lg ${!isConnected ? 'bg-gray-600 text-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white hover:shadow-purple-500/25 transform hover:scale-105'}" ${!isConnected ? 'disabled' : ''}>
-                        <span class="mr-2 sm:mr-3">${I_CloudDownload('w-4 h-4 sm:w-5 sm:h-5')}</span>
-                        <span class="text-sm sm:text-base font-semibold">Загрузить из облака</span>
-                    </button>
+                    ${connectionState.showMainActions ? `
+                        <button id="backup-to-cloud" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-lg transition-all duration-200 shadow-lg bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white hover:shadow-green-500/25 transform hover:scale-105">
+                            <span class="mr-2 sm:mr-3">${I_CloudUpload('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                            <span class="text-sm sm:text-base font-semibold">Сохранить в облако</span>
+                        </button>
+                        
+                        <button id="restore-from-cloud" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-lg transition-all duration-200 shadow-lg bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white hover:shadow-purple-500/25 transform hover:scale-105">
+                            <span class="mr-2 sm:mr-3">${I_CloudDownload('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                            <span class="text-sm sm:text-base font-semibold">Загрузить из облака</span>
+                        </button>
+                    ` : ''}
                 </div>
 
                 <!-- Контейнер для виджета подключения -->
                 <div id="cloud-backup-widget-container" class="hidden"></div>
                 
                 <!-- Управление версиями резервных копий -->
-                ${isConnected ? `
-                    <div class="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 p-5 sm:p-6 shadow-xl">
-                        <div class="flex items-center justify-between mb-6">
+                ${connectionState.showVersionsBlock ? `
+                    <div class="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-3 sm:p-5 lg:p-6 shadow-xl">
+                        <div class="flex items-center justify-between mb-4 sm:mb-6">
                             <div class="flex items-center">
-                                <div class="p-2 bg-cyan-500/20 rounded-lg mr-4">
-                                    <span class="text-cyan-400">${I_History('w-6 h-6')}</span>
+                                <div class="p-1.5 sm:p-2 bg-cyan-500/20 rounded-lg mr-3 sm:mr-4">
+                                    <span class="text-cyan-400">${I_History('w-5 h-5 sm:w-6 sm:h-6')}</span>
                                 </div>
                                 <div>
-                                    <h3 class="text-lg font-bold text-gray-200 mb-1">Версии резервных копий</h3>
-                                    <p class="text-sm text-gray-400">Управление сохраненными версиями данных</p>
+                                    <h3 class="text-base sm:text-lg font-bold text-gray-200 mb-0.5 sm:mb-1">Версии резервных копий</h3>
+                                    <p class="text-xs sm:text-sm text-gray-400">Управление сохраненными версиями данных</p>
                                 </div>
                             </div>
                             <button id="refresh-backups" class="flex items-center justify-center px-3 py-2.5 sm:px-4 text-sm font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white shadow-lg hover:shadow-cyan-500/25 transform hover:scale-105">
@@ -4266,7 +4486,7 @@ function renderCloudBackupContent() {
                             </button>
                         </div>
                         
-                        <div id="backups-list" class="space-y-3">
+                        <div id="backups-list" class="space-y-2 sm:space-y-3">
                             <div class="text-center text-gray-400 py-6">
                                 <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-700/50 rounded-full mb-3">
                                     <span class="text-gray-500">${I_Clock('w-6 h-6')}</span>
@@ -4324,9 +4544,24 @@ function renderCloudBackupContent() {
 
 async function saveToCloud() {
     try {
+        // Показываем подтверждение с количеством элементов
+        const counts = getCollectionCounts();
+        const confirmed = confirm(
+            `Сохранить коллекцию в облако?\n\n` +
+            `Детали: ${counts.totalParts}\n` +
+            `Наборы: ${counts.totalSets}\n` +
+            `Минифигурки: ${counts.totalMinifigs}\n\n` +
+            `Это создаст новую версию резервной копии.`
+        );
+        
+        if (!confirmed) {
+            updateCloudStorageStatus('Отменено пользователем', 'info');
+            return;
+        }
+        
         updateCloudStorageStatus('Сохранение...', 'info');
         
-        // Собираем данные для сохранения - только коллекция и localStorage
+        // Собираем данные для сохранения - коллекция, избранные категории и темы
         const backupData = {
             timestamp: new Date().toISOString(),
             version: "1.0",
@@ -4334,6 +4569,10 @@ async function saveToCloud() {
                 parts: S.coll || {},
                 sets: S.setColl || {},
                 minifigs: S.minifigColl || {}
+            },
+            favorites: {
+                categories: Array.from(S.favCatIds || new Set()),
+                themes: Array.from(S.favThemeIds || new Set())
             },
             localStorage: {
                 // Сохраняем только критически важные данные из localStorage
@@ -4364,7 +4603,10 @@ async function saveToCloud() {
                 // Сохраняем в localStorage для быстрого доступа
                 saveCachedData(backupData);
                 
-                updateCloudStorageStatus('Коллекция сохранена в облако и кэш', 'success');
+                // Получаем количество элементов коллекции
+                const counts = getCollectionCounts();
+                const message = `Коллекция сохранена в облако и кэш (${counts.totalParts} деталей, ${counts.totalSets} наборов, ${counts.totalMinifigs} минифигурок)`;
+                updateCloudStorageStatus(message, 'success');
                 
                 // Обновляем список версий после сохранения
                 setTimeout(() => {
@@ -4484,16 +4726,17 @@ async function loadFromCloud() {
                 // Сохраняем загруженные данные в кэш
                 saveCachedData(backupData);
                 
-                // Показываем информацию о загруженных данных
-                const partsCount = Object.keys(backupData.collection?.parts || {}).length;
-                const setsCount = Object.keys(backupData.collection?.sets || {}).length;
-                const minifigsCount = Object.keys(backupData.collection?.minifigs || {}).length;
+                // Показываем информацию о загруженных данных (как в сводке коллекции)
+                const totalParts = Object.values(backupData.collection?.parts || {}).reduce((sum, part) => 
+                    sum + Object.values(part).reduce((partSum, qty) => partSum + qty, 0), 0);
+                const totalSets = Object.values(backupData.collection?.sets || {}).reduce((sum, set) => sum + set.qty, 0);
+                const totalMinifigs = Object.values(backupData.collection?.minifigs || {}).reduce((sum, minifig) => sum + minifig.qty, 0);
                 
                 const confirmed = confirm(
                     `Загрузить данные из облака?\n\n` +
-                    `Детали: ${partsCount}\n` +
-                    `Наборы: ${setsCount}\n` +
-                    `Минифигурки: ${minifigsCount}\n\n` +
+                    `Детали: ${totalParts}\n` +
+                    `Наборы: ${totalSets}\n` +
+                    `Минифигурки: ${totalMinifigs}\n\n` +
                     `Это заменит текущую коллекцию!`
                 );
                 
@@ -4521,7 +4764,10 @@ async function loadFromCloud() {
                 S.gridStale = true;
                 updateUI();
                 
-                updateCloudStorageStatus('Данные загружены из облака', 'success');
+                // Получаем количество загруженных элементов коллекции
+                const counts = getCollectionCounts();
+                const message = `Данные загружены из облака (${counts.totalParts} деталей, ${counts.totalSets} наборов, ${counts.totalMinifigs} минифигурок)`;
+                updateCloudStorageStatus(message, 'success');
                 
             } catch (cloudError) {
                 console.error('❌ Failed to load from cloud:', cloudError);
@@ -4574,7 +4820,9 @@ function initializeRemoteStorageWidget() {
         // Создаем клиент remoteStorage согласно документации
         cloudStorageClient = new RemoteStorage({
             logging: 'warn',
-            cache: false
+            cache: false,
+            // Отключаем автоматическое перенаправление для предотвращения циклических перезагрузок
+            redirectUri: window.location.origin + window.location.pathname
         });
         
         // Настраиваем доступ к данным согласно документации
@@ -4583,55 +4831,49 @@ function initializeRemoteStorageWidget() {
         // Показываем контейнер
         container.classList.remove('hidden');
         
-        // Создаем простой интерфейс для подключения
+        // Создаем стильный интерфейс для подключения в стиле сайта
         container.innerHTML = `
-            <div class="bg-gray-800/50 rounded-lg border border-gray-700/50 p-4 sm:p-6">
-                <div class="text-center text-gray-300 mb-6">
-                    <div class="mb-4 text-cyan-400">
-                        ${I_Cloud('w-12 h-12 sm:w-16 sm:h-16')}
+            <div class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-xl border border-gray-600/40 p-6 sm:p-8 shadow-2xl backdrop-blur-sm">
+                <div class="text-center text-gray-200 mb-8">
+                    <div class="mb-6 text-cyan-400">
+                        ${I_Cloud('w-16 h-16 sm:w-20 sm:h-20')}
                     </div>
-                    <h4 class="text-lg sm:text-xl font-semibold mb-2">Подключение к облачному хранилищу</h4>
-                    <p class="text-sm text-gray-400">
-                        Введите ваш email адрес с 5apps.com для подключения
+                    <h4 class="text-xl sm:text-2xl font-bold mb-3 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Подключение к облачному хранилищу</h4>
+                    <p class="text-sm sm:text-base text-gray-400 max-w-md mx-auto">
+                        Введите ваш email адрес с 5apps.com для подключения к облачному хранилищу
                     </p>
                 </div>
                 
-                <div class="space-y-4">
+                <div class="space-y-6">
                     <!-- Информация о провайдере -->
-                    <div class="p-3 bg-green-900/20 border border-green-700/50 rounded-lg">
-                        <div class="flex items-center">
-                            <span class="text-green-400 mr-2">${I_Info('w-4 h-4')}</span>
-                            <span class="text-sm text-green-300">Рекомендуется использовать 5apps.com</span>
+                    <div class="p-4 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-600/40 rounded-lg shadow-lg">
+                        <div class="flex items-center justify-center">
+                            <span class="text-green-400 mr-3">${I_Info('w-5 h-5')}</span>
+                            <span class="text-sm font-medium text-green-300">Рекомендуется использовать 5apps.com</span>
                         </div>
                     </div>
                     
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         <input 
                             type="text" 
                             id="user-address" 
                             placeholder="user@5apps.com" 
-                            class="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-cyan-500 focus:outline-none text-center"
+                            class="w-full px-6 py-4 bg-gray-700/80 text-white rounded-lg border border-gray-600/50 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-center text-lg font-medium shadow-lg backdrop-blur-sm transition-all duration-200"
                         >
                         <button 
                             id="connect-address" 
-                            class="w-full px-4 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-semibold rounded-lg transition-colors"
+                            class="w-full px-6 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-lg transition-all duration-200 shadow-lg hover:shadow-cyan-500/25 transform hover:scale-105 text-lg"
                         >
                             Подключить
                         </button>
                     </div>
                     
-                    <div class="text-xs text-gray-500 text-center">
-                        <p>Рекомендуемый провайдер: <strong>5apps.com</strong> (бесплатно, надежно)</p>
-                    </div>
-                    
-                    <div class="flex justify-between items-center text-xs pt-2 border-t border-gray-700">
-                        <button 
-                            id="clear-cache" 
-                            class="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded transition-colors"
-                        >
-                            Очистить кэш
-                        </button>
-                        <span id="cache-info" class="text-gray-400"></span>
+                    <div class="text-center">
+                        <div class="inline-flex items-center px-4 py-2 bg-gray-700/50 rounded-lg border border-gray-600/30">
+                            <span class="text-xs text-gray-400">
+                                Рекомендуемый провайдер: <strong class="text-cyan-400">5apps.com</strong> (бесплатно, надежно)
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -4654,23 +4896,6 @@ function initializeRemoteStorageWidget() {
         // Устанавливаем значение по умолчанию для 5apps.com
         addressInput.value = 'user@5apps.com';
         addressInput.focus();
-        
-        // Обработчик для очистки кэша
-        const clearCacheBtn = document.getElementById('clear-cache');
-        
-        if (clearCacheBtn) {
-            clearCacheBtn.addEventListener('click', () => {
-                if (confirm('Очистить весь кэш RemoteStorage? Это удалит сохраненные данные и настройки подключения.')) {
-                    clearRemoteStorageCache();
-                    cloudStorageConnected = false;
-                    updateCloudStorageStatus('Кэш очищен', 'info');
-                    updateCacheInfo();
-                }
-            });
-        }
-        
-        // Обновляем информацию о кэше
-        updateCacheInfo();
         
         console.log('✅ RemoteStorage initialized');
         
@@ -4742,7 +4967,9 @@ function showWidgetError(message) {
     if (container) {
         container.innerHTML = `
             <div class="text-center text-red-400">
-                <div class="text-4xl mb-2">⚠️</div>
+                <div class="mb-2">
+                    <div class="w-12 h-12 mx-auto text-yellow-400">${I_Info('w-full h-full')}</div>
+                </div>
                 <p class="text-sm mb-4">${message}</p>
                 <div class="space-y-2">
                     <button id="retry-widget-init" class="mt-2 px-3 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded">
@@ -4818,17 +5045,22 @@ function logoutFromCloudStorage() {
             // Сбрасываем состояние
             cloudStorageConnected = false;
             cloudStorageClient = null;
+            isReconnecting = false; // Сбрасываем флаг переподключения
             
-            // Обновляем UI
-            updateCloudStorageStatus('Вы вышли из учётной записи', 'info');
-            
-            // Перерисовываем интерфейс
-            if (S.view === 'tools' && S.toolSubView === 'cloud-backup') {
-                const mainContent = document.getElementById('main-content');
-                if (mainContent) {
-                    mainContent.innerHTML = renderCloudBackupContent();
-                }
+            // Очищаем таймер автоскрытия сообщений
+            if (window.cloudStatusTimer) {
+                clearTimeout(window.cloudStatusTimer);
             }
+            
+            // Обновляем статус и UI
+            updateCloudStorageStatus('Вы вышли из учётной записи', 'info');
+            updateCloudStorageUI();
+            
+            // Дополнительно обновляем статус через 3 секунды
+            setTimeout(() => {
+                updateCloudStorageStatus('Не подключено', 'info');
+                updateCloudStorageStatusDisplay();
+            }, 3000);
             
             console.log('✅ Successfully logged out from cloud storage');
             
@@ -4856,11 +5088,16 @@ function checkSavedCloudStorageState() {
             if (!cloudStorageClient) {
                 cloudStorageClient = new RemoteStorage({
                     logging: 'warn',
-                    cache: false
+                    cache: false,
+                    // Отключаем автоматическое перенаправление для предотвращения циклических перезагрузок
+                    redirectUri: window.location.origin + window.location.pathname
                 });
                 cloudStorageClient.access.claim('lego-catalog', 'rw');
                 setupRemoteStorageEventHandlers();
             }
+            
+            // Обновляем UI
+            updateCloudStorageUI();
             
             return true;
         } else {
@@ -4878,13 +5115,33 @@ function setupRemoteStorageEventHandlers() {
     cloudStorageClient.on('ready', () => {
         console.log('✅ RemoteStorage ready');
         cloudStorageConnected = true;
-        updateCloudStorageStatus('Готово к работе', 'success');
+        isReconnecting = false; // Сбрасываем флаг переподключения
+        
+        // Получаем информацию об аккаунте
+        const account = cloudStorageClient.remote?.userAddress;
+        
+        // Обновляем статус
+        updateCloudStorageStatus(`Готово к работе: ${account}`, 'success');
+        
+        // Скрываем окно ввода логина
+        const container = document.getElementById('cloud-backup-widget-container');
+        if (container) {
+            container.classList.add('hidden');
+        }
+        
+        // Обновляем UI
+        updateCloudStorageUI();
+        
+        // Загружаем список версий при готовности
+        setTimeout(() => {
+            loadBackupsList(true);
+        }, 1000);
     });
     
     cloudStorageClient.on('connected', () => {
         console.log('✅ RemoteStorage connected');
         cloudStorageConnected = true;
-        updateCloudStorageStatus('Подключено', 'success');
+        isReconnecting = false; // Сбрасываем флаг переподключения
         
         // Сохраняем состояние подключения
         saveRemoteStorageState(true);
@@ -4892,43 +5149,67 @@ function setupRemoteStorageEventHandlers() {
         if (account) {
             saveUserAccount(account);
         }
-        updateCacheInfo();
+        
+        // Обновляем статус
+        updateCloudStorageStatus(`Подключено: ${account}`, 'success');
+        
+        // Скрываем окно ввода логина
+        const container = document.getElementById('cloud-backup-widget-container');
+        if (container) {
+            container.classList.add('hidden');
+        }
+        
+        // Обновляем UI
+        updateCloudStorageUI();
         
         // Загружаем список версий при подключении
         setTimeout(() => {
-            loadBackupsList();
+            loadBackupsList(true);
         }, 1000);
     });
     
     cloudStorageClient.on('disconnected', () => {
         console.log('⚠️ RemoteStorage disconnected');
         cloudStorageConnected = false;
-        updateCloudStorageStatus('Отключено', 'error');
+        isReconnecting = false; // Сбрасываем флаг переподключения
         
         // Сохраняем состояние отключения
         saveRemoteStorageState(false);
-        updateCacheInfo();
+        
+        // Обновляем статус
+        updateCloudStorageStatus('Отключено', 'error');
+        
+        // Обновляем UI
+        updateCloudStorageUI();
     });
     
     cloudStorageClient.on('error', (error) => {
         console.error('❌ RemoteStorage error:', error);
         cloudStorageConnected = false;
+        isReconnecting = false; // Сбрасываем флаг переподключения при ошибке
         
         // Обрабатываем разные типы ошибок
+        let errorMessage = 'Ошибка подключения';
         if (error.name === 'DiscoveryError') {
-            updateCloudStorageStatus('Ошибка обнаружения сервера', 'error');
+            errorMessage = 'Ошибка обнаружения сервера';
         } else if (error.name === 'UnauthorizedError') {
-            updateCloudStorageStatus('Ошибка авторизации', 'error');
-        } else {
-            updateCloudStorageStatus('Ошибка: ' + error.message, 'error');
+            errorMessage = 'Ошибка авторизации';
+        } else if (error.message) {
+            errorMessage = 'Ошибка: ' + error.message;
         }
+        
+        // Обновляем статус
+        updateCloudStorageStatus(errorMessage, 'error');
+        
+        // Обновляем UI при ошибке
+        updateCloudStorageUI();
     });
 }
 
 // Кэш для списка версий
 let backupsListCache = null;
 let backupsListCacheTime = 0;
-const BACKUPS_CACHE_DURATION = 30000; // 30 секунд
+const BACKUPS_CACHE_DURATION = 10000; // 10 секунд
 
 // Функция для загрузки списка версий резервных копий
 async function loadBackupsList(forceRefresh = false) {
@@ -4970,7 +5251,7 @@ async function loadBackupsList(forceRefresh = false) {
                         <span class="text-blue-400">${I_Clock('w-8 h-8')}</span>
                     </div>
                     <p class="text-gray-400 text-sm font-medium">Загрузка списка версий...</p>
-                    <p class="text-gray-500 text-xs mt-1">Пожалуйста, подождите</p>
+                    <p class="text-gray-500 text-xs mt-1">Анализируем содержимое резервных копий</p>
                 </div>
             `;
         }
@@ -5005,8 +5286,84 @@ async function loadBackupsList(forceRefresh = false) {
             return;
         }
 
+        // Загружаем информацию о каждой версии для отображения количества элементов
+        const backupFilesWithInfo = await Promise.all(backupFiles.map(async (file, index) => {
+            try {
+                // Загружаем данные версии для подсчета элементов
+                const backupData = await client.getFile(file.key);
+                let elementCounts = { parts: 0, sets: 0, minifigs: 0 };
+                
+                // Отладочная информация о загруженных данных
+                console.log(`📥 Raw backup data for ${file.key}:`, {
+                    type: typeof backupData,
+                    isString: typeof backupData === 'string',
+                    isObject: typeof backupData === 'object',
+                    hasData: backupData && typeof backupData === 'object' && backupData.data,
+                    length: typeof backupData === 'string' ? backupData.length : 'N/A'
+                });
+                
+                if (backupData) {
+                    // Парсим данные - remoteStorage.js может возвращать данные в разных форматах
+                    let data;
+                    if (typeof backupData === 'string') {
+                        data = JSON.parse(backupData);
+                    } else if (backupData && typeof backupData === 'object' && backupData.data) {
+                        // Если данные в объекте с полем data
+                        data = typeof backupData.data === 'string' ? JSON.parse(backupData.data) : backupData.data;
+                    } else {
+                        data = backupData;
+                    }
+                    
+                    // Отладочная информация
+                    console.log(`🔍 Backup data structure for ${file.key}:`, {
+                        hasColl: !!data.coll,
+                        hasSetColl: !!data.setColl,
+                        hasMinifigColl: !!data.minifigColl,
+                        hasCollection: !!data.collection,
+                        hasLocalStorage: !!data.localStorage,
+                        collKeys: data.coll ? Object.keys(data.coll).length : 0,
+                        setCollKeys: data.setColl ? Object.keys(data.setColl).length : 0,
+                        minifigCollKeys: data.minifigColl ? Object.keys(data.minifigColl).length : 0,
+                        collectionPartsKeys: data.collection?.parts ? Object.keys(data.collection.parts).length : 0,
+                        collectionSetsKeys: data.collection?.sets ? Object.keys(data.collection.sets).length : 0,
+                        collectionMinifigsKeys: data.collection?.minifigs ? Object.keys(data.collection.minifigs).length : 0,
+                        localStorageCollKeys: data.localStorage?.coll ? Object.keys(data.localStorage.coll).length : 0,
+                        localStorageSetCollKeys: data.localStorage?.setColl ? Object.keys(data.localStorage.setColl).length : 0,
+                        localStorageMinifigCollKeys: data.localStorage?.minifigColl ? Object.keys(data.localStorage.minifigColl).length : 0,
+                        dataKeys: Object.keys(data)
+                    });
+                    
+                    // Дополнительная отладочная информация - полная структура данных
+                    console.log(`📊 Full backup data for ${file.key}:`, data);
+                    
+                    // Подсчитываем элементы из правильной структуры данных (как в системном сообщении)
+                    if (data.collection && data.collection.parts) {
+                        // Подсчитываем общее количество деталей с учетом количества (как в getCollectionCounts)
+                        elementCounts.parts = Object.values(data.collection.parts).reduce((sum, part) => 
+                            sum + Object.values(part).reduce((partSum, qty) => partSum + qty, 0), 0);
+                    }
+                    if (data.collection && data.collection.sets) {
+                        // Подсчитываем общее количество наборов с учетом количества
+                        elementCounts.sets = Object.values(data.collection.sets).reduce((sum, set) => sum + set.qty, 0);
+                    }
+                    if (data.collection && data.collection.minifigs) {
+                        // Подсчитываем общее количество минифигурок с учетом количества
+                        elementCounts.minifigs = Object.values(data.collection.minifigs).reduce((sum, minifig) => sum + minifig.qty, 0);
+                    }
+                    
+                    // Отладочная информация о подсчитанных элементах
+                    console.log(`🔢 Element counts for ${file.key}:`, elementCounts);
+                }
+                
+                return { ...file, elementCounts, index };
+            } catch (error) {
+                console.warn(`⚠️ Could not load backup info for ${file.key}:`, error);
+                return { ...file, elementCounts: { parts: 0, sets: 0, minifigs: 0 }, index };
+            }
+        }));
+
         // Отображаем список версий
-        backupsList.innerHTML = backupFiles.map((file, index) => {
+        backupsList.innerHTML = backupFilesWithInfo.map((file, index) => {
             const isLatest = index === 0;
             const dateStr = file.date.toLocaleString('ru-RU', {
                 year: 'numeric',
@@ -5016,40 +5373,56 @@ async function loadBackupsList(forceRefresh = false) {
                 minute: '2-digit'
             });
             
+            // Формируем строку с количеством элементов
+            const totalElements = file.elementCounts.parts + file.elementCounts.sets + file.elementCounts.minifigs;
+            const elementsInfo = totalElements > 0 ? 
+                `${file.elementCounts.parts} деталей, ${file.elementCounts.sets} наборов, ${file.elementCounts.minifigs} фигурок` :
+                'Пустая версия';
+            
+            // Определяем цвет индикатора в зависимости от количества элементов
+            const indicatorColor = totalElements === 0 ? 'bg-gray-500/20' : 
+                                 totalElements < 10 ? 'bg-yellow-500/20' : 
+                                 totalElements < 50 ? 'bg-blue-500/20' : 'bg-green-500/20';
+            
             return `
-                <div class="group bg-gradient-to-r from-gray-700/40 to-gray-800/40 rounded-xl border border-gray-600/30 p-3 hover:border-gray-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-gray-900/20">
+                <div class="group bg-gradient-to-r from-gray-700/40 to-gray-800/40 rounded-lg sm:rounded-xl border border-gray-600/30 p-2 sm:p-3 hover:border-gray-500/50 transition-all duration-200 hover:shadow-lg hover:shadow-gray-900/20">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center flex-1 min-w-0">
-                            <div class="p-1.5 bg-cyan-500/20 rounded-lg mr-3 group-hover:bg-cyan-500/30 transition-colors flex-shrink-0">
-                                <span class="text-cyan-400">${I_FileText('w-4 h-4')}</span>
+                            <div class="p-1 sm:p-1.5 bg-cyan-500/20 rounded-md sm:rounded-lg mr-2 sm:mr-3 group-hover:bg-cyan-500/30 transition-colors flex-shrink-0">
+                                <span class="text-cyan-400">${I_FileText('w-3 h-3 sm:w-4 sm:h-4')}</span>
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center mb-1">
-                                    <span class="text-sm font-semibold text-gray-200 truncate">Версия ${backupFiles.length - index}</span>
-                                    ${isLatest ? '<span class="ml-2 px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full shadow-lg flex-shrink-0">Последняя</span>' : ''}
+                                <div class="flex items-center mb-0.5 sm:mb-1">
+                                    <span class="text-xs sm:text-sm font-semibold text-gray-200 truncate">Версия ${backupFiles.length - index}</span>
+                                    ${totalElements > 0 ? `<span class="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-cyan-600 to-cyan-500 text-white rounded-full shadow-lg flex-shrink-0">${totalElements}</span>` : ''}
+                                    ${isLatest ? '<span class="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full shadow-lg flex-shrink-0">Последняя</span>' : ''}
                                 </div>
-                                <div class="flex items-center text-xs text-gray-400">
-                                    <span class="mr-1.5 p-0.5 bg-gray-600/50 rounded flex-shrink-0">${I_Calendar('w-3 h-3')}</span>
-                                    <span class="font-medium truncate">${dateStr}</span>
+                                <div class="flex items-center text-xs text-gray-400 mb-0.5 sm:mb-1">
+                                    <span class="mr-1 sm:mr-1.5 p-0.5 bg-gray-600/50 rounded flex-shrink-0">${I_Calendar('w-3 h-3')}</span>
+                                    <span class="font-medium truncate text-xs">${dateStr}</span>
+                                </div>
+                                <div class="flex items-center text-xs text-gray-500">
+                                    <span class="mr-1 sm:mr-1.5 p-0.5 ${indicatorColor} rounded flex-shrink-0">${I_Archive('w-3 h-3')}</span>
+                                    <span class="truncate text-xs">${elementsInfo}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center space-x-1.5 ml-2 flex-shrink-0">
+                        <div class="flex items-center space-x-1 sm:space-x-1.5 ml-1 sm:ml-2 flex-shrink-0">
                             <button 
-                                class="load-backup-btn flex items-center px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg hover:shadow-purple-500/25 transform hover:scale-105"
+                                class="load-backup-btn flex items-center px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold rounded-md sm:rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg hover:shadow-purple-500/25 transform hover:scale-105"
                                 data-key="${file.key}"
                             >
-                                <span class="mr-1">${I_CloudDownload('w-3 h-3')}</span>
+                                <span class="mr-0.5 sm:mr-1">${I_CloudDownload('w-3 h-3')}</span>
                                 <span class="hidden sm:inline">Загрузить</span>
                                 <span class="sm:hidden">↓</span>
                             </button>
                             <button 
-                                class="delete-backup-btn flex items-center px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200 ${isLatest ? 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 shadow-orange-500/25' : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-red-500/25'} text-white shadow-lg hover:shadow-lg transform hover:scale-105"
+                                class="delete-backup-btn flex items-center px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold rounded-md sm:rounded-lg transition-all duration-200 ${isLatest ? 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 shadow-orange-500/25' : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-red-500/25'} text-white shadow-lg hover:shadow-lg transform hover:scale-105"
                                 data-key="${file.key}"
                                 data-is-latest="${isLatest}"
                                 title="${isLatest ? 'Удалить последнюю версию (требует подтверждения)' : 'Удалить эту версию'}"
                             >
-                                <span class="mr-1">${I_Trash('w-3 h-3')}</span>
+                                <span class="mr-0.5 sm:mr-1">${I_Trash('w-3 h-3')}</span>
                                 <span class="hidden sm:inline">Удалить</span>
                                 <span class="sm:hidden">×</span>
                             </button>
@@ -5059,9 +5432,11 @@ async function loadBackupsList(forceRefresh = false) {
             `;
         }).join('');
 
-        // Сохраняем в кэш
-        backupsListCache = backupsList.innerHTML;
-        backupsListCacheTime = Date.now();
+        // Сохраняем в кэш (только если загрузка прошла успешно)
+        if (backupFilesWithInfo.length > 0) {
+            backupsListCache = backupsList.innerHTML;
+            backupsListCacheTime = Date.now();
+        }
 
         // Добавляем обработчики для кнопок
         addBackupButtonsHandlers();
@@ -5219,8 +5594,17 @@ async function loadSpecificBackup(key) {
         
         console.log('📥 Parsed data:', data);
         
-        // Подтверждение от пользователя
-        const confirmMessage = `Загрузить версию от ${new Date(parseInt(key.replace('backup-', '').replace('.json', ''))).toLocaleString('ru-RU')}?\n\nЭто заменит текущие данные коллекции.`;
+        // Подтверждение от пользователя с количеством элементов
+        const totalParts = Object.values(data.collection?.parts || {}).reduce((sum, part) => 
+            sum + Object.values(part).reduce((partSum, qty) => partSum + qty, 0), 0);
+        const totalSets = Object.values(data.collection?.sets || {}).reduce((sum, set) => sum + set.qty, 0);
+        const totalMinifigs = Object.values(data.collection?.minifigs || {}).reduce((sum, minifig) => sum + minifig.qty, 0);
+        
+        const confirmMessage = `Загрузить версию от ${new Date(parseInt(key.replace('backup-', '').replace('.json', ''))).toLocaleString('ru-RU')}?\n\n` +
+            `Детали: ${totalParts}\n` +
+            `Наборы: ${totalSets}\n` +
+            `Минифигурки: ${totalMinifigs}\n\n` +
+            `Это заменит текущие данные коллекции.`;
         if (!confirm(confirmMessage)) {
             updateCloudStorageStatus('Отменено пользователем', 'info');
             return;
@@ -5244,10 +5628,34 @@ async function loadSpecificBackup(key) {
             alert('В резервной копии не найдены данные коллекции');
             return;
         }
+        
+        // Восстанавливаем избранные категории и темы
+        if (data.favorites) {
+            console.log('📥 Found favorites data:', data.favorites);
+            
+            if (data.favorites.categories) {
+                S.favCatIds = new Set(data.favorites.categories);
+                console.log('📥 Loaded favorite categories:', S.favCatIds.size);
+            }
+            
+            if (data.favorites.themes) {
+                S.favThemeIds = new Set(data.favorites.themes);
+                console.log('📥 Loaded favorite themes:', S.favThemeIds.size);
+            }
+        } else {
+            console.log('⚠️ No favorites data found in backup, keeping current favorites');
+        }
 
+        // Сохраняем загруженные данные в кэш
+        console.log('💾 Saving loaded data to cache...');
+        saveCachedData(data);
+        
         // Обновляем UI
         updateUI();
-        updateCloudStorageStatus('Версия успешно загружена', 'success');
+        // Получаем количество загруженных элементов коллекции
+        const counts = getCollectionCounts();
+        const message = `Версия успешно загружена и сохранена в кэш (${counts.totalParts} деталей, ${counts.totalSets} наборов, ${counts.totalMinifigs} минифигурок)`;
+        updateCloudStorageStatus(message, 'success');
         
         // Обновляем список версий
         setTimeout(() => {
@@ -6978,7 +7386,7 @@ function renderAnalyticsContent(analytics) {
                 </div>
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
-                        ${I_Tech("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
+                        ${I_Palette("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalColors || 0}</div>
                     <div class="text-xs sm:text-sm xl:text-base text-gray-400">Цветов</div>
@@ -6999,7 +7407,7 @@ function renderAnalyticsContent(analytics) {
                     <!-- Редкие детали -->
                     <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                            <span class="text-xl sm:text-2xl xl:text-3xl">💎</span>
+                            <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-yellow-400">${I_Star('w-full h-full')}</div>
                             <span class="hidden sm:inline">Редкие детали в коллекции</span>
                             <span class="sm:hidden">Редкие детали</span>
                         </h3>
@@ -7012,7 +7420,7 @@ function renderAnalyticsContent(analytics) {
                     ${analytics.topRareParts.length > 0 ? `
                         <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
                             <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                                <span class="text-xl sm:text-2xl xl:text-3xl">🏆</span>
+                                <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-yellow-400">${I_Trophy('w-full h-full')}</div>
                                 <span class="hidden sm:inline">Топ-10 самых редких деталей</span>
                                 <span class="sm:hidden">Топ редких деталей</span>
                             </h3>
@@ -7028,7 +7436,7 @@ function renderAnalyticsContent(analytics) {
                     <!-- Статистика по цветам -->
                     <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                            <span class="text-xl sm:text-2xl xl:text-3xl">🎨</span>
+                            <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-purple-400">${I_Theme('w-full h-full')}</div>
                             <span class="hidden sm:inline">Топ-10 цветов</span>
                             <span class="sm:hidden">Топ цветов</span>
                         </h3>
@@ -7040,7 +7448,7 @@ function renderAnalyticsContent(analytics) {
                     <!-- Статистика по категориям -->
                     <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                            <span class="text-xl sm:text-2xl xl:text-3xl">📦</span>
+                            <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-orange-400">${I_Package('w-full h-full')}</div>
                             <span class="hidden sm:inline">Топ-10 категорий</span>
                             <span class="sm:hidden">Топ категорий</span>
                         </h3>
@@ -7123,7 +7531,7 @@ function renderSetsAnalytics(analytics, subViewTabs) {
                 </div>
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
-                        ${I_Tech("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
+                        ${I_Calculator("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${setsStats.averagePieces}</div>
                     <div class="text-xs sm:text-sm xl:text-base text-gray-400">Среднее</div>
@@ -7144,7 +7552,7 @@ function renderSetsAnalytics(analytics, subViewTabs) {
                     <!-- Топ темы наборов -->
                     <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                            <span class="text-xl sm:text-2xl xl:text-3xl">🎭</span>
+                            <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-purple-400">${I_Tags('w-full h-full')}</div>
                             <span class="hidden sm:inline">Топ-10 тем наборов</span>
                             <span class="sm:hidden">Топ темы</span>
                         </h3>
@@ -7159,7 +7567,7 @@ function renderSetsAnalytics(analytics, subViewTabs) {
                     <!-- Топ наборы по количеству деталей -->
                     <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                            <span class="text-xl sm:text-2xl xl:text-3xl">🏗️</span>
+                            <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-orange-400">${I_Brick('w-full h-full')}</div>
                             <span class="hidden sm:inline">Топ-10 наборов по деталям</span>
                             <span class="sm:hidden">Топ наборы</span>
                         </h3>
@@ -7256,7 +7664,7 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
             <!-- Топ минифигурки по количеству -->
             <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                    <span class="text-xl sm:text-2xl xl:text-3xl">👥</span>
+                    <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-blue-400">${I_Users('w-full h-full')}</div>
                     <span class="hidden sm:inline">Топ-10 минифигурок по количеству</span>
                     <span class="sm:hidden">Топ по количеству</span>
                 </h3>
@@ -7268,7 +7676,7 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
             <!-- Топ минифигурки по редкости -->
             <div class="bg-gray-800 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                    <span class="text-xl sm:text-2xl xl:text-3xl">💎</span>
+                    <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-yellow-400">${I_Star('w-full h-full')}</div>
                     <span class="hidden sm:inline">Топ-10 минифигурок по редкости</span>
                     <span class="sm:hidden">Топ по редкости</span>
                 </h3>
@@ -7289,7 +7697,9 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
             <div class="p-3 sm:p-4 lg:p-6 xl:p-8">
                 ${subViewTabs}
                 <div class="bg-gray-800 rounded-lg p-8 text-center">
-                    <div class="text-6xl mb-4">⚠️</div>
+                    <div class="mb-4">
+                        <div class="w-16 h-16 mx-auto text-yellow-400">${I_Info('w-full h-full')}</div>
+                    </div>
                     <h3 class="text-xl font-bold text-white mb-2">Данные аналитики недоступны</h3>
                     <p class="text-gray-400">Попробуйте обновить страницу или добавить элементы в коллекцию</p>
                 </div>
@@ -7344,7 +7754,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
                 </div>
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
-                        ${I_Tech("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
+                        ${I_Palette("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-yellow-400")}
                     </div>
                     <div class="text-sm sm:text-lg lg:text-xl xl:text-3xl font-bold text-white">${analytics.totalColors || 0}</div>
                     <div class="text-xs sm:text-sm xl:text-base text-gray-400">Цветов</div>
@@ -7361,7 +7771,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
             <!-- График по годам выпуска -->
             <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                    <span class="text-xl sm:text-2xl xl:text-3xl">📅</span>
+                    <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-blue-400">${I_Calendar('w-full h-full')}</div>
                     <span>Статистика по годам выпуска</span>
                 </h3>
                 <div class="bg-gray-700/20 rounded-lg p-3 sm:p-4 lg:p-6">
@@ -7372,7 +7782,9 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
                     ` : `
                         <div class="h-64 sm:h-80 xl:h-96 flex items-center justify-center">
                             <div class="text-gray-400 text-center">
-                                <div class="text-4xl mb-2">📊</div>
+                                <div class="mb-2">
+                                    <div class="w-12 h-12 mx-auto text-blue-400">${I_Analytics('w-full h-full')}</div>
+                                </div>
                                 <div>Нет данных о годах выпуска</div>
                             </div>
                         </div>
@@ -7383,7 +7795,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
             <!-- График по темам (круговая диаграмма) -->
             <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                    <span class="text-xl sm:text-2xl xl:text-3xl">🎨</span>
+                    <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-purple-400">${I_TrendingUp('w-full h-full')}</div>
                     <span>Распределение по темам</span>
                 </h3>
                 <div class="bg-gray-700/20 rounded-lg p-4 sm:p-6">
@@ -7411,7 +7823,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
             <!-- График по категориям деталей -->
             <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                    <span class="text-xl sm:text-2xl xl:text-3xl">🧩</span>
+                    <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-purple-400">${I_Puzzle('w-full h-full')}</div>
                     <span>Распределение по категориям деталей</span>
                 </h3>
                 <div class="bg-gray-700/20 rounded-lg p-4 sm:p-6">
@@ -7438,7 +7850,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
             <!-- График по размерам наборов -->
             <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-lg p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
-                    <span class="text-xl sm:text-2xl xl:text-3xl">📦</span>
+                    <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-green-400">${I_Package('w-full h-full')}</div>
                     <span>Распределение по размерам наборов</span>
                 </h3>
                 <div class="bg-gray-700/20 rounded-lg p-4 sm:p-6">
@@ -9940,7 +10352,7 @@ function renderSidebar() {
     const l = Object.keys(S.setColl).length;
     const a = Object.values(S.minifigColl).reduce((e, t) => e + t.qty, 0);
     const i = Object.keys(S.minifigColl).length;
-    const n = (e) => `flex items-center w-full p-3 text-base font-semibold rounded-lg transition-colors duration-150 ${S.view===e?"bg-blue-600 text-white":"text-gray-400 hover:bg-gray-700 hover:text-white"}`;
+    const n = (e) => `flex items-center w-full p-3 text-base font-semibold rounded-lg transition-all duration-200 ease-in-out ${S.view===e?"bg-blue-600 text-white":"text-gray-400 hover:bg-gray-700 hover:text-white"}`;
     const r = (e) => `relative flex-1 py-2 px-1 rounded-lg text-sm font-semibold transition-colors duration-200 flex flex-col items-center justify-center gap-1 ${S.subView===e?"bg-blue-600 text-white":"text-gray-300 hover:bg-gray-700 hover:text-white"}`;
     const s = (e, t, o) => {
         if (o === 0 || "collection" !== S.view) return "";
@@ -10109,13 +10521,13 @@ function renderSidebar() {
                 {
                     id: 'analytics',
                     name: 'Аналитика',
-                    icon: '📊',
+                    icon: I_Analytics('w-5 h-5'),
                     description: 'Статистика и анализ коллекции'
                 },
                 {
                     id: 'cloud-backup',
-                    name: 'Резервное копирование в облако',
-                    icon: '☁️',
+                    name: 'Облачное хранилище',
+                    icon: I_Cloud('w-5 h-5'),
                     description: 'Синхронизация данных с облачным хранилищем'
                 }
             ];
@@ -10128,7 +10540,7 @@ function renderSidebar() {
                     <li>
                         <button data-tool-sub-view="${tool.id}" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}">
                             <div class="flex items-center">
-                                <span class="text-lg mr-3">${tool.icon}</span>
+                                <span class="mr-3 flex-shrink-0">${tool.icon}</span>
                                 <div>
                                     <span class="break-words leading-tight font-medium">${tool.name}</span>
                                     <div class="text-xs text-gray-400 mt-1">${tool.description}</div>
@@ -10328,7 +10740,7 @@ function renderSidebar() {
         <div class="space-y-2 mb-4 flex-shrink-0">
             <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3")}<span>Каталог</span></button>
             <button data-view="collection" class="${n("collection")}" title="Переключиться на просмотр вашей личной коллекции">${I_Coll("w-5 h-5 mr-3")}<span>Коллекция</span></button>
-            <button data-view="tools" class="${n("tools")}" title="Инструменты для анализа и работы с коллекцией">${I_Tech("w-5 h-5 mr-3")}<span>Инструменты</span></button>
+            <button data-view="tools" class="${n("tools")}" title="Инструменты для анализа и работы с коллекцией">${I_Toolbox("w-5 h-5 mr-3")}<span>Инструменты</span></button>
         </div>
 
         ${S.view !== "tools" ? `
@@ -11668,7 +12080,9 @@ function renderMainContent() {
         if (!S.toolSubView || S.toolSubView === '') {
             e = `
                 <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
-                    <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">🛠️</div>
+                    <div class="mb-3 sm:mb-4 xl:mb-6">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 xl:w-24 xl:h-24 mx-auto text-blue-400">${I_Toolbox('w-full h-full')}</div>
+                    </div>
                     <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Инструменты</h2>
                     <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Выберите инструмент в боковой панели для начала работы</p>
                 </div>
@@ -11701,7 +12115,7 @@ function renderMainContent() {
             // Автоматически загружаем список версий при рендеринге, если подключены
             if (cloudStorageConnected && window.remoteStorageAvailable) {
                 setTimeout(() => {
-                    loadBackupsList();
+                    loadBackupsList(true); // Принудительное обновление при рендеринге
                 }, 300);
             }
         }
@@ -11721,7 +12135,9 @@ function renderMainContent() {
             } else {
                 e = `
                     <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
-                        <div class="text-4xl sm:text-6xl xl:text-8xl mb-3 sm:mb-4 xl:mb-6">📊</div>
+                        <div class="mb-3 sm:mb-4 xl:mb-6">
+                            <div class="w-16 h-16 sm:w-20 sm:h-20 xl:w-24 xl:h-24 mx-auto text-blue-400">${I_Analytics('w-full h-full')}</div>
+                        </div>
                         <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Аналитика</h2>
                         <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">Добавьте детали в коллекцию, чтобы увидеть аналитику</p>
                     </div>
@@ -16740,43 +17156,19 @@ document.addEventListener("click", async e => {
         } else if (e === 'tools') {
             // Очищаем временные фильтры при переключении на инструменты
             clearTemporaryFilters();
-            // Принудительно сбрасываем подраздел инструментов, чтобы показать список инструментов
-            console.log('🔧 Switching to tools, resetting toolSubView from:', S.toolSubView, 'to empty string');
-            console.log('🔧 Previous view was:', S.view, 'subView was:', S.subView);
+            // Сбрасываем подразделы инструментов
             S.toolSubView = '';
-            // Сбрасываем subView при переключении на tools
             S.subView = '';
-            console.log('🔧 Resetting subView to empty string for tools');
-            // Принудительно обновляем UI сразу после сброса
+            // Устанавливаем флаг обновления
             S.gridStale = true;
             updateLoadingStatus("Переключение на инструменты...", 50, "Подготовка инструментов");
-            // Принудительно обновляем боковую панель
-            console.log('🔧 Forcing sidebar update after toolSubView reset');
-            const sidebarEl = document.getElementById('sidebar');
-            if (sidebarEl) {
-                const newHTML = renderSidebar();
-                console.log('🔧 New sidebar HTML length:', newHTML.length);
-                sidebarEl.innerHTML = newHTML;
-                console.log('🔧 Sidebar updated, current innerHTML length:', sidebarEl.innerHTML.length);
-                // Проверяем, что HTML действительно содержит инструменты
-                if (newHTML.includes('Аналитика')) {
-                    console.log('✅ Tools list found in sidebar HTML');
-                } else {
-                    console.log('❌ Tools list NOT found in sidebar HTML');
-                }
-            }
-            // Дополнительно принудительно обновляем UI через небольшую задержку
-            setTimeout(() => {
-                console.log('🔧 Delayed UI update for tools');
-                updateUI();
-            }, 100);
         }
         
         // Отключаем анимации при переключении вкладок для улучшения производительности
         document.body.classList.add('tab-switching');
         setTimeout(() => {
             document.body.classList.remove('tab-switching');
-        }, 1000);
+        }, 300);
         
         // Сбрасываем мультивыбор только при переключении Каталог/Коллекция
         S.multiSelect.active = false; S.multiSelect.items = new Set();
@@ -16841,10 +17233,11 @@ document.addEventListener("click", async e => {
             window.stopTipRotation();
         }
         
-        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setupScrollListener(), setTimeout(() => {
+        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setTimeout(() => {
+            setupScrollListener();
             // НЕ перезапускаем ротацию подсказок - это создает бесконечный цикл!
             console.log('⚠️ Skipping tip rotation restart to prevent infinite loop');
-        }, 1000)))
+        }, 50)))
     }
     const n = t.closest("[data-sub-view]");
     if (n?.dataset.subView) {
@@ -17045,9 +17438,11 @@ document.addEventListener("click", async e => {
             setTimeout(() => {
                 if (window.remoteStorageAvailable) {
                     checkSavedCloudStorageState();
+                    // Принудительно обновляем UI при переходе на вкладку
+                    updateCloudStorageUI();
                     // Автоматически загружаем список версий при открытии вкладки
                     setTimeout(() => {
-                        loadBackupsList();
+                        loadBackupsList(true); // Принудительное обновление при открытии вкладки
                     }, 500);
                 } else {
                     console.log('⚠️ RemoteStorage not available');
@@ -17064,27 +17459,56 @@ document.addEventListener("click", async e => {
     if (t.closest('#connect-cloud-storage')) {
         e.preventDefault();
         e.stopPropagation();
-        // Инициализируем виджет после рендеринга
-        setTimeout(() => {
-            if (window.remoteStorageAvailable) {
-                console.log('🔧 Initializing RemoteStorage widget...');
-                initializeRemoteStorageWidget();
-            } else {
-                console.log('🔧 RemoteStorage not available, showing fallback solution');
-                showFallbackSolution();
+        
+        // Проверяем состояние подключения
+        const connectionState = getCloudStorageConnectionState();
+        
+        if (connectionState.showReconnectButton) {
+            // Если есть сохраненный аккаунт, но нет активного подключения - переподключаемся
+            console.log('🔧 Found saved account, attempting reconnection:', connectionState.account);
+            isReconnecting = true; // Устанавливаем флаг переподключения
+            
+            // Инициализируем клиент RemoteStorage
+            if (!cloudStorageClient) {
+                cloudStorageClient = new RemoteStorage({
+                    logging: 'warn',
+                    cache: false,
+                    // Отключаем автоматическое перенаправление для предотвращения циклических перезагрузок
+                    redirectUri: window.location.origin + window.location.pathname
+                });
+                cloudStorageClient.access.claim('lego-catalog', 'rw');
+                setupRemoteStorageEventHandlers();
             }
-        }, 500);
-        return;
-    }
-    
-    if (t.closest('#disconnect-cloud-storage')) {
-        e.preventDefault();
-        e.stopPropagation();
-        if (cloudStorageClient) {
-            cloudStorageClient.disconnect();
+            
+            // Пытаемся подключиться к сохраненному аккаунту
+            try {
+                cloudStorageClient.connect(connectionState.account);
+                updateCloudStorageStatus('Переподключение...', 'info');
+            } catch (error) {
+                console.error('❌ Reconnection failed:', error);
+                isReconnecting = false; // Сбрасываем флаг при ошибке
+                updateCloudStorageStatus('Ошибка переподключения', 'error');
+            }
+        } else if (connectionState.showConnectButton) {
+            // Если это новый пользователь - показываем виджет для ввода email
+            console.log('🔧 New user, showing connection widget...');
+            setTimeout(() => {
+                if (window.remoteStorageAvailable) {
+                    console.log('🔧 Initializing RemoteStorage widget...');
+                    initializeRemoteStorageWidget();
+                } else {
+                    console.error('❌ RemoteStorage not available');
+                    updateCloudStorageStatus('RemoteStorage недоступен', 'error');
+                }
+            }, 100);
+        } else if (connectionState.isConnected) {
+            // Если уже подключен, просто обновляем UI
+            console.log('🔧 Already connected, updating UI');
+            updateCloudStorageUI();
         }
         return;
     }
+    
     
     if (t.closest('#backup-to-cloud')) {
         e.preventDefault();
@@ -18974,6 +19398,27 @@ async function preloadImages() {
 }
 
 async function initializeApp() {
+    // Проверяем, не является ли это OAuth callback, чтобы предотвратить циклические перезагрузки
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('code') || urlParams.has('state') || urlParams.has('access_token')) {
+        console.log('🔍 Обнаружен OAuth callback, очищаем URL параметры для предотвращения циклических перезагрузок');
+        // Очищаем URL от OAuth параметров
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.replaceState({}, document.title, cleanUrl);
+    }
+    
+    // Проверяем сохраненное состояние облачного хранилища при запуске (БЕЗ автоматического переподключения)
+    setTimeout(() => {
+        if (window.remoteStorageAvailable && typeof RemoteStorage !== 'undefined') {
+            const connectionState = getCloudStorageConnectionState();
+            
+            if (connectionState.needsReconnection) {
+                console.log('🔍 Найдено сохраненное подключение, но автоматическое переподключение отключено для предотвращения циклических перезагрузок');
+                console.log('ℹ️ Для переподключения используйте кнопку "Переподключить хранилище" в разделе облачного резервного копирования');
+            }
+        }
+    }, 1000);
+    
     // Массив подсказок для кнопки "мне повезёт"
     window.FEELING_LUCKY_TIPS = [
     "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
@@ -19524,6 +19969,32 @@ async function initializeApp() {
             }, 1000);
         }
     })();
+    
+    // Проверка состояния облачного хранилища после загрузки данных (БЕЗ автоматического переподключения)
+    setTimeout(async () => {
+        try {
+            console.log('🔍 Проверяем сохраненное состояние облачного хранилища...');
+            
+            // Используем существующую функцию проверки состояния
+            if (window.remoteStorageAvailable && typeof RemoteStorage !== 'undefined') {
+                const connectionState = getCloudStorageConnectionState();
+                
+                if (connectionState.needsReconnection) {
+                    console.log('ℹ️ Найдено сохраненное подключение, но автоматическое переподключение отключено для предотвращения циклических перезагрузок');
+                    console.log('ℹ️ Для переподключения используйте кнопку "Переподключить хранилище" в разделе облачного резервного копирования');
+                } else if (connectionState.isConnected) {
+                    console.log('✅ Уже подключен к облачному хранилищу');
+                    updateCloudStorageUI();
+                } else {
+                    console.log('ℹ️ Нет сохраненного подключения к облачному хранилищу');
+                }
+            } else {
+                console.log('⚠️ RemoteStorage не доступен для автоматического подключения');
+            }
+        } catch (error) {
+            console.error('❌ Ошибка при проверке состояния облачного хранилища:', error);
+        }
+    }, 3000); // Ждем 3 секунды после завершения загрузки данных
 }
 document.addEventListener("DOMContentLoaded", () => {
     // Защита от случайного масштабирования страницы
