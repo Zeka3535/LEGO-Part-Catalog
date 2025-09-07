@@ -3297,7 +3297,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -11589,19 +11589,47 @@ function renderMainContent() {
         error: S.err,
         toDisplay: S.toDisplay,
         hasMoreItems: S.hasMoreItems,
+        S_q: S.q,
+        S_searchGroups: S.searchGroups,
+        S_catGroups: S.catGroups,
+        window_searchStateReset: window.searchStateReset,
         stack: new Error().stack?.split('\n').slice(1, 4).join('\n')
     });
+    
+    // Дополнительная отладка для понимания состояния
+    console.log('🔍 Detailed state check:');
+    console.log('  - S.q:', JSON.stringify(S.q));
+    console.log('  - S.searchGroups:', S.searchGroups);
+    console.log('  - S.catGroups:', S.catGroups);
+    console.log('  - window.searchStateReset:', window.searchStateReset);
+    console.log('  - S.selCatId:', S.selCatId);
+    console.log('  - S.selThemeId:', S.selThemeId);
     
     // Отладка для дашборда
     
     if (S.view === 'tools' && S.toolSubView === 'analytics' && S.analyticsSubView === 'dashboard') {
     }
     
-    if (S.loading) e = '<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>';
-    else if (S.err) e = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${S.err}</p></div>`;
-    else if ("catalog" === S.view) {
+    console.log('🔍 Checking conditions:');
+    console.log('  - S.loading:', S.loading);
+    console.log('  - S.err:', S.err);
+    console.log('  - S.view === "catalog":', S.view === 'catalog');
+    
+    if (S.loading) {
+        console.log('🔍 Path: Loading state');
+        e = '<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>';
+    } else if (S.err) {
+        console.log('🔍 Path: Error state');
+        e = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${S.err}</p></div>`;
+    } else if ("catalog" === S.view) {
+        console.log('🔍 Path: Catalog view');
         // Проверяем, нужно ли показать универсальные результаты поиска
+        console.log('🔍 Checking universal search:');
+        console.log('  - S.showUniversalSearch:', S.showUniversalSearch);
+        console.log('  - S.universalSearchResults:', S.universalSearchResults);
+        
         if (S.showUniversalSearch && S.universalSearchResults) {
+            console.log('🔍 Path: Universal search results');
             // Устанавливаем значения для правильного расчета прогресса прокрутки
             const { parts, sets, minifigs } = S.universalSearchResults;
             const totalResults = parts.length + sets.length + minifigs.length;
@@ -11609,17 +11637,23 @@ function renderMainContent() {
             S.loadedItems = totalResults; // Все результаты поиска загружены сразу
             e = renderUniversalSearchResults(S.universalSearchResults, S.universalSearchTerm);
         } else {
+            console.log('🔍 Path: Regular catalog content');
             let t, o, l, a = "sets-minifigs-grid";
+            console.log('🔍 Checking subview:', S.subView);
+            
             if ("parts" === S.subView) {
-            let i = {};
-            l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском";
+                console.log('🔍 Path: Parts subview');
+                let i = {};
+                l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском";
             
             // Инициализируем данные для деталей, если они не загружены
             if (!S.catGroups && !S.searchGroups && Object.keys(PART_MAP).length > 0) {
                 console.log('🔧 Initializing parts data for parts subview');
+                console.log('🔧 Current state - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups, 'window.searchStateReset:', window.searchStateReset);
                 
                 // Если есть поисковый запрос, ищем по нему
-                if (S.q && S.q.trim()) {
+                // НО только если мы не в процессе сброса состояния
+                if (S.q && S.q.trim() && !window.searchStateReset) {
                     console.log('🔍 Searching parts for query:', S.q);
                     const searchResults = Object.values(PART_MAP).filter(part => 
                         part.name && part.name.toLowerCase().includes(S.q.toLowerCase()) ||
@@ -11663,26 +11697,40 @@ function renderMainContent() {
                 console.log('✅ Search results sorted by popularity, most used first');
             }
             
+            console.log('🔍 Content determination logic:');
+            console.log('  - S.filters.colorIds?.length > 1:', S.filters.colorIds?.length > 1);
+            console.log('  - S.searchGroups !== null:', S.searchGroups !== null);
+            console.log('  - S.selCatId !== null:', S.selCatId !== null);
+            console.log('  - S.catGroups && Object.keys(S.catGroups).length > 0:', S.catGroups && Object.keys(S.catGroups).length > 0);
+            
             if (S.filters.colorIds?.length > 1) {
+                console.log('🔍 Path: Color filter error');
                 l = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию"';
             } else if (S.searchGroups !== null) {
+                console.log('🔍 Path: Using search groups for display:', Object.keys(S.searchGroups || {}).length, 'groups');
                 i = S.searchGroups;
                 l = "По вашему запросу ничего не найдено";
             } else if (S.selCatId !== null) {
+                console.log('🔍 Path: Using category data');
                 i = S.catGroups;
                 l = "В этой категории нет деталей";
             } else {
+                console.log('🔍 Path: Default - checking for all parts data');
                 // Если нет ни поиска, ни выбранной категории, используем все детали
                 if (S.catGroups && Object.keys(S.catGroups).length > 0) {
+                    console.log('🔍 Path: Using all parts data:', Object.keys(S.catGroups));
                     i = S.catGroups;
                     l = "Все детали";
-                    console.log('🔧 Using all parts data:', Object.keys(S.catGroups));
+                } else {
+                    console.log('🔍 Path: No data available');
                 }
             }
             
             // Дополнительная проверка: если есть поисковый запрос, но searchGroups не инициализирован
-            if (S.q && S.q.trim() && (!S.searchGroups || Object.keys(S.searchGroups).length === 0)) {
+            // НО только если мы не в процессе сброса состояния (проверяем, что не было недавнего сброса)
+            if (S.q && S.q.trim() && (!S.searchGroups || Object.keys(S.searchGroups).length === 0) && !window.searchStateReset) {
                 console.log('🔍 Re-initializing search results for parts query:', S.q);
+                console.log('🔍 Current state - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'window.searchStateReset:', window.searchStateReset);
                 const searchResults = Object.values(PART_MAP).filter(part => 
                     part.name && part.name.toLowerCase().includes(S.q.toLowerCase()) ||
                     part.part_num && part.part_num.toLowerCase().includes(S.q.toLowerCase())
@@ -14124,6 +14172,20 @@ function updateUI() {
     
     renderSidebar(), renderHeader(), renderMainContent();
     
+    // Сбрасываем флаг сброса состояния поиска после обновления UI
+    if (window.searchStateReset) {
+        console.log('🔄 Clearing search state reset flag, current state - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups);
+        window.searchStateReset = false;
+        console.log('🔄 Search state reset flag cleared');
+        
+        // Принудительно очищаем поле поиска, если оно еще содержит значение
+        const searchInput = document.getElementById('search-input');
+        if (searchInput && searchInput.value && !S.q) {
+            searchInput.value = '';
+            console.log('🔄 Search input field cleared');
+        }
+    }
+    
     // Обновляем статистику кнопки "Мне повезёт"
     updateFeelingLuckyStats();
     
@@ -15435,6 +15497,17 @@ function triggerSearch(e = !1) {
         S.selCatId = null;
         S.selFigNum = null;
         S.showRelatedSets = false;
+        S.searchGroups = null;
+        S.catGroups = null;
+        S.setRes = null;
+        S.searchSetRes = null;
+        S.minifigRes = null;
+        S.searchMinifigRes = null;
+        S.showUniversalSearch = false;
+        S.universalSearchResults = null;
+        S.universalSearchTerm = "";
+        S.originalSearchContext = null;
+        window.searchStateReset = true;
         console.log('Switching from tools to catalog for search, calling searchRebrickableParts with:', S.q.trim());
         searchRebrickableParts(S.q.trim());
     } else if ("sets" === S.subView) {
@@ -17384,7 +17457,9 @@ document.addEventListener("click", async e => {
             window.stopTipRotation();
         }
         
-        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setTimeout(() => {
+        console.log('🔄 Switching to view:', e, 'from:', S.view);
+        console.log('🔄 Before reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups);
+        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, S.searchGroups = null, S.catGroups = null, S.setRes = null, S.searchSetRes = null, S.minifigRes = null, S.searchMinifigRes = null, S.showUniversalSearch = false, S.universalSearchResults = null, S.universalSearchTerm = "", S.originalSearchContext = null, window.searchStateReset = true, console.log('🔄 After reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups, 'S.showUniversalSearch:', S.showUniversalSearch, 'window.searchStateReset:', window.searchStateReset), void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setTimeout(() => {
             setupScrollListener();
             // НЕ перезапускаем ротацию подсказок - это создает бесконечный цикл!
             console.log('⚠️ Skipping tip rotation restart to prevent infinite loop');
@@ -17479,6 +17554,10 @@ document.addEventListener("click", async e => {
         S.searchSetRes = null;
         S.minifigRes = null;
         S.searchMinifigRes = null;
+        S.showUniversalSearch = false;
+        S.universalSearchResults = null;
+        S.universalSearchTerm = "";
+        S.originalSearchContext = null;
         
         if ("sets" === e) {
             S.sortBy = "year_desc";
@@ -18061,6 +18140,8 @@ document.addEventListener("click", async e => {
         S.loadedItems = null;
         // Сбрасываем случайное изображение минифигурки при очистке поиска
         resetRandomMinifigImage();
+        // Устанавливаем флаг сброса состояния поиска
+        window.searchStateReset = true;
         document.getElementById("search-input")?.focus();
         return void triggerSearch()
     }
