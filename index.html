@@ -1100,19 +1100,6 @@
         padding: 0.75rem !important;
     }
     
-    /* Стили для панели "Данные через API" */
-    #api-stats-panel.collapse-panel {
-        overflow: hidden !important;
-        max-height: 0 !important;
-        opacity: 0 !important;
-        padding: 0 !important;
-        transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease !important;
-    }
-    #api-stats-panel.collapse-panel.open {
-        max-height: 1000px !important;
-        opacity: 1 !important;
-        padding: 0.75rem !important;
-    }
     .rotate {
         transition: transform 0.2s ease;
     }
@@ -3329,10 +3316,7 @@ function testFunction() {
 // Вызываем тестовую функцию
 testFunction();
 
-// Простая инициализация системы неактивности
-let inactivityTimer = null;
-let tipRotationTimer = null;
-
+// Массив подсказок для системы неактивности
 const inactivityTips = [
     "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
     "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
@@ -3368,99 +3352,6 @@ const inactivityTips = [
     "🎲 Удерживайте кнопку Детали/Наборы/Фигурки 1 секунду для случайного элемента",
     "📱 Интерфейс оптимизирован для всех устройств"
 ];
-
-function simpleInactivityInit() {
-    
-    // Проверяем элементы
-    const overlay = document.getElementById('inactivity-overlay');
-    const tip = document.getElementById('inactivity-tip');
-    const closeBtn = document.getElementById('inactivity-close');
-    
-    
-    if (overlay && tip && closeBtn) {
-        
-        // Функция для сброса таймера
-        function resetInactivityTimer() {
-            if (inactivityTimer) {
-                clearTimeout(inactivityTimer);
-            }
-            
-            // Останавливаем смену подсказок при активности
-            stopTipRotation();
-            
-            // Запускаем новый таймер на 90 секунд
-            inactivityTimer = setTimeout(() => {
-                // Выбираем случайную подсказку
-                const randomIndex = Math.floor(Math.random() * inactivityTips.length);
-                tip.textContent = inactivityTips[randomIndex];
-                overlay.classList.remove('hidden');
-                overlay.classList.add('show');
-                // Запускаем автоматическую смену подсказок
-                startTipRotation();
-            }, 90000);
-        }
-        
-        // Функция для автоматической смены подсказок
-        function startTipRotation() {
-            if (tipRotationTimer) {
-                clearInterval(tipRotationTimer);
-            }
-            
-            tipRotationTimer = setInterval(() => {
-                if (overlay && overlay.classList.contains('show')) {
-                    console.log('🔄 Меняем подсказку');
-                    // Выбираем случайную подсказку
-                    const randomIndex = Math.floor(Math.random() * inactivityTips.length);
-                    tip.textContent = inactivityTips[randomIndex];
-                }
-            }, 5000);
-        }
-        
-        // Функция для остановки смены подсказок
-        function stopTipRotation() {
-            if (tipRotationTimer) {
-                clearInterval(tipRotationTimer);
-                tipRotationTimer = null;
-            }
-        }
-        
-        // Обработчик закрытия по кнопке
-        closeBtn.addEventListener('click', () => {
-            overlay.classList.remove('show');
-            overlay.classList.add('hidden');
-            stopTipRotation();
-            // Перезапускаем таймер после закрытия
-            resetInactivityTimer();
-        });
-        
-        // Обработчик закрытия по клику на пустое место (оверлей)
-        overlay.addEventListener('click', (event) => {
-            // Проверяем, что клик был именно по оверлею, а не по его содержимому
-            if (event.target === overlay) {
-                overlay.classList.remove('show');
-                overlay.classList.add('hidden');
-                stopTipRotation();
-                // Перезапускаем таймер после закрытия
-                resetInactivityTimer();
-            }
-        });
-        
-        // Обработчики активности пользователя
-        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
-        
-        activityEvents.forEach(event => {
-            document.addEventListener(event, () => {
-                resetInactivityTimer();
-            }, { passive: true });
-        });
-        
-        // Запускаем первый таймер
-        resetInactivityTimer();
-    }
-}
-
-// Запускаем простую инициализацию
-simpleInactivityInit();
 const REBRICKABLE_API_URL = 'https://rebrickable.com/api/v3/lego';
 const REBRICKABLE_API_KEYS = ['20c78cc607d6059c8d2a61338d851590', '04a7405ad41f1dd484a562f6e0c57312', 'd93f5c0989f63afa9b1c29ef8ad66002', 'b4179c1b8bd3c022ec9fc0e713e96b77', 'd32527bc33b575b8825a0ba04ba4add5'];
 let currentApiKeyIndex = 0;
@@ -4076,6 +3967,8 @@ const REMOTESTORAGE_KEYS = {
 let inactivityOverlay = null;
 let inactivityTip = null;
 let inactivityCloseBtn = null;
+let inactivityTimer = null;
+let tipRotationTimer = null;
 
 // Функции для работы с localStorage
 function saveRemoteStorageState(connected, account = null) {
@@ -9793,6 +9686,14 @@ function handleLongPress(type) {
     window.UI_BLOCKED = true;
     console.log('🚫 UI blocked globally during long press');
     
+    // Принудительный сброс глобального флага через 10 секунд
+    setTimeout(() => {
+        if (window.UI_BLOCKED) {
+            console.log('⚠️ Force reset UI_BLOCKED flag after timeout');
+            window.UI_BLOCKED = false;
+        }
+    }, 10000);
+    
     window.updateUI = () => {
         console.log('🚫 updateUI blocked during long press (early)');
         return;
@@ -11662,10 +11563,22 @@ function renderMainContent() {
     // Защита от циклических вызовов
     if (window.renderingMainContent) {
         console.log('⚠️ renderMainContent already running, skipping');
+        // Сбрасываем флаг через короткое время, чтобы не блокировать обновления
+        setTimeout(() => {
+            window.renderingMainContent = false;
+        }, 50);
         return;
     }
     
     window.renderingMainContent = true;
+    
+    // Принудительный сброс флага через 5 секунд для предотвращения зависания
+    setTimeout(() => {
+        if (window.renderingMainContent) {
+            console.log('⚠️ Force reset renderingMainContent flag after timeout');
+            window.renderingMainContent = false;
+        }
+    }, 5000);
     
     let e = "";
     
@@ -12448,10 +12361,11 @@ function renderMainContent() {
     // Убрана автоматическая загрузка изображений для предотвращения постоянных обновлений UI
     
     // Обновляем статистику кнопки "Мне повезёт" после рендеринга
+    // Сбрасываем флаг сразу после завершения рендеринга
+    window.renderingMainContent = false;
+    
     setTimeout(() => {
         updateFeelingLuckyStats();
-        // Сбрасываем флаг после завершения обновления статистики
-        window.renderingMainContent = false;
     }, 100);
 }
 // Добавляем слушатель события прокрутки для автоматической загрузки дополнительных элементов
@@ -13567,7 +13481,6 @@ function renderSettingsModal() {
                             ${(() => {
                                 const stats = getLoadingStats();
                                 const lastUpdate = stats.lastApiUpdate ? new Date(stats.lastApiUpdate).toLocaleString('ru-RU') : 'Никогда';
-                                const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
                                 return `
                                     <div class="space-y-1">
                                         <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
@@ -13613,52 +13526,6 @@ function renderSettingsModal() {
                                             <div class="text-white font-semibold text-xs">${stats.minifigs}</div>
                                         </div>
                                     </div>
-                                    <button data-action="toggle-api-stats" class="w-full flex items-center justify-between text-left text-xs font-semibold text-yellow-300 mt-3 pt-2 border-t border-gray-700/50">
-                                        <span>Данные через API</span>
-                                        <span id="api-stats-chevron" class="${apiOpen ? 'rotate-180' : ''}">${I_Chev('w-4 h-4 text-yellow-300')}</span>
-                                    </button>
-                                    <div id="api-stats-panel" class="collapse-panel ${apiOpen ? 'open' : ''}">
-                                        <div class="space-y-1 mt-1">
-                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                                                <div class="flex items-center text-gray-300 text-xs">
-                                                    <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
-                                                    Цвета:
-                                                </div>
-                                                <div class="text-white font-semibold text-xs">${stats.apiColors}</div>
-                                            </div>
-                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                                                <div class="flex items-center text-gray-300 text-xs">
-                                                    <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
-                                                    Детали:
-                                                </div>
-                                                <div class="text-white font-semibold text-xs">${stats.apiParts}</div>
-                                            </div>
-                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                                                <div class="flex items-center text-gray-300 text-xs">
-                                                    <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
-                                                    Наборы:
-                                                </div>
-                                                <div class="text-white font-semibold text-xs">${stats.apiSets}</div>
-                                            </div>
-                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                                                <div class="flex items-center text-gray-300 text-xs">
-                                                    <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
-                                                    Минифигурки:
-                                                </div>
-                                                <div class="text-white font-semibold text-xs">${stats.apiMinifigs}</div>
-                                            </div>
-                                            <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                                                <div class="flex items-center text-gray-300 text-xs">
-                                                    <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
-                                                    Изображения:
-                                                </div>
-                                                <div class="text-white font-semibold text-xs">${stats.apiImages}</div>
-                                            </div>
-                                        </div>
-                                        <div class="text-blue-400 text-xs mt-2">
-                                            Последнее обновление API: ${lastUpdate}
-                                        </div>
-                                    </div>
                                 `;
                             })()}
                         </div>
@@ -13670,16 +13537,14 @@ function renderSettingsModal() {
                                Одностраничное веб‑приложение для локального просмотра и ведения собственной коллекции LEGO
                            </p>
                            <ul class="list-disc list-outside pl-5 space-y-1">
-                               <li>Каталог деталей/наборов/минифигурок</li>
-                               <li>Фильтры, сортировки, поиск</li>
-                               <li>Коллекция пользователя (детали, наборы, минифигурки)</li>
-                               <li>Полноэкранный просмотр изображений</li>
-                               <li>Модальные карточки: изображения, цвета, количество в коллекции</li>
-                               <li>Инвентари наборов и минифигурок (клики по элементам открывают карточки)</li>
-                               <li>Связанные наборы с минифигуркой</li>
-                               <li>Папка для детали в коллекции если добавлено более трёх цветов</li>
-                               <li>Панель мультивыбора (удаление в коллекции, добавление в каталоге)</li>
-                               <li>Импорт/экспорт коллекции в CSV и «Поделиться» CSV в соцсети</li>
+                               <li><strong>Каталог LEGO</strong> - детали, наборы и минифигурки с умным поиском</li>
+                               <li><strong>Коллекция пользователя</strong> - локальное и облачное хранение данных</li>
+                               <li><strong>Модальные карточки</strong> - детальная информация с изображениями и цветами</li>
+                               <li><strong>Аналитика и статистика</strong> - графики и диаграммы коллекции</li>
+                               <li><strong>Мультивыбор</strong> - пакетные операции с элементами</li>
+                               <li><strong>Импорт/экспорт</strong> - CSV файлы и резервное копирование</li>
+                               <li><strong>Система подсказок</strong> - интерактивные советы при неактивности</li>
+                               <li><strong>Продвинутое кэширование</strong> - offline режим и быстрая загрузка</li>
                            </ul>
                            <div class="pt-3 border-t border-gray-700/50 flex flex-col items-center justify-center gap-3 text-center">
                                <a href="https://github.com/Zeka3535/LEGO-Part-Catalog" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-gray-700 hover:bg-gray-600 text-white transition-colors duration-150 shadow-lg hover:shadow-gray-500/25">
@@ -13688,6 +13553,9 @@ function renderSettingsModal() {
                                </a>
                                <p class="text-gray-400 text-xs">
                                Этот сайт использует <a href="https://rebrickable.com/api/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">Rebrickable API</a> и его базу данных CSV
+                               </p>
+                               <p class="text-gray-400 text-xs mt-2">
+                               Для облачного хранилища используется <a href="https://remotestorage.io/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">remoteStorage</a> - открытый протокол для персонального хранения данных в интернете
                                </p>
                            </div>
                         </div>
@@ -13705,10 +13573,10 @@ function renderSettingsModal() {
     setTimeout(() => {
         const panel = document.getElementById('settings-stats-panel');
         const chevron = document.getElementById('settings-stats-chevron');
-        const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
         
         if (panel) {
-            if (apiOpen) {
+            const isOpen = localStorage.getItem('settingsStatsOpen') === 'true';
+            if (isOpen) {
                 panel.classList.add('open');
             } else {
                 panel.classList.remove('open');
@@ -13716,32 +13584,14 @@ function renderSettingsModal() {
         }
         
         if (chevron) {
-            if (apiOpen) {
+            const isOpen = localStorage.getItem('settingsStatsOpen') === 'true';
+            if (isOpen) {
                 chevron.classList.add('rotate-180');
             } else {
                 chevron.classList.remove('rotate-180');
             }
         }
         
-        // Инициализируем состояние панели "Данные через API"
-        const apiPanel = document.getElementById('api-stats-panel');
-        const apiChevron = document.getElementById('api-stats-chevron');
-        
-        if (apiPanel) {
-            if (apiOpen) {
-                apiPanel.classList.add('open');
-            } else {
-                apiPanel.classList.remove('open');
-            }
-        }
-        
-        if (apiChevron) {
-            if (apiOpen) {
-                apiChevron.classList.add('rotate-180');
-            } else {
-                apiChevron.classList.remove('rotate-180');
-            }
-        }
     }, 0);
     // Обновляем информацию об использовании хранилища/кэша (в МБ)
     ;(async () => {
@@ -18957,22 +18807,9 @@ document.addEventListener("click", async e => {
                 if (panel) {
                     panel.classList.toggle('open');
                     const isOpen = panel.classList.contains('open');
-                    try { localStorage.setItem('apiStatsOpen', String(isOpen)); } catch {}
                 }
                 if (chevron) {
                     chevron.classList.toggle('rotate-180');
-                }
-                break;
-            case "toggle-api-stats":
-                const apiPanel = document.getElementById('api-stats-panel');
-                const apiChevron = document.getElementById('api-stats-chevron');
-                if (apiPanel) {
-                    apiPanel.classList.toggle('open');
-                    const isOpen = apiPanel.classList.contains('open');
-                    try { localStorage.setItem('apiStatsOpen', String(isOpen)); } catch {}
-                }
-                if (apiChevron) {
-                    apiChevron.classList.toggle('rotate-180');
                 }
                 break;
                 const checkbox = document.getElementById('disable-color-images');
@@ -21280,11 +21117,6 @@ function getApiLoadingStats() {
         apiStats = window.API_STATS;
     }
     return {
-        apiColors: Number(apiStats.colors) || 0,
-        apiParts: Number(apiStats.parts) || 0,
-        apiSets: Number(apiStats.sets) || 0,
-        apiMinifigs: Number(apiStats.minifigs) || 0,
-        apiImages: Number(apiStats.images) || 0,
         lastApiUpdate: apiStats.lastUpdate || null
     };
 }
@@ -21388,10 +21220,10 @@ function refreshSettingsStatsPanel() {
     if (!panel) return;
     const stats = getLoadingStats();
     const lastUpdate = stats.lastApiUpdate ? new Date(stats.lastApiUpdate).toLocaleString('ru-RU') : 'Никогда';
-    const apiOpen = localStorage.getItem('apiStatsOpen') === 'true';
     
     // Применяем состояние панели
-    if (apiOpen) {
+    const isOpen = localStorage.getItem('settingsStatsOpen') === 'true';
+    if (isOpen) {
         panel.classList.add('open');
     } else {
         panel.classList.remove('open');
@@ -21400,32 +21232,13 @@ function refreshSettingsStatsPanel() {
     // Обновляем состояние шеврона
     const chevron = document.getElementById('settings-stats-chevron');
     if (chevron) {
-        if (apiOpen) {
+        if (isOpen) {
             chevron.classList.add('rotate-180');
         } else {
             chevron.classList.remove('rotate-180');
         }
     }
     
-    // Обновляем состояние панели "Данные через API"
-    const apiPanel = document.getElementById('api-stats-panel');
-    const apiChevron = document.getElementById('api-stats-chevron');
-    
-    if (apiPanel) {
-        if (apiOpen) {
-            apiPanel.classList.add('open');
-        } else {
-            apiPanel.classList.remove('open');
-        }
-    }
-    
-    if (apiChevron) {
-        if (apiOpen) {
-            apiChevron.classList.add('rotate-180');
-        } else {
-            apiChevron.classList.remove('rotate-180');
-        }
-    }
     
     panel.innerHTML = `
         <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
@@ -21471,52 +21284,6 @@ function refreshSettingsStatsPanel() {
                     Минифигурки:
                 </div>
                 <div class="text-white font-semibold text-xs">${stats.minifigs}</div>
-            </div>
-        </div>
-        <button data-action="toggle-api-stats" class="w-full flex items-center justify-between text-left text-xs font-semibold text-yellow-300 mt-3 pt-2 border-t border-gray-700/50">
-            <span>Данные через API</span>
-            <span id="api-stats-chevron" class="${apiOpen ? 'rotate-180' : ''}">${I_Chev('w-4 h-4 text-yellow-300')}</span>
-        </button>
-        <div id="api-stats-panel" class="collapse-panel ${apiOpen ? 'open' : ''}">
-            <div class="space-y-1 mt-1">
-                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                    <div class="flex items-center text-gray-300 text-xs">
-                        <div class="w-2 h-2 rounded-full bg-red-500 mr-2"></div>
-                        Цвета:
-                    </div>
-                    <div class="text-white font-semibold text-xs">${stats.apiColors}</div>
-                </div>
-                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                    <div class="flex items-center text-gray-300 text-xs">
-                        <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
-                        Детали:
-                    </div>
-                    <div class="text-white font-semibold text-xs">${stats.apiParts}</div>
-                </div>
-                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                    <div class="flex items-center text-gray-300 text-xs">
-                        <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
-                        Наборы:
-                    </div>
-                    <div class="text-white font-semibold text-xs">${stats.apiSets}</div>
-                </div>
-                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                    <div class="flex items-center text-gray-300 text-xs">
-                        <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
-                        Минифигурки:
-                    </div>
-                    <div class="text-white font-semibold text-xs">${stats.apiMinifigs}</div>
-                </div>
-                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                    <div class="flex items-center text-gray-300 text-xs">
-                        <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
-                        Изображения:
-                    </div>
-                    <div class="text-white font-semibold text-xs">${stats.apiImages}</div>
-                </div>
-            </div>
-            <div class="text-blue-400 text-xs mt-2">
-                Последнее обновление API: ${lastUpdate}
             </div>
         </div>
     `;
@@ -23027,6 +22794,9 @@ function animateCloseButtonClick(button) {
     inactivityOverlay = document.getElementById('inactivity-overlay');
     inactivityTip = document.getElementById('inactivity-tip');
     inactivityCloseBtn = document.getElementById('inactivity-close');
+    
+    // Переменная для отслеживания текущей подсказки
+    let currentTipIndex = 0;
 
     // Функция для показа подсказки по порядку
     function showRandomTip() {
@@ -23053,13 +22823,15 @@ function animateCloseButtonClick(button) {
     function startTipRotation() {
         if (tipRotationTimer) {
             clearInterval(tipRotationTimer);
+            tipRotationTimer = null;
         }
         
         tipRotationTimer = setInterval(() => {
             if (inactivityOverlay && inactivityOverlay.classList.contains('show') && inactivityTip) {
                 // Переходим к следующей подсказке
                 currentTipIndex = (currentTipIndex + 1) % inactivityTips.length;
-                inactivityTip.textContent = inactivityTips[currentTipIndex];
+                const newTip = inactivityTips[currentTipIndex];
+                inactivityTip.textContent = newTip;
             }
         }, 5000);
     }
@@ -23097,12 +22869,13 @@ function animateCloseButtonClick(button) {
     function resetInactivityTimer() {
         if (inactivityTimer) {
             clearTimeout(inactivityTimer);
+            inactivityTimer = null;
         }
         
         // Останавливаем смену подсказок при активности пользователя
         stopTipRotation();
         
-        // Запускаем таймер на 90 секунд (для тестирования)
+        // Запускаем таймер на 90 секунд
         inactivityTimer = setTimeout(() => {
             showRandomTip();
         }, 90000);
@@ -23140,14 +22913,30 @@ function animateCloseButtonClick(button) {
         });
         
         // Обработчики активности пользователя
-        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        const activityEvents = [
+            'mousedown', 'mousemove', 'mouseup', 'click', 'dblclick',
+            'keydown', 'keyup', 'keypress',
+            'scroll', 'wheel',
+            'touchstart', 'touchmove', 'touchend',
+            'focus', 'blur',
+            'resize'
+        ];
         
         // Проверяем, не добавлены ли уже обработчики
         if (!document.documentElement.hasAttribute('data-inactivity-listeners')) {
             document.documentElement.setAttribute('data-inactivity-listeners', 'true');
             
             activityEvents.forEach(event => {
-                document.addEventListener(event, () => {
+                document.addEventListener(event, (e) => {
+                    // Игнорируем события от самой системы неактивности
+                    if (e.target && (
+                        e.target.closest('#inactivity-overlay') ||
+                        e.target.id === 'inactivity-close' ||
+                        e.target.id === 'inactivity-tip'
+                    )) {
+                        return;
+                    }
+                    
                     resetInactivityTimer();
                 }, { passive: true });
             });
@@ -23212,6 +23001,74 @@ function animateCloseButtonClick(button) {
         lastBlockedTime = 0;
         PROXY_CONFIG.currentProxyIndex = 0;
         console.log('🔄 Кэш прокси сброшен');
+    };
+    
+    // Функция для тестирования системы неактивности
+    window.testInactivitySystem = () => {
+        console.log('🧪 Тестируем систему неактивности...');
+        console.log('📊 Статус элементов:', {
+            overlay: !!inactivityOverlay,
+            tip: !!inactivityTip,
+            closeBtn: !!inactivityCloseBtn,
+            timer: !!inactivityTimer,
+            tipRotationTimer: !!tipRotationTimer,
+            currentTipIndex: typeof currentTipIndex !== 'undefined' ? currentTipIndex : 'не определена',
+            tipsArray: inactivityTips ? inactivityTips.length : 'не определена'
+        });
+        
+        if (inactivityOverlay && inactivityTip) {
+            console.log('✅ Элементы найдены, показываем тестовую подсказку');
+            inactivityTip.textContent = '🧪 Тестовая подсказка - система работает!';
+            inactivityOverlay.classList.remove('hidden');
+            inactivityOverlay.classList.add('show');
+            
+            // Автоматически скрываем через 3 секунды
+            setTimeout(() => {
+                inactivityOverlay.classList.remove('show');
+                setTimeout(() => {
+                    inactivityOverlay.classList.add('hidden');
+                }, 500);
+                console.log('✅ Тестовая подсказка скрыта');
+            }, 3000);
+        } else {
+            console.error('❌ Элементы системы неактивности не найдены');
+        }
+    };
+    
+    // Функция для принудительного показа подсказки
+    window.showInactivityTip = () => {
+        if (typeof showRandomTip === 'function') {
+            showRandomTip();
+            console.log('✅ Подсказка показана принудительно');
+        } else {
+            console.error('❌ Функция showRandomTip не найдена');
+        }
+    };
+    
+    // Функция для тестирования с коротким таймером (10 секунд)
+    window.testInactivityQuick = () => {
+        console.log('🧪 Тестируем систему неактивности с коротким таймером (10 сек)');
+        
+        if (inactivityTimer) {
+            clearTimeout(inactivityTimer);
+        }
+        
+        inactivityTimer = setTimeout(() => {
+            console.log('⏰ Тестовый таймер сработал, показываем подсказку');
+            showRandomTip();
+        }, 10000);
+        
+        console.log('✅ Тестовый таймер установлен на 10 секунд');
+    };
+    
+    // Функция для проверки статуса системы
+    window.checkInactivityStatus = () => {
+        console.log('📊 Статус системы неактивности:');
+        console.log('  - Таймер неактивности:', inactivityTimer ? 'активен' : 'не активен');
+        console.log('  - Таймер смены подсказок:', tipRotationTimer ? 'активен' : 'не активен');
+        console.log('  - Текущий индекс подсказки:', currentTipIndex);
+        console.log('  - Overlay показан:', inactivityOverlay?.classList.contains('show') ? 'да' : 'нет');
+        console.log('  - Количество подсказок:', inactivityTips.length);
     };
     
     window.proxyStatus = () => {
