@@ -96,7 +96,10 @@ function cacheFirst(request) {
             if (networkResponse.ok || networkResponse.type === 'opaque') {
                 const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, responseToCache);
+                    cache.put(request, responseToCache).catch(error => {
+                        // Ignore cache put errors (e.g., if entry already exists)
+                        console.warn('Cache put failed:', error);
+                    });
                 });
             }
             return networkResponse;
@@ -110,7 +113,10 @@ function networkFirst(request) {
         if (networkResponse.ok) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then(cache => {
-                cache.put(request, responseToCache);
+                cache.put(request, responseToCache).catch(error => {
+                    // Ignore cache put errors (e.g., if entry already exists)
+                    console.warn('Cache put failed:', error);
+                });
             });
         }
         return networkResponse;
@@ -139,7 +145,10 @@ function staleWhileRevalidate(request) {
             if (networkResponse.ok) {
                 const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, responseToCache);
+                    cache.put(request, responseToCache).catch(error => {
+                        // Ignore cache put errors (e.g., if entry already exists)
+                        console.warn('Cache put failed:', error);
+                    });
                 });
             }
             return networkResponse;
