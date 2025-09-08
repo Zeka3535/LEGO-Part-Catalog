@@ -3297,7 +3297,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -4305,9 +4305,7 @@ function renderCloudBackupContent() {
     
     // Автоматически загружаем список версий при рендеринге, если подключены
     if (connectionState.isConnected) {
-        setTimeout(() => {
-            loadBackupsList(true); // Принудительное обновление при рендеринге
-        }, 100);
+        debouncedLoadBackupsList(true, 100); // Принудительное обновление при рендеринге
     }
     
     return `
@@ -4484,8 +4482,22 @@ function renderCloudBackupContent() {
 
 async function saveToCloud() {
     try {
+        // Загружаем актуальные данные из localStorage перед сохранением
+        console.log('🔄 Loading state before save...');
+        loadState();
+        
+        // Отладочная информация
+        console.log('📊 S.coll keys:', Object.keys(S.coll).length);
+        console.log('📊 S.setColl keys:', Object.keys(S.setColl).length);
+        console.log('📊 S.minifigColl keys:', Object.keys(S.minifigColl).length);
+        console.log('📊 S.coll sample:', Object.keys(S.coll).slice(0, 3));
+        console.log('📊 S.setColl sample:', Object.keys(S.setColl).slice(0, 3));
+        console.log('📊 S.minifigColl sample:', Object.keys(S.minifigColl).slice(0, 3));
+        
         // Показываем подтверждение с количеством элементов
         const counts = getCollectionCounts();
+        console.log('📊 Collection counts:', counts);
+        
         const confirmed = confirm(
             `Сохранить коллекцию в облако?\n\n` +
             `Детали: ${counts.totalParts}\n` +
@@ -4500,6 +4512,19 @@ async function saveToCloud() {
         }
         
         updateCloudStorageStatus('Сохранение...', 'info');
+        
+        // Проверяем, есть ли данные для сохранения
+        const hasData = Object.keys(S.coll).length > 0 || Object.keys(S.setColl).length > 0 || Object.keys(S.minifigColl).length > 0;
+        if (!hasData) {
+            console.warn('⚠️ No collection data found! Checking localStorage directly...');
+            const directColl = localStorage.getItem('legoCollection');
+            const directSetColl = localStorage.getItem('legoSetCollection');
+            const directMinifigColl = localStorage.getItem('legoMinifigCollection');
+            console.log('📦 Direct localStorage check:');
+            console.log('  - legoCollection:', directColl ? JSON.parse(directColl) : 'empty');
+            console.log('  - legoSetCollection:', directSetColl ? JSON.parse(directSetColl) : 'empty');
+            console.log('  - legoMinifigCollection:', directMinifigColl ? JSON.parse(directMinifigColl) : 'empty');
+        }
         
         // Собираем данные для сохранения - коллекция, избранные категории и темы
         const backupData = {
@@ -4521,6 +4546,13 @@ async function saveToCloud() {
                 minifigColl: S.minifigColl || {}
             }
         };
+        
+        console.log('💾 Backup data prepared:', {
+            partsCount: Object.keys(backupData.collection.parts).length,
+            setsCount: Object.keys(backupData.collection.sets).length,
+            minifigsCount: Object.keys(backupData.collection.minifigs).length,
+            dataSize: JSON.stringify(backupData).length
+        });
         
         // Проверяем подключение к облачному хранилищу
         if (window.remoteStorageAvailable && cloudStorageClient) {
@@ -4549,9 +4581,7 @@ async function saveToCloud() {
                 updateCloudStorageStatus(message, 'success');
                 
                 // Обновляем список версий после сохранения
-                setTimeout(() => {
-                    loadBackupsList(true); // Принудительное обновление
-                }, 500);
+                debouncedLoadBackupsList(true, 500); // Принудительное обновление
                 
             } catch (cloudError) {
                 console.error('❌ Cloud save failed:', cloudError);
@@ -4582,6 +4612,9 @@ async function saveToCloud() {
         
         // Fallback: сохраняем как JSON файл
         try {
+            // Загружаем актуальные данные из localStorage перед fallback сохранением
+            loadState();
+            
             const backupData = {
                 timestamp: new Date().toISOString(),
                 version: "1.0",
@@ -4940,6 +4973,14 @@ async function checkBackupFreshness() {
             return false;
         }
         
+        // Проверяем кэш - не проверяем слишком часто
+        const now = Date.now();
+        if (now - lastBackupFreshnessCheck < BACKUP_FRESHNESS_CHECK_INTERVAL) {
+            console.log('📝 Backup freshness check too recent, skipping...');
+            return false;
+        }
+        
+        lastBackupFreshnessCheck = now;
         console.log('🔄 Checking backup freshness...');
         
         // Создаем клиент для работы с данными
@@ -5000,15 +5041,10 @@ async function checkBackupFreshness() {
         const cloudTimestamp = backupData.timestamp;
         const isCloudNewer = !localTimestamp || new Date(cloudTimestamp) > new Date(localTimestamp);
         
-        console.log('🔄 Backup freshness check:', {
-            local: localTimestamp,
-            cloud: cloudTimestamp,
-            isCloudNewer: isCloudNewer
-        });
+        // Отладочная информация удалена для улучшения производительности
         
         // Если облачная копия новее, обновляем локальный кэш
         if (isCloudNewer) {
-            console.log('🔄 Cloud backup is newer, updating local cache');
             const cacheData = {
                 data: backupData,
                 timestamp: cloudTimestamp
@@ -5056,10 +5092,6 @@ function updateCloudBackupInfo() {
                     timeText = 'только что';
                 }
                 
-                // Получаем статистику коллекции
-                const counts = getCollectionCounts();
-                const totalItems = counts.totalParts + counts.totalSets + counts.totalMinifigs;
-                
                 // Форматируем дату
                 const formattedDate = date.toLocaleDateString('ru-RU', {
                     day: '2-digit',
@@ -5081,15 +5113,10 @@ function updateCloudBackupInfo() {
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center mb-0.5 sm:mb-1">
                                         <span class="text-xs sm:text-sm font-semibold text-gray-200 truncate">Последняя резервная копия</span>
-                                        <span class="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-cyan-600 to-cyan-500 text-white rounded-full shadow-lg flex-shrink-0">${totalItems}</span>
                                     </div>
                                     <div class="flex items-center text-xs text-gray-400 mb-0.5 sm:mb-1">
                                         <span class="mr-1 sm:mr-1.5 p-0.5 bg-gray-600/50 rounded flex-shrink-0">${I_Calendar("w-3 h-3")}</span>
                                         <span class="font-medium truncate text-xs">${formattedDate}, ${formattedTime}</span>
-                                    </div>
-                                    <div class="flex items-center text-xs text-gray-500">
-                                        <span class="mr-1 sm:mr-1.5 p-0.5 bg-green-500/20 rounded flex-shrink-0">${I_FileText("w-3 h-3")}</span>
-                                        <span class="truncate text-xs">${counts.totalParts} деталей, ${counts.totalSets} наборов, ${counts.totalMinifigs} фигурок</span>
                                     </div>
                                 </div>
                             </div>
@@ -5111,7 +5138,6 @@ function updateCloudBackupInfo() {
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center mb-0.5 sm:mb-1">
                                 <span class="text-xs sm:text-sm font-semibold text-gray-200 truncate">Резервная копия</span>
-                                <span class="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-gray-600 to-gray-500 text-white rounded-full shadow-lg flex-shrink-0">—</span>
                             </div>
                             <div class="flex items-center text-xs text-gray-400 mb-0.5 sm:mb-1">
                                 <span class="mr-1 sm:mr-1.5 p-0.5 bg-gray-600/50 rounded flex-shrink-0">${I_Calendar("w-3 h-3")}</span>
@@ -5263,9 +5289,7 @@ async function checkSavedCloudStorageState() {
             updateCloudBackupInfo();
             
             // Проверяем актуальность резервной копии
-            setTimeout(() => {
-                checkBackupFreshness();
-            }, 500);
+            debouncedCheckBackupFreshness(500);
             
             return true;
         } else {
@@ -5304,14 +5328,10 @@ function setupRemoteStorageEventHandlers() {
         updateCloudBackupInfo();
         
         // Проверяем актуальность резервной копии
-        setTimeout(() => {
-            checkBackupFreshness();
-        }, 500);
+        debouncedCheckBackupFreshness(500);
         
         // Загружаем список версий при готовности
-        setTimeout(() => {
-            loadBackupsList(true);
-        }, 1000);
+        debouncedLoadBackupsList(true, 1000);
     });
     
     cloudStorageClient.on('connected', () => {
@@ -5339,9 +5359,7 @@ function setupRemoteStorageEventHandlers() {
         updateCloudStorageUI();
         
         // Загружаем список версий при подключении
-        setTimeout(() => {
-            loadBackupsList(true);
-        }, 1000);
+        debouncedLoadBackupsList(true, 1000);
     });
     
     cloudStorageClient.on('disconnected', () => {
@@ -5385,13 +5403,50 @@ function setupRemoteStorageEventHandlers() {
 // Кэш для списка версий
 let backupsListCache = null;
 let backupsListCacheTime = 0;
-const BACKUPS_CACHE_DURATION = 10000; // 10 секунд
+const BACKUPS_CACHE_DURATION = 30000; // 30 секунд (увеличено с 10)
+
+// Защита от множественных одновременных вызовов
+let isLoadingBackupsList = false;
+let loadBackupsListTimeout = null;
+
+// Кэш для checkBackupFreshness
+let lastBackupFreshnessCheck = 0;
+const BACKUP_FRESHNESS_CHECK_INTERVAL = 30000; // 30 секунд
+let checkBackupFreshnessTimeout = null;
+
+// Debounce функция для loadBackupsList
+function debouncedLoadBackupsList(forceRefresh = false, delay = 500) {
+    if (loadBackupsListTimeout) {
+        clearTimeout(loadBackupsListTimeout);
+    }
+    
+    loadBackupsListTimeout = setTimeout(() => {
+        loadBackupsList(forceRefresh);
+    }, delay);
+}
+
+// Debounce функция для checkBackupFreshness
+function debouncedCheckBackupFreshness(delay = 1000) {
+    if (checkBackupFreshnessTimeout) {
+        clearTimeout(checkBackupFreshnessTimeout);
+    }
+    
+    checkBackupFreshnessTimeout = setTimeout(() => {
+        checkBackupFreshness();
+    }, delay);
+}
 
 // Функция для загрузки списка версий резервных копий
 async function loadBackupsList(forceRefresh = false) {
     try {
         const backupsList = document.getElementById('backups-list');
         if (!backupsList) return;
+
+        // Защита от множественных одновременных вызовов
+        if (isLoadingBackupsList) {
+            console.log('🔄 loadBackupsList already in progress, skipping...');
+            return;
+        }
 
         if (!cloudStorageConnected || !cloudStorageClient) {
             console.log('⚠️ Cloud storage not connected');
@@ -5413,6 +5468,9 @@ async function loadBackupsList(forceRefresh = false) {
             backupsList.innerHTML = backupsListCache;
             return;
         }
+
+        // Устанавливаем флаг загрузки
+        isLoadingBackupsList = true;
 
         // Показываем индикатор загрузки только если список пустой или содержит только индикатор
         const currentContent = backupsList.innerHTML.trim();
@@ -5469,14 +5527,7 @@ async function loadBackupsList(forceRefresh = false) {
                 const backupData = await client.getFile(file.key);
                 let elementCounts = { parts: 0, sets: 0, minifigs: 0 };
                 
-                // Отладочная информация о загруженных данных
-                console.log(`📥 Raw backup data for ${file.key}:`, {
-                    type: typeof backupData,
-                    isString: typeof backupData === 'string',
-                    isObject: typeof backupData === 'object',
-                    hasData: backupData && typeof backupData === 'object' && backupData.data,
-                    length: typeof backupData === 'string' ? backupData.length : 'N/A'
-                });
+                // Отладочная информация удалена для улучшения производительности
                 
                 if (backupData) {
                     // Парсим данные - remoteStorage.js может возвращать данные в разных форматах
@@ -5490,27 +5541,7 @@ async function loadBackupsList(forceRefresh = false) {
                         data = backupData;
                     }
                     
-                    // Отладочная информация
-                    console.log(`🔍 Backup data structure for ${file.key}:`, {
-                        hasColl: !!data.coll,
-                        hasSetColl: !!data.setColl,
-                        hasMinifigColl: !!data.minifigColl,
-                        hasCollection: !!data.collection,
-                        hasLocalStorage: !!data.localStorage,
-                        collKeys: data.coll ? Object.keys(data.coll).length : 0,
-                        setCollKeys: data.setColl ? Object.keys(data.setColl).length : 0,
-                        minifigCollKeys: data.minifigColl ? Object.keys(data.minifigColl).length : 0,
-                        collectionPartsKeys: data.collection?.parts ? Object.keys(data.collection.parts).length : 0,
-                        collectionSetsKeys: data.collection?.sets ? Object.keys(data.collection.sets).length : 0,
-                        collectionMinifigsKeys: data.collection?.minifigs ? Object.keys(data.collection.minifigs).length : 0,
-                        localStorageCollKeys: data.localStorage?.coll ? Object.keys(data.localStorage.coll).length : 0,
-                        localStorageSetCollKeys: data.localStorage?.setColl ? Object.keys(data.localStorage.setColl).length : 0,
-                        localStorageMinifigCollKeys: data.localStorage?.minifigColl ? Object.keys(data.localStorage.minifigColl).length : 0,
-                        dataKeys: Object.keys(data)
-                    });
-                    
-                    // Дополнительная отладочная информация - полная структура данных
-                    console.log(`📊 Full backup data for ${file.key}:`, data);
+                    // Отладочная информация удалена для улучшения производительности
                     
                     // Подсчитываем элементы из правильной структуры данных (как в системном сообщении)
                     if (data.collection && data.collection.parts) {
@@ -5527,8 +5558,7 @@ async function loadBackupsList(forceRefresh = false) {
                         elementCounts.minifigs = Object.values(data.collection.minifigs).reduce((sum, minifig) => sum + minifig.qty, 0);
                     }
                     
-                    // Отладочная информация о подсчитанных элементах
-                    console.log(`🔢 Element counts for ${file.key}:`, elementCounts);
+                    // Отладочная информация удалена для улучшения производительности
                 }
                 
                 return { ...file, elementCounts, index };
@@ -5608,6 +5638,75 @@ async function loadBackupsList(forceRefresh = false) {
             `;
         }).join('');
 
+        // Обновляем HTML содержимое списка резервных копий
+        backupsList.innerHTML = backupFilesWithInfo.map((file, index) => {
+            const dateStr = file.date.toLocaleString('ru-RU', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            
+            const totalElements = file.elementCounts.parts + file.elementCounts.sets + file.elementCounts.minifigs;
+            const isLatest = index === 0;
+            
+            let elementsInfo = '';
+            if (file.elementCounts.parts > 0) elementsInfo += `${file.elementCounts.parts} дет.`;
+            if (file.elementCounts.sets > 0) elementsInfo += (elementsInfo ? ', ' : '') + `${file.elementCounts.sets} наб.`;
+            if (file.elementCounts.minifigs > 0) elementsInfo += (elementsInfo ? ', ' : '') + `${file.elementCounts.minifigs} мин.`;
+            if (!elementsInfo) elementsInfo = 'Пустая копия';
+            
+            const indicatorColor = totalElements > 0 ? 'bg-green-500/20' : 'bg-gray-500/20';
+            
+            return `
+                <div class="group bg-gradient-to-r from-gray-800/40 to-gray-900/40 hover:from-gray-700/50 hover:to-gray-800/50 rounded-lg sm:rounded-xl border border-gray-600/30 hover:border-gray-500/50 transition-all duration-200 p-2 sm:p-3 shadow-lg hover:shadow-xl">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center min-w-0 flex-1">
+                            <div class="p-1 sm:p-1.5 bg-cyan-500/20 rounded-lg mr-2 sm:mr-3 flex-shrink-0">
+                                <span class="text-cyan-400">${I_FileText('w-3 h-3 sm:w-4 sm:h-4')}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center mb-0.5 sm:mb-1">
+                                    <span class="text-xs sm:text-sm font-semibold text-gray-200 truncate">Версия ${backupFiles.length - index}</span>
+                                    ${totalElements > 0 ? `<span class="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-cyan-600 to-cyan-500 text-white rounded-full shadow-lg flex-shrink-0">${totalElements}</span>` : ''}
+                                    ${isLatest ? '<span class="ml-1 sm:ml-2 px-1.5 sm:px-2 py-0.5 text-xs font-bold bg-gradient-to-r from-green-600 to-green-500 text-white rounded-full shadow-lg flex-shrink-0">Последняя</span>' : ''}
+                                </div>
+                                <div class="flex items-center text-xs text-gray-400 mb-0.5 sm:mb-1">
+                                    <span class="mr-1 sm:mr-1.5 p-0.5 bg-gray-600/50 rounded flex-shrink-0">${I_Calendar('w-3 h-3')}</span>
+                                    <span class="font-medium truncate text-xs">${dateStr}</span>
+                                </div>
+                                <div class="flex items-center text-xs text-gray-500">
+                                    <span class="mr-1 sm:mr-1.5 p-0.5 ${indicatorColor} rounded flex-shrink-0">${I_Archive('w-3 h-3')}</span>
+                                    <span class="truncate text-xs">${elementsInfo}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-1 sm:space-x-1.5 ml-1 sm:ml-2 flex-shrink-0">
+                            <button 
+                                class="load-backup-btn flex items-center px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold rounded-md sm:rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg hover:shadow-purple-500/25 transform hover:scale-105"
+                                data-key="${file.key}"
+                            >
+                                <span class="mr-0.5 sm:mr-1">${I_CloudDownload('w-3 h-3')}</span>
+                                <span class="hidden sm:inline">Загрузить</span>
+                                <span class="sm:hidden">↓</span>
+                            </button>
+                            <button 
+                                class="delete-backup-btn flex items-center px-1.5 sm:px-2.5 py-1 sm:py-1.5 text-xs font-semibold rounded-md sm:rounded-lg transition-all duration-200 ${isLatest ? 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 shadow-orange-500/25' : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 shadow-red-500/25'} text-white shadow-lg hover:shadow-lg transform hover:scale-105"
+                                data-key="${file.key}"
+                                data-is-latest="${isLatest}"
+                                title="${isLatest ? 'Удалить последнюю версию (требует подтверждения)' : 'Удалить эту версию'}"
+                            >
+                                <span class="mr-0.5 sm:mr-1">${I_Trash('w-3 h-3')}</span>
+                                <span class="hidden sm:inline">Удалить</span>
+                                <span class="sm:hidden">×</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
         // Сохраняем в кэш (только если загрузка прошла успешно)
         if (backupFilesWithInfo.length > 0) {
             backupsListCache = backupsList.innerHTML;
@@ -5631,21 +5730,19 @@ async function loadBackupsList(forceRefresh = false) {
                 </div>
             `;
         }
+    } finally {
+        // Сбрасываем флаг загрузки
+        isLoadingBackupsList = false;
     }
 }
 
 // Функция для добавления обработчиков кнопок версий
 function addBackupButtonsHandlers() {
-    console.log('🔧 Adding backup button handlers...');
-    
     // Используем делегирование событий для надежной работы
     const backupsList = document.getElementById('backups-list');
     if (!backupsList) {
-        console.log('❌ backups-list element not found');
         return;
     }
-
-    console.log('✅ backups-list element found');
 
     // Удаляем старые обработчики
     backupsList.removeEventListener('click', handleBackupButtonClick);
@@ -5656,24 +5753,18 @@ function addBackupButtonsHandlers() {
     // Добавляем обработчик для кнопки обновления
     const refreshBtn = document.getElementById('refresh-backups');
     if (refreshBtn) {
-        console.log('✅ Refresh button found, adding handler');
         // Удаляем старый обработчик
         refreshBtn.removeEventListener('click', handleRefreshClick);
         // Добавляем новый обработчик
         refreshBtn.addEventListener('click', handleRefreshClick);
-    } else {
-        console.log('❌ Refresh button not found');
     }
-    
-    console.log('✅ Event handlers added successfully');
 }
 
 // Обработчик для кнопки обновления
 function handleRefreshClick(e) {
-    console.log('🔄 Refresh button clicked');
     e.preventDefault();
     e.stopPropagation();
-    loadBackupsList(true); // Принудительное обновление
+    debouncedLoadBackupsList(true, 100); // Принудительное обновление с минимальной задержкой
 }
 
 // Обработчик для всех кнопок в списке версий
@@ -5834,9 +5925,7 @@ async function loadSpecificBackup(key) {
         updateCloudStorageStatus(message, 'success');
         
         // Обновляем список версий
-        setTimeout(() => {
-            loadBackupsList(true); // Принудительное обновление
-        }, 1000);
+        debouncedLoadBackupsList(true, 1000); // Принудительное обновление
 
     } catch (error) {
         console.error('❌ Error loading specific backup:', error);
@@ -5863,9 +5952,7 @@ async function deleteBackup(key) {
         updateCloudStorageStatus('Версия удалена', 'success');
         
         // Обновляем список версий
-        setTimeout(() => {
-            loadBackupsList(true); // Принудительное обновление
-        }, 500);
+        debouncedLoadBackupsList(true, 500); // Принудительное обновление
 
     } catch (error) {
         console.error('❌ Error deleting backup:', error);
@@ -6021,17 +6108,23 @@ function loadState() {
     // Сбрасываем случайное изображение минифигурки при загрузке состояния
     resetRandomMinifigImage();
     
+    console.log('🔄 Loading state from localStorage...');
+    
     const e = localStorage.getItem('legoCollection');
+    console.log('📦 legoCollection in localStorage:', e ? 'exists' : 'missing', e ? `(${e.length} chars)` : '');
     if (e) try {
         const t = JSON.parse(e);
         "object" == typeof t && null !== t && (S.coll = t)
+        console.log('✅ Loaded parts collection:', Object.keys(S.coll).length, 'items');
     } catch (t) {
         console.error("Failed to parse lego collection from localStorage", t), S.coll = {}
     }
     const t = localStorage.getItem('legoSetCollection');
+    console.log('📦 legoSetCollection in localStorage:', t ? 'exists' : 'missing', t ? `(${t.length} chars)` : '');
     if (t) try {
         const e = JSON.parse(t);
         "object" == typeof e && null !== e && (S.setColl = e)
+        console.log('✅ Loaded sets collection:', Object.keys(S.setColl).length, 'items');
     } catch (e) {
         console.error("Failed to parse lego set collection from localStorage", e), S.setColl = {}
     }
@@ -6041,9 +6134,11 @@ function loadState() {
     console.log('User collections and favorites loaded from localStorage');
     
     const o = localStorage.getItem('legoMinifigCollection');
+    console.log('📦 legoMinifigCollection in localStorage:', o ? 'exists' : 'missing', o ? `(${o.length} chars)` : '');
     if (o) try {
         const e = JSON.parse(o);
         "object" == typeof e && null !== e && (S.minifigColl = e)
+        console.log('✅ Loaded minifigs collection:', Object.keys(S.minifigColl).length, 'items');
     } catch (e) {
         console.error("Failed to parse lego minifig collection from localStorage", e), S.minifigColl = {}
     }
@@ -9974,225 +10069,7 @@ function setupLongPressHandlers() {
     });
 }
 
-async function handleFeelingLucky(type = null) {
-    // Если тип не передан, используем текущий subView
-    const targetType = type || S.subView;
-    console.log('🎲 handleFeelingLucky called, targetType:', targetType, 'current subView:', S.subView, 'loading:', S.loading);
-    
-    // Анимация кнопки
-    const button = document.getElementById('feeling-lucky-button');
-    const icon = document.getElementById('feeling-lucky-icon');
-    const text = document.getElementById('feeling-lucky-text');
-    
-    if (button && icon && text) {
-        button.disabled = true;
-        button.classList.add('opacity-75', 'cursor-not-allowed');
-        icon.innerHTML = '<div class="loader !w-6 !h-6 !border-2"></div>';
-        text.textContent = 'Ищем сокровище...';
-    }
-    
-    console.log('🔄 Setting loading state and calling updateUI');
-    S.loading = !0, S.err = null, S.gridStale = !0, updateUI();
-    try {
-                if ("parts" === targetType) {
-            // Небольшая задержка для лучшего UX
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
-            // Показываем случайную деталь из всей библиотеки (каталога)
-            const hasCats = Array.isArray(flatCategories) && flatCategories.length > 0;
-            let pool = [];
-            if (hasCats) {
-                const tries = Math.min(10, flatCategories.length);
-                for (let i = 0; i < tries && pool.length === 0; i++) {
-                    const randomCat = flatCategories[Math.floor(Math.random() * flatCategories.length)];
-                    pool = Object.values(PART_MAP).filter(p => p && p.categoryId === randomCat.id && p.name);
-                }
-            }
-            if (pool.length === 0) {
-                pool = Object.values(PART_MAP).filter(p => p && p.name);
-            }
-            if (pool.length === 0) throw new Error("Детали еще не загружены.");
-            
-            const randomPart = pool[Math.floor(Math.random() * pool.length)];
-            const partId = randomPart.id || randomPart.part_num;
-            if (!partId) throw new Error("Некорректные данные детали.");
-            
-            const groupId = getGroupId(partId);
-            let variants = Object.values(PART_MAP).filter(v => 
-                v && (v.id || v.part_num) && getGroupId(v.id || v.part_num) === groupId
-            );
-            if (typeof partCmp === 'function') variants = variants.sort(partCmp);
-            
-            openModalForPart(partId, groupId, variants.length ? variants : [randomPart]);
-            
-        } else if ("sets" === targetType) {
-            // Небольшая задержка для лучшего UX
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
-            // Показываем случайный набор из всей библиотеки (каталога)
-            let setPool = Object.values(SET_MAP).filter(s => s && s.name);
-            if (setPool.length === 0) throw new Error("Наборы еще не загружены.");
-            
-            // Пытаемся найти наборы с определенной темой для разнообразия
-            const themeIds = Object.keys(THEME_MAP || {});
-            if (themeIds.length > 0) {
-                const tries = Math.min(5, themeIds.length);
-                for (let i = 0; i < tries; i++) {
-                    const themeId = parseInt(themeIds[Math.floor(Math.random() * themeIds.length)], 10);
-                    const themed = setPool.filter(s => s && s.theme_id === themeId);
-                    if (themed.length > 0) { 
-                        setPool = themed; 
-                        break; 
-                    }
-                }
-            }
-            
-            const randomSet = setPool[Math.floor(Math.random() * setPool.length)];
-            if (!randomSet || !randomSet.set_num) throw new Error("Некорректные данные набора.");
-            
-            SET_MAP[randomSet.set_num] = randomSet;
-            
-            openModalForSet(randomSet.set_num);
-            S.loading = !1;
-            return void updateUI();
-            
-        } else {
-            // Небольшая задержка для лучшего UX
-            await new Promise(resolve => setTimeout(resolve, 800));
-            
-            // Показываем случайную минифигурку из всей библиотеки (каталога)
-            let figs = Object.values(MINIFIG_MAP).filter(f => f && f.name);
-            if (figs.length === 0) throw new Error("Минифигурки еще не загружены.");
-            
-            const randomFig = figs[Math.floor(Math.random() * figs.length)];
-            MINIFIG_MAP[randomFig.set_num] = randomFig;
-            
-            openModalForMinifig(randomFig.set_num);
-        }
-    } catch (e) {
-        console.error("Feeling lucky failed:", e);
-        S.err = `Не удалось совершить чудо: ${e.message}`;
-    } finally {
-        S.loading = !1;
-        updateUI();
-        
-        // Восстанавливаем кнопку
-        const button = document.getElementById('feeling-lucky-button');
-        const icon = document.getElementById('feeling-lucky-icon');
-        const text = document.getElementById('feeling-lucky-text');
-        
-        if (button && icon && text) {
-            button.disabled = false;
-            button.classList.remove('opacity-75', 'cursor-not-allowed');
-            icon.innerHTML = I_Dice("w-6 h-6");
-            text.textContent = 'Мне повезёт!';
-        }
-        
-        // Обновляем подсказку при каждом клике с анимацией
-        const tipElement = document.getElementById('feeling-lucky-tip');
-        if (tipElement && window.getRandomTip && window.animateTipChange) {
-            const newTip = window.getRandomTip();
-            window.animateTipChange(tipElement, newTip, () => {
-                // Добавляем подсказку в историю после анимации
-                if (window.addTipToHistory) {
-                    window.addTipToHistory(newTip, 'feelingLucky');
-                }
-            });
-        }
-        
-        // Перезапускаем автоматическую смену подсказок при каждом клике
-        // ОТКЛЮЧЕНО: конфликт с системой неактивности
-        // setTimeout(() => {
-        //     if (window.startTipRotation) {
-        //         console.log('Restarting tip rotation after feeling lucky click');
-        //         window.startTipRotation();
-        //     }
-        // }, 500);
-    }
-}
 
-// Функция для обновления статистики кнопки "Мне повезёт"
-function updateFeelingLuckyStats() {
-    console.log('🔍 updateFeelingLuckyStats called, subView:', S.subView, 'loading:', S.loading);
-    
-    // Защита от циклических вызовов
-    if (window.updatingFeelingLuckyStats) {
-        console.log('⚠️ updateFeelingLuckyStats already running, skipping');
-        return;
-    }
-    
-    window.updatingFeelingLuckyStats = true;
-    
-    const statsElement = document.getElementById('feeling-lucky-stats');
-    const tipElement = document.getElementById('feeling-lucky-tip');
-    
-    if (!statsElement) {
-        console.log('❌ statsElement not found');
-        window.updatingFeelingLuckyStats = false;
-        return;
-    }
-    
-    try {
-        let stats = '';
-        if (S.subView === 'parts') {
-            const totalParts = Object.values(PART_MAP).filter(p => p && p.name).length;
-            stats = `🎲 ${totalParts.toLocaleString()} деталей в каталоге`;
-        } else if (S.subView === 'sets') {
-            const totalSets = Object.values(SET_MAP).filter(s => s && s.name).length;
-            stats = `🎲 ${totalSets.toLocaleString()} наборов в каталоге`;
-        } else {
-            const totalMinifigs = Object.values(MINIFIG_MAP).filter(f => f && f.name).length;
-            stats = `🎲 ${totalMinifigs.toLocaleString()} минифигурок в каталоге`;
-        }
-        
-        statsElement.textContent = stats;
-        
-        // Обновляем подсказку с анимацией
-        if (tipElement && window.getRandomTip && window.animateTipChange) {
-            const newTip = window.getRandomTip();
-            // Если это первая подсказка, показываем её без анимации исчезновения
-            if (!tipElement.textContent || tipElement.textContent === '💡 Загружаем подсказку...') {
-                tipElement.textContent = newTip;
-                tipElement.classList.add('fade-in', 'show');
-                setTimeout(() => {
-                    tipElement.classList.remove('fade-in', 'show');
-                }, 600);
-                // Добавляем первую подсказку в историю
-                if (window.addTipToHistory) {
-                    window.addTipToHistory(newTip, 'feelingLucky');
-                }
-            } else {
-                window.animateTipChange(tipElement, newTip, () => {
-                    // Добавляем подсказку в историю после анимации
-                    if (window.addTipToHistory) {
-                        window.addTipToHistory(newTip, 'feelingLucky');
-                    }
-                });
-            }
-        }
-        
-        // Запускаем автоматическую смену подсказок, если еще не запущена
-        // ОТКЛЮЧЕНО: конфликт с системой неактивности
-        // if (window.startTipRotation && !window.tipRotationInterval) {
-        //     console.log('🚀 Starting tip rotation from updateFeelingLuckyStats');
-        //     window.startTipRotation();
-        // } else if (window.startTipRotation && window.tipRotationInterval) {
-        //     console.log('⚠️ Tip rotation already running, interval ID:', window.tipRotationInterval);
-        //     // НЕ перезапускаем ротацию - это создает бесконечный цикл!
-        // } else {
-        //     console.log('❌ startTipRotation function not available');
-        // }
-    } catch (e) {
-        console.error('💥 Error in updateFeelingLuckyStats:', e);
-        statsElement.textContent = 'Статистика недоступна';
-        if (tipElement) {
-            tipElement.textContent = '💡 Подсказка недоступна';
-        }
-    } finally {
-        // Сбрасываем флаг в любом случае
-        window.updatingFeelingLuckyStats = false;
-    }
-}
 
 
 
@@ -11577,8 +11454,6 @@ function renderCollectionFolderCard(part, colors) {
 }
 
 function renderMainContent() {
-    console.log('🎨 renderMainContent function called');
-    
     // Проверяем глобальный флаг блокировки
     if (window.UI_BLOCKED) {
         console.log('🚫 renderMainContent blocked by global flag');
@@ -11607,54 +11482,21 @@ function renderMainContent() {
     
     let e = "";
     
-    console.log('🎨 renderMainContent called:', {
-        view: S.view,
-        subView: S.subView,
-        loading: S.loading,
-        error: S.err,
-        toDisplay: S.toDisplay,
-        hasMoreItems: S.hasMoreItems,
-        S_q: S.q,
-        S_searchGroups: S.searchGroups,
-        S_catGroups: S.catGroups,
-        window_searchStateReset: window.searchStateReset,
-        stack: new Error().stack?.split('\n').slice(1, 4).join('\n')
-    });
-    
-    // Дополнительная отладка для понимания состояния
-    console.log('🔍 Detailed state check:');
-    console.log('  - S.q:', JSON.stringify(S.q));
-    console.log('  - S.searchGroups:', S.searchGroups);
-    console.log('  - S.catGroups:', S.catGroups);
-    console.log('  - window.searchStateReset:', window.searchStateReset);
-    console.log('  - S.selCatId:', S.selCatId);
-    console.log('  - S.selThemeId:', S.selThemeId);
+    // Отладочные логи удалены для уменьшения шума в консоли
     
     // Отладка для дашборда
     
     if (S.view === 'tools' && S.toolSubView === 'analytics' && S.analyticsSubView === 'dashboard') {
     }
     
-    console.log('🔍 Checking conditions:');
-    console.log('  - S.loading:', S.loading);
-    console.log('  - S.err:', S.err);
-    console.log('  - S.view === "catalog":', S.view === 'catalog');
     
     if (S.loading) {
-        console.log('🔍 Path: Loading state');
         e = '<div class="flex flex-col items-center justify-center h-full p-8 text-center"><div class="loader"></div><p class="mt-4 text-gray-400">Загрузка...</p></div>';
     } else if (S.err) {
-        console.log('🔍 Path: Error state');
         e = `<div class="flex flex-col items-center justify-center h-full p-8 text-center text-red-400"><p class="font-semibold">Произошла ошибка</p><p class="text-sm mt-2">${S.err}</p></div>`;
     } else if ("catalog" === S.view) {
-        console.log('🔍 Path: Catalog view');
         // Проверяем, нужно ли показать универсальные результаты поиска
-        console.log('🔍 Checking universal search:');
-        console.log('  - S.showUniversalSearch:', S.showUniversalSearch);
-        console.log('  - S.universalSearchResults:', S.universalSearchResults);
-        
         if (S.showUniversalSearch && S.universalSearchResults) {
-            console.log('🔍 Path: Universal search results');
             // Устанавливаем значения для правильного расчета прогресса прокрутки
             const { parts, sets, minifigs } = S.universalSearchResults;
             const totalResults = parts.length + sets.length + minifigs.length;
@@ -11662,12 +11504,9 @@ function renderMainContent() {
             S.loadedItems = totalResults; // Все результаты поиска загружены сразу
             e = renderUniversalSearchResults(S.universalSearchResults, S.universalSearchTerm);
         } else {
-            console.log('🔍 Path: Regular catalog content');
             let t, o, l, a = "sets-minifigs-grid";
-            console.log('🔍 Checking subview:', S.subView);
             
             if ("parts" === S.subView) {
-                console.log('🔍 Path: Parts subview');
                 let i = {};
                 l = "Выберите категорию, чтобы увидеть детали, или воспользуйтесь поиском";
             
@@ -11722,40 +11561,26 @@ function renderMainContent() {
                 console.log('✅ Search results sorted by popularity, most used first');
             }
             
-            console.log('🔍 Content determination logic:');
-            console.log('  - S.filters.colorIds?.length > 1:', S.filters.colorIds?.length > 1);
-            console.log('  - S.searchGroups !== null:', S.searchGroups !== null);
-            console.log('  - S.selCatId !== null:', S.selCatId !== null);
-            console.log('  - S.catGroups && Object.keys(S.catGroups).length > 0:', S.catGroups && Object.keys(S.catGroups).length > 0);
             
             if (S.filters.colorIds?.length > 1) {
-                console.log('🔍 Path: Color filter error');
                 l = 'Фильтрация по нескольким цветам в режиме "Каталог" не поддерживается. Пожалуйста, выберите один цвет или просмотрите свою "Коллекцию"';
             } else if (S.searchGroups !== null) {
-                console.log('🔍 Path: Using search groups for display:', Object.keys(S.searchGroups || {}).length, 'groups');
                 i = S.searchGroups;
                 l = "По вашему запросу ничего не найдено";
             } else if (S.selCatId !== null) {
-                console.log('🔍 Path: Using category data');
                 i = S.catGroups;
                 l = "В этой категории нет деталей";
             } else {
-                console.log('🔍 Path: Default - checking for all parts data');
                 // Если нет ни поиска, ни выбранной категории, используем все детали
                 if (S.catGroups && Object.keys(S.catGroups).length > 0) {
-                    console.log('🔍 Path: Using all parts data:', Object.keys(S.catGroups));
                     i = S.catGroups;
                     l = "Все детали";
-                } else {
-                    console.log('🔍 Path: No data available');
                 }
             }
             
             // Дополнительная проверка: если есть поисковый запрос, но searchGroups не инициализирован
             // НО только если мы не в процессе сброса состояния (проверяем, что не было недавнего сброса)
             if (S.q && S.q.trim() && (!S.searchGroups || Object.keys(S.searchGroups).length === 0) && !window.searchStateReset) {
-                console.log('🔍 Re-initializing search results for parts query:', S.q);
-                console.log('🔍 Current state - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'window.searchStateReset:', window.searchStateReset);
                 const searchResults = Object.values(PART_MAP).filter(part => 
                     part.name && part.name.toLowerCase().includes(S.q.toLowerCase()) ||
                     part.part_num && part.part_num.toLowerCase().includes(S.q.toLowerCase())
@@ -11763,38 +11588,25 @@ function renderMainContent() {
                 S.searchGroups = { 'search': searchResults };
                 i = S.searchGroups;
                 l = searchResults.length > 0 ? `Результаты поиска для "${S.q}" (${searchResults.length})` : "По вашему запросу ничего не найдено";
-                console.log('🔍 Search results re-initialized:', searchResults.length);
             }
             
             // Дополнительная проверка: если есть выбранная категория, но catGroups не инициализирован
             if (S.selCatId && (!S.catGroups || Object.keys(S.catGroups).length === 0)) {
-                console.log('🔧 Re-initializing category data for category ID:', S.selCatId);
                 // Здесь можно добавить логику загрузки деталей по категории
                 // Пока что используем все детали
                 const allParts = Object.values(PART_MAP);
                 S.catGroups = { 'category': allParts };
                 i = S.catGroups;
                 l = `Детали в категории (${allParts.length})`;
-                console.log('🔧 Category data re-initialized:', allParts.length);
             }
             
             let n = Object.values(i).flat();
-            console.log('📊 Parts processing:', {
-                iKeys: Object.keys(i),
-                nLength: n.length,
-                filters: S.filters
-            });
             
             // Дополнительная проверка: если i пустой, используем все детали
             if (n.length === 0 && S.catGroups && Object.keys(S.catGroups).length > 0) {
-                console.log('⚠️ No parts found, falling back to all parts');
                 i = S.catGroups;
                 n = Object.values(i).flat();
                 l = "Все детали";
-                console.log('📊 Parts after fallback:', {
-                    iKeys: Object.keys(i),
-                    nLength: n.length
-                });
             }
             
             // Фильтры для каталога «Все детали»
@@ -11981,18 +11793,6 @@ function renderMainContent() {
                             </div>
                         ` : ''}
                         <p class="text-gray-400 max-w-sm mb-6">${l}</p>
-                                <button id="feeling-lucky-button" class="relative z-10 pointer-events-auto flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 hover:shadow-xl shadow-lg group" title="Случайная деталь/набор из каталога">
-            <span id="feeling-lucky-icon" class="group-hover:rotate-12 transition-transform duration-300">${I_Dice("w-6 h-6")}</span>
-            <span id="feeling-lucky-text">Мне повезёт!</span>
-        </button>
-        <div class="text-center text-sm text-gray-500 mt-2">
-            <span id="feeling-lucky-stats">Загружаем статистику...</span>
-        </div>
-        <div class="text-center text-xs text-blue-400 mt-6 px-8">
-            <div class="tip-container">
-                <span id="feeling-lucky-tip" class="tip-text">💡 Загружаем подсказку...</span>
-            </div>
-        </div>
                     </div>`;
         else {
             // Используем S.toDisplay для ограничения количества отображаемых карточек/групп
@@ -12342,7 +12142,6 @@ function renderMainContent() {
                     collectionUpdated: S.collectionLastUpdate,
                     analyticsUpdated: S.analyticsLastUpdate
                 });
-                console.log('🔍 Calling analyzeCollection from renderMainContent');
                 analyzeCollection();
             }
         } else if (S.toolSubView === 'cloud-backup') {
@@ -12358,9 +12157,7 @@ function renderMainContent() {
             
             // Автоматически загружаем список версий при рендеринге, если подключены
             if (cloudStorageConnected && window.remoteStorageAvailable) {
-                setTimeout(() => {
-                    loadBackupsList(true); // Принудительное обновление при рендеринге
-                }, 300);
+                debouncedLoadBackupsList(true, 300); // Принудительное обновление при рендеринге
             }
         }
         
@@ -12422,8 +12219,13 @@ function renderMainContent() {
     requestAnimationFrame(() => {
         if (!S.loading && S.hasMoreItems && mainEl.scrollHeight <= mainEl.clientHeight) {
             S.toDisplay += S.increment;
-            // Используем updateUI вместо рекурсивного вызова renderMainContent
-            updateUI();
+            // Используем прямой вызов renderMainContent вместо updateUI для избежания зацикливания
+            // Добавляем дополнительную защиту от зацикливания
+            if (!window.renderingMainContent) {
+                renderMainContent();
+            } else {
+                console.log('⚠️ Skipping renderMainContent call to prevent infinite loop');
+            }
         }
         // Обновляем прогресс после автоподгрузки/проверки
         if (typeof window.refreshScrollProgress === 'function') {
@@ -12433,13 +12235,8 @@ function renderMainContent() {
     
     // Убрана автоматическая загрузка изображений для предотвращения постоянных обновлений UI
     
-    // Обновляем статистику кнопки "Мне повезёт" после рендеринга
     // Сбрасываем флаг сразу после завершения рендеринга
     window.renderingMainContent = false;
-    
-    setTimeout(() => {
-        updateFeelingLuckyStats();
-    }, 100);
 }
 // Добавляем слушатель события прокрутки для автоматической загрузки дополнительных элементов
 function setupScrollListener() {
@@ -14211,8 +14008,6 @@ function updateUI() {
         }
     }
     
-    // Обновляем статистику кнопки "Мне повезёт"
-    updateFeelingLuckyStats();
     
     // Настраиваем слушатель событий для поискового ввода (только для обновления S.q, не для автопоиска)
     const searchInput = document.getElementById('search-input');
@@ -17062,8 +16857,6 @@ document.addEventListener("click", async e => {
                 fetchSets();
             }
             
-            // Обновляем статистику после перехода к теме
-            setTimeout(() => updateFeelingLuckyStats(), 500);
         }
         return;
     }
@@ -17148,12 +16941,6 @@ document.addEventListener("click", async e => {
     const o = t.closest('[data-action="view-image-fullscreen"]');
     if (o?.dataset.imageUrl) return openImageViewer(o.dataset.imageUrl);
     
-    // Кнопка "Мне повезёт!"
-    if (t.closest('#feeling-lucky-button')) {
-        e.preventDefault();
-        e.stopPropagation();
-        return handleFeelingLucky();
-    }
     
     
     // Фильтрация по редкости из аналитики
@@ -17595,39 +17382,11 @@ document.addEventListener("click", async e => {
         if ("catalog" === S.view && "minifigs" === e && !S.minifigRes) {
             fetchMinifigs();
             
-            // Восстанавливаем состояние кнопки "Мне повезёт" после загрузки данных в каталоге
-            setTimeout(() => {
-                const button = document.getElementById('feeling-lucky-button');
-                const icon = document.getElementById('feeling-lucky-icon');
-                const text = document.getElementById('feeling-lucky-text');
-                
-                if (button && icon && text) {
-                    button.disabled = false;
-                    button.classList.remove('opacity-75', 'cursor-not-allowed');
-                    icon.innerHTML = I_Dice("w-6 h-6");
-                    text.textContent = 'Мне повезёт!';
-                }
-            }, 500);
         } else if ("minifigs" === e && S.view === "collection" && Object.keys(S.minifigColl).length > 0) {
             fetchMissingCollectionMinifigDetails().then(() => { 
                 S.gridStale = true; 
                 updateUI(); 
-                // Обновляем статистику после загрузки данных
-                setTimeout(() => updateFeelingLuckyStats(), 300);
                 
-                // Восстанавливаем состояние кнопки "Мне повезёт" после загрузки данных
-                setTimeout(() => {
-                    const button = document.getElementById('feeling-lucky-button');
-                    const icon = document.getElementById('feeling-lucky-icon');
-                    const text = document.getElementById('feeling-lucky-text');
-                    
-                    if (button && icon && text) {
-                        button.disabled = false;
-                        button.classList.remove('opacity-75', 'cursor-not-allowed');
-                        icon.innerHTML = I_Dice("w-6 h-6");
-                        text.textContent = 'Мне повезёт!';
-                    }
-                }, 400);
             }).catch(console.error);
         } else {
             updateUI();
@@ -17651,27 +17410,8 @@ document.addEventListener("click", async e => {
             // Настраиваем слушатель прокрутки
             setupScrollListener();
             
-            // Восстанавливаем состояние кнопки "Мне повезёт" при переключении вкладок в каталоге
-            setTimeout(() => {
-                const button = document.getElementById('feeling-lucky-button');
-                const icon = document.getElementById('feeling-lucky-icon');
-                const text = document.getElementById('feeling-lucky-text');
-                
-                if (button && icon && text) {
-                    button.disabled = false;
-                    button.classList.remove('opacity-75', 'cursor-not-allowed');
-                    icon.innerHTML = I_Dice("w-6 h-6");
-                    text.textContent = 'Мне повезёт!';
-                }
-            }, 300);
         }
         
-        // Обновляем статистику кнопки "Мне повезёт" после смены представления
-        setTimeout(() => {
-            console.log('📊 Updating feeling lucky stats after view change');
-            updateFeelingLuckyStats();
-            // НЕ перезапускаем ротацию подсказок - это создает бесконечный цикл!
-        }, 200);
         
         // Настраиваем слушатель прокрутки для автоматической загрузки изображений
         setupScrollListener();
@@ -17696,9 +17436,7 @@ document.addEventListener("click", async e => {
                     // Принудительно обновляем UI при переходе на вкладку
                     updateCloudStorageUI();
                     // Автоматически загружаем список версий при открытии вкладки
-                    setTimeout(() => {
-                        loadBackupsList(true); // Принудительное обновление при открытии вкладки
-                    }, 500);
+                    debouncedLoadBackupsList(true, 500); // Принудительное обновление при открытии вкладки
                 } else {
                     console.log('⚠️ RemoteStorage not available');
                 }
@@ -17826,7 +17564,7 @@ document.addEventListener("click", async e => {
     if (t.closest('#refresh-backups')) {
         e.preventDefault();
         e.stopPropagation();
-        loadBackupsList(true); // Принудительное обновление
+        debouncedLoadBackupsList(true, 100); // Принудительное обновление с минимальной задержкой
         return;
     }
     // Обработка сворачивания/разворачивания сводки коллекции
@@ -17873,8 +17611,6 @@ document.addEventListener("click", async e => {
             }
             S.gridStale = true;
             updateUI();
-            // Обновляем статистику после смены на каталог деталей
-            setTimeout(() => updateFeelingLuckyStats(), 300);
         }
         return;
     }
@@ -19457,8 +19193,6 @@ document.addEventListener("click", async e => {
                     break;
                 case "go-to-category":
                     o && (closeModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "parts", S.selCatId = parseInt(o, 10), S.selFigNum = null, S.showRelatedSets = false, loadPartsForCategory(S.selCatId));
-                    // Обновляем статистику после перехода к категории
-                    setTimeout(() => updateFeelingLuckyStats(), 500);
                     break;
                 case "retry-fetch-colors":
                     S.selPartId && fetchPartColors(S.selPartId)
@@ -19669,12 +19403,6 @@ async function initializeApp() {
         }
     }, 1000);
     
-    // Массив подсказок для кнопки "мне повезёт"
-    window.FEELING_LUCKY_TIPS = [
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы"
-    ];
-    
-    console.log('FEELING_LUCKY_TIPS initialized with', window.FEELING_LUCKY_TIPS.length, 'tips');
     
     // Массив подсказок для экрана загрузки
     window.LOADING_TIPS = [
@@ -19749,30 +19477,30 @@ async function initializeApp() {
     
     // Функция для получения случайной подсказки
     window.getRandomTip = function() {
-        if (!window.FEELING_LUCKY_TIPS || window.FEELING_LUCKY_TIPS.length === 0) {
-            console.error('FEELING_LUCKY_TIPS array is not available');
+        if (!window.LOADING_TIPS || window.LOADING_TIPS.length === 0) {
+            console.error('LOADING_TIPS array is not available');
             return '💡 Подсказка недоступна';
         }
         
         // Получаем текущую подсказку для исключения
-        const currentTip = document.getElementById('feeling-lucky-tip')?.textContent || '';
+        const currentTip = document.getElementById('loading-tip')?.textContent || '';
         
         // Фильтруем подсказки, исключая текущую и последние из истории
-        const availableTips = window.FEELING_LUCKY_TIPS.filter(tip => 
-            tip !== currentTip && !window.LAST_TIPS_HISTORY.feelingLucky.includes(tip)
+        const availableTips = window.LOADING_TIPS.filter(tip => 
+            tip !== currentTip && !window.LAST_TIPS_HISTORY.loading.includes(tip)
         );
         
         if (availableTips.length === 0) {
             // Если все подсказки в истории, очищаем историю и начинаем заново
             console.log('All tips are in history, clearing history');
-            window.LAST_TIPS_HISTORY.feelingLucky = [];
+            window.LAST_TIPS_HISTORY.loading = [];
             
             // Исключаем только текущую подсказку
-            const freshTips = window.FEELING_LUCKY_TIPS.filter(tip => tip !== currentTip);
+            const freshTips = window.LOADING_TIPS.filter(tip => tip !== currentTip);
             if (freshTips.length === 0) {
                 // Если все подсказки одинаковые, возвращаем любую
-                const randomIndex = Math.floor(Math.random() * window.FEELING_LUCKY_TIPS.length);
-                const tip = window.FEELING_LUCKY_TIPS[randomIndex];
+                const randomIndex = Math.floor(Math.random() * window.LOADING_TIPS.length);
+                const tip = window.LOADING_TIPS[randomIndex];
                 console.log(`All tips are the same, selected: index ${randomIndex}, tip: ${tip}`);
                 return tip;
             }
@@ -19901,7 +19629,7 @@ async function initializeApp() {
             return;
         }
         
-        let tipElement = document.getElementById('feeling-lucky-tip');
+        let tipElement = document.getElementById('loading-tip');
         
         // Если элемент не найден, попробуем найти его через несколько секунд
         if (!tipElement) {
@@ -19910,7 +19638,7 @@ async function initializeApp() {
             const maxAttempts = 10;
             
             const waitForElement = setInterval(() => {
-                tipElement = document.getElementById('feeling-lucky-tip');
+                tipElement = document.getElementById('loading-tip');
                 attempts++;
                 
                 if (tipElement) {
@@ -19981,14 +19709,14 @@ async function initializeApp() {
     // Функция для проверки состояния автоматической смены подсказок
     window.checkTipRotationStatus = function() {
         console.log('🔍 Tip rotation status:');
-        console.log('- FEELING_LUCKY_TIPS array length:', window.FEELING_LUCKY_TIPS ? window.FEELING_LUCKY_TIPS.length : 'undefined');
+        console.log('- LOADING_TIPS array length:', window.LOADING_TIPS ? window.LOADING_TIPS.length : 'undefined');
         console.log('- getRandomTip function available:', !!window.getRandomTip);
         console.log('- startTipRotation function available:', !!window.startTipRotation);
         console.log('- stopTipRotation function available:', !!window.stopTipRotation);
         console.log('- Current interval ID:', window.tipRotationInterval);
-        console.log('- Tip element exists:', !!document.getElementById('feeling-lucky-tip'));
+        console.log('- Tip element exists:', !!document.getElementById('loading-tip'));
         
-        const tipElement = document.getElementById('feeling-lucky-tip');
+        const tipElement = document.getElementById('loading-tip');
         if (tipElement) {
             console.log('- Current tip text:', tipElement.textContent);
         }
@@ -20006,9 +19734,6 @@ async function initializeApp() {
         console.log('window.stopTipRotation available:', !!window.stopTipRotation);
         console.log('window.getRandomTip available:', !!window.getRandomTip);
         console.log('window.animateTipChange available:', !!window.animateTipChange);
-        console.log('feeling-lucky-button exists:', !!document.getElementById('feeling-lucky-button'));
-        console.log('feeling-lucky-stats exists:', !!document.getElementById('feeling-lucky-stats'));
-        console.log('feeling-lucky-tip exists:', !!document.getElementById('feeling-lucky-tip'));
         console.log('=== END DEBUG ===');
     };
     
