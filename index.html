@@ -3385,23 +3385,111 @@ let currentApiKeyIndex = 0;
 const PROXY_CONFIG = {
     currentProxyIndex: 0,
     proxies: [
-        // Бесплатные прокси серверы (могут быть нестабильными)
+        // Стабильные CORS прокси серверы (обновлено 2024)
         'https://api.allorigins.win/raw?url=',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://api.codetabs.com/v1/proxy?quest=',
-        'https://thingproxy.freeboard.io/fetch/',
         'https://corsproxy.io/?',
-        // Альтернативные CORS прокси
-        'https://yacdn.org/proxy/',
+        'https://api.codetabs.com/v1/proxy?quest=',
         'https://cors.bridged.cc/',
-        'https://api.allorigins.win/get?url='
+        'https://yacdn.org/proxy/',
+        'https://thingproxy.freeboard.io/fetch/',
+        'https://api.allorigins.win/get?url=',
+        // Резервные прокси
+        'https://cors-anywhere.herokuapp.com/',
+        'https://corsproxy.org/?',
+        'https://api.codetabs.com/v1/proxy?quest='
     ],
-    maxRetries: 2,
-    retryDelay: 1000
+    maxRetries: 3,
+    retryDelay: 1000,
+    // Кэш проверенных прокси
+    testedProxies: new Map(),
+    workingProxies: [],
+    lastProxyTest: 0,
+    proxyTestInterval: 300000 // 5 минут
 };
 
 // Кэш для отслеживания недоступных прокси
 const FAILED_PROXIES = new Set();
+
+// Функция проверки доступности прокси сервера
+async function testProxyAvailability(proxyUrl, timeout = 5000) {
+    const testUrl = 'https://rebrickable.com/api/v3/lego/colors/?page=1&page_size=1';
+    const proxyTestUrl = buildProxyUrl(testUrl, proxyUrl);
+    
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        
+        const response = await fetch(proxyTestUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': `key ${REBRICKABLE_API_KEYS[0]}`
+            },
+            signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (response.ok) {
+            const data = await response.json();
+            return {
+                working: true,
+                responseTime: Date.now() - PROXY_CONFIG.testedProxies.get(proxyUrl)?.startTime || 0,
+                data: data
+            };
+        } else {
+            return { working: false, error: `HTTP ${response.status}` };
+        }
+    } catch (error) {
+        return { 
+            working: false, 
+            error: error.name === 'AbortError' ? 'Timeout' : error.message 
+        };
+    }
+}
+
+// Функция проверки всех прокси серверов
+async function checkAllProxies(showDetails = false) {
+    console.log('🔍 Проверяем доступность прокси серверов...');
+    // updateApiStatus('checking', 'Проверка прокси...', 'blue', showDetails);
+    
+    const testPromises = PROXY_CONFIG.proxies.map(async (proxy, index) => {
+        const startTime = Date.now();
+        PROXY_CONFIG.testedProxies.set(proxy, { startTime, index });
+        
+        const result = await testProxyAvailability(proxy);
+        
+        if (result.working) {
+            console.log(`✅ Прокси ${index + 1} работает: ${proxy} (${result.responseTime}ms)`);
+            return { proxy, index, responseTime: result.responseTime };
+        } else {
+            console.log(`❌ Прокси ${index + 1} недоступен: ${proxy} (${result.error})`);
+            return null;
+        }
+    });
+    
+    const results = await Promise.all(testPromises);
+    const workingProxies = results.filter(result => result !== null);
+    
+    // Сортируем по времени отклика (быстрее = лучше)
+    workingProxies.sort((a, b) => a.responseTime - b.responseTime);
+    
+    PROXY_CONFIG.workingProxies = workingProxies.map(r => r.proxy);
+    PROXY_CONFIG.lastProxyTest = Date.now();
+    
+    console.log(`🎯 Найдено ${workingProxies.length} рабочих прокси из ${PROXY_CONFIG.proxies.length}`);
+    
+    if (workingProxies.length > 0) {
+        console.log(`🏆 Лучший прокси: ${workingProxies[0].proxy} (${workingProxies[0].responseTime}ms)`);
+        // Обновляем индекс на лучший прокси
+        PROXY_CONFIG.currentProxyIndex = workingProxies[0].index;
+        // updateApiStatus('working', `${workingProxies.length} прокси`, 'green', showDetails);
+    } else {
+        console.warn('⚠️ Нет доступных прокси серверов!');
+        // updateApiStatus('error', 'Нет прокси', 'red', showDetails);
+    }
+    
+    return workingProxies.length > 0;
+}
 
 // Кэш для отслеживания заблокированных IP
 const BLOCKED_IP_CACHE = new Set();
@@ -3483,6 +3571,14 @@ function shouldUseProxy() {
 
 // Функции для работы с прокси
 function getNextProxy() {
+    // Если есть проверенные рабочие прокси, используем их
+    if (PROXY_CONFIG.workingProxies.length > 0) {
+        const proxy = PROXY_CONFIG.workingProxies[PROXY_CONFIG.currentProxyIndex % PROXY_CONFIG.workingProxies.length];
+        PROXY_CONFIG.currentProxyIndex = (PROXY_CONFIG.currentProxyIndex + 1) % PROXY_CONFIG.workingProxies.length;
+        return proxy;
+    }
+    
+    // Fallback на старую логику
     const availableProxies = PROXY_CONFIG.proxies.filter((_, index) => !FAILED_PROXIES.has(index));
     if (availableProxies.length === 0) {
         console.warn('Все прокси недоступны, сбрасываем кэш');
@@ -3527,9 +3623,19 @@ function buildProxyUrl(originalUrl, proxyUrl) {
 }
 
 async function fetchWithProxy(url, options = {}, retryCount = 0) {
+    // Проверяем, нужно ли обновить список рабочих прокси
+    const now = Date.now();
+    if (now - PROXY_CONFIG.lastProxyTest > PROXY_CONFIG.proxyTestInterval) {
+        console.log('🔄 Обновляем список рабочих прокси...');
+        checkAllProxies(false).catch(error => {
+            console.warn('⚠️ Ошибка при обновлении прокси:', error);
+        });
+    }
+    
     // Если превышено количество попыток, используем только прямой запрос
     if (retryCount >= PROXY_CONFIG.maxRetries) {
         console.log('Превышено количество попыток, используем прямой запрос:', url);
+        // updateApiStatus('error', 'Прямое подключение', 'red');
         return await fetch(url, options);
     }
 
@@ -3545,6 +3651,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
             // Если запрос успешен, возвращаем результат
             if (directResponse.ok) {
                 console.log('✓ Прямой запрос успешен');
+                // updateApiStatus('working', 'Прямое подключение', 'green', false);
                 return directResponse;
             }
             
@@ -3613,6 +3720,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         }
 
         console.log('✓ Прокси запрос успешен');
+        // updateApiStatus('working', 'Через прокси', 'blue', false);
         return response;
     } catch (error) {
         console.warn(`Ошибка с прокси ${proxy}:`, error.message);
@@ -8626,42 +8734,78 @@ const sidebarEl = document.getElementById('sidebar-container'),
 async function apiFetchPaginated(e) {
     let t = [];
     let o = 1;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
     for (;;) {
         const l = e.includes("?") ? "&" : "?",
             a = `${REBRICKABLE_API_URL}${e}${l}page=${o}&page_size=800`;
         
         console.log(`API call: ${a}`);
         
-        const i = await fetchWithProxy(a, {
-            headers: {
-                Authorization: `key ${getApiKey()}`
+        try {
+            const i = await fetchWithProxy(a, {
+                headers: {
+                    Authorization: `key ${getApiKey()}`
+                }
+            });
+            
+            if (!i.ok) {
+                const errorData = await i.json().catch(() => ({
+                    detail: "Не удалось получить детали ошибки."
+                }));
+                
+                // Обработка различных типов ошибок
+                if (i.status === 429) {
+                    console.warn(`⚠️ Превышен лимит запросов (429), ждем 5 секунд...`);
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    retryCount++;
+                    if (retryCount <= maxRetries) continue;
+                } else if (i.status >= 500) {
+                    console.warn(`⚠️ Ошибка сервера (${i.status}), повторяем через 2 секунды...`);
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                    retryCount++;
+                    if (retryCount <= maxRetries) continue;
+                }
+                
+                throw new Error(`Ошибка API Rebrickable: ${i.status} - ${errorData.detail}`)
             }
-        });
-        if (!i.ok) {
-            const e = await i.json().catch(() => ({
-                detail: "Не удалось получить детали ошибки."
-            }));
-            throw new Error(`Ошибка API Rebrickable: ${i.status} - ${e.detail}`)
+            
+            const n = await i.json();
+            retryCount = 0; // Сбрасываем счетчик при успешном запросе
+            
+            console.log(`API response page ${o}:`, {
+                status: i.status,
+                hasResults: !!n.results,
+                resultsCount: n.results?.length || 0,
+                hasNext: !!n.next,
+                sampleResult: n.results?.[0] ? {
+                    part_num: n.results[0].part_num,
+                    name: n.results[0].name,
+                    has_part_img_url: !!n.results[0].part_img_url,
+                    part_img_url: n.results[0].part_img_url
+                } : null
+            });
+            
+            if (n.results?.length > 0) {
+                t = t.concat(n.results)
+            }
+            if (!n.next) break;
+            o++
+            
+        } catch (error) {
+            console.error(`❌ Ошибка при загрузке страницы ${o}:`, error.message);
+            retryCount++;
+            
+            if (retryCount <= maxRetries) {
+                console.log(`🔄 Повторяем попытку ${retryCount}/${maxRetries} через 3 секунды...`);
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                continue;
+            } else {
+                console.error(`💥 Превышено максимальное количество попыток для страницы ${o}`);
+                throw error;
+            }
         }
-        const n = await i.json();
-        console.log(`API response page ${o}:`, {
-            status: i.status,
-            hasResults: !!n.results,
-            resultsCount: n.results?.length || 0,
-            hasNext: !!n.next,
-            sampleResult: n.results?.[0] ? {
-                part_num: n.results[0].part_num,
-                name: n.results[0].name,
-                has_part_img_url: !!n.results[0].part_img_url,
-                part_img_url: n.results[0].part_img_url
-            } : null
-        });
-        
-        if (n.results?.length > 0) {
-            t = t.concat(n.results)
-        }
-        if (!n.next) break;
-        o++
     }
     return t
 }
@@ -13348,6 +13492,8 @@ function renderSettingsModal() {
                         </button>
                         <div id="settings-stats-panel" class="bg-gray-800/60 border border-gray-700/50 rounded-lg space-y-2 text-sm collapse-panel">
                             <div class="text-green-400 text-xs mb-2">✓ Все данные загружаются из CSV файлов</div>
+                            
+                            
                             ${(() => {
                                 const stats = getLoadingStats();
                                 const lastUpdate = stats.lastApiUpdate ? new Date(stats.lastApiUpdate).toLocaleString('ru-RU') : 'Никогда';
@@ -18647,8 +18793,24 @@ document.addEventListener("click", async e => {
                 const panel = document.getElementById('settings-stats-panel');
                 const chevron = document.getElementById('settings-stats-chevron');
                 if (panel) {
+                    const wasOpen = panel.classList.contains('open');
                     panel.classList.toggle('open');
                     const isOpen = panel.classList.contains('open');
+                    
+                    // Сохраняем состояние панели
+                    localStorage.setItem('settingsStatsOpen', String(isOpen));
+                    
+                    // Автопроверка прокси при разворачивании панели
+                    if (!wasOpen && isOpen) {
+                        console.log('🔍 Статистика загрузки развернута, проверяем прокси...');
+                        setTimeout(() => {
+                            // Проверяем, нужно ли обновить статус прокси
+                            const now = Date.now();
+                            const timeSinceLastTest = now - PROXY_CONFIG.lastProxyTest;
+                            
+                            // Автопроверка прокси убрана
+                        }, 300);
+                    }
                 }
                 if (chevron) {
                     chevron.classList.toggle('rotate-180');
@@ -19390,6 +19552,14 @@ async function initializeApp() {
         const cleanUrl = window.location.origin + window.location.pathname;
         window.history.replaceState({}, document.title, cleanUrl);
     }
+    
+    // Проверяем доступность прокси серверов при запуске
+    console.log('🚀 Инициализация приложения...');
+    
+    const proxyCheckPromise = checkAllProxies(false).catch(error => {
+        console.warn('⚠️ Ошибка при проверке прокси:', error);
+        return false;
+    });
     
     // Проверяем сохраненное состояние облачного хранилища при запуске (БЕЗ автоматического переподключения)
     setTimeout(() => {
@@ -22819,6 +22989,19 @@ function animateCloseButtonClick(button) {
         }
     };
     
+    window.checkProxies = async () => {
+        console.log('🔍 Запускаем проверку всех прокси серверов...');
+        const hasWorkingProxies = await checkAllProxies(false);
+        if (hasWorkingProxies) {
+            console.log('✅ Проверка завершена. Рабочие прокси найдены.');
+        } else {
+            console.warn('⚠️ Проверка завершена. Рабочие прокси не найдены.');
+        }
+        return hasWorkingProxies;
+    };
+    
+    
+    
     window.resetProxyCache = () => {
         FAILED_PROXIES.clear();
         BLOCKED_IP_CACHE.clear();
@@ -22897,12 +23080,18 @@ function animateCloseButtonClick(button) {
     
     window.proxyStatus = () => {
         const timeSinceBlocked = Date.now() - lastBlockedTime;
+        const timeSinceLastTest = Date.now() - PROXY_CONFIG.lastProxyTest;
         console.log('📊 Статус прокси:');
         console.log(`  Принудительно включен: ${forceProxy}`);
         console.log(`  IP заблокирован: ${timeSinceBlocked < 300000 ? 'Да' : 'Нет'}`);
         console.log(`  Время с блокировки: ${Math.round(timeSinceBlocked / 1000)}с`);
         console.log(`  Недоступных прокси: ${FAILED_PROXIES.size}`);
         console.log(`  Заблокированных URL: ${BLOCKED_IP_CACHE.size}`);
+        console.log(`  Рабочих прокси: ${PROXY_CONFIG.workingProxies.length}/${PROXY_CONFIG.proxies.length}`);
+        console.log(`  Последняя проверка: ${Math.round(timeSinceLastTest / 1000)}с назад`);
+        if (PROXY_CONFIG.workingProxies.length > 0) {
+            console.log(`  Текущий прокси: ${PROXY_CONFIG.workingProxies[PROXY_CONFIG.currentProxyIndex % PROXY_CONFIG.workingProxies.length]}`);
+        }
     };
     
     window.simulateBlock = () => {
