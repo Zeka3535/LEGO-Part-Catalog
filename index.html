@@ -341,6 +341,387 @@
     background: linear-gradient(to right, var(--tw-gradient-stops));
 }
 
+/* Стили для drag-and-drop в списках желаний */
+.wishlist-item {
+    transition: all 0.2s ease-out;
+}
+
+.wishlist-item:hover {
+    transform: translateY(-6px) scale(1.03) !important;
+    box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08) !important;
+}
+
+.wishlist-item:active {
+    transform: scale(0.98);
+}
+
+.wishlist-drop-zone {
+    transition: all 0.2s ease-out;
+}
+
+.wishlist-drop-zone.drag-over {
+    background-color: rgba(245, 158, 11, 0.05) !important;
+}
+
+.wishlist-folder.drag-over {
+    border-color: #f59e0b !important;
+    background-color: rgba(245, 158, 11, 0.05) !important;
+}
+
+/* Кнопки перемещения элементов - теперь в верхней части карточки */
+.wishlist-move-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+}
+
+.wishlist-item:hover .wishlist-move-buttons {
+    opacity: 1;
+}
+
+/* Всегда показываем кнопки на мобильных устройствах */
+@media (max-width: 768px) {
+    .wishlist-move-buttons {
+        opacity: 1;
+    }
+}
+
+.wishlist-move-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    background: rgba(17, 24, 39, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    font-weight: bold;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.wishlist-move-btn:hover {
+    background: rgba(17, 24, 39, 0.6);
+    color: white;
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.wishlist-move-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+    background: rgba(17, 24, 39, 0.2);
+}
+
+.wishlist-move-btn:disabled:hover {
+    background: rgba(17, 24, 39, 0.2);
+    color: rgba(255, 255, 255, 0.3);
+    transform: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.wishlist-move-btn.opacity-50 {
+    opacity: 0.5;
+}
+
+/* Улучшенные hover эффекты для кнопок */
+.wishlist-item .remove-from-wishlist {
+    transition: all 0.2s ease-out;
+}
+
+.wishlist-item:hover .remove-from-wishlist {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Дополнительные стили для единого списка желаний */
+@keyframes wishlistItemAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.wishlist-item {
+    animation: wishlistItemAppear 0.4s ease-out;
+}
+
+/* Стили для пустого состояния списка желаний */
+.wishlist-empty-state {
+    background: linear-gradient(135deg, rgba(55, 65, 81, 0.3), rgba(75, 85, 99, 0.2));
+    border: 2px dashed rgba(156, 163, 175, 0.4);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.wishlist-empty-state:hover {
+    border-color: rgba(234, 179, 8, 0.6);
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(251, 191, 36, 0.05));
+}
+
+/* Плавная анимация для всех карточек */
+.wishlist-item {
+    transition: all 0.3s ease;
+}
+
+/* Hover эффекты как в коллекции */
+.wishlist-item:hover {
+    transform: translateY(-6px) scale(1.03) !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Отключаем hover эффекты на мобильных устройствах */
+@media (max-width: 768px) {
+    .wishlist-item:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+}
+
+/* Максимально плавная анимация перемещения карточек */
+@keyframes moveUp {
+    0% { 
+        transform: translateY(0) scale(1);
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    50% { 
+        transform: translateY(-60px) scale(1.05);
+        z-index: 100;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+    100% { 
+        transform: translateY(0) scale(1);
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+}
+
+@keyframes moveDown {
+    0% { 
+        transform: translateY(0) scale(1);
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    50% { 
+        transform: translateY(60px) scale(1.05);
+        z-index: 100;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    }
+    100% { 
+        transform: translateY(0) scale(1);
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+}
+
+/* Максимально плавная анимация для карточек, которые сдвигаются в сторону */
+@keyframes slideLeft {
+    0% { 
+        transform: translateX(0) scale(1);
+        opacity: 1;
+        z-index: 1;
+    }
+    50% { 
+        transform: translateX(-60px) scale(0.98);
+        opacity: 0.9;
+        z-index: 1;
+    }
+    100% { 
+        transform: translateX(0) scale(1);
+        opacity: 1;
+        z-index: 1;
+    }
+}
+
+@keyframes slideRight {
+    0% { 
+        transform: translateX(0) scale(1);
+        opacity: 1;
+        z-index: 1;
+    }
+    50% { 
+        transform: translateX(60px) scale(0.98);
+        opacity: 0.9;
+        z-index: 1;
+    }
+    100% { 
+        transform: translateX(0) scale(1);
+        opacity: 1;
+        z-index: 1;
+    }
+}
+
+/* Анимации перемещения отключены - мгновенная перестановка */
+
+/* Дополнительные брейкпоинты для лучшей адаптивности */
+@media (min-width: 475px) {
+    .xs\:grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Стили карточек списка желаний - современный дизайн */
+.wishlist-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    backdrop-filter: blur(10px);
+}
+
+.wishlist-item:hover {
+    transform: translateY(-4px) scale(1.02) !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+    border-color: rgba(156, 163, 175, 0.3) !important;
+}
+
+/* Отключаем hover эффекты на мобильных устройствах */
+@media (max-width: 768px) {
+    .wishlist-item:hover {
+        transform: none !important;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    }
+}
+
+/* Стили для иконки типа */
+.wishlist-item .absolute:first-child {
+    transition: transform 0.2s ease;
+}
+
+.wishlist-item:hover .absolute:first-child {
+    transform: scale(1.05);
+}
+
+/* Стили для кнопки удаления */
+.wishlist-item button[data-action="remove-from-wishlist"] {
+    transition: all 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.wishlist-item button[data-action="remove-from-wishlist"]:hover {
+    transform: scale(1.05);
+}
+
+/* Кнопка удаления всегда видна на малых устройствах */
+@media (max-width: 768px) {
+    .wishlist-item button[data-action="remove-from-wishlist"] {
+        opacity: 1 !important;
+    }
+}
+
+/* Стили для кнопок перемещения */
+.wishlist-move-btn {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(4px);
+}
+
+.wishlist-move-btn:hover:not(:disabled) {
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.wishlist-move-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+
+/* Улучшенные стили для кнопки экспорта */
+.export-wishlist {
+    min-width: 32px;
+    min-height: 32px;
+    flex-shrink: 0;
+}
+
+/* Улучшенные стили для кнопки импорта */
+.import-wishlist {
+    min-width: 32px;
+    min-height: 32px;
+    flex-shrink: 0;
+}
+
+/* Адаптивные стили для кнопки экспорта */
+@media (max-width: 640px) {
+    .export-wishlist {
+        padding: 0.375rem 0.5rem;
+        min-width: 28px;
+        min-height: 28px;
+        font-size: 0.75rem;
+    }
+    
+    .export-wishlist span:first-child {
+        margin-right: 0.25rem;
+    }
+}
+
+/* Адаптивные стили для кнопки импорта */
+@media (max-width: 640px) {
+    .import-wishlist {
+        padding: 0.375rem 0.5rem;
+        min-width: 28px;
+        min-height: 28px;
+        font-size: 0.75rem;
+    }
+    
+    .import-wishlist span:first-child {
+        margin-right: 0.25rem;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 768px) {
+    .export-wishlist {
+        padding: 0.5rem 0.75rem;
+        min-width: 32px;
+        min-height: 32px;
+    }
+    
+    .import-wishlist {
+        padding: 0.5rem 0.75rem;
+        min-width: 32px;
+        min-height: 32px;
+    }
+}
+
+/* Улучшенные hover эффекты */
+.export-wishlist:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.export-wishlist:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.import-wishlist:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.import-wishlist:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+/* Отключаем hover эффекты на мобильных устройствах */
+@media (max-width: 768px) {
+    .wishlist-item:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+}
+
 .from-blue-400 {
     --tw-gradient-from: #60a5fa;
     --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(96, 165, 250, 0));
@@ -1938,6 +2319,17 @@ body.tab-switching button[data-view] {
     }
 }
 
+/* Определяем breakpoint xs для очень малых устройств */
+@media (max-width: 480px) {
+    .xs\:hidden {
+        display: none !important;
+    }
+    
+    .xs\:inline {
+        display: inline !important;
+    }
+}
+
 /* ВРЕМЕННО ОТКЛЮЧЕНО: Производительность карточек */
 .part-card img,
 .set-card img,
@@ -3238,6 +3630,136 @@ body.tab-switching button[data-view] {
         }
     }
     
+    /* Стили для кнопок выбора в списке желаний */
+    .wishlist-item-checkbox.selected {
+        background-color: rgba(59, 130, 246, 0.7) !important;
+        color: white !important;
+    }
+    
+    /* Стили для новой структуры карточки списка желаний */
+    .wishlist-image-container {
+        position: relative;
+        width: 100%;
+        height: 10rem; /* 160px */
+        background: linear-gradient(135deg, #374151, #1f2937);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem;
+    }
+    
+    .wishlist-image-inner {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        background: white;
+        border-radius: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+    }
+    
+    .wishlist-type-icon {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+        z-index: 20;
+    }
+    
+    .wishlist-item-checkbox {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        z-index: 30;
+        background: rgba(17, 24, 39, 0.4);
+        color: rgba(255, 255, 255, 0.8);
+        border-radius: 50%;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        opacity: 1;
+        transition: all 0.15s;
+        padding: 0.25rem;
+    }
+    
+    .wishlist-item-checkbox:hover {
+        background: rgba(17, 24, 39, 0.6);
+        color: white;
+    }
+    
+    .wishlist-item-checkbox.selected {
+        background: rgba(59, 130, 246, 0.7) !important;
+        color: white !important;
+    }
+    
+    .wishlist-info-section {
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    
+    .wishlist-title-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .wishlist-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .wishlist-color-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.5rem;
+        background: rgba(55, 65, 81, 0.5);
+        border-radius: 0.5rem;
+        border: 1px solid rgba(75, 85, 99, 0.5);
+    }
+    
+    .wishlist-color-placeholder {
+        flex: 1;
+    }
+    
+    .wishlist-move-buttons {
+        display: flex;
+        flex-direction: row;
+        gap: 0.25rem;
+    }
+    
+    /* Дополнительные стили для малых устройств */
+    @media (max-width: 640px) {
+        .wishlist-item {
+            min-width: 0;
+            flex-shrink: 0;
+        }
+        
+        .wishlist-image-container {
+            height: 8rem; /* 128px на малых устройствах */
+        }
+        
+        .wishlist-item-checkbox {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+        }
+        
+        .wishlist-item-checkbox svg {
+            display: block !important;
+            margin: 0 auto !important;
+        }
+    }
+    
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
@@ -3271,6 +3793,7 @@ body.tab-switching button[data-view] {
   <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
   <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
   <div id="related-sets-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
+  <div id="wishlist-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
   <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center viewer-hidden">
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
@@ -3297,7 +3820,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -3776,6 +4299,9 @@ const I_Brick = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 const I_Plate = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="15" width="18" height="6" rx="1"></rect><circle cx="8" cy="18" r="1"></circle><circle cx="16" cy="18" r="1"></circle></svg>`;
 const I_Tech = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.85-.93 3.53-2.28a3.99 3.99 0 0 0-7.06 0c.68 1.35 2.03 2.28 3.53 2.28z"></path><path d="M12 3.06c-1.5 0-2.85.93-3.53 2.28a3.99 3.99 0 0 0 7.06 0C14.85 3.99 13.5 3.06 12 3.06z"></path><path d="M3.06 12c0-1.5.93-2.85 2.28-3.53a3.99 3.99 0 0 0 0 7.06C3.99 14.85 3.06 13.5 3.06 12z"></path><path d="M20.94 12c0 1.5-.93 2.85-2.28 3.53a3.99 3.99 0 0 0 0-7.06c1.35.68 2.28 2.03 2.28 3.53z"></path><circle cx="12" cy="12" r="1"></circle></svg>`;
 const I_Toolbox = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`;
+const I_Edit = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+const I_Eye = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+const I_Download = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
 const I_Slope = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18L3 4v16z"></path></svg>`;
 const I_Cloud = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`;
 const I_CloudUpload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line></svg>`;
@@ -3786,6 +4312,8 @@ const I_Logout = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vi
 const I_Info = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
 const I_ChevronDown = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
 const I_ChevronUp = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+const I_ChevronLeft = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
+const I_ChevronRight = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
 const I_Clock = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
 const I_History = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg>`;
 const I_Archive = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="9"></line><line x1="9" y1="13" x2="15" y2="13"></line></svg>`;
@@ -3821,9 +4349,10 @@ const I_CheckCircle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c
 const I_Share = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.59 13.51l6.83 3.98"></path><path d="M15.41 6.51L8.59 10.49"></path></svg>`;
 const I_Settings = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
 const I_Heart = (c, f = !1) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+const I_List = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`;
+const I_Star = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26 12,2"></polygon></svg>`;
 const I_Refresh = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path></svg>`;
 const I_Chart = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"></path><circle cx="18" cy="8" r="2"></circle><circle cx="13" cy="13" r="2"></circle><circle cx="10" cy="10" r="2"></circle><circle cx="7" cy="14" r="2"></circle></svg>`;
-const I_Star = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
 const I_Users = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`;
 const I_Trophy = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21l-1 .5A3 3 0 0 1 5 15.5V14.66"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21l1 .5A3 3 0 0 0 19 15.5V14.66"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>`;
 const I_Puzzle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.439 13.269l-1.178-4.24a2.01 2.01 0 0 0-1.901-1.245H5.64a2.01 2.01 0 0 0-1.9 1.245l-1.179 4.24a2.01 2.01 0 0 0 1.9 2.563h12.72a2.01 2.01 0 0 0 1.9-2.563z"></path><path d="M8 12h8"></path><path d="M8 8h8"></path><path d="M8 16h8"></path><path d="M12 2v6"></path><path d="M12 18v4"></path></svg>`;
@@ -4581,6 +5110,296 @@ function renderCloudBackupContent() {
                                 <p class="text-gray-300"><strong>Преимущества:</strong> Доступ с любого устройства, ручное резервное копирование, история версий</p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderWishlistContent() {
+    // Создаем или получаем единый список желаний
+    const singleWishlistId = 'main-wishlist';
+    if (!S.wishlists[singleWishlistId]) {
+        S.wishlists[singleWishlistId] = {
+            id: singleWishlistId,
+            name: 'Мой список желаний',
+            description: 'Элементы, которые я хочу приобрести',
+            items: [],
+            created: new Date().toISOString(),
+            modified: new Date().toISOString()
+        };
+    }
+    
+    const wishlist = S.wishlists[singleWishlistId];
+    const items = wishlist.items || [];
+    const itemsCount = items.length;
+    
+    console.log('📁 renderWishlistContent called, single wishlist, itemsCount:', itemsCount);
+    
+    return `
+        <div class="min-h-full p-2 sm:p-4 md:p-6 lg:p-8">
+            <!-- Заголовок и описание -->
+            <div class="text-center mb-4 sm:mb-6 md:mb-8">
+                <h2 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-200 mb-1 sm:mb-2 md:mb-3">Список желаний</h2>
+                <p class="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg max-w-2xl mx-auto px-2 sm:px-4">
+                    Планируйте покупки и добавляйте элементы в свой список желаний
+                </p>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="max-w-7xl mx-auto space-y-3 sm:space-y-4 md:space-y-6 px-2 sm:px-4">
+                <!-- Заголовок списка и статистика -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-3 sm:p-4 md:p-6 shadow-lg">
+                    <!-- Мобильная версия (стек) -->
+                    <div class="block sm:hidden space-y-3">
+                        <!-- Заголовок и иконка -->
+                        <div class="flex items-start gap-3">
+                            <div class="p-2 bg-yellow-500/20 rounded-lg flex-shrink-0 mt-0.5">
+                                <span class="text-yellow-400">${I_Star('w-4 h-4')}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-base font-bold text-gray-200 mb-1">${wishlist.name}</h3>
+                                <p class="text-sm text-gray-400 leading-relaxed">
+                                    ${wishlist.description}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <!-- Статистика и кнопка экспорта -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex flex-col gap-1">
+                                <span class="text-sm text-orange-400 font-semibold">
+                                    ${itemsCount} ${itemsCount === 1 ? 'элемент' : itemsCount < 5 ? 'элемента' : 'элементов'}
+                                </span>
+                                <span class="text-xs text-gray-500">
+                                    Изменен: ${new Date(wishlist.modified).toLocaleDateString('ru-RU')}
+                                </span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="import-wishlist flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-emerald-700 hover:bg-emerald-600 text-gray-300 hover:text-white shadow-lg" data-wishlist-id="${singleWishlistId}" title="Импорт из CSV">
+                                    <span class="mr-2">${I_Up('w-4 h-4')}</span>
+                                    <span>Импорт</span>
+                                </button>
+                                <button class="export-wishlist flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white shadow-lg" data-wishlist-id="${singleWishlistId}" title="Экспорт в CSV">
+                                    <span class="mr-2">${I_Download('w-4 h-4')}</span>
+                                    <span>Экспорт</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Десктопная версия (горизонтальная) -->
+                    <div class="hidden sm:flex sm:items-center justify-between gap-4">
+                        <div class="flex items-center min-w-0 flex-1">
+                            <div class="p-2 md:p-3 bg-yellow-500/20 rounded-lg mr-4 md:mr-6 flex-shrink-0">
+                                <span class="text-yellow-400">${I_Star('w-5 h-5 md:w-6 md:h-6')}</span>
+                            </div>
+                            <div class="min-w-0 flex-1">
+                                <h3 class="text-base md:text-lg lg:text-xl font-bold text-gray-200 mb-1">${wishlist.name}</h3>
+                                <p class="text-sm md:text-base text-gray-400 mb-2 lg:mb-0">
+                                    ${wishlist.description}
+                                </p>
+                                <div class="flex flex-wrap items-center gap-2 md:gap-4 text-xs md:text-sm text-gray-500">
+                                    <span class="inline-flex items-center gap-1">
+                                        <span class="text-orange-400 font-semibold">${itemsCount}</span> 
+                                        ${itemsCount === 1 ? 'элемент' : itemsCount < 5 ? 'элемента' : 'элементов'}
+                                    </span>
+                                    <span class="hidden md:inline">•</span>
+                                    <span>Изменен: ${new Date(wishlist.modified).toLocaleDateString('ru-RU')}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button class="import-wishlist flex items-center justify-center px-3 md:px-4 py-2 md:py-3 text-sm md:text-base font-medium rounded-lg transition-all duration-200 bg-emerald-700 hover:bg-emerald-600 text-gray-300 hover:text-white shadow-lg hover:shadow-emerald-500/25" data-wishlist-id="${singleWishlistId}" title="Импорт из CSV">
+                                <span class="mr-2">${I_Up('w-4 h-4 md:w-5 md:h-5')}</span>
+                                <span>Импорт</span>
+                            </button>
+                            <button class="export-wishlist flex items-center justify-center px-3 md:px-4 py-2 md:py-3 text-sm md:text-base font-medium rounded-lg transition-all duration-200 bg-gray-700 hover:bg-gray-600 text-gray-300 hover:text-white shadow-lg hover:shadow-gray-500/25" data-wishlist-id="${singleWishlistId}" title="Экспорт в CSV">
+                                <span class="mr-2">${I_Download('w-4 h-4 md:w-5 md:h-5')}</span>
+                                <span>Экспорт</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Сетка элементов -->
+                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg sm:rounded-xl border border-gray-600/30 p-3 sm:p-4 md:p-6 shadow-lg">
+                    ${itemsCount === 0 ? `
+                        <div class="wishlist-drop-zone wishlist-empty-state text-center py-12 sm:py-16 md:py-20" data-wishlist-id="${singleWishlistId}">
+                            <div class="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 bg-gradient-to-br from-yellow-500/20 to-orange-500/20 rounded-full mb-4 sm:mb-6">
+                                <span class="text-yellow-400">${I_Star('w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12')}</span>
+                            </div>
+                            <h3 class="text-base sm:text-lg md:text-xl font-semibold text-gray-200 mb-2 sm:mb-3">Список пуст</h3>
+                            <p class="text-gray-400 mb-6 sm:mb-8 text-sm sm:text-base md:text-lg max-w-lg mx-auto leading-relaxed">
+                                Добавьте элементы из каталога через кнопку "Добавить в список желаний"
+                            </p>
+                            <p class="text-gray-500 mb-4 text-xs sm:text-sm">
+                                💡 Используйте кнопки перемещения для изменения порядка элементов
+                            </p>
+                        </div>
+                    ` : `
+                        <div class="mb-4 sm:mb-6">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3 sm:mb-4">
+                                <h4 class="text-base sm:text-lg font-semibold text-gray-200">Элементы списка</h4>
+                                <div class="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
+                                    <button id="select-all-wishlist" class="flex items-center gap-2 bg-blue-600/80 hover:bg-blue-700/90 text-white text-sm font-semibold px-4 py-2 rounded-full transition-all duration-150 shadow-lg hover:shadow-blue-500/25 backdrop-blur-sm" title="Выбрать все элементы">
+                                        + Все
+                                    </button>
+                                    <button id="deselect-all-wishlist" class="flex items-center gap-2 bg-gray-700/80 hover:bg-gray-600/90 text-white text-sm font-semibold px-4 py-2 rounded-full transition-all duration-150 shadow-lg hover:shadow-gray-500/25 backdrop-blur-sm hidden" title="Снять выбор со всех элементов">
+                                        Снять выбор
+                                    </button>
+                                    <button id="export-selected-wishlist" class="flex items-center gap-2 bg-indigo-600/80 hover:bg-indigo-700/90 text-white text-sm font-semibold px-4 py-2 rounded-full transition-all duration-150 shadow-lg hover:shadow-indigo-500/25 backdrop-blur-sm hidden" title="Экспортировать выбранные элементы в CSV">
+                                        ${I_Download('w-5 h-5')} <span class="hidden sm:inline">Экспорт</span>
+                                    </button>
+                                    <button id="share-selected-wishlist" class="flex items-center gap-2 bg-gray-700/80 hover:bg-gray-600/90 text-white text-sm font-semibold px-4 py-2 rounded-full transition-all duration-150 shadow-lg hover:shadow-gray-500/25 backdrop-blur-sm hidden" title="Поделиться выбранными элементами через CSV файл и изображение">
+                                        ${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="wishlist-drop-zone grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4 md:gap-6 min-h-[200px] p-2 sm:p-4" data-wishlist-id="${singleWishlistId}">
+                            ${items.map(item => renderWishlistItemCard(item, singleWishlistId)).join('')}
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Инициализация UI мультивыбора после рендеринга списка желаний
+function initWishlistMultiselect() {
+    // Инициализируем UI мультивыбора
+    setTimeout(() => {
+        updateWishlistSelectionUI();
+    }, 100);
+}
+
+// Функция renderWishlistFolderCard больше не используется для единого списка желаний
+
+function renderWishlistItemCard(item, wishlistId) {
+    // Получаем информацию об элементе
+    let itemData = null;
+    let itemImage = null;
+    let itemName = item.name;
+    let itemType = 'unknown';
+    let itemColor = null;
+    
+    // Определяем позицию элемента для отключения кнопок
+    const wishlist = S.wishlists[wishlistId];
+    const itemIndex = wishlist ? wishlist.items.findIndex(i => i.id === item.id) : -1;
+    const isFirst = itemIndex === 0;
+    const isLast = itemIndex === (wishlist ? wishlist.items.length - 1 : 0);
+    
+    // Определяем тип элемента и получаем данные
+    if (item.id.startsWith('set:')) {
+        itemType = 'set';
+        const setId = item.id.split(':')[1];
+        itemData = SET_MAP[setId];
+        if (itemData) {
+            itemImage = itemData.set_img_url;
+            itemName = itemData.name;
+        }
+    } else if (item.id.startsWith('minifig:')) {
+        itemType = 'minifig';
+        const minifigId = item.id.split(':')[1];
+        itemData = MINIFIG_MAP[minifigId];
+        if (itemData) {
+            itemImage = itemData.minifig_img_url || itemData.set_img_url;
+            itemName = itemData.name;
+        }
+    } else if (item.id.startsWith('part:')) {
+        itemType = 'part';
+        const partId = item.id.split(':')[1];
+        const colorId = item.id.split(':')[2];
+        itemData = PART_MAP[partId];
+        if (itemData) {
+            itemImage = itemData.part_img_url;
+            itemName = itemData.name;
+        }
+        if (colorId && COLOR_MAP[colorId]) {
+            itemColor = COLOR_MAP[colorId];
+        }
+    }
+    
+    const typeLabels = {
+        'set': 'Набор',
+        'minifig': 'Минифиг',
+        'part': 'Деталь'
+    };
+    
+    // SVG иконки для типов карточек с цветами (используем иконки из статистики)
+    const typeIcons = {
+        'set': (className = 'w-5 h-5') => `
+            <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg border border-blue-400/30">
+                ${I_Set(className + ' text-white')}
+            </div>
+        `,
+        'minifig': (className = 'w-5 h-5') => `
+            <div class="w-8 h-8 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg border border-green-400/30">
+                ${I_Minifig(className + ' text-white')}
+            </div>
+        `,
+        'part': (className = 'w-5 h-5') => `
+            <div class="w-8 h-8 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center shadow-lg border border-yellow-400/30">
+                ${I_Tile(className + ' text-white')}
+            </div>
+        `
+    };
+    
+    return `
+        <div class="wishlist-item relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl overflow-hidden group cursor-pointer border border-gray-700/50 shadow-lg hover:shadow-xl transition-all duration-300" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" data-action="open-item-modal" data-item-type="${itemType}" data-item-id-value="${item.id.split(':')[1]}">
+            
+            <!-- Контейнер изображения с фиксированными размерами -->
+            <div class="wishlist-image-container relative w-full h-40 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center p-3">
+                <!-- Внутренний контейнер изображения -->
+                <div class="wishlist-image-inner relative w-full h-full bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-inner">
+                    <!-- Изображение -->
+                    <img src="${itemImage || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0zMiAxNkMyMy4xNjM0IDE2IDE2IDIzLjE2MzQgMTYgMzJDMTYgNDAuODM2NiAyMy4xNjM0IDQ4IDMyIDQ4QzQwLjgzNjYgNDggNDggNDAuODM2NiA0OCAzMkM0OCAyMy4xNjM0IDQwLjgzNjYgMTYgMzIgMTZaIiBmaWxsPSIjNkI3MjgwIi8+CjxwYXRoIGQ9Ik0yNCAyOEgyNEMyMi44OTU1IDI4IDIyIDI4Ljg5NTQgMjIgMzBWMzRIMjZWMzBDMjYgMjguODk1NCAyNS4xMDQ2IDI4IDI0IDI4WiIgZmlsbD0iIzZCNzI4MCIvPgo8cGF0aCBkPSJNMzIgMjhIMzJDMzAuODk1NCAyOCAzMCAyOC44OTU0IDMwIDMwVjM0SDM0VjMwQzM0IDI4Ljg5NTQgMzMuMTA0NiAyOCAzMiAyOFoiIGZpbGw9IiM2QjcyODAiLz4KPHBhdGggZD0iTTI0IDM2SDQwQzQxLjEwNDYgMzYgNDIgMzYuODk1NCA0MiAzOFY0MEg0MlY0MkM0MiA0My4xMDQ2IDQxLjEwNDYgNDQgNDAgNDRIMjRDMjIuODk1NCA0NCAyMiA0My4xMDQ2IDIyIDQyVjQwSDIyVjM4QzIyIDM2Ljg5NTQgMjIuODk1NCAzNiAyNCAzNloiIGZpbGw9IiM2QjcyODAiLz4KPC9zdmc+'}" alt="${itemName}" class="w-full h-full object-contain pointer-events-none" loading="lazy">
+                    
+                    <!-- Иконка типа в левом верхнем углу -->
+                    <div class="wishlist-type-icon absolute top-2 left-2 z-20">
+                        ${typeIcons[itemType] ? typeIcons[itemType]('w-4 h-4') : ''}
+                    </div>
+                    
+                    <!-- Кнопка выбора в правом верхнем углу -->
+                    <button class="wishlist-item-checkbox absolute top-2 right-2 z-30 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md opacity-100 transition-all duration-150 p-1" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" title="Выбрать элемент">
+                        ${I_Circle('w-3 h-3')}
+                    </button>
+                    
+                    <!-- Кнопка удаления в правом нижнем углу -->
+                    <button aria-label="Удалить ${itemName}" data-action="remove-from-wishlist" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" class="absolute bottom-2 right-2 z-20 bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full shadow-lg hover:shadow-red-500/25 opacity-0 group-hover:opacity-100 transition-all duration-200" title="Удалить из списка желаний">
+                        ${I_Trash("w-4 h-4")}
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Информационная секция -->
+            <div class="wishlist-info-section p-4 space-y-3">
+                <!-- Заголовок и ID -->
+                <div class="wishlist-title-section space-y-1">
+                    <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${itemName}</h3>
+                    <p class="text-xs text-gray-400 pointer-events-none font-mono">${item.id.replace(/^(set|minifig|part):/, '')}</p>
+                </div>
+                
+                <!-- Цвет и кнопки управления -->
+                <div class="wishlist-controls flex items-center justify-between">
+                    ${itemColor ? `
+                        <div class="wishlist-color-info flex items-center gap-2 px-2 py-1 bg-gray-700/50 rounded-lg border border-gray-600/50">
+                            <span class="w-3 h-3 rounded-full border border-gray-500 shadow-sm" style="background-color: ${itemColor.hex || itemColor.rgb};"></span>
+                            <span class="text-xs text-gray-300 font-medium">${itemColor.name}</span>
+                        </div>
+                    ` : '<div class="wishlist-color-placeholder"></div>'}
+                    
+                    <!-- Кнопки перемещения -->
+                    <div class="wishlist-move-buttons flex flex-row gap-1">
+                        <button class="wishlist-move-btn move-left" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" title="Переместить влево" ${isFirst ? 'disabled' : ''}>
+                            ${I_ChevronLeft('w-4 h-4')}
+                        </button>
+                        <button class="wishlist-move-btn move-right" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" title="Переместить вправо" ${isLast ? 'disabled' : ''}>
+                            ${I_ChevronRight('w-4 h-4')}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -6204,7 +7023,12 @@ let S = {
     catalogMultiSelectEnabled: (localStorage.getItem('catalogMultiSelectEnabled') === 'true'),
     collectionMultiSelectEnabled: (localStorage.getItem('collectionMultiSelectEnabled') !== 'false'),
     collectionSummaryExpanded: (localStorage.getItem('collectionSummaryExpanded') === 'true'), // По умолчанию скрыта
-    foldersEnabled: (localStorage.getItem('foldersEnabled') !== 'false') // По умолчанию включено
+    foldersEnabled: (localStorage.getItem('foldersEnabled') !== 'false'), // По умолчанию включено
+    wishlistEnabled: (localStorage.getItem('wishlistEnabled') !== 'false'), // По умолчанию включено
+    wishlists: {}, // Списки желаний
+    currentWishlist: null, // Текущий выбранный список
+    wishlistModal: { open: false, wishlistId: null, wishlist: null }, // Модальное окно просмотра списка
+    expandedWishlists: [] // Развернутые папки списков желаний
 };
 let tempFilters = {
     filters: { colorIds: [], inCollectionOnly: false },
@@ -6263,6 +7087,56 @@ function loadState() {
         console.error("Failed to parse favorite themes from localStorage", e), S.favThemeIds = new Set
     }
     
+    // Загружаем списки желаний
+    const wishlistsData = localStorage.getItem('wishlists');
+    if (wishlistsData) try {
+        S.wishlists = JSON.parse(wishlistsData);
+        console.log('✅ Loaded wishlists:', Object.keys(S.wishlists).length, 'lists');
+    } catch (e) {
+        console.error("Failed to parse wishlists from localStorage", e), S.wishlists = {}
+    }
+    
+    const currentWishlistData = localStorage.getItem('currentWishlist');
+    if (currentWishlistData) {
+        S.currentWishlist = currentWishlistData;
+    }
+    
+    // Загружаем развернутые папки списков желаний
+    S.expandedWishlists = []; // Инициализируем как пустой массив
+    const expandedWishlistsData = localStorage.getItem('expandedWishlists');
+    console.log('📁 Raw expandedWishlistsData from localStorage:', expandedWishlistsData);
+    
+    if (expandedWishlistsData) try {
+        S.expandedWishlists = JSON.parse(expandedWishlistsData);
+        console.log('✅ Loaded expanded wishlists:', S.expandedWishlists.length, 'folders:', S.expandedWishlists);
+    } catch (e) {
+        console.error("Failed to parse expandedWishlists from localStorage", e);
+        S.expandedWishlists = [];
+    }
+    console.log('📁 Final expandedWishlists after load:', S.expandedWishlists);
+    
+    // Добавляем функции для отладки
+    window.clearExpandedWishlists = function() {
+        S.expandedWishlists = [];
+        localStorage.removeItem('expandedWishlists');
+        console.log('🧹 Cleared expandedWishlists');
+        updateUI();
+    };
+    
+    window.forceCollapseAll = function() {
+        S.expandedWishlists = [];
+        localStorage.setItem('expandedWishlists', JSON.stringify([]));
+        console.log('🧹 Force collapsed all wishlists');
+        updateUI();
+    };
+    
+    window.debugWishlistState = function() {
+        console.log('🔍 Current wishlist state:');
+        console.log('S.expandedWishlists:', S.expandedWishlists);
+        console.log('localStorage expandedWishlists:', localStorage.getItem('expandedWishlists'));
+        console.log('S.wishlists keys:', Object.keys(S.wishlists || {}));
+    };
+    
     // Загружаем настройки
     const foldersEnabled = localStorage.getItem('foldersEnabled');
     if (foldersEnabled !== null) {
@@ -6276,6 +7150,8 @@ function saveState() {
     localStorage.setItem('legoMinifigCollection', JSON.stringify(S.minifigColl));
     localStorage.setItem('favoriteCategoryIds', JSON.stringify(Array.from(S.favCatIds)));
     localStorage.setItem('favoriteThemeIds', JSON.stringify(Array.from(S.favThemeIds)));
+    localStorage.setItem('wishlists', JSON.stringify(S.wishlists));
+    localStorage.setItem('currentWishlist', S.currentWishlist);
         
     // Все данные будут загружены заново из CSV файлов при каждом запуске
     console.log('User collections and favorites saved to localStorage');
@@ -7518,6 +8394,315 @@ function showTemporaryMessage(message) {
             }
         }, 300);
     }, 3000);
+}
+
+// Функция для показа статистики импорта
+function showImportStats(importedCount, skippedCount) {
+    // Создаем элемент уведомления с улучшенным дизайном
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-emerald-600 to-green-600 text-white px-4 py-3 rounded-xl shadow-2xl z-50 transition-all duration-300 border border-emerald-500/20';
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(100%)';
+    
+    // Создаем содержимое с иконками и статистикой
+    const totalCount = importedCount + skippedCount;
+    const successRate = totalCount > 0 ? Math.round((importedCount / totalCount) * 100) : 0;
+    
+    notification.innerHTML = `
+        <div class="flex items-center gap-3">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold">Импорт завершен</div>
+                <div class="text-xs text-white/90 mt-1">
+                    <span class="inline-flex items-center gap-1">
+                        <span class="w-2 h-2 bg-white rounded-full"></span>
+                        ${importedCount} добавлено
+                    </span>
+                    ${skippedCount > 0 ? `
+                        <span class="mx-2">•</span>
+                        <span class="inline-flex items-center gap-1">
+                            <span class="w-2 h-2 bg-white/60 rounded-full"></span>
+                            ${skippedCount} пропущено
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+            <div class="flex-shrink-0 text-xs font-bold bg-white/20 px-2 py-1 rounded-full">
+                ${successRate}%
+            </div>
+        </div>
+    `;
+    
+    // Добавляем в DOM
+    document.body.appendChild(notification);
+    
+    // Анимируем появление
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Убираем через 4 секунды (чуть дольше для статистики)
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 4000);
+}
+
+// Функция для показа ошибок импорта
+function showImportError(message) {
+    // Создаем элемент уведомления об ошибке
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-red-600 to-red-700 text-white px-4 py-3 rounded-xl shadow-2xl z-50 transition-all duration-300 border border-red-500/20';
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(100%)';
+    
+    notification.innerHTML = `
+        <div class="flex items-center gap-3">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold">Ошибка импорта</div>
+                <div class="text-xs text-white/90 mt-1">${message}</div>
+            </div>
+        </div>
+    `;
+    
+    // Добавляем в DOM
+    document.body.appendChild(notification);
+    
+    // Анимируем появление
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Убираем через 5 секунд (дольше для ошибок)
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 5000);
+}
+
+// Функция для показа успешного экспорта
+function showExportSuccess(itemCount) {
+    // Создаем элемент уведомления об успешном экспорте
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl z-50 transition-all duration-300 border border-blue-500/20';
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(100%)';
+    
+    notification.innerHTML = `
+        <div class="flex items-center gap-3">
+            <div class="flex-shrink-0">
+                <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-semibold">Экспорт завершен</div>
+                <div class="text-xs text-white/90 mt-1">
+                    <span class="inline-flex items-center gap-1">
+                        <span class="w-2 h-2 bg-white rounded-full"></span>
+                        ${itemCount} элементов экспортировано
+                    </span>
+                </div>
+            </div>
+            <div class="flex-shrink-0 text-xs font-bold bg-white/20 px-2 py-1 rounded-full">
+                CSV
+            </div>
+        </div>
+    `;
+    
+    // Добавляем в DOM
+    document.body.appendChild(notification);
+    
+    // Анимируем появление
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Убираем через 3 секунды
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Функции мультивыбора в списке желаний
+function selectAllWishlistItems() {
+    const checkboxes = document.querySelectorAll('.wishlist-item-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.classList.add('selected');
+        checkbox.innerHTML = I_CheckCircle('w-3 h-3');
+    });
+    updateWishlistSelectionUI();
+}
+
+function deselectAllWishlistItems() {
+    const checkboxes = document.querySelectorAll('.wishlist-item-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.classList.remove('selected');
+        checkbox.innerHTML = I_Circle('w-3 h-3');
+    });
+    updateWishlistSelectionUI();
+}
+
+function updateWishlistSelectionUI() {
+    const checkboxes = document.querySelectorAll('.wishlist-item-checkbox');
+    const selectedCount = Array.from(checkboxes).filter(cb => cb.classList.contains('selected')).length;
+    const totalCount = checkboxes.length;
+    
+    const selectAllBtn = document.getElementById('select-all-wishlist');
+    const deselectAllBtn = document.getElementById('deselect-all-wishlist');
+    const exportSelectedBtn = document.getElementById('export-selected-wishlist');
+    const shareSelectedBtn = document.getElementById('share-selected-wishlist');
+    
+    if (selectedCount === 0) {
+        selectAllBtn.classList.remove('hidden');
+        deselectAllBtn.classList.add('hidden');
+        exportSelectedBtn.classList.add('hidden');
+        shareSelectedBtn.classList.add('hidden');
+    } else if (selectedCount === totalCount) {
+        selectAllBtn.classList.add('hidden');
+        deselectAllBtn.classList.remove('hidden');
+        exportSelectedBtn.classList.remove('hidden');
+        shareSelectedBtn.classList.remove('hidden');
+    } else {
+        selectAllBtn.classList.remove('hidden');
+        deselectAllBtn.classList.remove('hidden');
+        exportSelectedBtn.classList.remove('hidden');
+        shareSelectedBtn.classList.remove('hidden');
+    }
+    
+    // Обновляем текст кнопок
+    if (selectedCount > 0) {
+        exportSelectedBtn.innerHTML = `${I_Download('w-5 h-5')} <span class="hidden sm:inline">Экспорт (${selectedCount})</span><span class="sm:hidden">(${selectedCount})</span>`;
+        shareSelectedBtn.innerHTML = `${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться (${selectedCount})</span><span class="sm:hidden">(${selectedCount})</span>`;
+    } else {
+        exportSelectedBtn.innerHTML = `${I_Download('w-5 h-5')} <span class="hidden sm:inline">Экспорт</span>`;
+        shareSelectedBtn.innerHTML = `${I_Share('w-5 h-5')} <span class="hidden sm:inline">Поделиться</span>`;
+    }
+}
+
+function getSelectedWishlistItems() {
+    const checkboxes = document.querySelectorAll('.wishlist-item-checkbox.selected');
+    return Array.from(checkboxes).map(checkbox => {
+        const itemId = checkbox.dataset.itemId;
+        const wishlistId = checkbox.dataset.wishlistId;
+        const wishlist = S.wishlists[wishlistId];
+        return wishlist ? wishlist.items.find(item => item.id === itemId) : null;
+    }).filter(item => item !== null);
+}
+
+function exportSelectedWishlistItems() {
+    const selectedItems = getSelectedWishlistItems();
+    if (selectedItems.length === 0) {
+        showImportError('Нет выбранных элементов для экспорта');
+        return;
+    }
+    
+    // Создаем CSV данные для выбранных элементов
+    const csvHeader = 'Type,ID,Name,Color,Added\n';
+    const csvData = selectedItems.map(item => {
+        const colorName = item.colorId ? (COLOR_MAP[item.colorId]?.name || item.colorId) : '';
+        return `${item.type},"${item.itemId}","${item.name}","${colorName}","${item.added}"`;
+    }).join('\n');
+    
+    const csvContent = csvHeader + csvData;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const fileName = `wishlist-selected-${selectedItems.length}-items-${new Date().toISOString().slice(0,10)}.csv`;
+    
+    // Скачиваем файл
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showExportSuccess(selectedItems.length);
+}
+
+async function shareSelectedWishlistItems() {
+    const selectedItems = getSelectedWishlistItems();
+    if (selectedItems.length === 0) {
+        showImportError('Нет выбранных элементов для публикации');
+        return;
+    }
+    
+    try {
+        // Создаем CSV данные для выбранных элементов
+        const csvHeader = 'Type,ID,Name,Color,Added\n';
+        const csvData = selectedItems.map(item => {
+            const colorName = item.colorId ? (COLOR_MAP[item.colorId]?.name || item.colorId) : '';
+            return `${item.type},"${item.itemId}","${item.name}","${colorName}","${item.added}"`;
+        }).join('\n');
+        
+        const csvContent = csvHeader + csvData;
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const fileName = `wishlist-selected-${selectedItems.length}-items-${new Date().toISOString().slice(0,10)}.csv`;
+        const csvFile = new File([blob], fileName, { type: 'text/csv' });
+        
+        const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
+        const title = `Мой список желаний LEGO (${selectedItems.length} элементов)`;
+        const text = `Поделился списком желаний LEGO из каталога: ${siteUrl}`;
+        
+        if (navigator.share && navigator.canShare({ files: [csvFile] })) {
+            await navigator.share({
+                title: title,
+                text: text,
+                files: [csvFile],
+                url: siteUrl
+            });
+            showTemporaryMessage('Список желаний успешно опубликован!');
+        } else {
+            // Fallback: скачиваем файл
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 5000);
+            showExportSuccess(selectedItems.length);
+        }
+    } catch (error) {
+        console.error('Ошибка при публикации:', error);
+        showImportError('Ошибка при публикации списка желаний');
+    }
 }
 
 // Функция для очистки временных фильтров
@@ -10730,6 +11915,12 @@ function renderSidebar() {
                     description: 'Статистика и анализ коллекции'
                 },
                 {
+                    id: 'wishlist',
+                    name: 'Списки желаний',
+                    icon: I_Star('w-5 h-5 text-yellow-400'),
+                    description: 'Планирование покупок и создание списков желаний'
+                },
+                {
                     id: 'cloud-backup',
                     name: 'Облачное хранилище',
                     icon: I_Cloud('w-5 h-5'),
@@ -11205,6 +12396,11 @@ function renderSetCard(e, t, o = 0) {
                             ${S.multiSelect.active && S.multiSelect.items.has(`sets:${e.set_num}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
                         </button>
                         `:""}
+                        ${S.view==="catalog" && S.wishlistEnabled?`
+                        <button data-action="add-to-wishlist" data-item-type="set" data-item-id="${e.set_num}" class="absolute bottom-1.5 left-1.5 ${isInWishlist('set', e.set_num) ? 'bg-gradient-to-br from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 shadow-amber-500/60 ring-2 ring-amber-400/50' : 'bg-gradient-to-br from-gray-600/80 to-gray-700/80 hover:from-gray-500/90 hover:to-gray-600/90 shadow-gray-500/40'} text-white rounded-full w-6 h-6 flex items-center justify-center z-20 shadow-lg hover:shadow-xl opacity-100 transition-all duration-200 hover:scale-110" title="${isInWishlist('set', e.set_num) ? 'Удалить из списка желаний' : 'Добавить в список желаний'}">
+                            ${I_Star('w-4 h-4')}
+                        </button>
+                        `:""}
                 ${S.view==="collection"?`
                         <button aria-label="Удалить ${e.name}" data-action="delete-set-from-collection" data-set-num="${e.set_num}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-lg hover:shadow-red-500/25 opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-150" title="Удалить набор из коллекции">
                     ${I_Trash("w-4 h-4")}
@@ -11247,6 +12443,11 @@ function renderMinifigCard(e, t, o = 0) {
                         ${((S.view==="collection" && S.collectionMultiSelectEnabled) || (S.view==="catalog" && S.catalogMultiSelectEnabled))?`
                         <button data-action="toggle-select" data-item-type="minifig" data-item-id="${e.set_num}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`minifigs:${e.set_num}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
                             ${S.multiSelect.active && S.multiSelect.items.has(`minifigs:${e.set_num}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
+                        </button>
+                        `:""}
+                        ${S.view==="catalog" && S.wishlistEnabled?`
+                        <button data-action="add-to-wishlist" data-item-type="minifig" data-item-id="${e.set_num}" class="absolute bottom-1.5 left-1.5 ${isInWishlist('minifig', e.set_num) ? 'bg-gradient-to-br from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 shadow-amber-500/60 ring-2 ring-amber-400/50' : 'bg-gradient-to-br from-gray-600/80 to-gray-700/80 hover:from-gray-500/90 hover:to-gray-600/90 shadow-gray-500/40'} text-white rounded-full w-6 h-6 flex items-center justify-center z-20 shadow-lg hover:shadow-xl opacity-100 transition-all duration-200 hover:scale-110" title="${isInWishlist('minifig', e.set_num) ? 'Удалить из списка желаний' : 'Добавить в список желаний'}">
+                            ${I_Star('w-4 h-4')}
                         </button>
                         `:""}
                 ${S.view==="collection"?`
@@ -11331,6 +12532,11 @@ function renderPartCard(e, t, o, l, a = 0) {
                             ${S.multiSelect.active && S.multiSelect.items.has(`parts:${e.id}:${t?.id || ''}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
                         </button>
                         `: ''}
+                        ${S.view==="catalog" && S.wishlistEnabled?`
+                        <button data-action="add-to-wishlist" data-item-type="part" data-item-id="${e.id}" data-color-id="${t?.id || ''}" class="absolute bottom-1.5 left-1.5 ${isInWishlist('part', e.id, t?.id) ? 'bg-gradient-to-br from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 shadow-amber-500/60 ring-2 ring-amber-400/50' : 'bg-gradient-to-br from-gray-600/80 to-gray-700/80 hover:from-gray-500/90 hover:to-gray-600/90 shadow-gray-500/40'} text-white rounded-full w-6 h-6 flex items-center justify-center z-20 shadow-lg hover:shadow-xl opacity-100 transition-all duration-200 hover:scale-110" title="${isInWishlist('part', e.id, t?.id) ? 'Удалить из списка желаний' : 'Добавить в список желаний'}">
+                            ${I_Star('w-4 h-4')}
+                        </button>
+                        `:""}
                 ${i && t ?`
                         <button aria-label="Удалить ${e.name} (${t.name})" data-action="delete-from-collection" data-part-id="${e.id}" data-color-id="${t.id}" class="absolute bottom-2 right-2 bg-red-600 text-white p-1.5 rounded-full z-10 shadow-lg hover:shadow-red-500/25 opacity-100 focus:opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-150" title="Удалить деталь из коллекции">
                         ${I_Trash("w-4 h-4")}
@@ -12030,7 +13236,7 @@ function renderMainContent() {
         }
         }
     } else {
-        let t, o, l = `В вашей коллекции нет ${"parts"===S.subView?"деталей":"sets"===S.subView?"наборов":"минифигурок"}`,
+        let t, o, l = `В вашей коллекции нет ${"parts"===S.subView?"деталей":"sets"===S.subView?"наборов":"минифигурок"}. Используйте поиск или просмотрите каталог`,
             i = S.q.trim().toLowerCase(),
             n = "grid-cols-[repeat(auto-fill,minmax(150px,1fr))]";
         if ("parts" === S.subView) {
@@ -12205,7 +13411,17 @@ function renderMainContent() {
                             <span>Загрузка данных...</span>
                         </div>
                     ` : ''}
-                    <p class="text-gray-400">${l}</p>
+                    <div class="mb-6">
+                        <div class="w-20 h-20 mx-auto text-gray-400 mb-4 bg-gradient-to-br from-gray-700/30 to-gray-800/30 rounded-full flex items-center justify-center border border-gray-600/20">
+                            ${"parts"===S.subView?I_Brick('w-10 h-10'):"sets"===S.subView?I_Set('w-10 h-10'):I_Minifig('w-10 h-10')}
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-200 mb-3">${l}</h3>
+                        <p class="text-gray-400 text-base mb-4 max-w-md mx-auto leading-relaxed">Добавляйте элементы из каталога чтобы отслеживать свою коллекцию</p>
+                        <div class="inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/30 rounded-lg text-blue-400 text-sm font-medium">
+                            <span>💡</span>
+                            <span>Используйте поиск или просмотрите каталог</span>
+                        </div>
+                    </div>
                 </div>`;
         } else {
             // Для коллекции деталей включаем группировку по названию
@@ -12303,6 +13519,13 @@ function renderMainContent() {
             if (cloudStorageConnected && window.remoteStorageAvailable) {
                 debouncedLoadBackupsList(true, 300); // Принудительное обновление при рендеринге
             }
+        }
+        
+        // Показываем списки желаний только для подкатегории 'wishlist'
+        if (S.toolSubView === 'wishlist') {
+            e = renderWishlistContent();
+            // Инициализируем мультивыбор после рендеринга
+            initWishlistMultiselect();
         }
         
         // Показываем аналитику только для подкатегории 'analytics'
@@ -13433,6 +14656,10 @@ function renderSettingsModal() {
                                 <span class="text-sm text-gray-300 flex items-center gap-2">${I_Coll('w-4 h-4 text-green-400')} Коллекция</span>
                                 <button data-action="toggle-collection-multiselect" class="toggle-switch ${S.collectionMultiSelectEnabled? 'on' : ''}" aria-pressed="${S.collectionMultiSelectEnabled}"><span class="knob"></span></button>
                             </div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Star('w-4 h-4 text-yellow-400')} Списки желаний</span>
+                                <button data-action="toggle-wishlist" class="toggle-switch ${S.wishlistEnabled? 'on' : ''}" aria-pressed="${S.wishlistEnabled}"><span class="knob"></span></button>
+                            </div>
                         </div>
                     </div>
                     <div>
@@ -14139,6 +15366,25 @@ function updateUI() {
     }
     
     renderSidebar(), renderHeader(), renderMainContent();
+    
+    // Рендерим модальное окно списка желаний
+    const wishlistModalEl = document.getElementById('wishlist-modal-container');
+    if (wishlistModalEl) {
+        if (S.wishlistModal.open) {
+            wishlistModalEl.classList.remove('modal-hidden');
+            wishlistModalEl.innerHTML = renderWishlistModal();
+        } else {
+            wishlistModalEl.classList.add('modal-hidden');
+            wishlistModalEl.innerHTML = '';
+        }
+    }
+    
+    // Инициализируем drag-and-drop для списков желаний
+    if (S.view === 'tools' && S.toolSubView === 'wishlist') {
+        setTimeout(() => {
+            // Перетаскивание заменено на кнопки перемещения
+        }, 100);
+    }
     
     // Сбрасываем флаг сброса состояния поиска после обновления UI
     if (window.searchStateReset) {
@@ -15261,6 +16507,392 @@ async function handleUpdateMinifigCollection(e, t, o = !0) {
         fetchMissingImagesForCollection().catch(console.error);
     }
 }
+
+function addToWishlist(itemType, itemId, colorId = null) {
+    console.log('🎯 addToWishlist called with:', { itemType, itemId, colorId });
+    
+    // Проверяем, включены ли списки желаний
+    if (!S.wishlistEnabled) {
+        console.log('❌ Списки желаний отключены');
+        return;
+    }
+    
+    // Создаем уникальный ключ для элемента
+    const itemKey = colorId ? `${itemType}:${itemId}:${colorId}` : `${itemType}:${itemId}`;
+    
+    // Получаем информацию об элементе
+    let itemInfo = null;
+    switch (itemType) {
+        case 'set':
+            itemInfo = SET_MAP[itemId];
+            break;
+        case 'minifig':
+            itemInfo = MINIFIG_MAP[itemId];
+            break;
+        case 'part':
+            itemInfo = PART_MAP[itemId];
+            if (colorId) {
+                itemInfo = { ...itemInfo, color: COLOR_MAP[colorId] };
+            }
+            break;
+    }
+    
+    if (!itemInfo) {
+        console.error('Не удалось найти информацию об элементе:', itemType, itemId);
+        return;
+    }
+    
+    // Создаем элемент для списка желаний
+    const wishlistItem = {
+        id: itemKey,
+        type: itemType,
+        itemId: itemId,
+        colorId: colorId,
+        name: itemInfo.name,
+        image: itemInfo.set_img_url || itemInfo.minifig_img_url || itemInfo.part_img_url,
+        added: new Date().toISOString()
+    };
+    
+    // Используем единый список желаний
+    const singleWishlistId = 'main-wishlist';
+    
+    // Создаем единый список если его нет
+    if (!S.wishlists[singleWishlistId]) {
+        S.wishlists[singleWishlistId] = {
+            id: singleWishlistId,
+            name: 'Мой список желаний',
+            description: 'Элементы, которые я хочу приобрести',
+            created: new Date().toISOString(),
+            modified: new Date().toISOString(),
+            items: []
+        };
+    }
+    
+    // Добавляем элемент в единый список
+    const wishlist = S.wishlists[singleWishlistId];
+    if (!wishlist.items.find(item => item.id === itemKey)) {
+        wishlist.items.push(wishlistItem);
+        wishlist.modified = new Date().toISOString();
+        
+        // Сохраняем состояние
+        saveState();
+        
+        // Уведомление убрано
+        
+        // Принудительно обновляем UI
+        if (S.view === 'catalog' || (S.view === 'tools' && S.toolSubView === 'wishlist')) {
+            S.gridStale = true;
+            updateUI();
+        }
+        
+        console.log('Добавлено в список желаний:', wishlistItem);
+    } else {
+        // Элемент уже в списке - уведомление убрано
+    }
+}
+
+// Функция создания списков больше не используется - у нас единый список желаний
+function createWishlist() {
+    console.log('ℹ️ createWishlist called but not needed - using single wishlist');
+}
+
+// Функция редактирования списков больше не используется - у нас единый список желаний
+function editWishlist(wishlistId) {
+    console.log('ℹ️ editWishlist called but not needed - using single wishlist');
+}
+
+// Функция удаления списков больше не используется - у нас единый список желаний
+function deleteWishlist(wishlistId) {
+    console.log('ℹ️ deleteWishlist called but not needed - using single wishlist');
+}
+
+function viewWishlist(wishlistId) {
+    const wishlist = S.wishlists[wishlistId];
+    if (!wishlist) return;
+    
+    // Открываем модальное окно для просмотра списка желаний
+    S.wishlistModal = {
+        open: true,
+        wishlistId: wishlistId,
+        wishlist: wishlist
+    };
+    
+    updateUI();
+    console.log('Viewing wishlist:', wishlist);
+}
+
+function exportWishlist(wishlistId) {
+    const wishlist = S.wishlists[wishlistId];
+    if (!wishlist) return;
+    
+    // Создаем CSV данные
+    const csvHeader = 'Type,ID,Name,Color,Added\n';
+    const csvData = wishlist.items.map(item => {
+        const colorName = item.colorId ? (COLOR_MAP[item.colorId]?.name || item.colorId) : '';
+        return `${item.type},"${item.itemId}","${item.name}","${colorName}","${item.added}"`;
+    }).join('\n');
+    
+    const csvContent = csvHeader + csvData;
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const fileName = `wishlist-${wishlist.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')}-${new Date().toISOString().slice(0,10)}.csv`;
+    
+    // Скачиваем файл
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    showExportSuccess(wishlist.items.length);
+}
+
+function importWishlist(wishlistId) {
+    const wishlist = S.wishlists[wishlistId];
+    if (!wishlist) return;
+    
+    // Создаем скрытый input для выбора файла
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.style.display = 'none';
+    
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const csvContent = e.target.result;
+                const lines = csvContent.split('\n').filter(line => line.trim());
+                
+                if (lines.length < 2) {
+                    showImportError('Файл пуст или содержит только заголовки');
+                    return;
+                }
+                
+                // Пропускаем заголовок
+                const dataLines = lines.slice(1);
+                let importedCount = 0;
+                let skippedCount = 0;
+                
+                dataLines.forEach(line => {
+                    const columns = line.split(',').map(col => col.replace(/^"|"$/g, ''));
+                    if (columns.length < 3) return;
+                    
+                    const [type, itemId, name, colorName, added] = columns;
+                    
+                    // Создаем элемент для списка желаний
+                    const itemKey = `${type}:${itemId}`;
+                    
+                    // Проверяем, есть ли уже такой элемент
+                    if (!wishlist.items.find(item => item.id === itemKey)) {
+                        const wishlistItem = {
+                            id: itemKey,
+                            type: type,
+                            itemId: itemId,
+                            colorId: null,
+                            name: name,
+                            image: '', // Будет загружена при обновлении UI
+                            added: added || new Date().toISOString()
+                        };
+                        
+                        wishlist.items.push(wishlistItem);
+                        importedCount++;
+                    } else {
+                        skippedCount++;
+                    }
+                });
+                
+                wishlist.modified = new Date().toISOString();
+                saveState();
+                
+                // Обновляем UI
+                if (S.view === 'tools' && S.toolSubView === 'wishlist') {
+                    S.gridStale = true;
+                    updateUI();
+                }
+                
+                showImportStats(importedCount, skippedCount);
+                
+            } catch (error) {
+                console.error('Ошибка импорта CSV:', error);
+                showImportError('Ошибка при импорте файла');
+            }
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
+}
+
+// Тестовая функция для проверки работы списков желаний
+window.testWishlist = function() {
+    console.log('🧪 Testing wishlist functionality...');
+    console.log('S.wishlistEnabled:', S.wishlistEnabled);
+    console.log('S.wishlists:', S.wishlists);
+    console.log('S.currentWishlist:', S.currentWishlist);
+    
+    // Тестируем создание списка
+    if (Object.keys(S.wishlists).length === 0) {
+        console.log('Creating test wishlist...');
+        createWishlist();
+    }
+    
+    const result = {
+        wishlistEnabled: S.wishlistEnabled,
+        wishlistsCount: Object.keys(S.wishlists).length,
+        currentWishlist: S.currentWishlist
+    };
+    
+    console.log('Current state after test:', result);
+    return result;
+}
+
+// Функция для быстрого тестирования добавления элемента
+window.testAddToWishlist = function() {
+    console.log('🧪 Testing add to wishlist...');
+    addToWishlist('set', '10210-1', null);
+    return 'Element added to wishlist';
+}
+
+// Функция для тестирования создания списка
+window.testCreateWishlist = function() {
+    console.log('🧪 Testing create wishlist directly...');
+    createWishlist();
+    return 'Create wishlist function called';
+}
+
+// Функция для тестирования клика по кнопке
+window.testClickHandler = function() {
+    console.log('🧪 Testing click handler...');
+    const btn = document.getElementById('create-wishlist');
+    if (btn) {
+        console.log('Button found:', btn);
+        btn.click();
+    } else {
+        console.log('Button not found!');
+    }
+    return 'Click test completed';
+}
+
+// Функция для проверки состояния
+window.checkWishlistState = function() {
+    if (typeof S === 'undefined') {
+        console.error('S is not defined. Make sure the page is fully loaded.');
+        return null;
+    }
+    return {
+        wishlistEnabled: S.wishlistEnabled,
+        wishlists: S.wishlists,
+        currentWishlist: S.currentWishlist
+    };
+}
+
+// Функция для проверки доступности S
+window.checkS = function() {
+    return typeof S !== 'undefined' ? S : null;
+}
+
+// Функция для рендеринга модального окна списка желаний
+function renderWishlistModal() {
+    if (!S.wishlistModal.open || !S.wishlistModal.wishlist) {
+        return '';
+    }
+    
+    const wishlist = S.wishlistModal.wishlist;
+    const items = wishlist.items || [];
+    
+    return `
+        <div class="bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+            <!-- Заголовок -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-700">
+                <div>
+                    <h2 class="text-2xl font-bold text-white">${wishlist.name}</h2>
+                    ${wishlist.description ? `<p class="text-gray-400 mt-1">${wishlist.description}</p>` : ''}
+                    <p class="text-sm text-gray-500 mt-2">
+                        Создан: ${new Date(wishlist.created).toLocaleDateString('ru-RU')} • 
+                        Элементов: ${items.length}
+                    </p>
+                </div>
+                <button id="close-wishlist-modal" class="text-gray-400 hover:text-white transition-colors">
+                    ${I_X('w-6 h-6')}
+                </button>
+            </div>
+            
+            <!-- Содержимое -->
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                ${items.length === 0 ? `
+                    <div class="text-center py-12">
+                        <div class="text-gray-400 mb-4">${I_List('w-16 h-16 mx-auto')}</div>
+                        <h3 class="text-lg font-semibold text-gray-300 mb-2">Список пуст</h3>
+                        <p class="text-gray-500">Добавьте элементы из каталога, нажав на сердечко</p>
+                    </div>
+                ` : `
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${items.map(item => `
+                            <div class="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors">
+                                <div class="flex items-start space-x-3">
+                                    ${item.image ? `
+                                        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 object-cover rounded-lg flex-shrink-0">
+                                    ` : `
+                                        <div class="w-16 h-16 bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                                            ${I_Brick('w-8 h-8 text-gray-400')}
+                                        </div>
+                                    `}
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-semibold text-white truncate">${item.name}</h4>
+                                        <p class="text-sm text-gray-400">${item.type === 'set' ? 'Набор' : item.type === 'minifig' ? 'Минифигурка' : 'Деталь'}</p>
+                                        <p class="text-xs text-gray-500">ID: ${item.itemId}</p>
+                                        ${item.colorId ? `<p class="text-xs text-gray-500">Цвет: ${item.colorId}</p>` : ''}
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            Добавлен: ${new Date(item.added).toLocaleDateString('ru-RU')}
+                                        </p>
+                                    </div>
+                                    <button class="remove-from-wishlist text-red-400 hover:text-red-300 transition-colors" 
+                                            data-wishlist-id="${wishlist.id}" 
+                                            data-item-id="${item.id}">
+                                        ${I_Trash('w-4 h-4')}
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `}
+            </div>
+            
+            <!-- Подвал -->
+            <div class="flex items-center justify-between p-6 border-t border-gray-700 bg-gray-750">
+                <div class="flex space-x-2">
+                    <button id="export-wishlist-from-modal" 
+                            class="flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-medium bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-green-500/25 hover:transform hover:-translate-y-0.5"
+                            data-wishlist-id="${wishlist.id}">
+                        ${I_Download('w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2')}
+                        <span class="hidden sm:inline">Экспорт CSV</span>
+                        <span class="sm:hidden">Экспорт</span>
+                    </button>
+                    <button id="edit-wishlist-from-modal" 
+                            class="flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                            data-wishlist-id="${wishlist.id}">
+                        ${I_Edit('w-4 h-4 mr-2')}
+                        Редактировать
+                    </button>
+                </div>
+                <button id="close-wishlist-modal-bottom" 
+                        class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                    Закрыть
+                </button>
+            </div>
+        </div>
+    `;
+}
+
 async function handleBulkUpdatePartsFromSet(e, t) {
     if (S.setModal.bulkUpdate) return;
     S.setModal.bulkUpdate = !0, S.setModal.status = "", S.setModal.statusType = "", updateSetModalControlsState();
@@ -15697,6 +17329,280 @@ function closeRelatedSetsModal() {
     
     // Закрываем модальное окно через modalManager
     modalManager.closeModal('related-sets-modal-container');
+}
+
+function closeWishlistModal() {
+    console.log('closeWishlistModal called');
+    
+    S.wishlistModal = { open: false, wishlistId: null, wishlist: null };
+    updateUI();
+}
+
+// Функция разворачивания папок больше не используется - у нас единый список желаний
+function toggleWishlistExpand(wishlistId) {
+    console.log('ℹ️ toggleWishlistExpand called but not needed - using single wishlist');
+}
+
+// Функции перетаскивания удалены - теперь используется перемещение кнопками
+
+// Функции перетаскивания удалены - теперь используется перемещение кнопками
+
+function removeFromWishlist(wishlistId, itemId) {
+    const wishlist = S.wishlists[wishlistId];
+    if (!wishlist) return;
+    
+    // Находим и удаляем элемент
+    const itemIndex = wishlist.items.findIndex(item => item.id === itemId);
+    if (itemIndex === -1) return;
+    
+    const item = wishlist.items[itemIndex];
+    wishlist.items.splice(itemIndex, 1);
+    wishlist.modified = new Date().toISOString();
+    
+    // Обновляем модальное окно, если оно открыто
+    if (S.wishlistModal.open && S.wishlistModal.wishlistId === wishlistId) {
+        S.wishlistModal.wishlist = wishlist;
+    }
+    
+    saveState();
+    // Уведомление убрано
+    updateUI();
+}
+
+// Функция для проверки, есть ли элемент в списке желаний
+function isInWishlist(itemType, itemId, colorId = null) {
+    const itemKey = colorId ? `${itemType}:${itemId}:${colorId}` : `${itemType}:${itemId}`;
+    const singleWishlistId = 'main-wishlist';
+    
+    const wishlist = S.wishlists[singleWishlistId];
+    if (wishlist && wishlist.items) {
+        return wishlist.items.some(item => item.id === itemKey);
+    }
+    return false;
+}
+
+// Функция для удаления элемента из списка по данным элемента
+function removeFromWishlistByItem(itemType, itemId, colorId = null) {
+    const itemKey = colorId ? `${itemType}:${itemId}:${colorId}` : `${itemType}:${itemId}`;
+    const singleWishlistId = 'main-wishlist';
+    
+    const wishlist = S.wishlists[singleWishlistId];
+    if (wishlist && wishlist.items) {
+        const itemIndex = wishlist.items.findIndex(item => item.id === itemKey);
+        if (itemIndex !== -1) {
+            const item = wishlist.items[itemIndex];
+            wishlist.items.splice(itemIndex, 1);
+            wishlist.modified = new Date().toISOString();
+            
+            // Обновляем модальное окно, если оно открыто
+            if (S.wishlistModal.open && S.wishlistModal.wishlistId === singleWishlistId) {
+                S.wishlistModal.wishlist = wishlist;
+            }
+            
+            saveState();
+            // Уведомление убрано
+            
+            // Принудительно обновляем UI
+            if (S.view === 'catalog' || (S.view === 'tools' && S.toolSubView === 'wishlist')) {
+                S.gridStale = true;
+                updateUI();
+            }
+            return;
+        }
+    }
+}
+
+// Функции для перемещения элементов в списке желаний
+function moveWishlistItemUp(wishlistId, itemId) {
+    console.log('🔄 moveWishlistItemUp called:', { wishlistId, itemId });
+    
+    const wishlist = S.wishlists[wishlistId];
+    if (!wishlist) {
+        console.log('❌ Wishlist not found');
+        return;
+    }
+    
+    const itemIndex = wishlist.items.findIndex(item => item.id === itemId);
+    console.log('🔄 Item index:', itemIndex, 'Total items:', wishlist.items.length);
+    
+    if (itemIndex <= 0) {
+        console.log('❌ Cannot move - already at beginning or not found');
+        return; // Уже в начале списка
+    }
+    
+    const container = document.querySelector(`.wishlist-drop-zone[data-wishlist-id="${wishlistId}"]`);
+    if (!container) {
+        console.log('❌ Container not found');
+        return;
+    }
+    
+    // Находим DOM элементы
+    const currentItem = document.querySelector(`[data-item-id="${itemId}"]`);
+    const previousItem = document.querySelector(`[data-item-id="${wishlist.items[itemIndex - 1].id}"]`);
+    
+    console.log('🔄 DOM elements:', { currentItem, previousItem });
+    
+    if (!currentItem || !previousItem) {
+        console.log('❌ DOM elements not found');
+        return;
+    }
+    
+    console.log('🔄 Starting instant swap');
+    
+    // Меняем местами в данных
+    const temp = wishlist.items[itemIndex];
+    wishlist.items[itemIndex] = wishlist.items[itemIndex - 1];
+    wishlist.items[itemIndex - 1] = temp;
+    
+    console.log('🔄 Data swapped, new order:', wishlist.items.map(item => item.id));
+    
+    wishlist.modified = new Date().toISOString();
+    saveState();
+    
+    // Меняем местами в DOM мгновенно
+    console.log('🔄 Swapping in DOM');
+    container.insertBefore(currentItem, previousItem);
+    
+    // Обновляем кнопки
+    updateWishlistButtonStates(wishlistId);
+    console.log('🔄 Swap completed');
+    
+    console.log(`✅ Moved item ${itemId} up in wishlist ${wishlistId}`);
+}
+
+function moveWishlistItemDown(wishlistId, itemId) {
+    console.log('🔄 moveWishlistItemDown called:', { wishlistId, itemId });
+    
+    const wishlist = S.wishlists[wishlistId];
+    if (!wishlist) {
+        console.log('❌ Wishlist not found');
+        return;
+    }
+    
+    const itemIndex = wishlist.items.findIndex(item => item.id === itemId);
+    console.log('🔄 Item index:', itemIndex, 'Total items:', wishlist.items.length);
+    
+    if (itemIndex === -1 || itemIndex >= wishlist.items.length - 1) {
+        console.log('❌ Cannot move - already at end or not found');
+        return; // Уже в конце списка
+    }
+    
+    const container = document.querySelector(`.wishlist-drop-zone[data-wishlist-id="${wishlistId}"]`);
+    if (!container) {
+        console.log('❌ Container not found');
+        return;
+    }
+    
+    // Находим DOM элементы
+    const currentItem = document.querySelector(`[data-item-id="${itemId}"]`);
+    const nextItem = document.querySelector(`[data-item-id="${wishlist.items[itemIndex + 1].id}"]`);
+    
+    console.log('🔄 DOM elements:', { currentItem, nextItem });
+    
+    if (!currentItem || !nextItem) {
+        console.log('❌ DOM elements not found');
+        return;
+    }
+    
+    console.log('🔄 Starting instant swap');
+    
+    // Меняем местами в данных
+    const temp = wishlist.items[itemIndex];
+    wishlist.items[itemIndex] = wishlist.items[itemIndex + 1];
+    wishlist.items[itemIndex + 1] = temp;
+    
+    console.log('🔄 Data swapped, new order:', wishlist.items.map(item => item.id));
+    
+    wishlist.modified = new Date().toISOString();
+    saveState();
+    
+    // Меняем местами в DOM мгновенно
+    console.log('🔄 Swapping in DOM');
+    container.insertBefore(nextItem, currentItem);
+    
+    // Обновляем кнопки
+    updateWishlistButtonStates(wishlistId);
+    console.log('🔄 Swap completed');
+    
+    console.log(`✅ Moved item ${itemId} down in wishlist ${wishlistId}`);
+}
+
+// Функция для обновления состояний кнопок перемещения
+function updateWishlistButtonStates(wishlistId) {
+    const wishlist = S.wishlists[wishlistId];
+    if (!wishlist) return;
+    
+    const container = document.querySelector(`.wishlist-drop-zone[data-wishlist-id="${wishlistId}"]`);
+    if (!container) return;
+    
+    const items = container.querySelectorAll('.wishlist-item');
+    items.forEach((item, index) => {
+        const leftButton = item.querySelector('.move-left');
+        const rightButton = item.querySelector('.move-right');
+        
+        if (leftButton) {
+            leftButton.disabled = index === 0;
+            leftButton.classList.toggle('opacity-50', index === 0);
+        }
+        
+        if (rightButton) {
+            rightButton.disabled = index === items.length - 1;
+            rightButton.classList.toggle('opacity-50', index === items.length - 1);
+        }
+    });
+}
+
+// Функция для плавного обновления элементов списка желаний без перезапуска анимаций
+function updateWishlistItemsSmoothly(wishlistId) {
+    const wishlist = S.wishlists[wishlistId];
+    if (!wishlist) return;
+    
+    const container = document.querySelector(`.wishlist-drop-zone[data-wishlist-id="${wishlistId}"]`);
+    if (!container) return;
+    
+    // Получаем текущие элементы
+    const currentItems = Array.from(container.querySelectorAll('.wishlist-item'));
+    
+    // Создаем новый HTML для элементов
+    const newItemsHTML = wishlist.items.map(item => renderWishlistItemCard(item, wishlistId)).join('');
+    
+    // Создаем временный контейнер
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = newItemsHTML;
+    const newItems = Array.from(tempContainer.children);
+    
+    // Обновляем только содержимое существующих элементов, не трогая их позиции
+    currentItems.forEach((currentItem, index) => {
+        if (newItems[index]) {
+            // Сохраняем текущие классы анимации
+            const hasJumpingUp = currentItem.classList.contains('jumping-up');
+            const hasJumpingDown = currentItem.classList.contains('jumping-down');
+            
+            // Обновляем содержимое
+            currentItem.innerHTML = newItems[index].innerHTML;
+            
+            // Восстанавливаем классы анимации
+            if (hasJumpingUp) {
+                currentItem.classList.add('jumping-up');
+            }
+            if (hasJumpingDown) {
+                currentItem.classList.add('jumping-down');
+            }
+        }
+    });
+    
+    // Если количество элементов изменилось, добавляем или удаляем лишние
+    if (newItems.length > currentItems.length) {
+        // Добавляем новые элементы
+        for (let i = currentItems.length; i < newItems.length; i++) {
+            container.appendChild(newItems[i]);
+        }
+    } else if (newItems.length < currentItems.length) {
+        // Удаляем лишние элементы
+        for (let i = currentItems.length - 1; i >= newItems.length; i--) {
+            currentItems[i].remove();
+        }
+    }
 }
 
 function closeSettingsModal() {
@@ -16923,10 +18829,215 @@ document.addEventListener("click", async e => {
     const t = e.target;
     
     // Логируем все клики для отладки
+    console.log('🖱️ Click detected:', {
+        target: t,
+        id: t.id,
+        className: t.className,
+        tagName: t.tagName,
+        closestMoveLeft: t.closest('.move-left'),
+        closestMoveRight: t.closest('.move-right')
+    });
     
+    // ПРИОРИТЕТНЫЕ ОБРАБОТЧИКИ - кнопки списка желаний (единый список)
+    
+    // Просмотр в модальном окне отключен для единого списка желаний
+    
+    if (t.closest('.import-wishlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const wishlistId = t.closest('.import-wishlist').dataset.wishlistId;
+        if (wishlistId) {
+            importWishlist(wishlistId);
+        }
+        return;
+    }
+    
+    if (t.closest('.export-wishlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const wishlistId = t.closest('.export-wishlist').dataset.wishlistId;
+        if (wishlistId) {
+            exportWishlist(wishlistId);
+        }
+        return;
+    }
+    
+    // Обработчики мультивыбора в списке желаний
+    if (t.id === 'select-all-wishlist' || t.closest('#select-all-wishlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        selectAllWishlistItems();
+        return;
+    }
+    
+    if (t.id === 'deselect-all-wishlist' || t.closest('#deselect-all-wishlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        deselectAllWishlistItems();
+        return;
+    }
+    
+    if (t.id === 'export-selected-wishlist' || t.closest('#export-selected-wishlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        exportSelectedWishlistItems();
+        return;
+    }
+    
+    if (t.id === 'share-selected-wishlist' || t.closest('#share-selected-wishlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        shareSelectedWishlistItems();
+        return;
+    }
+    
+    // Обработчик кнопок выбора в списке желаний
+    const wishlistCheckbox = t.closest('.wishlist-item-checkbox');
+    if (wishlistCheckbox) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        console.log('🔘 Wishlist checkbox clicked:', wishlistCheckbox);
+        
+        if (wishlistCheckbox.classList.contains('selected')) {
+            wishlistCheckbox.classList.remove('selected');
+            wishlistCheckbox.innerHTML = I_Circle('w-3 h-3');
+            console.log('🔘 Unselected item');
+        } else {
+            wishlistCheckbox.classList.add('selected');
+            wishlistCheckbox.innerHTML = I_CheckCircle('w-3 h-3');
+            console.log('🔘 Selected item');
+        }
+        
+        updateWishlistSelectionUI();
+        return;
+    }
+    
+    // Обработчики для кнопок в модальном окне списка желаний
+    if (t.id === 'export-wishlist-from-modal') {
+        e.preventDefault();
+        e.stopPropagation();
+        const wishlistId = t.dataset.wishlistId;
+        if (wishlistId) {
+            exportWishlist(wishlistId);
+        }
+        return;
+    }
+    
+    // Редактирование единого списка желаний отключено
+    
+    if (t.closest('[data-action="remove-from-wishlist"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const removeButton = t.closest('[data-action="remove-from-wishlist"]');
+        const wishlistId = removeButton.dataset.wishlistId;
+        const itemId = removeButton.dataset.itemId;
+        console.log('🗑️ Remove button clicked:', { wishlistId, itemId });
+        if (wishlistId && itemId) {
+            removeFromWishlist(wishlistId, itemId);
+        }
+        return;
+    }
+    
+    // Обработчик для кнопки удаления в модальном окне (использует класс)
+    if (t.closest('.remove-from-wishlist')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const removeButton = t.closest('.remove-from-wishlist');
+        const wishlistId = removeButton.dataset.wishlistId;
+        const itemId = removeButton.dataset.itemId;
+        console.log('🗑️ Remove button clicked (modal):', { wishlistId, itemId });
+        if (wishlistId && itemId) {
+            removeFromWishlist(wishlistId, itemId);
+        }
+        return;
+    }
+    
+    // Обработчики для кнопок перемещения элементов списка желаний
+    if (t.closest('.move-left')) {
+        console.log('🔄 Move left clicked');
+        e.preventDefault();
+        e.stopPropagation();
+        const wishlistId = t.closest('.move-left').dataset.wishlistId;
+        const itemId = t.closest('.move-left').dataset.itemId;
+        console.log('🔄 Move left data:', { wishlistId, itemId });
+        if (wishlistId && itemId) {
+            moveWishlistItemUp(wishlistId, itemId);
+        }
+        return;
+    }
+    
+    if (t.closest('.move-right')) {
+        console.log('🔄 Move right clicked');
+        e.preventDefault();
+        e.stopPropagation();
+        const wishlistId = t.closest('.move-right').dataset.wishlistId;
+        const itemId = t.closest('.move-right').dataset.itemId;
+        console.log('🔄 Move right data:', { wishlistId, itemId });
+        if (wishlistId && itemId) {
+            moveWishlistItemDown(wishlistId, itemId);
+        }
+        return;
+    }
+    
+    // Обработчик для открытия модального окна элемента списка желаний
+    if (t.closest('[data-action="open-item-modal"]')) {
+        e.preventDefault();
+        e.stopPropagation();
+        const itemElement = t.closest('[data-action="open-item-modal"]');
+        const itemType = itemElement.dataset.itemType;
+        const itemId = itemElement.dataset.itemIdValue;
+        
+        if (itemType && itemId) {
+            // Открываем модальное окно в зависимости от типа элемента
+            if (itemType === 'set') {
+                openModalForSet(itemId);
+            } else if (itemType === 'minifig') {
+                openModalForMinifig(itemId);
+            } else if (itemType === 'part') {
+                // Для деталей нужно найти цвет
+                const fullItemId = itemElement.dataset.itemId;
+                const colorId = fullItemId.split(':')[2];
+                openModalForPart(itemId, colorId);
+            }
+        }
+        return;
+    }
+    
+    if (t.id === 'close-wishlist-modal' || t.id === 'close-wishlist-modal-bottom') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeWishlistModal();
+        return;
+    }
+    
+    // Разворачивание папок больше не используется в едином списке желаний
+
     // Проверяем, есть ли data-action у элемента или его родителей
     const actionElement = t.closest('[data-action]');
     if (actionElement) {
+        switch (actionElement.dataset.action) {
+            case "add-to-wishlist":
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('🎯 Add to wishlist button clicked!', actionElement);
+                const itemType = actionElement.dataset.itemType;
+                const itemId = actionElement.dataset.itemId;
+                const colorId = actionElement.dataset.colorId;
+                console.log('📝 Item data:', { itemType, itemId, colorId });
+                if (itemType && itemId) {
+                    if (isInWishlist(itemType, itemId, colorId)) {
+                        // Элемент уже в списке - удаляем его
+                        removeFromWishlistByItem(itemType, itemId, colorId);
+                    } else {
+                        // Элемента нет в списке - добавляем его
+                        addToWishlist(itemType, itemId, colorId);
+                    }
+                } else {
+                    console.error('❌ Missing item data:', { itemType, itemId, colorId });
+                }
+                return;
+        }
     }
 
     // ПРИОРИТЕТНЫЕ ОБРАБОТЧИКИ - проверяем сначала специальные действия из аналитики
@@ -18032,6 +20143,9 @@ document.addEventListener("click", async e => {
         }
         return closeRelatedSetsModal();
     }
+    if ("wishlist-modal-container" === t.id) {
+        return closeWishlistModal();
+    }
     if (t.closest("#search-button")) return triggerSearch();
     if (t.closest("#clear-search")) {
         S.q = "";
@@ -18342,7 +20456,7 @@ document.addEventListener("click", async e => {
                     imageFile = await createRasterPreviewImage(fallbackTitle, fallbackSub, { fileName: `lego-${safe}.png` });
                 }
                 if (selectedName) {
-                    const safeCsv = String(selectedName).replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
+                    const safeCsv = String(selectedName).replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
                     fileName = `lego-selection-${safeCsv}.csv`;
                 }
                 // Создаём CSV-файл с актуальным именем
@@ -18509,7 +20623,7 @@ document.addEventListener("click", async e => {
                 if (includeCsv) {
                     csvData = generateCsvDataForSelection({ parts: [{ id: partId, colorId }] });
                     const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-                    const csvName = `lego-selection-${partId}${colorId?'-'+colorId:''}.csv`;
+                    const csvName = `lego-selection-${partId}${colorId ? '-' + colorId : ''}.csv`;
                     csvFile = new File([csvBlob], csvName, { type: 'text/csv' });
                     files = [csvFile, imageFile];
                 }
@@ -18886,6 +21000,19 @@ document.addEventListener("click", async e => {
                 })();
                 S.gridStale = true; updateUI();
                 return;
+            case "toggle-wishlist":
+                S.wishlistEnabled = !S.wishlistEnabled;
+                localStorage.setItem('wishlistEnabled', String(S.wishlistEnabled));
+                // Обновляем только тумблер, не трогая остальной контент
+                (function(){
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-wishlist"]');
+                    if (btn) {
+                        if (S.wishlistEnabled) btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.wishlistEnabled));
+                    }
+                })();
+                S.gridStale = true; updateUI();
+                return;
             case "toggle-folders":
                 S.foldersEnabled = !S.foldersEnabled;
                 localStorage.setItem('foldersEnabled', String(S.foldersEnabled));
@@ -19249,6 +21376,7 @@ document.addEventListener("click", async e => {
                 break;
             case "add-minifig-parts-to-collection":
                 a && handleBulkAddMinifigParts(a)
+                break;
         }
     } else if (partModalEl?.contains(t)) {
         // Обрабатываем клик по кнопке селектора пользовательских вариаций
@@ -20135,6 +22263,9 @@ async function initializeApp() {
     }, 3000); // Ждем 3 секунды после завершения загрузки данных
 }
 document.addEventListener("DOMContentLoaded", () => {
+    // Инициализируем drag-and-drop для списков желаний
+    // Перетаскивание заменено на кнопки перемещения
+    
     // Защита от случайного масштабирования страницы
     document.addEventListener('wheel', (e) => {
         if (e.ctrlKey) {
@@ -23257,5 +25388,4 @@ function animateCloseButtonClick(button) {
   </script>
 
 </body>
-</html>
-</html>
+</html></html>
