@@ -7639,22 +7639,13 @@ async function startHtml5QrCodeScanner() {
                 showTorchButtonIfSupported: true,
                 showZoomSliderIfSupported: true,
                 useBarCodeDetectorIfSupported: true,
+                showCameraSelectionIfSupported: true, // Включаем выбор камеры
+                defaultZoomValueIfSupported: 2, // Увеличиваем зум для лучшего фокуса
                 videoConstraints: {
                     facingMode: 'environment',
-                    width: { ideal: 1280, min: 640 }, // Оптимизированное разрешение
+                    width: { ideal: 1280, min: 640 },
                     height: { ideal: 720, min: 480 },
-                    focusMode: 'continuous', // Автоматический авто-фокус
-                    focusDistance: { ideal: 0.5 }, // Оптимальное расстояние фокусировки
-                    whiteBalanceMode: 'continuous', // Автоматический баланс белого
-                    exposureMode: 'continuous', // Автоматическая экспозиция
-                    frameRate: { ideal: 5, max: 10 }, // Ограничиваем частоту кадров
-                    // Дополнительные настройки для автофокуса
-                    advanced: [
-                        { focusMode: 'continuous' },
-                        { focusDistance: { ideal: 0.5 } },
-                        { whiteBalanceMode: 'continuous' },
-                        { exposureMode: 'continuous' }
-                    ]
+                    frameRate: { ideal: 5, max: 10 }
                 },
                 // Поддерживаемые форматы как у Falconbricks
                 supportedScanTypes: [
@@ -7691,23 +7682,40 @@ async function startHtml5QrCodeScanner() {
                 if (videoElement && videoElement.srcObject) {
                     const stream = videoElement.srcObject;
                     const videoTrack = stream.getVideoTracks()[0];
-                    if (videoTrack && videoTrack.getCapabilities) {
-                        const capabilities = videoTrack.getCapabilities();
-                        if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                    if (videoTrack) {
+                        // Пробуем разные способы включения автофокуса
+                        try {
+                            // Способ 1: Через applyConstraints
                             await videoTrack.applyConstraints({
-                                advanced: [
-                                    { focusMode: 'continuous' },
-                                    { focusDistance: { ideal: 0.5 } }
-                                ]
+                                focusMode: 'continuous'
                             });
-                            console.log('🔍 Автофокус принудительно включен для html5-qrcode');
+                            console.log('🔍 Автофокус включен через applyConstraints');
+                        } catch (e1) {
+                            try {
+                                // Способ 2: Через advanced
+                                await videoTrack.applyConstraints({
+                                    advanced: [{ focusMode: 'continuous' }]
+                                });
+                                console.log('🔍 Автофокус включен через advanced');
+                            } catch (e2) {
+                                try {
+                                    // Способ 3: Через базовые настройки
+                                    await videoTrack.applyConstraints({
+                                        focusMode: 'continuous',
+                                        focusDistance: { ideal: 0.5 }
+                                    });
+                                    console.log('🔍 Автофокус включен через базовые настройки');
+                                } catch (e3) {
+                                    console.log('🔍 Автофокус не поддерживается или уже включен');
+                                }
+                            }
                         }
                     }
                 }
             } catch (error) {
-                console.log('🔍 Не удалось принудительно включить автофокус для html5-qrcode:', error);
+                console.log('🔍 Ошибка настройки автофокуса:', error);
             }
-        }, 1000);
+        }, 1500);
         
         console.log('✅ html5-qrcode сканер запущен (как у Falconbricks)');
             
@@ -7737,6 +7745,47 @@ function stopHtml5QrCodeScanner() {
 // Функция полной остановки сканера
 async function stopScannerCompletely() {
     await completelyDestroyScanner();
+}
+
+// Функция смены камеры
+async function switchCamera() {
+    console.log('🔄 Переключаем камеру...');
+    
+    try {
+        // Получаем список доступных камер
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        
+        if (videoDevices.length < 2) {
+            alert('Доступна только одна камера');
+            return;
+        }
+        
+        // Останавливаем текущий сканер
+        stopHtml5QrCodeScanner();
+        
+        // Очищаем контейнер
+        const scannerContainer = document.getElementById('qr-reader');
+        if (scannerContainer) {
+            scannerContainer.innerHTML = '';
+        }
+        
+        // Перезапускаем сканер с новой камерой
+        setTimeout(async () => {
+            try {
+                await startHtml5QrCodeScanner();
+                console.log('✅ Камера переключена');
+            } catch (error) {
+                console.error('Ошибка переключения камеры:', error);
+                S.scannerModal.error = 'Ошибка переключения камеры: ' + error.message;
+                updateUI();
+            }
+        }, 500);
+        
+    } catch (error) {
+        console.error('Ошибка получения списка камер:', error);
+        alert('Ошибка переключения камеры: ' + error.message);
+    }
 }
 
 // Функция для перезапуска сканера
@@ -7950,6 +7999,7 @@ window.processManualCode = processManualCode;
 window.waitForDataAndOpenMinifigModal = waitForDataAndOpenMinifigModal;
 window.openMinifigModalByCode = openMinifigModalByCode;
 window.restartScanner = restartScanner;
+window.switchCamera = switchCamera;
 window.startHtml5QrCodeScanner = startHtml5QrCodeScanner;
 window.stopHtml5QrCodeScanner = stopHtml5QrCodeScanner;
 window.testMinifigSearch = testMinifigSearch;
@@ -16155,6 +16205,10 @@ function renderScannerModal() {
                                         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
                                     Scan the next box
                                 </button>
+                                <button onclick="switchCamera()" 
+                                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                    Switch Camera
+                                </button>
                             <button onclick="closeScannerModal()" 
                                         class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
                                 Закрыть
@@ -16187,10 +16241,16 @@ function renderScannerModal() {
                             </div>
                             <p class="text-gray-400 mb-4">Наведите камеру на DataMatrix код минифигурки</p>
                             
-                            <button onclick="closeScannerModal()" 
-                                    class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
-                                Отмена
-                            </button>
+                            <div class="flex gap-2 justify-center">
+                                <button onclick="switchCamera()" 
+                                        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    Switch Camera
+                                </button>
+                                <button onclick="closeScannerModal()" 
+                                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                    Отмена
+                                </button>
+                            </div>
                             </div>
                         </div>
                     `}
