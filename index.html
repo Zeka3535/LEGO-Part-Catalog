@@ -7761,30 +7761,43 @@ async function switchCamera() {
             return;
         }
         
-        // Останавливаем текущий сканер
-        stopHtml5QrCodeScanner();
+        // Показываем индикатор загрузки
+        S.scannerModal.loading = true;
+        S.scannerModal.error = null;
+        S.scannerModal.result = null;
+        updateUI();
         
-        // Очищаем контейнер
-        const scannerContainer = document.getElementById('qr-reader');
-        if (scannerContainer) {
-            scannerContainer.innerHTML = '';
-        }
+        // ПОЛНОСТЬЮ уничтожаем текущий сканер
+        console.log('🔍 Полное уничтожение сканера для переключения камеры...');
+        await completelyDestroyScanner();
         
-        // Перезапускаем сканер с новой камерой
+        // Дополнительная очистка
+        forceClearAllMediaStreams();
+        
+        // Перезапускаем сканер с увеличенной задержкой
         setTimeout(async () => {
             try {
+                console.log('🔍 Перезапускаем сканер после переключения камеры...');
                 await startHtml5QrCodeScanner();
-                console.log('✅ Камера переключена');
+                
+                // Скрываем индикатор загрузки
+                S.scannerModal.loading = false;
+                updateUI();
+                
+                console.log('✅ Камера переключена и сканер запущен');
             } catch (error) {
                 console.error('Ошибка переключения камеры:', error);
+                S.scannerModal.loading = false;
                 S.scannerModal.error = 'Ошибка переключения камеры: ' + error.message;
                 updateUI();
             }
-        }, 500);
+        }, 1500); // Увеличиваем задержку для полной очистки
         
     } catch (error) {
         console.error('Ошибка получения списка камер:', error);
-        alert('Ошибка переключения камеры: ' + error.message);
+        S.scannerModal.loading = false;
+        S.scannerModal.error = 'Ошибка переключения камеры: ' + error.message;
+        updateUI();
     }
 }
 
@@ -8000,6 +8013,28 @@ window.waitForDataAndOpenMinifigModal = waitForDataAndOpenMinifigModal;
 window.openMinifigModalByCode = openMinifigModalByCode;
 window.restartScanner = restartScanner;
 window.switchCamera = switchCamera;
+window.switchCameraViaButton = switchCameraViaButton;
+
+// Альтернативная функция смены камеры через встроенную кнопку html5-qrcode
+function switchCameraViaButton() {
+    console.log('🔄 Переключаем камеру через встроенную кнопку...');
+    
+    try {
+        // Ищем встроенную кнопку переключения камеры
+        const cameraButton = document.querySelector('#qr-reader button[title*="camera"], #qr-reader button[title*="Camera"], [id^="qr-reader-"] button[title*="camera"], [id^="qr-reader-"] button[title*="Camera"]');
+        
+        if (cameraButton) {
+            console.log('🔍 Найдена встроенная кнопка камеры, нажимаем...');
+            cameraButton.click();
+        } else {
+            console.log('🔍 Встроенная кнопка камеры не найдена, используем альтернативный метод...');
+            switchCamera();
+        }
+    } catch (error) {
+        console.error('Ошибка переключения камеры через кнопку:', error);
+        switchCamera(); // Fallback к основному методу
+    }
+}
 window.startHtml5QrCodeScanner = startHtml5QrCodeScanner;
 window.stopHtml5QrCodeScanner = stopHtml5QrCodeScanner;
 window.testMinifigSearch = testMinifigSearch;
@@ -16205,7 +16240,7 @@ function renderScannerModal() {
                                         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
                                     Scan the next box
                                 </button>
-                                <button onclick="switchCamera()" 
+                                <button onclick="switchCameraViaButton()" 
                                         class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
                                     Switch Camera
                                 </button>
@@ -16242,7 +16277,7 @@ function renderScannerModal() {
                             <p class="text-gray-400 mb-4">Наведите камеру на DataMatrix код минифигурки</p>
                             
                             <div class="flex gap-2 justify-center">
-                                <button onclick="switchCamera()" 
+                                <button onclick="switchCameraViaButton()" 
                                         class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
                                     Switch Camera
                                 </button>
