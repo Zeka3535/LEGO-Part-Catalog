@@ -7042,7 +7042,9 @@ let S = {
         loading: false,
         result: null,
         error: null
-    }
+    },
+    // История сканирования
+    scanHistory: []
 };
 let tempFilters = {
     filters: { colorIds: [], inCollectionOnly: false },
@@ -7155,6 +7157,26 @@ function loadState() {
     const foldersEnabled = localStorage.getItem('foldersEnabled');
     if (foldersEnabled !== null) {
         S.foldersEnabled = foldersEnabled === 'true';
+    }
+    
+    // Загружаем историю сканирования
+    loadScanHistory();
+}
+
+// Функция загрузки истории сканирования
+function loadScanHistory() {
+    try {
+        const historyData = localStorage.getItem('lego_scan_history');
+        if (historyData) {
+            S.scanHistory = JSON.parse(historyData);
+            console.log('✅ Loaded scan history:', S.scanHistory.length, 'items');
+        } else {
+            S.scanHistory = [];
+            console.log('📝 No scan history found, initializing empty array');
+        }
+    } catch (e) {
+        console.error('Failed to parse scan history from localStorage', e);
+        S.scanHistory = [];
     }
 }
 
@@ -7455,6 +7477,77 @@ function detectQRCode(imageData) {
 }
 
 // Обработка результата сканирования
+// Функция определения типа кода
+function detectCodeType(code) {
+    // URL
+    if (code.startsWith('http://') || code.startsWith('https://')) {
+        return 'URL';
+    }
+    
+    // Email
+    if (code.includes('@') && code.includes('.')) {
+        return 'Email';
+    }
+    
+    // Phone number
+    if (/^\+?[\d\s\-\(\)]+$/.test(code) && code.length >= 10) {
+        return 'Phone';
+    }
+    
+    // WiFi
+    if (code.startsWith('WIFI:')) {
+        return 'WiFi';
+    }
+    
+    // SMS
+    if (code.startsWith('sms:') || code.startsWith('SMS:')) {
+        return 'SMS';
+    }
+    
+    // VCard
+    if (code.startsWith('BEGIN:VCARD')) {
+        return 'VCard';
+    }
+    
+    // Calendar
+    if (code.startsWith('BEGIN:VEVENT')) {
+        return 'Calendar';
+    }
+    
+    // Location
+    if (code.startsWith('geo:')) {
+        return 'Location';
+    }
+    
+    // Bitcoin
+    if (code.startsWith('bitcoin:') || /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/.test(code)) {
+        return 'Bitcoin';
+    }
+    
+    // Ethereum
+    if (code.startsWith('ethereum:') || /^0x[a-fA-F0-9]{40}$/.test(code)) {
+        return 'Ethereum';
+    }
+    
+    // JSON
+    if (code.startsWith('{') && code.endsWith('}')) {
+        try {
+            JSON.parse(code);
+            return 'JSON';
+        } catch (e) {
+            // Not JSON
+        }
+    }
+    
+    // Base64
+    if (/^[A-Za-z0-9+/]*={0,2}$/.test(code) && code.length > 20) {
+        return 'Base64';
+    }
+    
+    // Default to text
+    return 'Text';
+}
+
 async function processQRResult(qrCode) {
     try {
         // ПОЛНОСТЬЮ уничтожаем сканер перед обработкой
@@ -7468,6 +7561,10 @@ async function processQRResult(qrCode) {
         
         console.log('Обрабатываем отсканированный код:', qrCode);
         
+        // Определяем тип кода
+        const codeType = detectCodeType(qrCode);
+        console.log('Определен тип кода:', codeType);
+        
         // Извлекаем первые 7 цифр из отсканированного кода
         const numericCode = qrCode.replace(/\D/g, ''); // Убираем все нецифровые символы
         const searchCode = numericCode.substring(0, 7);
@@ -7477,6 +7574,31 @@ async function processQRResult(qrCode) {
         // Ищем минифигурку в базе данных
         const minifig = searchMinifigByCode(searchCode);
         
+        // Создаем результат сканирования
+        const scanResult = {
+            id: Date.now(),
+            timestamp: new Date().toISOString(),
+            code: qrCode,
+            type: codeType,
+            minifig: minifig || null,
+            searchCode: searchCode
+        };
+        
+        // Добавляем в историю сканирования
+        S.scanHistory.unshift(scanResult);
+        
+        // Ограничиваем историю 50 записями
+        if (S.scanHistory.length > 50) {
+            S.scanHistory = S.scanHistory.slice(0, 50);
+        }
+        
+        // Сохраняем историю в localStorage
+        try {
+            localStorage.setItem('lego_scan_history', JSON.stringify(S.scanHistory));
+        } catch (e) {
+            console.warn('Не удалось сохранить историю сканирования:', e);
+        }
+        
         if (minifig) {
             console.log('Найдена минифигурка:', minifig);
             S.scannerModal.result = {
@@ -7484,13 +7606,15 @@ async function processQRResult(qrCode) {
                 originalCode: qrCode,
                 name: minifig.name,
                 id: minifig.id,
+                type: codeType,
                 image: `Minifig_png/fig-${minifig.id.split('-')[1]}.png`
             };
             
             // Показываем результат кратко и сразу переходим к модальному окну
             S.scannerModal.result = {
                 minifig: minifig,
-                code: qrCode
+                code: qrCode,
+                type: codeType
             };
             updateUI();
             
@@ -7500,10 +7624,17 @@ async function processQRResult(qrCode) {
                 // Ждем инициализации данных перед открытием модального окна
                 waitForDataAndOpenMinifigModal(minifig.id);
             }, 1000);
-                        } else {
-                            console.log('Минифигурка не найдена для кода:', searchCode);
-                            S.scannerModal.error = `Hmm... we couldn't find a Minifigure with this code. Please recheck the instructions below and try again.`;
-                        }
+        } else {
+            console.log('Минифигурка не найдена для кода:', searchCode);
+            // Показываем общий результат сканирования
+            S.scannerModal.result = {
+                code: qrCode,
+                originalCode: qrCode,
+                type: codeType,
+                name: null
+            };
+            S.scannerModal.error = null;
+        }
         
         S.scannerModal.loading = false;
                     updateUI();
@@ -7633,19 +7764,20 @@ async function startHtml5QrCodeScanner() {
         html5QrcodeScanner = new Html5QrcodeScanner(
             scannerContainer.id,
             {
-                fps: 5, // Уменьшенная частота кадров для экономии ресурсов
-                qrbox: { width: 150, height: 150 }, // Уменьшенная область сканирования для точности
+                fps: 10, // Оптимальная частота кадров для баланса производительности и точности
+                qrbox: { width: 300, height: 300 }, // Увеличенная область сканирования для лучшего распознавания
                 aspectRatio: 1.0,
                 showTorchButtonIfSupported: true,
                 showZoomSliderIfSupported: true,
                 useBarCodeDetectorIfSupported: true,
                 showCameraSelectionIfSupported: true, // Включаем выбор камеры
                 defaultZoomValueIfSupported: 2, // Увеличиваем зум для лучшего фокуса
+                rememberLastUsedCamera: true, // Запоминать последнюю использованную камеру
                 videoConstraints: {
                     facingMode: 'environment',
-                    width: { ideal: 1280, min: 640 },
-                    height: { ideal: 720, min: 480 },
-                    frameRate: { ideal: 5, max: 10 }
+                    width: { ideal: 1920, max: 1920, min: 640 },
+                    height: { ideal: 1080, max: 1080, min: 480 },
+                    frameRate: { ideal: 10, max: 15 }
                 },
                 // Поддерживаемые форматы как у Falconbricks
                 supportedScanTypes: [
@@ -7670,8 +7802,33 @@ async function startHtml5QrCodeScanner() {
                 processQRResult(decodedText);
             },
             (errorMessage) => {
-                // Игнорируем ошибки сканирования (как у Falconbricks)
-                // console.log('🔍 html5-qrcode ошибка:', errorMessage);
+                // Улучшенная обработка ошибок сканирования
+                if (errorMessage.includes('NotFoundException')) {
+                    // Это нормальная ошибка - код не найден, игнорируем
+                    return;
+                } else if (errorMessage.includes('NotAllowedError') || errorMessage.includes('Permission denied')) {
+                    console.error('❌ Доступ к камере запрещен:', errorMessage);
+                    S.scannerModal.error = 'Camera access denied. Please allow camera access and try again.';
+                    updateUI();
+                } else if (errorMessage.includes('NotFoundError') || errorMessage.includes('No camera found')) {
+                    console.error('❌ Камера не найдена:', errorMessage);
+                    S.scannerModal.error = 'No camera found. Please connect a camera and try again.';
+                    updateUI();
+                } else if (errorMessage.includes('NotReadableError') || errorMessage.includes('Camera already in use')) {
+                    console.error('❌ Камера занята:', errorMessage);
+                    S.scannerModal.error = 'Camera is already in use by another application. Please close other apps and try again.';
+                    updateUI();
+                } else if (errorMessage.includes('OverconstrainedError')) {
+                    console.error('❌ Неподдерживаемые настройки камеры:', errorMessage);
+                    S.scannerModal.error = 'Camera settings not supported. Trying with different settings...';
+                    updateUI();
+                    // Попробуем перезапустить с упрощенными настройками
+                    setTimeout(() => {
+                        restartScanner();
+                    }, 2000);
+                } else {
+                    console.warn('⚠️ Ошибка сканирования:', errorMessage);
+                }
             }
         );
         
@@ -16205,87 +16362,183 @@ function renderScannerModal() {
     const modal = S.scannerModal;
     
     return `
-        <div id="scanner-modal-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-gray-900 rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div class="sticky top-0 bg-gray-900 border-b border-gray-700 px-6 py-4 rounded-t-lg">
-                    <div class="flex items-center justify-between">
-                        <h2 class="text-xl font-bold text-white">
-                            ${modal.loading ? 'Сканирование...' : modal.result ? 'Результат сканирования' : modal.error ? 'Ошибка' : 'Сканер DataMatrix кодов'}
-                        </h2>
-                        <button onclick="closeScannerModal()" class="text-gray-400 hover:text-white transition-colors">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <div id="scanner-modal-container" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div class="bg-gray-900/95 backdrop-blur-md rounded-2xl max-w-lg w-full mx-auto shadow-2xl border border-gray-700/50">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-6 border-b border-gray-700/50">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                             </svg>
-                        </button>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold text-white">QR Code Scanner</h2>
+                            <p class="text-sm text-gray-400">Scan QR codes and barcodes</p>
+                        </div>
                     </div>
+                    <button onclick="closeScannerModal()" 
+                            class="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-700/50">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
                 
+                <!-- Content -->
                 <div class="p-6">
                     ${modal.loading ? `
-                        <div class="text-center">
-                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto"></div>
-                            <p class="text-gray-400 mt-4">Обработка QR-кода...</p>
-                        </div>
-                    ` : modal.result ? `
-                        <div class="text-center">
-                            <img src="${modal.result.image || `./Minifig_png/fig-${modal.result.id}.png`}" 
-                                 alt="${modal.result.name}" 
-                                 class="w-32 h-32 object-contain mx-auto mb-4 rounded-lg">
-                            <h3 class="text-lg font-semibold text-white mb-2">${modal.result.name}</h3>
-                            <p class="text-gray-400 mb-4">ID: ${modal.result.id}</p>
-                            <p class="text-sm text-gray-500 mb-2">Код поиска: ${modal.result.code}</p>
-                            ${modal.result.originalCode ? `<p class="text-xs text-gray-600 mb-6">Полный код: ${modal.result.originalCode}</p>` : ''}
-                            <div class="flex gap-2 justify-center">
-                                <button onclick="restartScanner()" 
-                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
-                                    Scan the next box
-                                </button>
-                                <button onclick="switchCameraViaButton()" 
-                                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
-                                    Switch Camera
-                                </button>
-                            <button onclick="closeScannerModal()" 
-                                        class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
-                                Закрыть
-                            </button>
+                        <div class="text-center py-12">
+                            <div class="relative">
+                                <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-700 border-t-purple-500 mx-auto mb-6"></div>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="w-8 h-8 bg-purple-500 rounded-full animate-pulse"></div>
+                                </div>
                             </div>
+                            <h3 class="text-lg font-semibold text-white mb-2">Initializing Scanner</h3>
+                            <p class="text-gray-400">Setting up camera and scanning engine...</p>
                         </div>
                     ` : modal.error ? `
-                        <div class="text-center">
-                            <div class="text-red-400 mb-4">
-                                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="text-center py-12">
+                            <div class="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
                                 </svg>
                             </div>
-                            <p class="text-red-400 text-lg mb-4">${modal.error}</p>
-                            <div class="flex gap-2 justify-center">
+                            <h3 class="text-xl font-bold text-white mb-3">Scanning Error</h3>
+                            <p class="text-gray-400 mb-6 px-4">${modal.error}</p>
+                            <div class="flex gap-3 justify-center">
                                 <button onclick="restartScanner()" 
-                                        class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg transition-colors">
-                                    Try again
+                                        class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:scale-105 shadow-lg">
+                                    Try Again
                                 </button>
-                            <button onclick="closeScannerModal()" 
-                                        class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
-                                Закрыть
-                            </button>
+                                <button onclick="closeScannerModal()" 
+                                        class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200">
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    ` : modal.result ? `
+                        <div class="text-center py-8">
+                            <!-- Success Animation -->
+                            <div class="relative mb-6">
+                                <div class="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                                    <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </div>
+                                <div class="absolute inset-0 rounded-full border-4 border-green-500/20 animate-ping"></div>
+                            </div>
+                            
+                            <h3 class="text-2xl font-bold text-white mb-2">Code Detected!</h3>
+                            <p class="text-gray-400 mb-6">Successfully scanned a ${modal.result.type || 'QR Code'}</p>
+                            
+                            <!-- Result Card -->
+                            <div class="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 mb-6 border border-gray-700/50">
+                                <div class="text-left">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                        <span class="text-sm font-medium text-gray-400 uppercase tracking-wide">Type</span>
+                                        <span class="text-sm text-white bg-gray-700 px-2 py-1 rounded-md">${modal.result.type || 'QR Code'}</span>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <p class="text-sm text-gray-400">Content:</p>
+                                        <div class="bg-gray-900/50 rounded-lg p-3 border border-gray-700/30">
+                                            <p class="text-white font-mono text-sm break-all leading-relaxed">${modal.result.code || modal.result.originalCode}</p>
+                                        </div>
+                                        ${modal.result.name ? `
+                                            <p class="text-sm text-gray-400 mt-4">Name:</p>
+                                            <p class="text-white font-medium">${modal.result.name}</p>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex flex-wrap gap-3 justify-center">
+                                <button onclick="copyToClipboard('${(modal.result.code || modal.result.originalCode).replace(/'/g, "\\'")}')" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                                    </svg>
+                                    Copy
+                                </button>
+                                <button onclick="downloadText('${(modal.result.code || modal.result.originalCode).replace(/'/g, "\\'")}', 'scanned-code-${Date.now()}.txt')" 
+                                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    Download
+                                </button>
+                                ${(modal.result.code || modal.result.originalCode).startsWith('http') ? `
+                                    <button onclick="openUrl('${(modal.result.code || modal.result.originalCode).replace(/'/g, "\\'")}')" 
+                                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                        </svg>
+                                        Open URL
+                                    </button>
+                                ` : ''}
+                                <button onclick="restartScanner()" 
+                                        class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-4 py-2 rounded-lg transition-all duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                    Scan Another
+                                </button>
                             </div>
                         </div>
                     ` : `
                         <div class="text-center">
-                            <div id="scanner-camera-container" class="mb-4 relative">
-                                <div id="qr-reader" class="w-full max-w-lg mx-auto rounded-lg overflow-hidden" style="min-height: 400px; background: #1f2937;"></div>
+                            <!-- Scanner Container -->
+                            <div class="relative mb-6">
+                                <div class="relative rounded-xl overflow-hidden border-2 border-gray-700/50 shadow-2xl">
+                                    <div id="qr-reader" class="w-full" style="min-height: 300px; background: linear-gradient(135deg, #1f2937 0%, #111827 100%);"></div>
+                                    <!-- Scanning overlay -->
+                                    <div class="absolute inset-0 pointer-events-none">
+                                        <div class="absolute top-4 left-4 right-4 h-8 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-full animate-pulse"></div>
+                                        <div class="absolute bottom-4 left-4 right-4 h-8 bg-gradient-to-r from-transparent via-white/10 to-transparent rounded-full animate-pulse"></div>
+                                    </div>
+                                </div>
+                                <!-- Scanning indicator -->
+                                <div class="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full animate-pulse">
+                                    <div class="absolute inset-1 bg-white rounded-full"></div>
+                                </div>
                             </div>
-                            <p class="text-gray-400 mb-4">Наведите камеру на DataMatrix код минифигурки</p>
                             
-                            <div class="flex gap-2 justify-center">
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-center gap-2 text-gray-400">
+                                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                    <span class="text-sm">Ready to scan QR codes and barcodes</span>
+                                </div>
+                                
+                                <p class="text-gray-400 text-sm px-4">Position the code within the camera viewfinder. The scanner will automatically detect and process the code.</p>
+                            </div>
+                            
+                            <!-- Control Buttons -->
+                            <div class="flex gap-3 justify-center mt-8">
                                 <button onclick="switchCameraViaButton()" 
-                                        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
+                                        class="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
                                     Switch Camera
                                 </button>
-                                <button onclick="closeScannerModal()" 
-                                        class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors">
-                                    Отмена
+                                <button onclick="showScanHistory()" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    History
                                 </button>
-                            </div>
+                                <button onclick="closeScannerModal()" 
+                                        class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    Close
+                                </button>
                             </div>
                         </div>
                     `}
@@ -16294,6 +16547,267 @@ function renderScannerModal() {
         </div>
     `;
 }
+
+// Функция копирования в буфер обмена
+async function copyToClipboard(text) {
+    try {
+        await navigator.clipboard.writeText(text);
+        showNotification('Copied to clipboard!', 'success');
+    } catch (err) {
+        // Fallback для старых браузеров
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showNotification('Copied to clipboard!', 'success');
+    }
+}
+
+// Функция открытия URL
+function openUrl(url) {
+    try {
+        window.open(url, '_blank', 'noopener,noreferrer');
+        showNotification('Opening URL...', 'info');
+    } catch (err) {
+        showNotification('Error opening URL', 'error');
+    }
+}
+
+// Функция скачивания текста как файла
+function downloadText(text, filename = 'scanned-code.txt') {
+    try {
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showNotification('File downloaded!', 'success');
+    } catch (err) {
+        showNotification('Error downloading file', 'error');
+    }
+}
+
+// Функция показа уведомлений
+function showNotification(message, type = 'info') {
+    // Создаем контейнер для уведомлений если его нет
+    let container = document.getElementById('notification-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'notification-container';
+        container.className = 'fixed top-4 right-4 z-50 space-y-2';
+        document.body.appendChild(container);
+    }
+    
+    // Создаем уведомление
+    const notification = document.createElement('div');
+    const colors = {
+        success: 'bg-green-600 text-white',
+        error: 'bg-red-600 text-white',
+        info: 'bg-blue-600 text-white',
+        warning: 'bg-yellow-600 text-white'
+    };
+    
+    notification.className = `${colors[type]} px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+    notification.innerHTML = `
+        <div class="flex items-center gap-2">
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white/80 hover:text-white">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(notification);
+    
+    // Анимация появления
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Автоматическое удаление через 3 секунды
+    setTimeout(() => {
+        notification.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Функция показа истории сканирования
+function showScanHistory() {
+    const historyModal = document.createElement('div');
+    historyModal.id = 'history-modal';
+    historyModal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4';
+    
+    const historyItems = S.scanHistory.map(item => {
+        const date = new Date(item.timestamp);
+        const timeString = date.toLocaleString();
+        
+        return `
+            <div class="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-gray-700/50">
+                <div class="flex items-start justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs bg-gray-700 px-2 py-1 rounded-md text-gray-300">${item.type}</span>
+                        <span class="text-xs text-gray-500">${timeString}</span>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="copyToClipboard('${item.code.replace(/'/g, "\\'")}')" 
+                                class="text-gray-400 hover:text-white p-1 rounded">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                            </svg>
+                        </button>
+                        <button onclick="downloadText('${item.code.replace(/'/g, "\\'")}', 'scan-${item.id}.txt')" 
+                                class="text-gray-400 hover:text-white p-1 rounded">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-900/50 rounded p-2">
+                    <p class="text-white font-mono text-sm break-all">${item.code}</p>
+                </div>
+                ${item.minifig ? `
+                    <div class="mt-2 text-sm text-gray-400">
+                        <span class="font-medium">Minifig:</span> ${item.minifig.name}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }).join('');
+    
+    historyModal.innerHTML = `
+        <div class="bg-gray-900/95 backdrop-blur-md rounded-2xl max-w-2xl w-full mx-auto shadow-2xl border border-gray-700/50 max-h-[80vh] overflow-hidden">
+            <div class="flex items-center justify-between p-6 border-b border-gray-700/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Scan History</h2>
+                        <p class="text-sm text-gray-400">${S.scanHistory.length} scanned codes</p>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="clearScanHistory()" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-all duration-200">
+                        Clear All
+                    </button>
+                    <button onclick="closeHistoryModal()" 
+                            class="text-gray-400 hover:text-white transition-colors p-2 rounded-lg hover:bg-gray-700/50">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[60vh]">
+                ${S.scanHistory.length === 0 ? `
+                    <div class="text-center py-12">
+                        <div class="w-16 h-16 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-semibold text-white mb-2">No scan history</h3>
+                        <p class="text-gray-400">Start scanning QR codes to see them here</p>
+                    </div>
+                ` : `
+                    <div class="space-y-3">
+                        ${historyItems}
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(historyModal);
+}
+
+// Функция закрытия модального окна истории
+function closeHistoryModal() {
+    const modal = document.getElementById('history-modal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+// Функция очистки истории сканирования
+function clearScanHistory() {
+    if (confirm('Are you sure you want to clear all scan history? This action cannot be undone.')) {
+        S.scanHistory = [];
+        try {
+            localStorage.removeItem('lego_scan_history');
+            showNotification('Scan history cleared', 'success');
+            closeHistoryModal();
+            showScanHistory(); // Обновляем модальное окно
+        } catch (e) {
+            showNotification('Error clearing scan history', 'error');
+        }
+    }
+}
+
+// Функция очистки ресурсов при закрытии приложения
+function cleanupScannerResources() {
+    console.log('🧹 Очистка ресурсов сканера...');
+    
+    // Останавливаем сканер
+    if (html5QrcodeScanner) {
+        try {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+        } catch (e) {
+            console.warn('Ошибка при очистке сканера:', e);
+        }
+    }
+    
+    // Очищаем медиа-потоки
+    forceClearAllMediaStreams();
+    
+    // Закрываем модальные окна
+    closeScannerModal();
+    closeHistoryModal();
+    
+    console.log('✅ Ресурсы сканера очищены');
+}
+
+// Обработчик закрытия страницы
+window.addEventListener('beforeunload', function(e) {
+    cleanupScannerResources();
+});
+
+// Обработчик скрытия страницы (для мобильных устройств)
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        // Если сканер открыт и страница скрыта, останавливаем сканер
+        if (S.scannerModal.open) {
+            console.log('📱 Страница скрыта, останавливаем сканер для экономии ресурсов');
+            stopHtml5QrCodeScanner();
+        }
+    } else {
+        // Если страница снова видна и сканер был открыт, перезапускаем
+        if (S.scannerModal.open && !html5QrcodeScanner) {
+            console.log('📱 Страница снова видна, перезапускаем сканер');
+            setTimeout(() => {
+                startHtml5QrCodeScanner();
+            }, 500);
+        }
+    }
+});
 
 async function closeScannerModal() {
     // ПОЛНОСТЬЮ уничтожаем сканер
