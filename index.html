@@ -7242,16 +7242,177 @@ let videoElement = null;
 let canvasElement = null;
 let scanningInterval = null;
 
+// Функция полного уничтожения сканера
+function completelyDestroyScanner() {
+    console.log('🔍 Полное уничтожение сканера...');
+    
+    // Останавливаем html5-qrcode сканер
+    if (html5QrcodeScanner) {
+        try {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+            console.log('🔍 html5-qrcode сканер уничтожен');
+        } catch (error) {
+            console.log('🔍 Ошибка уничтожения html5-qrcode сканера:', error);
+        }
+    }
+    
+    // Останавливаем ZXing сканер
+    if (scanningInterval) {
+        clearTimeout(scanningInterval);
+        scanningInterval = null;
+    }
+    
+    if (videoElement && videoElement.srcObject) {
+        const tracks = videoElement.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+        videoElement.srcObject = null;
+    }
+    
+    // Останавливаем все активные медиа-потоки
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then(stream => {
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('🔍 Остановлен трек:', track.kind);
+                });
+            })
+            .catch(error => {
+                console.log('🔍 Ошибка при очистке медиа-потоков:', error);
+            });
+    }
+    
+    // Очищаем все видео элементы на странице
+    const allVideos = document.querySelectorAll('video');
+    allVideos.forEach(video => {
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => {
+                track.stop();
+                console.log('🔍 Остановлен видео трек:', track.kind);
+            });
+            video.srcObject = null;
+        }
+        video.pause();
+        video.load();
+        video.removeAttribute('src');
+        video.removeAttribute('srcObject');
+    });
+    
+    // Агрессивно очищаем ВСЕ контейнеры сканера
+    const allScannerContainers = document.querySelectorAll('[id^="qr-reader"], #qr-reader');
+    allScannerContainers.forEach(container => {
+        container.innerHTML = '';
+        // Удаляем все атрибуты связанные с видео
+        container.removeAttribute('data-video');
+        container.removeAttribute('data-stream');
+        console.log('🔍 Агрессивно очищен контейнер:', container.id);
+    });
+    
+    // Дополнительно очищаем все элементы с классами html5-qrcode
+    const html5QrElements = document.querySelectorAll('.html5-qrcode-element, [class*="html5-qrcode"]');
+    html5QrElements.forEach(element => {
+        if (element.parentNode) {
+            element.parentNode.removeChild(element);
+            console.log('🔍 Удален html5-qrcode элемент');
+        }
+    });
+    
+    // Очищаем все canvas элементы
+    const allCanvases = document.querySelectorAll('canvas');
+    allCanvases.forEach(canvas => {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    });
+    
+    // Принудительно очищаем кэш браузера
+    if (window.gc) {
+        window.gc();
+    }
+    
+    // Ждем полной очистки
+    return new Promise(resolve => setTimeout(resolve, 300));
+}
+
+// Функция принудительной очистки всех медиа-потоков
+function forceClearAllMediaStreams() {
+    console.log('🔍 Принудительная очистка всех медиа-потоков...');
+    
+    // Останавливаем все активные медиа-потоки
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then(stream => {
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('🔍 Остановлен трек:', track.kind);
+                });
+            })
+            .catch(error => {
+                console.log('🔍 Ошибка при очистке медиа-потоков:', error);
+            });
+    }
+    
+    // Очищаем все видео элементы на странице
+    const allVideos = document.querySelectorAll('video');
+    allVideos.forEach(video => {
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => {
+                track.stop();
+                console.log('🔍 Остановлен видео трек:', track.kind);
+            });
+            video.srcObject = null;
+        }
+        video.pause();
+        video.load();
+        // Принудительно очищаем атрибуты
+        video.removeAttribute('src');
+        video.removeAttribute('srcObject');
+    });
+    
+    // Агрессивно очищаем ВСЕ контейнеры сканера
+    const allScannerContainers = document.querySelectorAll('[id^="qr-reader"], #qr-reader');
+    allScannerContainers.forEach(container => {
+        container.innerHTML = '';
+        container.removeAttribute('data-video');
+        container.removeAttribute('data-stream');
+        console.log('🔍 Очищен контейнер в forceClearAllMediaStreams:', container.id);
+    });
+    
+    // Удаляем все элементы html5-qrcode
+    const html5QrElements = document.querySelectorAll('.html5-qrcode-element, [class*="html5-qrcode"]');
+    html5QrElements.forEach(element => {
+        if (element.parentNode) {
+            element.parentNode.removeChild(element);
+            console.log('🔍 Удален html5-qrcode элемент в forceClearAllMediaStreams');
+        }
+    });
+    
+    // Дополнительно очищаем все canvas элементы
+    const allCanvases = document.querySelectorAll('canvas');
+    allCanvases.forEach(canvas => {
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    });
+    
+    // Принудительно очищаем кэш браузера для медиа-элементов
+    if (window.gc) {
+        window.gc();
+    }
+}
+
 async function startQRScanner() {
     console.log('Запуск QR-сканера с html5-qrcode');
     
-    // СРАЗУ открываем модальное окно сканера, чтобы оно отрендерилось
-    console.log('🔍 Устанавливаем состояние сканера: open = true');
+    // СНАЧАЛА открываем модальное окно сканера
     S.scannerModal.open = true;
     S.scannerModal.loading = false;
     S.scannerModal.error = null;
     S.scannerModal.result = null;
-    console.log('🔍 Состояние сканера после установки:', S.scannerModal);
+    console.log('🔍 Состояние сканера после сброса:', S.scannerModal);
     
     // Обновляем UI чтобы модальное окно отрендерилось
     updateUI();
@@ -7264,8 +7425,16 @@ async function startQRScanner() {
         try {
             console.log('Инициализация html5-qrcode сканера (как у Falconbricks)...');
             
-            // Даем время DOM обновиться
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // ТЕПЕРЬ уничтожаем предыдущий сканер ПОСЛЕ создания модального окна
+            console.log('🔍 Уничтожаем предыдущий сканер...');
+            await completelyDestroyScanner();
+            
+            // Дополнительная очистка кэша камеры
+            console.log('🔍 Дополнительная очистка кэша камеры...');
+            forceClearAllMediaStreams();
+            
+            // Даем время на очистку
+            await new Promise(resolve => setTimeout(resolve, 200));
             
             // Запускаем html5-qrcode сканер
             await startHtml5QrCodeScanner();
@@ -7288,6 +7457,10 @@ function detectQRCode(imageData) {
 // Обработка результата сканирования
 async function processQRResult(qrCode) {
     try {
+        // ПОЛНОСТЬЮ уничтожаем сканер перед обработкой
+        console.log('🔍 Полное уничтожение сканера перед обработкой результата...');
+        await completelyDestroyScanner();
+        
         S.scannerModal.loading = true;
         S.scannerModal.error = null;
         S.scannerModal.result = null;
@@ -7314,7 +7487,14 @@ async function processQRResult(qrCode) {
                 image: `Minifig_png/fig-${minifig.id.split('-')[1]}.png`
             };
             
-            // Закрываем сканер и открываем модальное окно минифигурки
+            // Показываем результат кратко и сразу переходим к модальному окну
+            S.scannerModal.result = {
+                minifig: minifig,
+                code: qrCode
+            };
+            updateUI();
+            
+            // Через 1 секунду открываем модальное окно минифигурки
             setTimeout(() => {
                 closeScannerModal();
                 // Ждем инициализации данных перед открытием модального окна
@@ -7430,28 +7610,51 @@ async function startHtml5QrCodeScanner() {
             throw new Error('html5-qrcode библиотека не загружена');
         }
         
-        const scannerContainer = document.getElementById('qr-reader');
+        // Ищем контейнер сканера
+        let scannerContainer = document.getElementById('qr-reader');
         if (!scannerContainer) {
             throw new Error('Контейнер сканера не найден');
         }
         
-        // Очищаем контейнер
-        scannerContainer.innerHTML = '';
+        // Создаем новый контейнер с уникальным ID для избежания кэширования
+        const parentElement = scannerContainer.parentElement;
+        const newContainer = document.createElement('div');
+        const uniqueId = 'qr-reader-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+        newContainer.id = uniqueId;
+        newContainer.className = scannerContainer.className;
+        parentElement.replaceChild(newContainer, scannerContainer);
+        scannerContainer = newContainer;
+        console.log('🔍 Создан новый контейнер сканера с ID:', uniqueId);
         
-        // Создаем html5-qrcode сканер с настройками как у Falconbricks + увеличение x6
+        // Дополнительная очистка
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Создаем html5-qrcode сканер с оптимизированными настройками
         html5QrcodeScanner = new Html5QrcodeScanner(
-            'qr-reader',
+            scannerContainer.id,
             {
-                fps: 10, // Меньше FPS для стабильности
-                qrbox: { width: 200, height: 200 }, // Меньший размер для увеличения
+                fps: 5, // Уменьшенная частота кадров для экономии ресурсов
+                qrbox: { width: 150, height: 150 }, // Уменьшенная область сканирования для точности
                 aspectRatio: 1.0,
                 showTorchButtonIfSupported: true,
                 showZoomSliderIfSupported: true,
                 useBarCodeDetectorIfSupported: true,
                 videoConstraints: {
                     facingMode: 'environment',
-                    width: { ideal: 1920, min: 1280 }, // Высокое разрешение для увеличения
-                    height: { ideal: 1080, min: 720 }
+                    width: { ideal: 1280, min: 640 }, // Оптимизированное разрешение
+                    height: { ideal: 720, min: 480 },
+                    focusMode: 'continuous', // Автоматический авто-фокус
+                    focusDistance: { ideal: 0.5 }, // Оптимальное расстояние фокусировки
+                    whiteBalanceMode: 'continuous', // Автоматический баланс белого
+                    exposureMode: 'continuous', // Автоматическая экспозиция
+                    frameRate: { ideal: 5, max: 10 }, // Ограничиваем частоту кадров
+                    // Дополнительные настройки для автофокуса
+                    advanced: [
+                        { focusMode: 'continuous' },
+                        { focusDistance: { ideal: 0.5 } },
+                        { whiteBalanceMode: 'continuous' },
+                        { exposureMode: 'continuous' }
+                    ]
                 },
                 // Поддерживаемые форматы как у Falconbricks
                 supportedScanTypes: [
@@ -7481,6 +7684,31 @@ async function startHtml5QrCodeScanner() {
             }
         );
         
+        // Принудительно настраиваем автофокус для html5-qrcode
+        setTimeout(async () => {
+            try {
+                const videoElement = document.querySelector('#qr-reader video, [id^="qr-reader-"] video');
+                if (videoElement && videoElement.srcObject) {
+                    const stream = videoElement.srcObject;
+                    const videoTrack = stream.getVideoTracks()[0];
+                    if (videoTrack && videoTrack.getCapabilities) {
+                        const capabilities = videoTrack.getCapabilities();
+                        if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                            await videoTrack.applyConstraints({
+                                advanced: [
+                                    { focusMode: 'continuous' },
+                                    { focusDistance: { ideal: 0.5 } }
+                                ]
+                            });
+                            console.log('🔍 Автофокус принудительно включен для html5-qrcode');
+                        }
+                    }
+                }
+            } catch (error) {
+                console.log('🔍 Не удалось принудительно включить автофокус для html5-qrcode:', error);
+            }
+        }, 1000);
+        
         console.log('✅ html5-qrcode сканер запущен (как у Falconbricks)');
             
         } catch (error) {
@@ -7501,39 +7729,54 @@ function stopHtml5QrCodeScanner() {
             console.error('❌ Ошибка остановки html5-qrcode сканера:', error);
         }
     }
+    
+    // Принудительно очищаем все медиа-потоки
+    forceClearAllMediaStreams();
+}
+
+// Функция полной остановки сканера
+async function stopScannerCompletely() {
+    await completelyDestroyScanner();
 }
 
 // Функция для перезапуска сканера
 async function restartScanner() {
     console.log('🔄 Перезапускаем сканер');
     
-    // Останавливаем текущий сканер
-    stopHtml5QrCodeScanner();
+    // Сбрасываем состояние сканера
+    S.scannerModal.loading = false;
+    S.scannerModal.error = null;
+    S.scannerModal.result = null;
     
-    // Очищаем контейнер
-    const scannerContainer = document.getElementById('qr-reader');
-    if (scannerContainer) {
-        scannerContainer.innerHTML = '';
-    }
+    // ПОЛНОСТЬЮ уничтожаем предыдущий сканер
+    console.log('🔍 Полное уничтожение предыдущего сканера...');
+    await completelyDestroyScanner();
     
+    // Дополнительная агрессивная очистка
+    console.log('🔍 Агрессивная очистка кэша камеры...');
+    forceClearAllMediaStreams();
     
-    // Перезапускаем сканер
+    // Очищаем все возможные контейнеры сканера
+    const allScannerContainers = document.querySelectorAll('[id^="qr-reader"], #qr-reader');
+    allScannerContainers.forEach(container => {
+        container.innerHTML = '';
+        console.log('🔍 Очищен контейнер:', container.id);
+    });
+    
+    // Обновляем UI
+    updateUI();
+    
+    // Перезапускаем сканер с увеличенной задержкой для полной очистки
     setTimeout(async () => {
         try {
             await startHtml5QrCodeScanner();
-            
-            // Скрываем индикатор загрузки
-            setTimeout(() => {
-                if (loadingEl) {
-                    loadingEl.style.display = 'none';
-                }
-            }, 1000);
+            console.log('✅ Сканер успешно перезапущен');
         } catch (error) {
             console.error('Ошибка перезапуска сканера:', error);
             S.scannerModal.error = 'Ошибка перезапуска сканера: ' + error.message;
             updateUI();
         }
-    }, 500);
+    }, 800); // Увеличиваем задержку для полной очистки
 }
 
 // Функция сканирования с ZXing (лучше поддерживает DataMatrix)
@@ -7571,17 +7814,47 @@ async function startZXingScanner() {
         scannerContainer.appendChild(videoElement);
         scannerContainer.appendChild(canvasElement);
         
-        // Запрашиваем доступ к камере
+        // Запрашиваем доступ к камере с оптимизированными настройками
         const stream = await navigator.mediaDevices.getUserMedia({
             video: {
                 facingMode: 'environment',
-                width: { ideal: 1920 },
-                height: { ideal: 1080 }
+                width: { ideal: 1280, min: 640 },
+                height: { ideal: 720, min: 480 },
+                focusMode: 'continuous', // Автоматический авто-фокус
+                focusDistance: { ideal: 0.5 }, // Оптимальное расстояние фокусировки
+                whiteBalanceMode: 'continuous', // Автоматический баланс белого
+                exposureMode: 'continuous', // Автоматическая экспозиция
+                // Дополнительные настройки для автофокуса
+                advanced: [
+                    { focusMode: 'continuous' },
+                    { focusDistance: { ideal: 0.5 } },
+                    { whiteBalanceMode: 'continuous' },
+                    { exposureMode: 'continuous' }
+                ]
             }
         });
         
         videoElement.srcObject = stream;
         await videoElement.play();
+        
+        // Принудительно настраиваем автофокус для видео элемента
+        try {
+            const videoTrack = stream.getVideoTracks()[0];
+            if (videoTrack && videoTrack.getCapabilities) {
+                const capabilities = videoTrack.getCapabilities();
+                if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                    await videoTrack.applyConstraints({
+                        advanced: [
+                            { focusMode: 'continuous' },
+                            { focusDistance: { ideal: 0.5 } }
+                        ]
+                    });
+                    console.log('🔍 Автофокус принудительно включен для видео');
+                }
+            }
+        } catch (error) {
+            console.log('🔍 Не удалось принудительно включить автофокус:', error);
+        }
         
         // Создаем ZXing reader
         zxingScanner = new ZXing.BrowserMultiFormatReader();
@@ -7637,8 +7910,10 @@ function startZXingScanning() {
                     }
                 }
                 
-                // Продолжаем сканирование
-        scanningInterval = requestAnimationFrame(scanFrame);
+                // Продолжаем сканирование с задержкой для оптимизации (5 FPS)
+        scanningInterval = setTimeout(() => {
+            requestAnimationFrame(scanFrame);
+        }, 200); // 200ms = 5 FPS
     };
     
     scanFrame();
@@ -7647,7 +7922,7 @@ function startZXingScanning() {
 // Функция остановки ZXing сканера
 function stopZXingScanner() {
     if (scanningInterval) {
-        cancelAnimationFrame(scanningInterval);
+        clearTimeout(scanningInterval);
         scanningInterval = null;
     }
     
@@ -15925,9 +16200,9 @@ function renderScannerModal() {
     `;
 }
 
-function closeScannerModal() {
-    // Останавливаем html5-qrcode сканер
-    stopHtml5QrCodeScanner();
+async function closeScannerModal() {
+    // ПОЛНОСТЬЮ уничтожаем сканер
+    await completelyDestroyScanner();
     
     // Удаляем модальное окно из DOM
     const existingModal = document.getElementById('scanner-modal-container');
