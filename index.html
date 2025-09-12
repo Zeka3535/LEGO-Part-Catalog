@@ -7264,6 +7264,490 @@ let videoElement = null;
 let canvasElement = null;
 let scanningInterval = null;
 
+// Переменные для определения устройства и настроек камеры
+let deviceInfo = {
+    isMobile: false,
+    isTablet: false,
+    isDesktop: false,
+    orientation: 'portrait',
+    hasBackCamera: false,
+    hasFrontCamera: false,
+    preferredCamera: 'environment',
+    maxResolution: { width: 1920, height: 1080 },
+    optimalFrameRate: 15
+};
+
+// Функция определения характеристик устройства
+async function detectDeviceCapabilities() {
+    console.log('🔍 Определяем характеристики устройства...');
+    
+    // Определяем тип устройства
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+    const isTablet = /ipad|android(?!.*mobile)/i.test(userAgent) || 
+                     (navigator.maxTouchPoints && navigator.maxTouchPoints > 2 && /android/i.test(userAgent));
+    const isDesktop = !isMobile && !isTablet;
+    
+    // Определяем ориентацию
+    const orientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+    
+    // Определяем размер экрана
+    const screenWidth = window.screen.width;
+    const screenHeight = window.screen.height;
+    const maxDimension = Math.max(screenWidth, screenHeight);
+    
+    // Определяем оптимальное разрешение камеры
+    let maxResolution = { width: 1920, height: 1080 };
+    let optimalFrameRate = 15;
+    
+    if (isMobile) {
+        // Для мобильных устройств используем более низкое разрешение для экономии батареи
+        maxResolution = { width: 1280, height: 720 };
+        optimalFrameRate = 10;
+    } else if (isTablet) {
+        // Для планшетов среднее разрешение
+        maxResolution = { width: 1600, height: 900 };
+        optimalFrameRate = 12;
+    }
+    
+    // Проверяем доступные камеры
+    let hasBackCamera = false;
+    let hasFrontCamera = false;
+    let preferredCamera = 'environment';
+    
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        
+        // Проверяем наличие задней камеры (environment)
+        for (const device of videoDevices) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: device.deviceId }, facingMode: 'environment' }
+                });
+                hasBackCamera = true;
+                stream.getTracks().forEach(track => track.stop());
+                break;
+            } catch (e) {
+                // Игнорируем ошибки, пробуем следующую камеру
+            }
+        }
+        
+        // Проверяем наличие фронтальной камеры (user)
+        for (const device of videoDevices) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { deviceId: { exact: device.deviceId }, facingMode: 'user' }
+                });
+                hasFrontCamera = true;
+                stream.getTracks().forEach(track => track.stop());
+                break;
+            } catch (e) {
+                // Игнорируем ошибки, пробуем следующую камеру
+            }
+        }
+        
+        // Определяем предпочтительную камеру
+        if (hasBackCamera) {
+            preferredCamera = 'environment';
+        } else if (hasFrontCamera) {
+            preferredCamera = 'user';
+        }
+        
+    } catch (error) {
+        console.log('🔍 Не удалось определить камеры:', error);
+        // Используем значения по умолчанию
+        hasBackCamera = true;
+        hasFrontCamera = false;
+        preferredCamera = 'environment';
+    }
+    
+    // Обновляем информацию об устройстве
+    deviceInfo = {
+        isMobile,
+        isTablet,
+        isDesktop,
+        orientation,
+        hasBackCamera,
+        hasFrontCamera,
+        preferredCamera,
+        maxResolution,
+        optimalFrameRate
+    };
+    
+    // Применяем оптимизации для слабых устройств
+    optimizeForWeakDevices();
+    
+    console.log('🔍 Информация об устройстве:', deviceInfo);
+    return deviceInfo;
+}
+
+// Функция получения адаптивных настроек камеры
+function getAdaptiveCameraSettings() {
+    console.log('🔍 Получаем адаптивные настройки камеры для:', deviceInfo);
+    
+    const baseSettings = {
+        video: {
+            facingMode: deviceInfo.preferredCamera,
+            width: { 
+                ideal: deviceInfo.maxResolution.width, 
+                max: deviceInfo.maxResolution.width, 
+                min: deviceInfo.isMobile ? 320 : 640 
+            },
+            height: { 
+                ideal: deviceInfo.maxResolution.height, 
+                max: deviceInfo.maxResolution.height, 
+                min: deviceInfo.isMobile ? 240 : 480 
+            },
+            frameRate: { 
+                ideal: deviceInfo.optimalFrameRate, 
+                max: deviceInfo.optimalFrameRate 
+            }
+        },
+        audio: false
+    };
+    
+    // Дополнительные настройки для мобильных устройств
+    if (deviceInfo.isMobile) {
+        baseSettings.video.focusMode = 'continuous';
+        baseSettings.video.focusDistance = { ideal: 0.5 };
+        baseSettings.video.whiteBalanceMode = 'continuous';
+        baseSettings.video.exposureMode = 'continuous';
+        baseSettings.video.advanced = [
+            { focusMode: 'continuous' },
+            { focusDistance: { ideal: 0.5 } },
+            { whiteBalanceMode: 'continuous' },
+            { exposureMode: 'continuous' }
+        ];
+    }
+    
+    // Дополнительные настройки для планшетов
+    if (deviceInfo.isTablet) {
+        baseSettings.video.focusMode = 'continuous';
+        baseSettings.video.whiteBalanceMode = 'continuous';
+        baseSettings.video.exposureMode = 'continuous';
+    }
+    
+    // Настройки для портретной ориентации
+    if (deviceInfo.orientation === 'portrait' && deviceInfo.isMobile) {
+        // Для портретной ориентации на мобильных устройствах
+        // можем использовать более высокое разрешение по вертикали
+        baseSettings.video.width = { 
+            ideal: Math.min(deviceInfo.maxResolution.height, 1080), 
+            max: Math.min(deviceInfo.maxResolution.height, 1080), 
+            min: 480 
+        };
+        baseSettings.video.height = { 
+            ideal: Math.min(deviceInfo.maxResolution.width, 1920), 
+            max: Math.min(deviceInfo.maxResolution.width, 1920), 
+            min: 640 
+        };
+    }
+    
+    console.log('🔍 Адаптивные настройки камеры:', baseSettings);
+    return baseSettings;
+}
+
+// Функция автоматического переключения камеры
+async function autoSwitchCamera() {
+    console.log('🔄 Автоматическое переключение камеры...');
+    
+    try {
+        // Если есть и фронтальная, и задняя камера
+        if (deviceInfo.hasBackCamera && deviceInfo.hasFrontCamera) {
+            // Переключаем на противоположную камеру
+            const newFacingMode = deviceInfo.preferredCamera === 'environment' ? 'user' : 'environment';
+            
+            console.log(`🔄 Переключаем с ${deviceInfo.preferredCamera} на ${newFacingMode}`);
+            
+            // Обновляем предпочтительную камеру
+            deviceInfo.preferredCamera = newFacingMode;
+            
+            // Перезапускаем сканер с новой камерой
+            await restartScanner();
+            
+            return true;
+        } else if (deviceInfo.hasBackCamera) {
+            // Если есть только задняя камера, пробуем её
+            console.log('🔄 Используем заднюю камеру');
+            deviceInfo.preferredCamera = 'environment';
+            await restartScanner();
+            return true;
+        } else if (deviceInfo.hasFrontCamera) {
+            // Если есть только фронтальная камера, пробуем её
+            console.log('🔄 Используем фронтальную камеру');
+            deviceInfo.preferredCamera = 'user';
+            await restartScanner();
+            return true;
+        } else {
+            console.log('❌ Нет доступных камер');
+            return false;
+        }
+    } catch (error) {
+        console.error('❌ Ошибка автоматического переключения камеры:', error);
+        return false;
+    }
+}
+
+// Функция для попытки запуска с альтернативными настройками
+async function tryAlternativeCameraSettings() {
+    console.log('🔄 Пробуем альтернативные настройки камеры...');
+    
+    const fallbackSettings = [
+        // Настройки для слабых устройств
+        {
+            video: {
+                facingMode: deviceInfo.preferredCamera,
+                width: { ideal: 640, max: 640, min: 320 },
+                height: { ideal: 480, max: 480, min: 240 },
+                frameRate: { ideal: 5, max: 10 }
+            },
+            audio: false
+        },
+        // Базовые настройки
+        {
+            video: {
+                facingMode: deviceInfo.preferredCamera,
+                width: { ideal: 320, max: 320, min: 160 },
+                height: { ideal: 240, max: 240, min: 120 },
+                frameRate: { ideal: 3, max: 5 }
+            },
+            audio: false
+        },
+        // Минимальные настройки
+        {
+            video: true,
+            audio: false
+        }
+    ];
+    
+    for (let i = 0; i < fallbackSettings.length; i++) {
+        try {
+            console.log(`🔄 Пробуем настройки ${i + 1}/${fallbackSettings.length}`);
+            
+            // Обновляем настройки камеры
+            const originalSettings = getAdaptiveCameraSettings();
+            const testSettings = fallbackSettings[i];
+            
+            // Пробуем запустить с тестовыми настройками
+            const stream = await navigator.mediaDevices.getUserMedia(testSettings);
+            
+            // Если получилось, останавливаем тестовый поток
+            stream.getTracks().forEach(track => track.stop());
+            
+            console.log(`✅ Настройки ${i + 1} работают, применяем их`);
+            
+            // Обновляем deviceInfo для использования этих настроек
+            if (i === 0) {
+                deviceInfo.maxResolution = { width: 640, height: 480 };
+                deviceInfo.optimalFrameRate = 5;
+            } else if (i === 1) {
+                deviceInfo.maxResolution = { width: 320, height: 240 };
+                deviceInfo.optimalFrameRate = 3;
+            }
+            
+            return true;
+        } catch (error) {
+            console.log(`❌ Настройки ${i + 1} не работают:`, error.message);
+            continue;
+        }
+    }
+    
+    console.log('❌ Никакие настройки камеры не работают');
+    return false;
+}
+
+// Улучшенная функция обработки ошибок камеры для мобильных устройств
+function handleCameraError(error, context = 'scanner') {
+    console.error(`❌ Ошибка камеры в ${context}:`, error);
+    
+    let errorMessage = '';
+    let shouldRetry = false;
+    let retryDelay = 1000;
+    
+    if (error.name === 'NotAllowedError' || error.message.includes('Permission denied')) {
+        errorMessage = deviceInfo.isMobile 
+            ? 'Доступ к камере запрещен. Пожалуйста, разрешите доступ к камере в настройках браузера и попробуйте снова.'
+            : 'Camera access denied. Please allow camera access and try again.';
+        shouldRetry = false;
+    } else if (error.name === 'NotFoundError' || error.message.includes('No camera found')) {
+        errorMessage = deviceInfo.isMobile
+            ? 'Камера не найдена. Убедитесь, что камера подключена и не используется другим приложением.'
+            : 'No camera found. Please connect a camera and try again.';
+        shouldRetry = true;
+        retryDelay = 2000;
+    } else if (error.name === 'NotReadableError' || error.message.includes('Camera already in use')) {
+        errorMessage = deviceInfo.isMobile
+            ? 'Камера занята другим приложением. Закройте другие приложения, использующие камеру, и попробуйте снова.'
+            : 'Camera is already in use by another application. Please close other apps and try again.';
+        shouldRetry = true;
+        retryDelay = 3000;
+    } else if (error.name === 'OverconstrainedError') {
+        errorMessage = deviceInfo.isMobile
+            ? 'Неподдерживаемые настройки камеры. Пробуем с упрощенными настройками...'
+            : 'Camera settings not supported. Trying with different settings...';
+        shouldRetry = true;
+        retryDelay = 1000;
+    } else if (error.name === 'AbortError') {
+        errorMessage = deviceInfo.isMobile
+            ? 'Операция с камерой была прервана. Попробуйте снова.'
+            : 'Camera operation was aborted. Please try again.';
+        shouldRetry = true;
+        retryDelay = 1000;
+    } else if (error.name === 'TypeError' && error.message.includes('getUserMedia')) {
+        errorMessage = deviceInfo.isMobile
+            ? 'Ваш браузер не поддерживает доступ к камере. Попробуйте использовать Chrome или Safari.'
+            : 'Your browser does not support camera access. Please use a modern browser.';
+        shouldRetry = false;
+    } else {
+        errorMessage = deviceInfo.isMobile
+            ? `Ошибка камеры: ${error.message}. Попробуйте перезапустить сканер.`
+            : `Camera error: ${error.message}. Please try restarting the scanner.`;
+        shouldRetry = true;
+        retryDelay = 2000;
+    }
+    
+    // Обновляем UI с ошибкой
+    S.scannerModal.error = errorMessage;
+    S.scannerModal.loading = false;
+    updateUI();
+    
+    // Если нужно повторить попытку
+    if (shouldRetry) {
+        console.log(`🔄 Повторная попытка через ${retryDelay}ms...`);
+        setTimeout(async () => {
+            try {
+                // Пробуем альтернативные настройки
+                const fallbackSuccess = await tryAlternativeCameraSettings();
+                if (fallbackSuccess) {
+                    await restartScanner();
+                } else {
+                    // Если альтернативные настройки не помогли, пробуем переключить камеру
+                    await autoSwitchCamera();
+                }
+            } catch (retryError) {
+                console.error('❌ Повторная попытка не удалась:', retryError);
+                S.scannerModal.error = deviceInfo.isMobile
+                    ? 'Не удалось запустить камеру. Попробуйте перезагрузить страницу.'
+                    : 'Failed to start camera. Please try refreshing the page.';
+                updateUI();
+            }
+        }, retryDelay);
+    }
+    
+    return {
+        message: errorMessage,
+        shouldRetry,
+        retryDelay
+    };
+}
+
+// Функция оптимизации производительности для слабых устройств
+function optimizeForWeakDevices() {
+    console.log('🔧 Оптимизация для слабых устройств...');
+    
+    // Определяем, является ли устройство слабым
+    const isWeakDevice = deviceInfo.isMobile || 
+                        (deviceInfo.isTablet && deviceInfo.maxResolution.width < 1200) ||
+                        (navigator.hardwareConcurrency && navigator.hardwareConcurrency < 4);
+    
+    if (isWeakDevice) {
+        console.log('🔧 Применяем оптимизации для слабого устройства');
+        
+        // Уменьшаем частоту кадров
+        deviceInfo.optimalFrameRate = Math.min(deviceInfo.optimalFrameRate, 8);
+        
+        // Уменьшаем разрешение
+        deviceInfo.maxResolution = {
+            width: Math.min(deviceInfo.maxResolution.width, 640),
+            height: Math.min(deviceInfo.maxResolution.height, 480)
+        };
+        
+        // Уменьшаем размер области сканирования
+        if (deviceInfo.isMobile) {
+            deviceInfo.qrBoxSize = 200;
+        } else {
+            deviceInfo.qrBoxSize = 250;
+        }
+        
+        // Включаем дополнительные оптимизации
+        deviceInfo.enablePerformanceMode = true;
+        deviceInfo.reduceScanFrequency = true;
+        deviceInfo.useLowerQuality = true;
+        
+        console.log('🔧 Оптимизации применены:', {
+            frameRate: deviceInfo.optimalFrameRate,
+            resolution: deviceInfo.maxResolution,
+            qrBoxSize: deviceInfo.qrBoxSize,
+            performanceMode: deviceInfo.enablePerformanceMode
+        });
+    }
+    
+    return isWeakDevice;
+}
+
+// Функция адаптивной частоты сканирования
+function getAdaptiveScanInterval() {
+    if (deviceInfo.enablePerformanceMode) {
+        // Для слабых устройств сканируем реже
+        return 200; // 200ms между сканированиями
+    } else if (deviceInfo.isMobile) {
+        // Для мобильных устройств средняя частота
+        return 150; // 150ms между сканированиями
+    } else {
+        // Для десктопов высокая частота
+        return 100; // 100ms между сканированиями
+    }
+}
+
+// Функция адаптивного размера области сканирования
+function getAdaptiveQrBoxSize() {
+    if (deviceInfo.qrBoxSize) {
+        return { width: deviceInfo.qrBoxSize, height: deviceInfo.qrBoxSize };
+    }
+    
+    if (deviceInfo.isMobile) {
+        return { width: 200, height: 200 };
+    } else if (deviceInfo.isTablet) {
+        return { width: 250, height: 250 };
+    } else {
+        return { width: 300, height: 300 };
+    }
+}
+
+// Обработчик изменения ориентации экрана
+function handleOrientationChange() {
+    console.log('🔄 Изменение ориентации экрана...');
+    
+    // Обновляем информацию об ориентации
+    deviceInfo.orientation = window.innerHeight > window.innerWidth ? 'portrait' : 'landscape';
+    
+    // Если сканер активен, перезапускаем его с новыми настройками
+    if (S.scannerModal.open && (html5QrcodeScanner || zxingScanner)) {
+        console.log('🔄 Перезапускаем сканер из-за изменения ориентации...');
+        setTimeout(async () => {
+            try {
+                await restartScanner();
+            } catch (error) {
+                console.error('❌ Ошибка перезапуска сканера:', error);
+            }
+        }, 500); // Небольшая задержка для стабилизации ориентации
+    }
+}
+
+// Добавляем обработчик изменения ориентации
+window.addEventListener('orientationchange', () => {
+    // Задержка для получения правильных размеров экрана
+    setTimeout(handleOrientationChange, 100);
+});
+
+// Добавляем обработчик изменения размера окна
+window.addEventListener('resize', () => {
+    // Дебаунс для избежания частых вызовов
+    clearTimeout(window.resizeTimeout);
+    window.resizeTimeout = setTimeout(handleOrientationChange, 250);
+});
+
 // Функция полного уничтожения сканера
 function completelyDestroyScanner() {
     console.log('🔍 Полное уничтожение сканера...');
@@ -7737,6 +8221,9 @@ async function startHtml5QrCodeScanner() {
     try {
         console.log('🔍 Запуск html5-qrcode сканера (как у Falconbricks)');
         
+        // Определяем характеристики устройства перед запуском сканера
+        await detectDeviceCapabilities();
+        
         if (typeof Html5QrcodeScanner === 'undefined') {
             throw new Error('html5-qrcode библиотека не загружена');
         }
@@ -7760,25 +8247,23 @@ async function startHtml5QrCodeScanner() {
         // Дополнительная очистка
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Создаем html5-qrcode сканер с оптимизированными настройками
+        // Получаем адаптивные настройки камеры
+        const cameraSettings = getAdaptiveCameraSettings();
+        
+        // Создаем html5-qrcode сканер с адаптивными настройками
         html5QrcodeScanner = new Html5QrcodeScanner(
             scannerContainer.id,
             {
-                fps: 10, // Оптимальная частота кадров для баланса производительности и точности
-                qrbox: { width: 300, height: 300 }, // Увеличенная область сканирования для лучшего распознавания
-                aspectRatio: 1.0,
+                fps: deviceInfo.optimalFrameRate, // Адаптивная частота кадров
+                qrbox: getAdaptiveQrBoxSize(), // Адаптивная область сканирования
+                aspectRatio: deviceInfo.orientation === 'portrait' && deviceInfo.isMobile ? 0.75 : 1.0,
                 showTorchButtonIfSupported: true,
                 showZoomSliderIfSupported: true,
                 useBarCodeDetectorIfSupported: true,
                 showCameraSelectionIfSupported: true, // Включаем выбор камеры
-                defaultZoomValueIfSupported: 2, // Увеличиваем зум для лучшего фокуса
+                defaultZoomValueIfSupported: deviceInfo.isMobile ? 1.5 : 2, // Адаптивный зум
                 rememberLastUsedCamera: true, // Запоминать последнюю использованную камеру
-                videoConstraints: {
-                    facingMode: 'environment',
-                    width: { ideal: 1920, max: 1920, min: 640 },
-                    height: { ideal: 1080, max: 1080, min: 480 },
-                    frameRate: { ideal: 10, max: 15 }
-                },
+                videoConstraints: cameraSettings.video,
                 // Поддерживаемые форматы как у Falconbricks
                 supportedScanTypes: [
                     Html5QrcodeScanType.SCAN_TYPE_CAMERA
@@ -7806,28 +8291,10 @@ async function startHtml5QrCodeScanner() {
                 if (errorMessage.includes('NotFoundException')) {
                     // Это нормальная ошибка - код не найден, игнорируем
                     return;
-                } else if (errorMessage.includes('NotAllowedError') || errorMessage.includes('Permission denied')) {
-                    console.error('❌ Доступ к камере запрещен:', errorMessage);
-                    S.scannerModal.error = 'Camera access denied. Please allow camera access and try again.';
-                    updateUI();
-                } else if (errorMessage.includes('NotFoundError') || errorMessage.includes('No camera found')) {
-                    console.error('❌ Камера не найдена:', errorMessage);
-                    S.scannerModal.error = 'No camera found. Please connect a camera and try again.';
-                    updateUI();
-                } else if (errorMessage.includes('NotReadableError') || errorMessage.includes('Camera already in use')) {
-                    console.error('❌ Камера занята:', errorMessage);
-                    S.scannerModal.error = 'Camera is already in use by another application. Please close other apps and try again.';
-                    updateUI();
-                } else if (errorMessage.includes('OverconstrainedError')) {
-                    console.error('❌ Неподдерживаемые настройки камеры:', errorMessage);
-                    S.scannerModal.error = 'Camera settings not supported. Trying with different settings...';
-                    updateUI();
-                    // Попробуем перезапустить с упрощенными настройками
-                    setTimeout(() => {
-                        restartScanner();
-                    }, 2000);
                 } else {
-                    console.warn('⚠️ Ошибка сканирования:', errorMessage);
+                    // Используем новую функцию обработки ошибок
+                    const error = new Error(errorMessage);
+                    handleCameraError(error, 'html5-qrcode');
                 }
             }
         );
@@ -7909,49 +8376,40 @@ async function switchCamera() {
     console.log('🔄 Переключаем камеру...');
     
     try {
-        // Получаем список доступных камер
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const videoDevices = devices.filter(device => device.kind === 'videoinput');
-        
-        if (videoDevices.length < 2) {
-            alert('Доступна только одна камера');
-            return;
-        }
-        
         // Показываем индикатор загрузки
         S.scannerModal.loading = true;
         S.scannerModal.error = null;
         S.scannerModal.result = null;
         updateUI();
         
-        // ПОЛНОСТЬЮ уничтожаем текущий сканер
-        console.log('🔍 Полное уничтожение сканера для переключения камеры...');
-        await completelyDestroyScanner();
+        // Используем новую функцию автоматического переключения
+        const success = await autoSwitchCamera();
         
-        // Дополнительная очистка
-        forceClearAllMediaStreams();
-        
-        // Перезапускаем сканер с увеличенной задержкой
-        setTimeout(async () => {
-            try {
-                console.log('🔍 Перезапускаем сканер после переключения камеры...');
-                await startHtml5QrCodeScanner();
-                
-                // Скрываем индикатор загрузки
+        if (success) {
+            // Скрываем индикатор загрузки
+            S.scannerModal.loading = false;
+            updateUI();
+            console.log('✅ Камера переключена и сканер запущен');
+        } else {
+            // Если автоматическое переключение не удалось, пробуем альтернативные настройки
+            console.log('🔄 Пробуем альтернативные настройки...');
+            const fallbackSuccess = await tryAlternativeCameraSettings();
+            
+            if (fallbackSuccess) {
+                // Перезапускаем сканер с альтернативными настройками
+                await restartScanner();
                 S.scannerModal.loading = false;
                 updateUI();
-                
-                console.log('✅ Камера переключена и сканер запущен');
-            } catch (error) {
-                console.error('Ошибка переключения камеры:', error);
+                console.log('✅ Сканер запущен с альтернативными настройками');
+            } else {
                 S.scannerModal.loading = false;
-                S.scannerModal.error = 'Ошибка переключения камеры: ' + error.message;
+                S.scannerModal.error = 'Не удалось запустить камеру с доступными настройками';
                 updateUI();
             }
-        }, 1500); // Увеличиваем задержку для полной очистки
+        }
         
     } catch (error) {
-        console.error('Ошибка получения списка камер:', error);
+        console.error('Ошибка переключения камеры:', error);
         S.scannerModal.loading = false;
         S.scannerModal.error = 'Ошибка переключения камеры: ' + error.message;
         updateUI();
@@ -8003,6 +8461,9 @@ async function startZXingScanner() {
     try {
         console.log('🔍 Запуск ZXing сканера для DataMatrix кодов');
         
+        // Определяем характеристики устройства перед запуском сканера
+        await detectDeviceCapabilities();
+        
         // Проверяем доступность ZXing
         if (typeof ZXing === 'undefined') {
             throw new Error('ZXing библиотека не загружена');
@@ -8033,25 +8494,11 @@ async function startZXingScanner() {
         scannerContainer.appendChild(videoElement);
         scannerContainer.appendChild(canvasElement);
         
-        // Запрашиваем доступ к камере с оптимизированными настройками
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                facingMode: 'environment',
-                width: { ideal: 1280, min: 640 },
-                height: { ideal: 720, min: 480 },
-                focusMode: 'continuous', // Автоматический авто-фокус
-                focusDistance: { ideal: 0.5 }, // Оптимальное расстояние фокусировки
-                whiteBalanceMode: 'continuous', // Автоматический баланс белого
-                exposureMode: 'continuous', // Автоматическая экспозиция
-                // Дополнительные настройки для автофокуса
-                advanced: [
-                    { focusMode: 'continuous' },
-                    { focusDistance: { ideal: 0.5 } },
-                    { whiteBalanceMode: 'continuous' },
-                    { exposureMode: 'continuous' }
-                ]
-            }
-        });
+        // Получаем адаптивные настройки камеры
+        const cameraSettings = getAdaptiveCameraSettings();
+        
+        // Запрашиваем доступ к камере с адаптивными настройками
+        const stream = await navigator.mediaDevices.getUserMedia(cameraSettings);
         
         videoElement.srcObject = stream;
         await videoElement.play();
@@ -8078,15 +8525,14 @@ async function startZXingScanner() {
         // Создаем ZXing reader
         zxingScanner = new ZXing.BrowserMultiFormatReader();
         
-        // Запускаем сканирование
+        // Запускаем сканирование с адаптивной частотой
         startZXingScanning();
         
         console.log('✅ ZXing сканер запущен');
         
     } catch (error) {
         console.error('❌ Ошибка запуска ZXing сканера:', error);
-        S.scannerModal.error = 'Ошибка запуска камеры: ' + error.message;
-        updateUI();
+        handleCameraError(error, 'zxing');
     }
 }
 
@@ -8129,10 +8575,11 @@ function startZXingScanning() {
                     }
                 }
                 
-                // Продолжаем сканирование с задержкой для оптимизации (5 FPS)
+                // Продолжаем сканирование с адаптивной задержкой
+        const scanInterval = getAdaptiveScanInterval();
         scanningInterval = setTimeout(() => {
             requestAnimationFrame(scanFrame);
-        }, 200); // 200ms = 5 FPS
+        }, scanInterval);
     };
     
     scanFrame();
