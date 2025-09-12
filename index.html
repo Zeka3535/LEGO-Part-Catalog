@@ -24,6 +24,10 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- remoteStorage.js library -->
   <script src="https://unpkg.com/remotestoragejs/release/remotestorage.js"></script>
+  <!-- html5-qrcode library for QR code scanning -->
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <!-- ZXing library for better DataMatrix support -->
+  <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
   <script>
     // Проверяем загрузку RemoteStorage
     window.addEventListener('load', function() {
@@ -4308,6 +4312,7 @@ const I_CloudUpload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c
 const I_CloudDownload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="16" x2="12" y2="7"></line></svg>`;
 const I_Link = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
 const I_Unlink = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.84 12.25l1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"></path><path d="M5.17 11.75l-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"></path><line x1="8" y1="2" x2="8" y2="5"></line><line x1="2" y1="8" x2="5" y2="8"></line><line x1="16" y1="19" x2="16" y2="22"></line><line x1="19" y1="16" x2="22" y2="16"></line></svg>`;
+const I_Scanner = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="8" y="8" width="8" height="8" rx="1"></rect><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>`;
 const I_Logout = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`;
 const I_Info = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
 const I_ChevronDown = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
@@ -7028,7 +7033,16 @@ let S = {
     wishlists: {}, // Списки желаний
     currentWishlist: null, // Текущий выбранный список
     wishlistModal: { open: false, wishlistId: null, wishlist: null }, // Модальное окно просмотра списка
-    expandedWishlists: [] // Развернутые папки списков желаний
+    expandedWishlists: [], // Развернутые папки списков желаний
+    
+    // Данные для сканера минифигурок
+    minifigDatabase: null, // Загруженная база данных минифигурок из figtable.txt
+    scannerModal: {
+        open: false,
+        loading: false,
+        result: null,
+        error: null
+    }
 };
 let tempFilters = {
     filters: { colorIds: [], inCollectionOnly: false },
@@ -7156,6 +7170,514 @@ function saveState() {
     // Все данные будут загружены заново из CSV файлов при каждом запуске
     console.log('User collections and favorites saved to localStorage');
 }
+
+// Функции для работы с данными минифигурок
+async function loadMinifigDatabase() {
+    if (S.minifigDatabase) {
+        return S.minifigDatabase;
+    }
+    
+    try {
+        console.log('📱 Загружаем базу данных минифигурок...');
+        const response = await fetch('figtable.txt');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const text = await response.text();
+        
+        // Парсим данные из формата figtable.txt
+        const database = {};
+        const lines = text.split('\n');
+        
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.includes(':')) {
+                // Извлекаем код (первые 7 цифр)
+                const match = line.match(/^(\d{7}):/);
+                if (match) {
+                    const code = match[1];
+                    const nameLine = lines[i + 1];
+                    const idLine = lines[i + 2];
+                    
+                    if (nameLine && idLine) {
+                        const nameMatch = nameLine.match(/n:\s*"([^"]+)"/);
+                        const idMatch = idLine.match(/i:\s*"([^"]+)"/);
+                        
+                        if (nameMatch && idMatch) {
+                            database[code] = {
+                                name: nameMatch[1],
+                                id: idMatch[1]
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        S.minifigDatabase = database;
+        console.log('✅ База данных минифигурок загружена:', Object.keys(database).length, 'записей');
+        return database;
+    } catch (error) {
+        console.error('❌ Ошибка загрузки базы данных минифигурок:', error);
+        return null;
+    }
+}
+
+function searchMinifigByCode(code) {
+    if (!S.minifigDatabase) {
+        console.warn('База данных минифигурок не загружена');
+        return null;
+    }
+    
+    // Берем первые 7 цифр из кода
+    const searchCode = code.toString().substring(0, 7);
+    return S.minifigDatabase[searchCode] || null;
+}
+
+// Функции для QR-сканера
+// Глобальные переменные для хранения экземпляров сканеров
+let html5QrcodeScanner = null;
+let zxingScanner = null;
+let videoElement = null;
+let canvasElement = null;
+let scanningInterval = null;
+
+async function startQRScanner() {
+    console.log('Запуск QR-сканера с html5-qrcode');
+    
+    // СРАЗУ открываем модальное окно сканера, чтобы оно отрендерилось
+    console.log('🔍 Устанавливаем состояние сканера: open = true');
+    S.scannerModal.open = true;
+    S.scannerModal.loading = false;
+    S.scannerModal.error = null;
+    S.scannerModal.result = null;
+    console.log('🔍 Состояние сканера после установки:', S.scannerModal);
+    
+    // Обновляем UI чтобы модальное окно отрендерилось
+    updateUI();
+    
+    // Загружаем базу данных минифигурок
+    await loadMinifigDatabase();
+    
+    // Ждем пока модальное окно отрендерится
+    setTimeout(async () => {
+        try {
+            console.log('Инициализация html5-qrcode сканера (как у Falconbricks)...');
+            
+            // Даем время DOM обновиться
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Запускаем html5-qrcode сканер
+            await startHtml5QrCodeScanner();
+            
+            
+        } catch (error) {
+            console.error('Ошибка запуска сканера:', error);
+            S.scannerModal.error = 'Ошибка запуска сканера: ' + error.message;
+            updateUI();
+        }
+    }, 500);
+}
+
+// Функция детекции QR-кода больше не нужна, так как html5-qrcode обрабатывает это автоматически
+function detectQRCode(imageData) {
+    // Эта функция больше не используется, так как html5-qrcode обрабатывает сканирование автоматически
+    return null;
+}
+
+// Обработка результата сканирования
+async function processQRResult(qrCode) {
+    try {
+        S.scannerModal.loading = true;
+        S.scannerModal.error = null;
+        S.scannerModal.result = null;
+        updateUI();
+        
+        console.log('Обрабатываем отсканированный код:', qrCode);
+        
+        // Извлекаем первые 7 цифр из отсканированного кода
+        const numericCode = qrCode.replace(/\D/g, ''); // Убираем все нецифровые символы
+        const searchCode = numericCode.substring(0, 7);
+        
+        console.log('Ищем по коду:', searchCode);
+        
+        // Ищем минифигурку в базе данных
+        const minifig = searchMinifigByCode(searchCode);
+        
+        if (minifig) {
+            console.log('Найдена минифигурка:', minifig);
+            S.scannerModal.result = {
+                code: searchCode,
+                originalCode: qrCode,
+                name: minifig.name,
+                id: minifig.id,
+                image: `Minifig_png/fig-${minifig.id.split('-')[1]}.png`
+            };
+            
+            // Закрываем сканер и открываем модальное окно минифигурки
+            setTimeout(() => {
+                closeScannerModal();
+                // Ждем инициализации данных перед открытием модального окна
+                waitForDataAndOpenMinifigModal(minifig.id);
+            }, 1000);
+                        } else {
+                            console.log('Минифигурка не найдена для кода:', searchCode);
+                            S.scannerModal.error = `Hmm... we couldn't find a Minifigure with this code. Please recheck the instructions below and try again.`;
+                        }
+        
+        S.scannerModal.loading = false;
+                    updateUI();
+        
+    } catch (error) {
+        console.error('Ошибка обработки QR-кода:', error);
+        S.scannerModal.error = 'Ошибка обработки QR-кода';
+        S.scannerModal.loading = false;
+                updateUI();
+    }
+}
+
+// Функция для тестирования сканера
+function testScannerWithCode() {
+    console.log('🧪 Тестируем сканер с кодом 6471959');
+    processQRResult('6471959');
+}
+
+// Функция для тестирования поиска набора
+function testMinifigSearch() {
+    console.log('🧪 Тестируем поиск набора с ID 71050-11');
+    openMinifigModalByCode('71050-11');
+}
+
+// Функция для обработки ручного ввода кода
+function processManualCode() {
+    const input = document.getElementById('manual-code-input');
+    if (!input) return;
+    
+    const code = input.value.trim();
+    if (!code) {
+        alert('Введите код');
+                    return;
+                }
+                
+    console.log('📝 Обрабатываем введенный вручную код:', code);
+    processQRResult(code);
+    input.value = ''; // Очищаем поле ввода
+}
+
+// Функция для ожидания загрузки данных и открытия модального окна минифигурки
+function waitForDataAndOpenMinifigModal(minifigId) {
+    console.log('🔍 Ждем загрузки данных для поиска набора:', minifigId);
+    
+    // Проверяем каждые 100мс в течение 5 секунд
+    let attempts = 0;
+    const maxAttempts = 50; // 5 секунд
+    
+    const checkData = () => {
+        attempts++;
+        
+        // Проверяем загрузку SET_MAP (база данных наборов)
+        const setMapLoaded = SET_MAP && typeof SET_MAP === 'object' && Object.keys(SET_MAP).length > 0;
+        
+        if (setMapLoaded) {
+            console.log('✅ Данные наборов загружены, выполняем поиск');
+            openMinifigModalByCode(minifigId);
+            return;
+        }
+        
+        if (attempts >= maxAttempts) {
+            console.log('⚠️ Таймаут ожидания данных, показываем уведомление');
+            alert(`Набор ${minifigId} не найден (данные не загружены)`);
+            return;
+        }
+        
+        setTimeout(checkData, 100);
+    };
+    
+    checkData();
+}
+
+// Функция для открытия модального окна минифигурки по ID
+function openMinifigModalByCode(minifigId) {
+    console.log('🔍 Ищем набор в базе данных по ID:', minifigId);
+    
+    // Ищем набор напрямую в базе данных, не переключая вид
+    let foundSet = null;
+    
+    // Ищем в основной базе данных наборов
+    if (SET_MAP) {
+        console.log('🔍 Ищем в основной базе данных наборов...');
+        foundSet = Object.values(SET_MAP).find(set => set.set_num === minifigId);
+        console.log('🔍 Найдено в основной базе данных наборов:', foundSet);
+    }
+    
+    if (foundSet) {
+        console.log('✅ Найден набор:', foundSet);
+        // Открываем модальное окно набора
+        openModalForSet(foundSet.set_num);
+    } else {
+        console.log('⚠️ Набор не найден в базе данных');
+        console.log('🔍 Примеры данных в SET_MAP:', Object.entries(SET_MAP).slice(0, 3));
+        alert(`Набор ${minifigId} не найден в каталоге`);
+    }
+}
+
+// Функция для запуска html5-qrcode сканера (как у Falconbricks)
+async function startHtml5QrCodeScanner() {
+    try {
+        console.log('🔍 Запуск html5-qrcode сканера (как у Falconbricks)');
+        
+        if (typeof Html5QrcodeScanner === 'undefined') {
+            throw new Error('html5-qrcode библиотека не загружена');
+        }
+        
+        const scannerContainer = document.getElementById('qr-reader');
+        if (!scannerContainer) {
+            throw new Error('Контейнер сканера не найден');
+        }
+        
+        // Очищаем контейнер
+        scannerContainer.innerHTML = '';
+        
+        // Создаем html5-qrcode сканер с настройками как у Falconbricks + увеличение x6
+        html5QrcodeScanner = new Html5QrcodeScanner(
+            'qr-reader',
+            {
+                fps: 10, // Меньше FPS для стабильности
+                qrbox: { width: 200, height: 200 }, // Меньший размер для увеличения
+                aspectRatio: 1.0,
+                showTorchButtonIfSupported: true,
+                showZoomSliderIfSupported: true,
+                useBarCodeDetectorIfSupported: true,
+                videoConstraints: {
+                    facingMode: 'environment',
+                    width: { ideal: 1920, min: 1280 }, // Высокое разрешение для увеличения
+                    height: { ideal: 1080, min: 720 }
+                },
+                // Поддерживаемые форматы как у Falconbricks
+                supportedScanTypes: [
+                    Html5QrcodeScanType.SCAN_TYPE_CAMERA
+                ],
+                // Форматы кодов для сканирования
+                formatsToSupport: [
+                    Html5QrcodeSupportedFormats.DATA_MATRIX,
+                    Html5QrcodeSupportedFormats.QR_CODE,
+                    Html5QrcodeSupportedFormats.AZTEC,
+                    Html5QrcodeSupportedFormats.PDF_417
+                ]
+            },
+            false
+        );
+        
+        // Запускаем сканер
+        html5QrcodeScanner.render(
+            (decodedText, decodedResult) => {
+                console.log('🔍 html5-qrcode нашел код:', decodedText, 'Формат:', decodedResult.result.format);
+                stopHtml5QrCodeScanner();
+                processQRResult(decodedText);
+            },
+            (errorMessage) => {
+                // Игнорируем ошибки сканирования (как у Falconbricks)
+                // console.log('🔍 html5-qrcode ошибка:', errorMessage);
+            }
+        );
+        
+        console.log('✅ html5-qrcode сканер запущен (как у Falconbricks)');
+            
+        } catch (error) {
+        console.error('❌ Ошибка запуска html5-qrcode сканера:', error);
+        S.scannerModal.error = 'Ошибка запуска камеры: ' + error.message;
+        updateUI();
+    }
+}
+
+// Функция для остановки html5-qrcode сканера
+function stopHtml5QrCodeScanner() {
+    if (html5QrcodeScanner) {
+        try {
+            html5QrcodeScanner.clear();
+            html5QrcodeScanner = null;
+            console.log('✅ html5-qrcode сканер остановлен');
+        } catch (error) {
+            console.error('❌ Ошибка остановки html5-qrcode сканера:', error);
+        }
+    }
+}
+
+// Функция для перезапуска сканера
+async function restartScanner() {
+    console.log('🔄 Перезапускаем сканер');
+    
+    // Останавливаем текущий сканер
+    stopHtml5QrCodeScanner();
+    
+    // Очищаем контейнер
+    const scannerContainer = document.getElementById('qr-reader');
+    if (scannerContainer) {
+        scannerContainer.innerHTML = '';
+    }
+    
+    
+    // Перезапускаем сканер
+    setTimeout(async () => {
+        try {
+            await startHtml5QrCodeScanner();
+            
+            // Скрываем индикатор загрузки
+            setTimeout(() => {
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Ошибка перезапуска сканера:', error);
+            S.scannerModal.error = 'Ошибка перезапуска сканера: ' + error.message;
+            updateUI();
+        }
+    }, 500);
+}
+
+// Функция сканирования с ZXing (лучше поддерживает DataMatrix)
+async function startZXingScanner() {
+    try {
+        console.log('🔍 Запуск ZXing сканера для DataMatrix кодов');
+        
+        // Проверяем доступность ZXing
+        if (typeof ZXing === 'undefined') {
+            throw new Error('ZXing библиотека не загружена');
+        }
+        
+        // Создаем элементы для камеры
+        const scannerContainer = document.getElementById('qr-reader');
+        if (!scannerContainer) {
+            throw new Error('Контейнер сканера не найден');
+        }
+        
+        // Очищаем контейнер
+        scannerContainer.innerHTML = '';
+        
+        // Создаем видео элемент
+        videoElement = document.createElement('video');
+        videoElement.style.width = '100%';
+        videoElement.style.height = '400px';
+        videoElement.style.objectFit = 'cover';
+        videoElement.setAttribute('playsinline', 'true');
+        videoElement.setAttribute('muted', 'true');
+        
+        // Создаем canvas для обработки кадров
+        canvasElement = document.createElement('canvas');
+        canvasElement.style.display = 'none';
+        
+        // Добавляем элементы в контейнер
+        scannerContainer.appendChild(videoElement);
+        scannerContainer.appendChild(canvasElement);
+        
+        // Запрашиваем доступ к камере
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                facingMode: 'environment',
+                width: { ideal: 1920 },
+                height: { ideal: 1080 }
+            }
+        });
+        
+        videoElement.srcObject = stream;
+        await videoElement.play();
+        
+        // Создаем ZXing reader
+        zxingScanner = new ZXing.BrowserMultiFormatReader();
+        
+        // Запускаем сканирование
+        startZXingScanning();
+        
+        console.log('✅ ZXing сканер запущен');
+        
+    } catch (error) {
+        console.error('❌ Ошибка запуска ZXing сканера:', error);
+        S.scannerModal.error = 'Ошибка запуска камеры: ' + error.message;
+        updateUI();
+    }
+}
+
+// Функция сканирования с ZXing
+function startZXingScanning() {
+    if (!zxingScanner || !videoElement || !canvasElement) return;
+    
+    const scanFrame = () => {
+                if (!S.scannerModal.open) {
+            stopZXingScanner();
+                    return;
+                }
+                
+        if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                    // Настраиваем canvas
+            canvasElement.width = videoElement.videoWidth;
+            canvasElement.height = videoElement.videoHeight;
+            
+            // Рисуем кадр на canvas
+            const ctx = canvasElement.getContext('2d');
+            ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+                    
+                    // Получаем данные изображения
+            const imageData = ctx.getImageData(0, 0, canvasElement.width, canvasElement.height);
+            
+            try {
+                // Используем правильный API ZXing - decodeBitmap
+                const result = zxingScanner.decodeBitmap(imageData);
+                if (result) {
+                    console.log('🔍 ZXing нашел код:', result.getText(), 'Формат:', result.getBarcodeFormat());
+                    stopZXingScanner();
+                    processQRResult(result.getText());
+                        return;
+                }
+            } catch (error) {
+                // Показываем ошибки для отладки (но не все)
+                if (error.message && !error.message.includes('No MultiFormat Readers were able to detect the code')) {
+                    console.log('🔍 ZXing ошибка:', error.message);
+                }
+                    }
+                }
+                
+                // Продолжаем сканирование
+        scanningInterval = requestAnimationFrame(scanFrame);
+    };
+    
+    scanFrame();
+}
+
+// Функция остановки ZXing сканера
+function stopZXingScanner() {
+    if (scanningInterval) {
+        cancelAnimationFrame(scanningInterval);
+        scanningInterval = null;
+    }
+    
+    if (videoElement && videoElement.srcObject) {
+        const tracks = videoElement.srcObject.getTracks();
+        tracks.forEach(track => track.stop());
+    }
+    
+    if (zxingScanner) {
+        zxingScanner.reset();
+        zxingScanner = null;
+    }
+    
+    videoElement = null;
+    canvasElement = null;
+}
+
+// Делаем функции доступными глобально
+window.startQRScanner = startQRScanner;
+window.detectQRCode = detectQRCode;
+window.processQRResult = processQRResult;
+window.closeScannerModal = closeScannerModal;
+window.testScannerWithCode = testScannerWithCode;
+window.processManualCode = processManualCode;
+window.waitForDataAndOpenMinifigModal = waitForDataAndOpenMinifigModal;
+window.openMinifigModalByCode = openMinifigModalByCode;
+window.restartScanner = restartScanner;
+window.startHtml5QrCodeScanner = startHtml5QrCodeScanner;
+window.stopHtml5QrCodeScanner = stopHtml5QrCodeScanner;
+window.testMinifigSearch = testMinifigSearch;
 
 // Функции аналитики и определения редкости деталей
 // Новая система определения редкости на основе анализа коллекции
@@ -9023,6 +9545,31 @@ function renderAnalyticsContent(analytics) {
                 </div>
             </div>
 
+        </div>
+    `;
+}
+
+function renderScannerContent() {
+    return `
+        <div class="flex flex-col items-center justify-center h-full p-4 sm:p-8 xl:p-12 text-center">
+            <div class="mb-3 sm:mb-4 xl:mb-6">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 xl:w-24 xl:h-24 mx-auto text-green-400">${I_Scanner('w-full h-full')}</div>
+            </div>
+            <h2 class="text-xl sm:text-2xl xl:text-3xl font-bold text-gray-200 mb-2 xl:mb-4">Сканер минифигурок</h2>
+            <p class="text-gray-400 mb-4 xl:mb-6 text-sm sm:text-base xl:text-lg px-4 xl:px-8 max-w-md xl:max-w-lg">
+                Сканируйте DataMatrix код на коробке минифигурки, чтобы узнать её название и ID
+            </p>
+            <button 
+                onclick="startQRScanner()" 
+                class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200 flex items-center gap-2">
+                ${I_Scanner('w-5 h-5')}
+                Запустить сканер
+            </button>
+            <div class="mt-4 text-xs text-gray-500">
+                <p>• Наведите камеру на QR-код минифигурки</p>
+                <p>• Убедитесь, что код хорошо освещен</p>
+                <p>• Держите устройство на расстоянии 10-20 см</p>
+            </div>
         </div>
     `;
 }
@@ -11903,7 +12450,7 @@ function renderSidebar() {
             
             // Проверяем, что toolSubView действительно пустой
             if (S.toolSubView && S.toolSubView !== '') {
-                console.log('⚠️ WARNING: toolSubView is not empty in renderSidebar:', S.toolSubView);
+                console.log('🔧 toolSubView активен в renderSidebar:', S.toolSubView);
             }
             
             // Создаем структуру подкатегорий для инструментов
@@ -11919,6 +12466,12 @@ function renderSidebar() {
                     name: 'Списки желаний',
                     icon: I_Star('w-5 h-5 text-yellow-400'),
                     description: 'Планирование покупок и создание списков желаний'
+                },
+                {
+                    id: 'scanner',
+                    name: 'Сканер минифигурок',
+                    icon: I_Scanner('w-5 h-5 text-green-400'),
+                    description: 'Сканирование QR-кодов минифигурок с помощью камеры'
                 },
                 {
                     id: 'cloud-backup',
@@ -13551,6 +14104,11 @@ function renderMainContent() {
                     </div>
                 `;
             }
+        }
+        
+        // Показываем сканер минифигурок только для подкатегории 'scanner'
+        if (S.toolSubView === 'scanner') {
+            e = renderScannerContent();
         }
         }
     }
@@ -15276,6 +15834,114 @@ function renderMinifigModalInventoryView() {
             ${r}
         </div>`;
 }
+function renderScannerModal() {
+    console.log('🔍 renderScannerModal вызвана, S.scannerModal.open:', S.scannerModal.open);
+    if (!S.scannerModal.open) {
+        console.log('🔍 renderScannerModal: модальное окно закрыто, возвращаем пустую строку');
+        return '';
+    }
+    
+    console.log('🔍 renderScannerModal: рендерим модальное окно, состояние:', S.scannerModal);
+    const modal = S.scannerModal;
+    
+    return `
+        <div id="scanner-modal-container" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-gray-900 rounded-lg max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div class="sticky top-0 bg-gray-900 border-b border-gray-700 px-6 py-4 rounded-t-lg">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-bold text-white">
+                            ${modal.loading ? 'Сканирование...' : modal.result ? 'Результат сканирования' : modal.error ? 'Ошибка' : 'Сканер DataMatrix кодов'}
+                        </h2>
+                        <button onclick="closeScannerModal()" class="text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    ${modal.loading ? `
+                        <div class="text-center">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-green-400 mx-auto"></div>
+                            <p class="text-gray-400 mt-4">Обработка QR-кода...</p>
+                        </div>
+                    ` : modal.result ? `
+                        <div class="text-center">
+                            <img src="${modal.result.image || `./Minifig_png/fig-${modal.result.id}.png`}" 
+                                 alt="${modal.result.name}" 
+                                 class="w-32 h-32 object-contain mx-auto mb-4 rounded-lg">
+                            <h3 class="text-lg font-semibold text-white mb-2">${modal.result.name}</h3>
+                            <p class="text-gray-400 mb-4">ID: ${modal.result.id}</p>
+                            <p class="text-sm text-gray-500 mb-2">Код поиска: ${modal.result.code}</p>
+                            ${modal.result.originalCode ? `<p class="text-xs text-gray-600 mb-6">Полный код: ${modal.result.originalCode}</p>` : ''}
+                            <div class="flex gap-2 justify-center">
+                                <button onclick="restartScanner()" 
+                                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                    Scan the next box
+                                </button>
+                            <button onclick="closeScannerModal()" 
+                                        class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                Закрыть
+                            </button>
+                            </div>
+                        </div>
+                    ` : modal.error ? `
+                        <div class="text-center">
+                            <div class="text-red-400 mb-4">
+                                <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                </svg>
+                            </div>
+                            <p class="text-red-400 text-lg mb-4">${modal.error}</p>
+                            <div class="flex gap-2 justify-center">
+                                <button onclick="restartScanner()" 
+                                        class="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                    Try again
+                                </button>
+                            <button onclick="closeScannerModal()" 
+                                        class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                Закрыть
+                            </button>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="text-center">
+                            <div id="scanner-camera-container" class="mb-4 relative">
+                                <div id="qr-reader" class="w-full max-w-lg mx-auto rounded-lg overflow-hidden" style="min-height: 400px; background: #1f2937;"></div>
+                            </div>
+                            <p class="text-gray-400 mb-4">Наведите камеру на DataMatrix код минифигурки</p>
+                            
+                            <button onclick="closeScannerModal()" 
+                                    class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                Отмена
+                            </button>
+                            </div>
+                        </div>
+                    `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function closeScannerModal() {
+    // Останавливаем html5-qrcode сканер
+    stopHtml5QrCodeScanner();
+    
+    // Удаляем модальное окно из DOM
+    const existingModal = document.getElementById('scanner-modal-container');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    S.scannerModal.open = false;
+    S.scannerModal.loading = false;
+    S.scannerModal.error = null;
+    S.scannerModal.result = null;
+    updateUI();
+}
+
 function updateUI() {
     // Проверяем глобальный флаг блокировки
     if (window.UI_BLOCKED) {
@@ -21519,12 +22185,43 @@ document.addEventListener("click", async e => {
             fetchPartColorSpecifics(S.selPartId, S.partModal.selColorId);
         }
     }
+    
+    // Рендерим модальное окно сканера минифигурок
+    console.log('🔍 Проверяем состояние сканера в updateUI:', S.scannerModal.open, S.scannerModal);
+    if (S.scannerModal.open) {
+        console.log('🔍 Рендерим модальное окно сканера...');
+        const scannerModalHtml = renderScannerModal();
+        console.log('🔍 HTML модального окна:', scannerModalHtml ? 'получен' : 'пустой');
+        if (scannerModalHtml) {
+            // Добавляем модальное окно в конец body если его еще нет
+            const existingModal = document.getElementById('scanner-modal-container');
+            if (!existingModal) {
+                console.log('➕ Добавляем модальное окно сканера в DOM');
+                document.body.insertAdjacentHTML('beforeend', scannerModalHtml);
+                console.log('✅ Модальное окно добавлено в DOM');
+            } else {
+                console.log('ℹ️ Модальное окно сканера уже существует в DOM');
+            }
+        } else {
+            console.log('⚠️ HTML модального окна сканера пустой');
+        }
+    } else {
+        console.log('🔍 Сканер закрыт, удаляем модальное окно');
+        // Удаляем модальное окно если оно закрыто
+        const existingModal = document.getElementById('scanner-modal-container');
+        if (existingModal) {
+            console.log('🗑️ Удаляем модальное окно сканера из DOM');
+            existingModal.remove();
+        }
+    }
 }), document.addEventListener("keydown", e => {
     const activeElement = document.activeElement;
     
         if ("Escape" === e.key) {
             if (viewerEl.classList.contains("viewer-hidden")) {
-                if (S.filterOpen) {
+                if (S.scannerModal.open) {
+                    closeScannerModal();
+                } else if (S.filterOpen) {
                     closeFilterModal();
                 } else if (S.settingsOpen) {
                     closeSettingsModal();
