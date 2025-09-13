@@ -25992,11 +25992,21 @@ function animateCloseButtonClick(button) {
                 
                 // Автоматически выбрать камеру (но НЕ запускать её)
                 if (videoDevices.length > 0) {
-                    // На мобильных устройствах всегда выбираем камеру с индексом 0 (первую)
+                    // На мобильных устройствах ищем камеру с deviceId "0"
                     if (isMobile) {
-                        cameraSelect.value = videoDevices[0].deviceId;
-                        console.log('Выбрана камера 0 (первая) для мобильного устройства:', videoDevices[0].label);
-                        addLog(`Выбрана камера 0: ${videoDevices[0].label}`, 'info');
+                        // Ищем камеру с deviceId "0" (обычно это задняя камера)
+                        const camera0 = videoDevices.find(device => device.deviceId === '0');
+                        
+                        if (camera0) {
+                            cameraSelect.value = camera0.deviceId;
+                            console.log('Выбрана камера 0 для мобильного устройства:', camera0.label);
+                            addLog(`Выбрана камера 0: ${camera0.label}`, 'info');
+                        } else {
+                            // Если камера 0 не найдена, выбираем первую доступную
+                            cameraSelect.value = videoDevices[0].deviceId;
+                            console.log('Камера 0 не найдена, выбрана первая доступная:', videoDevices[0].label);
+                            addLog(`Выбрана камера: ${videoDevices[0].label}`, 'info');
+                        }
                     } else {
                         cameraSelect.value = videoDevices[0].deviceId;
                         console.log('Выбрана первая камера:', videoDevices[0].label);
