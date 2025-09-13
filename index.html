@@ -26346,6 +26346,39 @@ function animateCloseButtonClick(button) {
                     }
                 });
             }
+            
+            // Обработчик изменения доступных устройств (для системного диалога выбора камеры)
+            if (navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+                navigator.mediaDevices.addEventListener('devicechange', () => {
+                    console.log('Обнаружено изменение доступных устройств');
+                    addLog('Обнаружено изменение доступных устройств', 'info');
+                    
+                    // Небольшая задержка для стабилизации
+                    setTimeout(() => {
+                        // Если камера не запущена, но есть выбранная камера, запускаем её
+                        if (!currentStream && !isCameraStarting && cameraSelect && cameraSelect.value) {
+                            console.log('Автозапуск камеры после изменения устройств...');
+                            addLog('Автозапуск камеры после изменения устройств...', 'info');
+                            startCamera();
+                        }
+                    }, 1000);
+                });
+            }
+            
+            // Обработчик касания видео элемента на мобильных устройствах
+            const video = document.getElementById('scanner-video');
+            if (video && isMobile) {
+                video.addEventListener('touchstart', () => {
+                    if (!currentStream && !isCameraStarting) {
+                        const cameraSelect = document.getElementById('camera-select');
+                        if (cameraSelect && cameraSelect.value) {
+                            console.log('Касание видео элемента, запускаем камеру...');
+                            addLog('Касание видео элемента, запускаем камеру...', 'info');
+                            startCamera();
+                        }
+                    }
+                });
+            }
         }
         
         // Запуск камеры
@@ -26727,11 +26760,21 @@ function animateCloseButtonClick(button) {
             addLog('Флаг запуска камеры сброшен. Теперь можно попробовать запустить камеру снова.', 'success');
         }
         
-        // Мониторинг состояния камеры (отключен для предотвращения циклических перезапусков)
+        // Мониторинг состояния камеры (упрощенный для автозапуска)
         function startCameraMonitoring() {
-            console.log('Мониторинг камеры отключен для предотвращения циклических перезапусков');
-            // Мониторинг отключен, так как он вызывал циклические перезапуски камеры
-            // Вместо этого полагаемся на встроенные механизмы браузера и обработку ошибок
+            console.log('Запуск упрощенного мониторинга камеры...');
+            
+            // Проверяем состояние камеры каждые 3 секунды для автозапуска
+            setInterval(() => {
+                if (isMobile && !currentStream && !isCameraStarting) {
+                    const cameraSelect = document.getElementById('camera-select');
+                    if (cameraSelect && cameraSelect.value && cameraSelect.value !== '') {
+                        console.log('Обнаружена выбранная камера без запущенного потока, запускаем...');
+                        addLog('Автозапуск камеры по таймеру...', 'info');
+                        startCamera();
+                    }
+                }
+            }, 3000);
         }
         
         // Очистка камеры при выходе из инструментов
