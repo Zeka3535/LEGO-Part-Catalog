@@ -105,6 +105,36 @@
         }
     }
     
+    /* Стили для квадратной области сканирования */
+    #scanner-video {
+        width: 320px;
+        height: 320px;
+        object-fit: cover;
+        border-radius: 0.5rem;
+    }
+    
+    #scanner-canvas {
+        width: 320px;
+        height: 320px;
+        border-radius: 0.5rem;
+    }
+    
+    #scanner-placeholder {
+        width: 320px;
+        height: 320px;
+        border-radius: 0.5rem;
+    }
+    
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 480px) {
+        #scanner-video,
+        #scanner-canvas,
+        #scanner-placeholder {
+            width: 280px;
+            height: 280px;
+        }
+    }
+    
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
@@ -5342,6 +5372,9 @@ function renderScannerContent() {
                         <div>
                             <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
                             <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="640x640">640x640 (Квадрат)</option>
+                                <option value="800x800">800x800 (Квадрат HD)</option>
+                                <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
                                 <option value="1280x720">1280x720 (HD)</option>
                                 <option value="1920x1080">1920x1080 (Full HD)</option>
                                 <option value="640x480">640x480 (VGA)</option>
@@ -5385,9 +5418,9 @@ function renderScannerContent() {
                 <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg sm:rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-lg">
                     <h3 class="text-lg font-semibold text-gray-200 mb-4">Область сканирования</h3>
                     <div class="relative">
-                        <video id="scanner-video" class="w-full max-w-2xl mx-auto rounded-lg bg-gray-900 hidden" autoplay muted playsinline webkit-playsinline></video>
-                        <canvas id="scanner-canvas" class="w-full max-w-2xl mx-auto rounded-lg bg-gray-900 hidden"></canvas>
-                        <div id="scanner-placeholder" class="w-full max-w-2xl mx-auto aspect-video bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-600">
+                        <video id="scanner-video" class="w-80 h-80 mx-auto rounded-lg bg-gray-900 hidden object-cover" autoplay muted playsinline webkit-playsinline></video>
+                        <canvas id="scanner-canvas" class="w-80 h-80 mx-auto rounded-lg bg-gray-900 hidden"></canvas>
+                        <div id="scanner-placeholder" class="w-80 h-80 mx-auto aspect-square bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-600">
                             <div class="text-center text-gray-400">
                                 <div class="text-4xl mb-2">${I_Camera('w-16 h-16')}</div>
                                 <p class="text-lg font-medium">Камера не запущена</p>
@@ -25902,7 +25935,7 @@ function animateCloseButtonClick(button) {
                 }
                 
                 // Получить разрешение
-                const resolution = resolutionSelect ? resolutionSelect.value.split('x') : ['1280', '720'];
+                const resolution = resolutionSelect ? resolutionSelect.value.split('x') : ['640', '640'];
                 const width = parseInt(resolution[0]);
                 const height = parseInt(resolution[1]);
                 
@@ -26608,9 +26641,31 @@ function animateCloseButtonClick(button) {
             if (!video || !canvas) return;
             
             const context = canvas.getContext('2d');
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            context.drawImage(video, 0, 0);
+            
+            // Устанавливаем квадратные размеры для canvas
+            const size = 320; // Размер квадрата
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Вычисляем размеры для обрезки видео до квадрата
+            const videoAspect = video.videoWidth / video.videoHeight;
+            let sourceX = 0;
+            let sourceY = 0;
+            let sourceWidth = video.videoWidth;
+            let sourceHeight = video.videoHeight;
+            
+            if (videoAspect > 1) {
+                // Видео шире, обрезаем по бокам
+                sourceWidth = video.videoHeight;
+                sourceX = (video.videoWidth - sourceWidth) / 2;
+            } else {
+                // Видео выше, обрезаем сверху и снизу
+                sourceHeight = video.videoWidth;
+                sourceY = (video.videoHeight - sourceHeight) / 2;
+            }
+            
+            // Рисуем квадратную область из центра видео
+            context.drawImage(video, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, size, size);
             
             // Показать canvas и скрыть video
             canvas.classList.remove('hidden');
