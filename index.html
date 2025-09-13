@@ -25992,23 +25992,37 @@ function animateCloseButtonClick(button) {
                 
                 // Автоматически выбрать камеру (но НЕ запускать её)
                 if (videoDevices.length > 0) {
-                    // На мобильных устройствах предпочитаем заднюю камеру
+                    // На мобильных устройствах всегда выбираем камеру с индексом 0 (первую)
                     if (isMobile) {
-                        const backCamera = videoDevices.find(device => 
-                            device.label.toLowerCase().includes('back') || 
-                            device.label.toLowerCase().includes('rear')
-                        );
-                        if (backCamera) {
-                            cameraSelect.value = backCamera.deviceId;
-                            console.log('Выбрана задняя камера для мобильного устройства (НЕ запущена)');
-                        } else {
-                            cameraSelect.value = videoDevices[0].deviceId;
-                            console.log('Выбрана первая доступная камера (НЕ запущена)');
-                        }
+                        cameraSelect.value = videoDevices[0].deviceId;
+                        console.log('Выбрана камера 0 (первая) для мобильного устройства:', videoDevices[0].label);
+                        addLog(`Выбрана камера 0: ${videoDevices[0].label}`, 'info');
                     } else {
                         cameraSelect.value = videoDevices[0].deviceId;
-                        console.log('Выбрана первая камера (НЕ запущена)');
+                        console.log('Выбрана первая камера:', videoDevices[0].label);
+                        addLog(`Выбрана камера: ${videoDevices[0].label}`, 'info');
                     }
+                }
+                
+                // Автоматически выбрать наилучшее квадратное разрешение
+                const resolutionSelect = document.getElementById('resolution-select');
+                if (resolutionSelect) {
+                    // Приоритет квадратных разрешений для лучшего сканирования
+                    const squareResolutions = ['1024x1024', '800x800', '640x640'];
+                    let selectedResolution = '640x640'; // По умолчанию
+                    
+                    // Выбираем наилучшее доступное квадратное разрешение
+                    for (const resolution of squareResolutions) {
+                        const option = resolutionSelect.querySelector(`option[value="${resolution}"]`);
+                        if (option) {
+                            selectedResolution = resolution;
+                            break;
+                        }
+                    }
+                    
+                    resolutionSelect.value = selectedResolution;
+                    console.log(`Автоматически выбрано разрешение: ${selectedResolution}`);
+                    addLog(`Автоматически выбрано разрешение: ${selectedResolution}`, 'info');
                 }
                 
             } catch (error) {
