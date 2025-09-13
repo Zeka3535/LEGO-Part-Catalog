@@ -5387,7 +5387,8 @@ function renderScannerContent() {
                             <div class="text-center text-gray-400">
                                 <div class="text-4xl mb-2">${I_Camera('w-16 h-16')}</div>
                                 <p class="text-lg font-medium">Камера не запущена</p>
-                                <p class="text-sm">Нажмите "Запустить камеру" для начала сканирования</p>
+                                <p class="text-sm">1. Выберите камеру из списка</p>
+                                <p class="text-sm">2. Нажмите "Запустить камеру"</p>
                                 <p class="text-xs mt-2" id="mobile-placeholder-tip" style="display: none;">На мобильных устройствах используйте заднюю камеру</p>
                             </div>
                         </div>
@@ -25724,7 +25725,7 @@ function animateCloseButtonClick(button) {
                     setupScannerEventListeners();
                     console.log('Обновление статистики...');
                     updateScanStats();
-                    console.log('Сканер инициализирован');
+                    console.log('Сканер инициализирован (камера НЕ запущена автоматически)');
                 }, 100);
             }
         }
@@ -25753,15 +25754,13 @@ function animateCloseButtonClick(button) {
                     throw new Error('На мобильных устройствах требуется HTTPS соединение для доступа к камере. Пожалуйста, откройте сайт через HTTPS.');
                 }
                 
-                // Запросить разрешения на камеру
+                // Получить список камер без запроса разрешений
                 let videoDevices = [];
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    await navigator.mediaDevices.getUserMedia({ video: true });
+                if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
                     const devices = await navigator.mediaDevices.enumerateDevices();
                     videoDevices = devices.filter(device => device.kind === 'videoinput');
                 } else {
-                    // Используем старый API
-                    await getOldUserMedia({ video: true });
+                    // Для старых браузеров используем заглушку
                     videoDevices = [{ deviceId: 'default', label: 'Камера по умолчанию' }];
                 }
                 
@@ -25790,7 +25789,7 @@ function animateCloseButtonClick(button) {
                     cameraSelect.appendChild(option);
                 });
                 
-                // Автоматически выбрать камеру
+                // Автоматически выбрать камеру (но НЕ запускать её)
                 if (videoDevices.length > 0) {
                     // На мобильных устройствах предпочитаем заднюю камеру
                     if (isMobile) {
@@ -25800,14 +25799,14 @@ function animateCloseButtonClick(button) {
                         );
                         if (backCamera) {
                             cameraSelect.value = backCamera.deviceId;
-                            console.log('Выбрана задняя камера для мобильного устройства');
+                            console.log('Выбрана задняя камера для мобильного устройства (НЕ запущена)');
                         } else {
                             cameraSelect.value = videoDevices[0].deviceId;
-                            console.log('Выбрана первая доступная камера');
+                            console.log('Выбрана первая доступная камера (НЕ запущена)');
                         }
                     } else {
                         cameraSelect.value = videoDevices[0].deviceId;
-                        console.log('Выбрана первая камера');
+                        console.log('Выбрана первая камера (НЕ запущена)');
                     }
                 }
                 
@@ -25825,6 +25824,7 @@ function animateCloseButtonClick(button) {
             const refreshBtn = document.getElementById('refresh-cameras');
             const testBtn = document.getElementById('test-scan');
             const toggleBtn = document.getElementById('toggle-scan');
+            const cameraSelect = document.getElementById('camera-select');
             
             if (startBtn) startBtn.addEventListener('click', startCamera);
             if (stopBtn) stopBtn.addEventListener('click', stopCamera);
@@ -25832,6 +25832,21 @@ function animateCloseButtonClick(button) {
             if (refreshBtn) refreshBtn.addEventListener('click', setupCameraSelect);
             if (testBtn) testBtn.addEventListener('click', testScanning);
             if (toggleBtn) toggleBtn.addEventListener('click', toggleScanning);
+            
+            // Обработчик изменения выбора камеры (НЕ запускаем камеру автоматически)
+            if (cameraSelect) {
+                cameraSelect.addEventListener('change', (e) => {
+                    console.log('Выбрана камера:', e.target.value);
+                    // Если камера уже запущена, перезапускаем с новой камерой
+                    if (currentStream) {
+                        console.log('Камера уже запущена, перезапускаем с новой камерой...');
+                        stopCamera();
+                        setTimeout(() => {
+                            startCamera();
+                        }, 500);
+                    }
+                });
+            }
         }
         
         // Запуск камеры
@@ -25919,7 +25934,7 @@ function animateCloseButtonClick(button) {
                     if (testBtn) testBtn.disabled = false;
                     if (toggleBtn) toggleBtn.disabled = false;
                     
-                    // Инициализировать сканер только если он еще не инициализирован
+                    // Инициализируем сканер только после запуска камеры
                     if (!isScannerInitialized) {
                         initQRScanner();
                     }
