@@ -5355,74 +5355,6 @@ function renderScannerContent() {
 
             <!-- Основной контент -->
             <div class="max-w-6xl mx-auto space-y-4 sm:space-y-6">
-                <!-- Настройки камеры -->
-                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 shadow-xl">
-                    <details class="group" open>
-                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-700/30 transition-colors rounded-t-xl">
-                            <div class="flex items-center gap-3">
-                                <div class="p-2 bg-blue-600/20 rounded-lg">
-                                    ${I_Scanner('w-5 h-5 text-blue-400')}
-                                </div>
-                                <h3 class="text-lg font-semibold text-gray-200">Настройки камеры</h3>
-                            </div>
-                            <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
-                        </summary>
-                        <div class="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-2">Камера</label>
-                                    <select id="camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
-                                        <option value="">Выберите камеру...</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
-                                    <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
-                                        <option value="640x640">640x640 (Квадрат)</option>
-                                        <option value="800x800">800x800 (Квадрат HD)</option>
-                                        <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
-                                        <option value="1280x720">1280x720 (HD)</option>
-                                        <option value="1920x1080">1920x1080 (Full HD)</option>
-                                        <option value="640x480">640x480 (VGA)</option>
-                                        <option value="3840x2160" id="4k-option" style="display: none;">3840x2160 (4K)</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap gap-2 sm:gap-3">
-                                <button id="request-permission" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors text-sm sm:text-base">
-                                    <span>${I_Shield('w-4 h-4')}</span>
-                                    <span class="hidden sm:inline">Запросить разрешение</span>
-                                    <span class="sm:hidden">Разрешение</span>
-                                </button>
-                                <button id="start-camera" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm sm:text-base">
-                                    <span>${I_Play('w-4 h-4')}</span>
-                                    <span class="hidden sm:inline">Запустить камеру</span>
-                                    <span class="sm:hidden">Запустить</span>
-                                </button>
-                                <button id="stop-camera" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm sm:text-base" disabled>
-                                    <span>${I_Square('w-4 h-4')}</span>
-                                    <span class="hidden sm:inline">Остановить камеру</span>
-                                    <span class="sm:hidden">Остановить</span>
-                                </button>
-                                <button id="refresh-cameras" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm sm:text-base">
-                                    <span>${I_Refresh('w-4 h-4')}</span>
-                                    <span class="hidden sm:inline">Обновить камеры</span>
-                                    <span class="sm:hidden">Обновить</span>
-                                </button>
-                                <button id="reset-camera-flag" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm sm:text-base">
-                                    <span>${I_Refresh('w-4 h-4')}</span>
-                                    <span class="hidden sm:inline">Сбросить флаг</span>
-                                    <span class="sm:hidden">Сброс</span>
-                                </button>
-                                <button id="test-minifig-scan" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm sm:text-base">
-                                    <span>${I_Scanner('w-4 h-4')}</span>
-                                    <span class="hidden sm:inline">Тест минифигурки</span>
-                                    <span class="sm:hidden">Тест</span>
-                                </button>
-                            </div>
-                        </div>
-                    </details>
-                </div>
 
                 <!-- Область сканирования -->
                 <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-xl">
@@ -5489,6 +5421,75 @@ function renderScannerContent() {
                         </div>
                     </div>
                 </div>
+
+                <!-- Настройки камеры -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 shadow-xl">
+                    <details class="group">
+                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-700/30 transition-colors rounded-t-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-blue-600/20 rounded-lg">
+                                    ${I_Scanner('w-5 h-5 text-blue-400')}
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-200">Настройки камеры</h3>
+                            </div>
+                            <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
+                        </summary>
+                        <div class="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Камера</label>
+                                    <select id="camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                        <option value="">Выберите камеру...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
+                                    <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                        <option value="640x640">640x640 (Квадрат)</option>
+                                        <option value="800x800">800x800 (Квадрат HD)</option>
+                                        <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
+                                        <option value="1280x720">1280x720 (HD)</option>
+                                        <option value="1920x1080">1920x1080 (Full HD)</option>
+                                        <option value="640x480">640x480 (VGA)</option>
+                                        <option value="3840x2160" id="4k-option" style="display: none;">3840x2160 (4K)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 sm:gap-3">
+                                <button id="request-permission" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors text-sm sm:text-base">
+                                    <span>${I_Shield('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Запросить разрешение</span>
+                                    <span class="sm:hidden">Разрешение</span>
+                                </button>
+                                <button id="start-camera" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm sm:text-base">
+                                    <span>${I_Play('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Запустить камеру</span>
+                                    <span class="sm:hidden">Запустить</span>
+                                </button>
+                                <button id="stop-camera" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm sm:text-base" disabled>
+                                    <span>${I_Square('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Остановить камеру</span>
+                                    <span class="sm:hidden">Остановить</span>
+                                </button>
+                                <button id="refresh-cameras" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm sm:text-base">
+                                    <span>${I_Refresh('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Обновить камеры</span>
+                                    <span class="sm:hidden">Обновить</span>
+                                </button>
+                                <button id="reset-camera-flag" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm sm:text-base">
+                                    <span>${I_Refresh('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Сбросить флаг</span>
+                                    <span class="sm:hidden">Сброс</span>
+                                </button>
+                                <button id="test-minifig-scan" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm sm:text-base">
+                                    <span>${I_Scanner('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Тест минифигурки</span>
+                                    <span class="sm:hidden">Тест</span>
+                                </button>
+                            </div>
+                        </div>
+                    </details>
+                </div>
                 
                 <!-- Консольные логи для отладки (свернутые) -->
                 <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 shadow-xl">
@@ -5514,6 +5515,56 @@ function renderScannerContent() {
                             </div>
                         </div>
                     </details>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно выбора камеры -->
+        <div id="camera-selection-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-gray-800 rounded-xl border border-gray-600/40 shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden">
+                <div class="p-6 border-b border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-600/20 rounded-lg">
+                                ${I_Scanner('w-5 h-5 text-blue-400')}
+                            </div>
+                            <h3 class="text-lg font-semibold text-white">Выбор камеры</h3>
+                        </div>
+                        <button id="close-camera-modal" class="text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Выберите камеру</label>
+                            <select id="modal-camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                <option value="">Загрузка камер...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
+                            <select id="modal-resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                <option value="640x640">640x640 (Квадрат)</option>
+                                <option value="800x800">800x800 (Квадрат HD)</option>
+                                <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
+                                <option value="1280x720">1280x720 (HD)</option>
+                                <option value="1920x1080">1920x1080 (Full HD)</option>
+                                <option value="640x480">640x480 (VGA)</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button id="modal-start-camera" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium">
+                                Запустить камеру
+                            </button>
+                            <button id="modal-cancel" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                                Отмена
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -19679,6 +19730,14 @@ document.addEventListener("click", async e => {
         S.sidebarOpen = false;
         updateUI();
         
+        // Показываем модальное окно выбора камеры после закрытия боковой панели (только в сканере на малых устройствах)
+        if (S.view === 'tools' && S.toolSubView === 'scanner' && window.innerWidth < 1024) {
+            setTimeout(() => {
+                console.log('Показываем модальное окно выбора камеры после закрытия боковой панели...');
+                showCameraSelectionModal();
+            }, 300); // Небольшая задержка для завершения анимации закрытия
+        }
+        
         // Скрываем указатель при закрытии боковой панели
         hideSidebarHint();
     }
@@ -19690,6 +19749,14 @@ document.addEventListener("click", async e => {
         // Разрешаем закрытие боковой панели через backdrop даже во время загрузки данных
         S.sidebarOpen = false;
         updateUI();
+        
+        // Показываем модальное окно выбора камеры после закрытия боковой панели (только в сканере на малых устройствах)
+        if (S.view === 'tools' && S.toolSubView === 'scanner' && window.innerWidth < 1024) {
+            setTimeout(() => {
+                console.log('Показываем модальное окно выбора камеры после закрытия боковой панели (backdrop)...');
+                showCameraSelectionModal();
+            }, 300); // Небольшая задержка для завершения анимации закрытия
+        }
         
         // Скрываем указатель при закрытии боковой панели
         hideSidebarHint();
@@ -26192,30 +26259,16 @@ function animateCloseButtonClick(button) {
                             addLog(`⚠ Камера 0 не найдена, выбрана первая доступная: ${videoDevices[0].label}`, 'warning');
                         }
                         
-                        // Автозапуск камеры на мобильных устройствах
-                        addLog('Автозапуск камеры...', 'info');
-                        setTimeout(() => {
-                            if (!currentStream && !isCameraStarting) {
-                                startCamera();
-                            } else {
-                                addLog('Камера уже запущена или запускается, пропускаем автозапуск', 'info');
-                            }
-                        }, 500);
+                        // Камера выбрана для мобильных устройств, ждем запуска через модальное окно
+                        addLog('Камера выбрана, запуск через модальное окно', 'info');
                     } else {
                         addLog('Не мобильное устройство, выбираем первую камеру', 'info');
                         cameraSelect.value = videoDevices[0].deviceId;
                         console.log('Выбрана первая камера:', videoDevices[0].label);
                         addLog(`Выбрана камера: ${videoDevices[0].label}`, 'info');
                         
-                        // Автозапуск камеры для ПК устройств
-                        addLog('Автозапуск камеры...', 'info');
-                        setTimeout(() => {
-                            if (!currentStream && !isCameraStarting) {
-                                startCamera();
-                            } else {
-                                addLog('Камера уже запущена или запускается, пропускаем автозапуск', 'info');
-                            }
-                        }, 500);
+                        // Камера выбрана для ПК устройств, ждем запуска через модальное окно
+                        addLog('Камера выбрана, запуск через модальное окно', 'info');
                     }
                 }
                 
@@ -26329,6 +26382,9 @@ function animateCloseButtonClick(button) {
                 cameraSelect.addEventListener('change', (e) => {
                     console.log('Выбрана камера:', e.target.value);
                     
+                    // Обновляем интерфейс камеры
+                    updateCameraInterface();
+                    
                     // Если камера уже запущена, перезапускаем с новой камерой
                     if (currentStream) {
                         console.log('Камера уже запущена, перезапускаем с новой камерой...');
@@ -26353,14 +26409,11 @@ function animateCloseButtonClick(button) {
                     console.log('Обнаружено изменение доступных устройств');
                     addLog('Обнаружено изменение доступных устройств', 'info');
                     
-                    // Небольшая задержка для стабилизации
+                    // Обновляем список камер при изменении устройств
                     setTimeout(() => {
-                        // Если камера не запущена, но есть выбранная камера, запускаем её
-                        if (!currentStream && !isCameraStarting && cameraSelect && cameraSelect.value) {
-                            console.log('Автозапуск камеры после изменения устройств...');
-                            addLog('Автозапуск камеры после изменения устройств...', 'info');
-                            startCamera();
-                        }
+                        console.log('Обновляем список камер после изменения устройств...');
+                        addLog('Обновляем список камер после изменения устройств...', 'info');
+                        setupCameraSelect();
                     }, 1000);
                 });
             }
@@ -26370,15 +26423,15 @@ function animateCloseButtonClick(button) {
             if (video && isMobile) {
                 video.addEventListener('touchstart', () => {
                     if (!currentStream && !isCameraStarting) {
-                        const cameraSelect = document.getElementById('camera-select');
-                        if (cameraSelect && cameraSelect.value) {
-                            console.log('Касание видео элемента, запускаем камеру...');
-                            addLog('Касание видео элемента, запускаем камеру...', 'info');
-                            startCamera();
-                        }
+                        console.log('Касание видео элемента, показываем модальное окно...');
+                        addLog('Касание видео элемента, показываем модальное окно...', 'info');
+                        showCameraSelectionModal();
                     }
                 });
             }
+            
+            // Настройка обработчиков модального окна выбора камеры
+            setupCameraModalHandlers();
         }
         
         // Запуск камеры
@@ -26760,21 +26813,10 @@ function animateCloseButtonClick(button) {
             addLog('Флаг запуска камеры сброшен. Теперь можно попробовать запустить камеру снова.', 'success');
         }
         
-        // Мониторинг состояния камеры (упрощенный для автозапуска)
+        // Мониторинг состояния камеры (отключен - запуск только через модальное окно)
         function startCameraMonitoring() {
-            console.log('Запуск упрощенного мониторинга камеры...');
-            
-            // Проверяем состояние камеры каждые 3 секунды для автозапуска
-            setInterval(() => {
-                if (isMobile && !currentStream && !isCameraStarting) {
-                    const cameraSelect = document.getElementById('camera-select');
-                    if (cameraSelect && cameraSelect.value && cameraSelect.value !== '') {
-                        console.log('Обнаружена выбранная камера без запущенного потока, запускаем...');
-                        addLog('Автозапуск камеры по таймеру...', 'info');
-                        startCamera();
-                    }
-                }
-            }, 3000);
+            console.log('Мониторинг камеры отключен - запуск только через модальное окно');
+            // Мониторинг отключен, так как камера запускается только через модальное окно
         }
         
         // Очистка камеры при выходе из инструментов
@@ -27359,10 +27401,10 @@ function animateCloseButtonClick(button) {
                     resultsContainer.appendChild(gridContainer);
                 }
                 
-                // Добавляем новую карточку в сетку
+                // Добавляем новую карточку в начало сетки
                 const cardElement = document.createElement('div');
                 cardElement.innerHTML = renderMinifigSetCardForScanner(setData, figId);
-                gridContainer.appendChild(cardElement.firstElementChild);
+                gridContainer.insertBefore(cardElement.firstElementChild, gridContainer.firstChild);
                 
                 // Добавляем обработчик клика на карточку для открытия модального окна
                 const card = cardElement.firstElementChild;
@@ -27429,6 +27471,196 @@ function animateCloseButtonClick(button) {
             `;
             
             addLog('Результаты сканирования очищены', 'info');
+        }
+        
+        // Показать модальное окно выбора камеры
+        function showCameraSelectionModal() {
+            const modal = document.getElementById('camera-selection-modal');
+            if (!modal) return;
+            
+            // Загружаем список камер в модальное окно
+            loadCamerasIntoModal();
+            
+            // Показываем модальное окно
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Скрыть модальное окно выбора камеры
+        function hideCameraSelectionModal() {
+            const modal = document.getElementById('camera-selection-modal');
+            if (!modal) return;
+            
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        // Загрузить список камер в модальное окно
+        async function loadCamerasIntoModal() {
+            const modalSelect = document.getElementById('modal-camera-select');
+            const modalResolutionSelect = document.getElementById('modal-resolution-select');
+            
+            if (!modalSelect || !modalResolutionSelect) return;
+            
+            // Очищаем список
+            modalSelect.innerHTML = '<option value="">Загрузка камер...</option>';
+            
+            try {
+                // Получаем список камер
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                // Очищаем список
+                modalSelect.innerHTML = '<option value="">Выберите камеру...</option>';
+                
+                // Добавляем камеры
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    let label = device.label || `Камера ${index + 1}`;
+                    
+                    // Определяем тип камеры для мобильных устройств
+                    if (isMobile) {
+                        if (label.toLowerCase().includes('back') || label.toLowerCase().includes('rear')) {
+                            label += ' (Задняя)';
+                        } else if (label.toLowerCase().includes('front') || label.toLowerCase().includes('selfie')) {
+                            label += ' (Передняя)';
+                        }
+                    }
+                    
+                    option.textContent = label;
+                    modalSelect.appendChild(option);
+                });
+                
+                // Автоматически выбираем камеру для мобильных устройств
+                if (isMobile && videoDevices.length > 0) {
+                    // Ищем камеру 0
+                    let camera0 = videoDevices.find(device => 
+                        device.label.toLowerCase().includes('camera 0')
+                    );
+                    
+                    if (!camera0) {
+                        camera0 = videoDevices.find(device => device.deviceId === '0');
+                    }
+                    
+                    if (!camera0) {
+                        camera0 = videoDevices.find(device => 
+                            device.label.toLowerCase().includes('facing back') ||
+                            device.label.toLowerCase().includes('back')
+                        );
+                    }
+                    
+                    if (camera0) {
+                        modalSelect.value = camera0.deviceId;
+                    } else {
+                        modalSelect.value = videoDevices[0].deviceId;
+                    }
+                }
+                
+                // Устанавливаем разрешение по умолчанию
+                modalResolutionSelect.value = '1024x1024';
+                
+            } catch (error) {
+                console.error('Ошибка загрузки камер:', error);
+                modalSelect.innerHTML = '<option value="">Ошибка загрузки камер</option>';
+            }
+        }
+        
+        // Обновление интерфейса камеры
+        function updateCameraInterface() {
+            const cameraSelect = document.getElementById('camera-select');
+            const resolutionSelect = document.getElementById('resolution-select');
+            const video = document.getElementById('scanner-video');
+            const placeholder = document.getElementById('scanner-placeholder');
+            
+            if (cameraSelect && cameraSelect.value) {
+                const selectedOption = cameraSelect.options[cameraSelect.selectedIndex];
+                const cameraName = selectedOption ? selectedOption.text : 'Неизвестная камера';
+                console.log('Обновление интерфейса камеры:', cameraName);
+                addLog(`Интерфейс обновлен для камеры: ${cameraName}`, 'info');
+            }
+            
+            if (resolutionSelect && resolutionSelect.value) {
+                console.log('Обновление интерфейса разрешения:', resolutionSelect.value);
+                addLog(`Интерфейс обновлен для разрешения: ${resolutionSelect.value}`, 'info');
+            }
+            
+            // Обновляем плейсхолдер с информацией о выбранной камере
+            if (placeholder) {
+                const cameraSelect = document.getElementById('camera-select');
+                if (cameraSelect && cameraSelect.value) {
+                    const selectedOption = cameraSelect.options[cameraSelect.selectedIndex];
+                    const cameraName = selectedOption ? selectedOption.text : 'Выбранная камера';
+                    placeholder.innerHTML = `
+                        <div class="text-center text-gray-400 px-4">
+                            <div class="text-4xl sm:text-5xl mb-3">${I_Scanner('w-12 h-12 mx-auto')}</div>
+                            <p class="text-sm sm:text-base font-medium mb-2">Камера готова к запуску</p>
+                            <p class="text-xs sm:text-sm text-gray-500">${cameraName}</p>
+                            <p class="text-xs sm:text-sm text-gray-500">${resolutionSelect ? resolutionSelect.value : 'Разрешение не выбрано'}</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+        
+        // Обработчики модального окна выбора камеры
+        function setupCameraModalHandlers() {
+            const modal = document.getElementById('camera-selection-modal');
+            const closeBtn = document.getElementById('close-camera-modal');
+            const cancelBtn = document.getElementById('modal-cancel');
+            const startBtn = document.getElementById('modal-start-camera');
+            const modalCameraSelect = document.getElementById('modal-camera-select');
+            const modalResolutionSelect = document.getElementById('modal-resolution-select');
+            
+            if (closeBtn) {
+                closeBtn.addEventListener('click', hideCameraSelectionModal);
+            }
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', hideCameraSelectionModal);
+            }
+            
+            if (startBtn) {
+                startBtn.addEventListener('click', () => {
+                    // Копируем выбранные значения в основные элементы
+                    const mainCameraSelect = document.getElementById('camera-select');
+                    const mainResolutionSelect = document.getElementById('resolution-select');
+                    
+                    if (mainCameraSelect && modalCameraSelect.value) {
+                        mainCameraSelect.value = modalCameraSelect.value;
+                        console.log('Камера выбрана в модальном окне:', modalCameraSelect.value);
+                        addLog(`Камера выбрана: ${modalCameraSelect.options[modalCameraSelect.selectedIndex].text}`, 'info');
+                    }
+                    
+                    if (mainResolutionSelect && modalResolutionSelect.value) {
+                        mainResolutionSelect.value = modalResolutionSelect.value;
+                        console.log('Разрешение выбрано в модальном окне:', modalResolutionSelect.value);
+                        addLog(`Разрешение выбрано: ${modalResolutionSelect.value}`, 'info');
+                    }
+                    
+                    // Обновляем интерфейс камеры
+                    updateCameraInterface();
+                    
+                    // Скрываем модальное окно
+                    hideCameraSelectionModal();
+                    
+                    // Запускаем камеру
+                    setTimeout(() => {
+                        console.log('Запуск камеры после применения настроек из модального окна...');
+                        addLog('Запуск камеры после применения настроек...', 'info');
+                        startCamera();
+                    }, 100);
+                });
+            }
+            
+            // Закрытие по клику на фон
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        hideCameraSelectionModal();
+                    }
+                });
+            }
         }
         
         // Обновление статистики сканирования
