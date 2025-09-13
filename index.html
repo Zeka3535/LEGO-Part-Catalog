@@ -5337,86 +5337,56 @@ function renderWishlistContent() {
 function renderScannerContent() {
     return `
         <div class="min-h-full p-2 sm:p-4 md:p-6 lg:p-8">
-            <!-- Заголовок и описание -->
-            <div class="text-center mb-4 sm:mb-6 md:mb-8">
-                <h2 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-200 mb-1 sm:mb-2 md:mb-3">Сканер минифигурок</h2>
-                <p class="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg max-w-2xl mx-auto px-2 sm:px-4">
-                    Сканируйте QR-коды и DataMatrix коды минифигурок для быстрого добавления в коллекцию
-                </p>
-                <div class="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg max-w-2xl mx-auto">
-                    <p class="text-blue-300 text-sm text-center">
-                        <strong>Совет:</strong> Если камера не запускается, разрешите доступ к камере в настройках браузера и нажмите "Обновить камеры"
-                    </p>
-                    <p class="text-blue-300 text-xs text-center mt-2" id="mobile-tip" style="display: none;">
-                        <strong>Мобильные устройства:</strong> Для лучшего сканирования используйте заднюю камеру и держите устройство стабильно
-                    </p>
-                    <div id="https-warning" class="mt-3 p-2 bg-red-900/20 border border-red-500/30 rounded text-center" style="display: none;">
-                        <p class="text-red-300 text-xs">
-                            <strong>⚠️ Требуется HTTPS:</strong> На мобильных устройствах камера работает только через HTTPS соединение
-                        </p>
-                    </div>
-                </div>
-            </div>
-
             <!-- Основной контент -->
             <div class="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-                <!-- Настройки камеры -->
-                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-4 sm:p-6 shadow-lg">
-                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Настройки камеры</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Камера</label>
-                            <select id="camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="">Выберите камеру...</option>
-                            </select>
+                <!-- Настройки камеры (свернутые) -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 shadow-lg">
+                    <details class="group">
+                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-700/30 transition-colors">
+                            <h3 class="text-lg font-semibold text-gray-200">Настройки камеры</h3>
+                            <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
+                        </summary>
+                        <div class="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Камера</label>
+                                    <select id="camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="">Выберите камеру...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
+                                    <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="640x640">640x640 (Квадрат)</option>
+                                        <option value="800x800">800x800 (Квадрат HD)</option>
+                                        <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
+                                        <option value="1280x720">1280x720 (HD)</option>
+                                        <option value="1920x1080">1920x1080 (Full HD)</option>
+                                        <option value="640x480">640x480 (VGA)</option>
+                                        <option value="3840x2160" id="4k-option" style="display: none;">3840x2160 (4K)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-2">
+                                <button id="request-permission" class="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
+                                    <span>${I_Shield('w-4 h-4')}</span>
+                                    <span>Запросить разрешение</span>
+                                </button>
+                                <button id="start-camera" class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                                    <span>${I_Play('w-4 h-4')}</span>
+                                    <span>Запустить камеру</span>
+                                </button>
+                                <button id="stop-camera" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors" disabled>
+                                    <span>${I_Square('w-4 h-4')}</span>
+                                    <span>Остановить камеру</span>
+                                </button>
+                                <button id="refresh-cameras" class="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                                    <span>${I_Refresh('w-4 h-4')}</span>
+                                    <span>Обновить камеры</span>
+                                </button>
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
-                            <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="640x640">640x640 (Квадрат)</option>
-                                <option value="800x800">800x800 (Квадрат HD)</option>
-                                <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
-                                <option value="1280x720">1280x720 (HD)</option>
-                                <option value="1920x1080">1920x1080 (Full HD)</option>
-                                <option value="640x480">640x480 (VGA)</option>
-                                <option value="3840x2160" id="4k-option" style="display: none;">3840x2160 (4K)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <button id="request-permission" class="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
-                            <span>${I_Shield('w-4 h-4')}</span>
-                            <span>Запросить разрешение</span>
-                        </button>
-                        <button id="start-camera" class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
-                            <span>${I_Play('w-4 h-4')}</span>
-                            <span>Запустить камеру</span>
-                        </button>
-                        <button id="stop-camera" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors" disabled>
-                            <span>${I_Square('w-4 h-4')}</span>
-                            <span>Остановить камеру</span>
-                        </button>
-                        <button id="capture-photo" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors" disabled>
-                            <span>${I_Camera('w-4 h-4')}</span>
-                            <span>Сделать снимок</span>
-                        </button>
-                        <button id="refresh-cameras" class="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
-                            <span>${I_Refresh('w-4 h-4')}</span>
-                            <span>Обновить камеры</span>
-                        </button>
-                        <button id="test-scan" class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors" disabled>
-                            <span>${I_Search('w-4 h-4')}</span>
-                            <span>Тест сканирования</span>
-                        </button>
-                        <button id="force-scan" class="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors" disabled style="display: none;">
-                            <span>${I_Search('w-4 h-4')}</span>
-                            <span>Принудительное сканирование</span>
-                        </button>
-                        <button id="toggle-scan" class="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors" disabled>
-                            <span>${I_Square('w-4 h-4')}</span>
-                            <span>Остановить сканирование</span>
-                        </button>
-                    </div>
+                    </details>
                 </div>
 
                 <!-- Область сканирования -->
@@ -26051,6 +26021,12 @@ function animateCloseButtonClick(button) {
                             console.log('Камера 0 не найдена, выбрана первая доступная:', videoDevices[0].label, 'deviceId:', videoDevices[0].deviceId);
                             addLog(`⚠ Камера 0 не найдена, выбрана первая доступная: ${videoDevices[0].label}`, 'warning');
                         }
+                        
+                        // Автозапуск камеры на мобильных устройствах
+                        addLog('Автозапуск камеры...', 'info');
+                        setTimeout(() => {
+                            startCamera();
+                        }, 500);
                     } else {
                         addLog('Не мобильное устройство, выбираем первую камеру', 'info');
                         cameraSelect.value = videoDevices[0].deviceId;
