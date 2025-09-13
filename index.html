@@ -24,6 +24,8 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- remoteStorage.js library -->
   <script src="https://unpkg.com/remotestoragejs/release/remotestorage.js"></script>
+  <!-- QR Code and DataMatrix scanner library -->
+  <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
   <script>
     // Проверяем загрузку RemoteStorage
     window.addEventListener('load', function() {
@@ -72,6 +74,34 @@
         body {
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
+        }
+    }
+    
+    /* Анимация для индикатора фокусировки */
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 1;
+        }
+        50% {
+            transform: scale(1.2);
+            opacity: 0.7;
+        }
+        100% {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* Стили для мобильных устройств */
+    @media (max-width: 768px) {
+        .scanner-video {
+            touch-action: none;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
     }
     
@@ -4289,6 +4319,9 @@ const I_Minus = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 const I_X = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 const I_Menu = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>`;
 const I_Up = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`;
+const I_Play = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+const I_Square = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>`;
+const I_Camera = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path><circle cx="12" cy="13" r="3"></circle></svg>`;
 const I_Down = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>`;
 const I_Img = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
 const I_Trash = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
@@ -4308,6 +4341,7 @@ const I_CloudUpload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c
 const I_CloudDownload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="16" x2="12" y2="7"></line></svg>`;
 const I_Link = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
 const I_Unlink = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.84 12.25l1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"></path><path d="M5.17 11.75l-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"></path><line x1="8" y1="2" x2="8" y2="5"></line><line x1="2" y1="8" x2="5" y2="8"></line><line x1="16" y1="19" x2="16" y2="22"></line><line x1="19" y1="16" x2="22" y2="16"></line></svg>`;
+const I_Scanner = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="8" y="8" width="8" height="8" rx="1"></rect><path d="M12 12v4"></path><path d="M12 8v4"></path></svg>`;
 const I_Logout = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>`;
 const I_Info = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
 const I_ChevronDown = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
@@ -5262,6 +5296,147 @@ function renderWishlistContent() {
                             ${items.map(item => renderWishlistItemCard(item, singleWishlistId)).join('')}
                         </div>
                     `}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Функция рендеринга сканера минифигурок
+function renderScannerContent() {
+    return `
+        <div class="min-h-full p-2 sm:p-4 md:p-6 lg:p-8">
+            <!-- Заголовок и описание -->
+            <div class="text-center mb-4 sm:mb-6 md:mb-8">
+                <h2 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-200 mb-1 sm:mb-2 md:mb-3">Сканер минифигурок</h2>
+                <p class="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg max-w-2xl mx-auto px-2 sm:px-4">
+                    Сканируйте QR-коды и DataMatrix коды минифигурок для быстрого добавления в коллекцию
+                </p>
+                <div class="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg max-w-2xl mx-auto">
+                    <p class="text-blue-300 text-sm text-center">
+                        <strong>Совет:</strong> Если камера не запускается, разрешите доступ к камере в настройках браузера и нажмите "Обновить камеры"
+                    </p>
+                    <p class="text-blue-300 text-xs text-center mt-2" id="mobile-tip" style="display: none;">
+                        <strong>Мобильные устройства:</strong> Для лучшего сканирования используйте заднюю камеру и держите устройство стабильно
+                    </p>
+                    <div id="https-warning" class="mt-3 p-2 bg-red-900/20 border border-red-500/30 rounded text-center" style="display: none;">
+                        <p class="text-red-300 text-xs">
+                            <strong>⚠️ Требуется HTTPS:</strong> На мобильных устройствах камера работает только через HTTPS соединение
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="max-w-4xl mx-auto space-y-4 sm:space-y-6">
+                <!-- Настройки камеры -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-4 sm:p-6 shadow-lg">
+                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Настройки камеры</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Камера</label>
+                            <select id="camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Выберите камеру...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
+                            <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="1280x720">1280x720 (HD)</option>
+                                <option value="1920x1080">1920x1080 (Full HD)</option>
+                                <option value="640x480">640x480 (VGA)</option>
+                                <option value="3840x2160" id="4k-option" style="display: none;">3840x2160 (4K)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button id="start-camera" class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                            <span>${I_Play('w-4 h-4')}</span>
+                            <span>Запустить камеру</span>
+                        </button>
+                        <button id="stop-camera" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors" disabled>
+                            <span>${I_Square('w-4 h-4')}</span>
+                            <span>Остановить камеру</span>
+                        </button>
+                        <button id="capture-photo" class="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors" disabled>
+                            <span>${I_Camera('w-4 h-4')}</span>
+                            <span>Сделать снимок</span>
+                        </button>
+                        <button id="refresh-cameras" class="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                            <span>${I_Refresh('w-4 h-4')}</span>
+                            <span>Обновить камеры</span>
+                        </button>
+                        <button id="test-scan" class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors" disabled>
+                            <span>${I_Search('w-4 h-4')}</span>
+                            <span>Тест сканирования</span>
+                        </button>
+                        <button id="toggle-scan" class="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors" disabled>
+                            <span>${I_Square('w-4 h-4')}</span>
+                            <span>Остановить сканирование</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Область сканирования -->
+                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg sm:rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-lg">
+                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Область сканирования</h3>
+                    <div class="relative">
+                        <video id="scanner-video" class="w-full max-w-2xl mx-auto rounded-lg bg-gray-900 hidden" autoplay muted playsinline webkit-playsinline></video>
+                        <canvas id="scanner-canvas" class="w-full max-w-2xl mx-auto rounded-lg bg-gray-900 hidden"></canvas>
+                        <div id="scanner-placeholder" class="w-full max-w-2xl mx-auto aspect-video bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-600">
+                            <div class="text-center text-gray-400">
+                                <div class="text-4xl mb-2">${I_Camera('w-16 h-16')}</div>
+                                <p class="text-lg font-medium">Камера не запущена</p>
+                                <p class="text-sm">Нажмите "Запустить камеру" для начала сканирования</p>
+                                <p class="text-xs mt-2" id="mobile-placeholder-tip" style="display: none;">На мобильных устройствах используйте заднюю камеру</p>
+                            </div>
+                        </div>
+                        <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">
+                            <div class="absolute inset-4 border-2 border-green-400 rounded-lg transition-all duration-300">
+                                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-green-400"></div>
+                                <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-green-400"></div>
+                                <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-green-400"></div>
+                                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-green-400"></div>
+                            </div>
+                            <div id="scan-status" class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium hidden">
+                                Сканирование...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Результаты сканирования -->
+                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg sm:rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-lg">
+                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Результаты сканирования</h3>
+                    <div id="scan-results" class="space-y-3">
+                        <div class="text-center text-gray-400 py-8">
+                            <div class="text-3xl mb-2">${I_Search('w-12 h-12')}</div>
+                            <p>Результаты сканирования появятся здесь</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Статистика сканирования -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-4 sm:p-6 shadow-lg">
+                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Статистика</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                        <div>
+                            <div class="text-2xl font-bold text-blue-400" id="total-scans">0</div>
+                            <div class="text-sm text-gray-400">Всего сканирований</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-green-400" id="successful-scans">0</div>
+                            <div class="text-sm text-gray-400">Успешных</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-yellow-400" id="qr-scans">0</div>
+                            <div class="text-sm text-gray-400">QR-коды</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-purple-400" id="datamatrix-scans">0</div>
+                            <div class="text-sm text-gray-400">DataMatrix</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -11921,6 +12096,12 @@ function renderSidebar() {
                     description: 'Планирование покупок и создание списков желаний'
                 },
                 {
+                    id: 'scanner',
+                    name: 'Сканер минифигурок',
+                    icon: I_Scanner('w-5 h-5 text-green-400'),
+                    description: 'Сканирование QR-кодов и DataMatrix минифигурок'
+                },
+                {
                     id: 'cloud-backup',
                     name: 'Облачное хранилище',
                     icon: I_Cloud('w-5 h-5'),
@@ -13526,6 +13707,13 @@ function renderMainContent() {
             e = renderWishlistContent();
             // Инициализируем мультивыбор после рендеринга
             initWishlistMultiselect();
+        }
+        
+        // Показываем сканер минифигурок только для подкатегории 'scanner'
+        if (S.toolSubView === 'scanner') {
+            e = renderScannerContent();
+            // Инициализируем сканер после рендеринга
+            setTimeout(initScannerOnViewChange, 100);
         }
         
         // Показываем аналитику только для подкатегории 'analytics'
@@ -25264,6 +25452,890 @@ function animateCloseButtonClick(button) {
     console.log('  proxyStatus() - показать статус прокси');
 
 
+        // ===== СКАНЕР МИНИФИГУРОК =====
+        
+        // Глобальные переменные для сканера
+        let scanner = null;
+        let currentStream = null;
+        let isScanning = false;
+        let scanTimer = null;
+        let isProcessingScan = false;
+        let isScannerInitialized = false;
+        let isMobile = false;
+        let scanStats = {
+            total: 0,
+            successful: 0,
+            qr: 0,
+            datamatrix: 0
+        };
+        
+        // Определение мобильного устройства
+        function detectMobile() {
+            const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+            isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+            console.log('Мобильное устройство:', isMobile);
+            
+            // Обновляем интерфейс для мобильных устройств
+            if (isMobile) {
+                updateMobileInterface();
+                checkHTTPS();
+            }
+            
+            return isMobile;
+        }
+        
+        // Проверка HTTPS соединения
+        function checkHTTPS() {
+            if (isMobile && location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                console.warn('Требуется HTTPS для доступа к камере на мобильных устройствах');
+                
+                // Показываем предупреждение пользователю
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'fixed top-0 left-0 right-0 bg-red-600 text-white p-4 z-50 text-center';
+                warningDiv.innerHTML = `
+                    <div class="max-w-4xl mx-auto">
+                        <h3 class="font-bold text-lg mb-2">⚠️ Требуется HTTPS соединение</h3>
+                        <p class="text-sm mb-3">На мобильных устройствах камера работает только через HTTPS. Пожалуйста, откройте сайт через HTTPS.</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <button onclick="location.href='https://' + location.host + location.pathname" 
+                                    class="bg-white text-red-600 px-4 py-2 rounded font-medium">
+                                Перейти на HTTPS
+                            </button>
+                            <button onclick="this.parentElement.parentElement.parentElement.remove()" 
+                                    class="bg-red-700 text-white px-4 py-2 rounded">
+                                Закрыть
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(warningDiv);
+                
+                return false;
+            }
+            return true;
+        }
+        
+        // Функция для работы со старым API getUserMedia
+        function getOldUserMedia(constraints) {
+            return new Promise((resolve, reject) => {
+                const getUserMedia = navigator.getUserMedia || 
+                                   navigator.webkitGetUserMedia || 
+                                   navigator.mozGetUserMedia || 
+                                   navigator.msGetUserMedia;
+                
+                if (!getUserMedia) {
+                    reject(new Error('getUserMedia не поддерживается'));
+                    return;
+                }
+                
+                getUserMedia.call(navigator, constraints, resolve, reject);
+            });
+        }
+        
+        // Обновление интерфейса для мобильных устройств
+        function updateMobileInterface() {
+            // Показываем подсказки для мобильных устройств
+            const mobileTip = document.getElementById('mobile-tip');
+            const mobilePlaceholderTip = document.getElementById('mobile-placeholder-tip');
+            const fourKOption = document.getElementById('4k-option');
+            const httpsWarning = document.getElementById('https-warning');
+            
+            if (mobileTip) mobileTip.style.display = 'block';
+            if (mobilePlaceholderTip) mobilePlaceholderTip.style.display = 'block';
+            if (fourKOption) fourKOption.style.display = 'block';
+            
+            // Показываем предупреждение о HTTPS если нужно
+            if (httpsWarning && location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                httpsWarning.style.display = 'block';
+            }
+            
+            // Добавляем мобильные классы для лучшего отображения
+            const video = document.getElementById('scanner-video');
+            if (video) {
+                video.classList.add('touch-none'); // Отключаем touch события для видео
+            }
+            
+            // Добавляем обработчик изменения ориентации
+            window.addEventListener('orientationchange', handleOrientationChange);
+            
+            // Добавляем поддержку жестов для мобильных устройств
+            addMobileGestures();
+            
+            console.log('Интерфейс обновлен для мобильного устройства');
+        }
+        
+        // Обработка изменения ориентации экрана
+        function handleOrientationChange() {
+            if (isMobile) {
+                console.log('Изменение ориентации экрана');
+                // Небольшая задержка для стабилизации
+                setTimeout(() => {
+                    // Перезапускаем камеру если она активна
+                    if (currentStream && isScanning) {
+                        console.log('Перезапуск камеры после изменения ориентации');
+                        stopCamera();
+                        setTimeout(() => {
+                            startCamera();
+                        }, 500);
+                    }
+                }, 1000);
+            }
+        }
+        
+        // Добавление поддержки жестов для мобильных устройств
+        function addMobileGestures() {
+            const video = document.getElementById('scanner-video');
+            if (!video) return;
+            
+            let startX = 0;
+            let startY = 0;
+            let startTime = 0;
+            
+            // Обработка касания для фокусировки
+            video.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+                startTime = Date.now();
+            });
+            
+            // Обработка отпускания для фокусировки
+            video.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const touch = e.changedTouches[0];
+                const endX = touch.clientX;
+                const endY = touch.clientY;
+                const endTime = Date.now();
+                
+                // Если это короткое касание (тап), фокусируемся
+                if (endTime - startTime < 300 && 
+                    Math.abs(endX - startX) < 10 && 
+                    Math.abs(endY - startY) < 10) {
+                    focusCamera(endX, endY);
+                }
+            });
+            
+            // Обработка двойного касания для переключения камеры
+            let lastTap = 0;
+            video.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                const currentTime = Date.now();
+                const tapLength = currentTime - lastTap;
+                
+                if (tapLength < 500 && tapLength > 0) {
+                    // Двойное касание - переключаем камеру
+                    switchCamera();
+                }
+                lastTap = currentTime;
+            });
+        }
+        
+        // Фокусировка камеры в указанной точке
+        function focusCamera(x, y) {
+            if (!currentStream || !isMobile) return;
+            
+            const video = document.getElementById('scanner-video');
+            if (!video) return;
+            
+            // Получаем размеры видео
+            const rect = video.getBoundingClientRect();
+            const xPercent = (x - rect.left) / rect.width;
+            const yPercent = (y - rect.top) / rect.height;
+            
+            // Создаем точку фокусировки
+            const focusPoint = {
+                x: xPercent,
+                y: yPercent
+            };
+            
+            // Показываем визуальную обратную связь
+            showFocusIndicator(x, y);
+            
+            console.log('Фокусировка камеры в точке:', focusPoint);
+        }
+        
+        // Показ индикатора фокусировки
+        function showFocusIndicator(x, y) {
+            const video = document.getElementById('scanner-video');
+            if (!video) return;
+            
+            // Создаем индикатор фокусировки
+            const indicator = document.createElement('div');
+            indicator.className = 'absolute w-8 h-8 border-2 border-white rounded-full pointer-events-none z-10';
+            indicator.style.left = (x - 16) + 'px';
+            indicator.style.top = (y - 16) + 'px';
+            indicator.style.animation = 'pulse 1s ease-in-out';
+            
+            video.parentElement.appendChild(indicator);
+            
+            // Удаляем индикатор через 1 секунду
+            setTimeout(() => {
+                if (indicator.parentElement) {
+                    indicator.parentElement.removeChild(indicator);
+                }
+            }, 1000);
+        }
+        
+        // Переключение между камерами
+        function switchCamera() {
+            if (!isMobile) return;
+            
+            const cameraSelect = document.getElementById('camera-select');
+            if (!cameraSelect) return;
+            
+            const options = Array.from(cameraSelect.options);
+            const currentIndex = options.findIndex(option => option.value === cameraSelect.value);
+            const nextIndex = (currentIndex + 1) % options.length;
+            
+            if (nextIndex > 0) { // Пропускаем первый элемент (заголовок)
+                cameraSelect.value = options[nextIndex].value;
+                console.log('Переключение на камеру:', options[nextIndex].textContent);
+                
+                // Перезапускаем камеру с новой камерой
+                if (currentStream) {
+                    stopCamera();
+                    setTimeout(() => {
+                        startCamera();
+                    }, 500);
+                }
+            }
+        }
+        
+        // Инициализация сканера при загрузке страницы
+        function initScanner() {
+            if (S.view === 'tools' && S.toolSubView === 'scanner') {
+                detectMobile();
+                setupCameraSelect();
+                setupScannerEventListeners();
+                updateScanStats();
+            }
+        }
+        
+        // Инициализация сканера при смене представления
+        function initScannerOnViewChange() {
+            if (S.view === 'tools' && S.toolSubView === 'scanner') {
+                console.log('Инициализация сканера...');
+                // Небольшая задержка для рендеринга DOM
+                setTimeout(() => {
+                    console.log('Настройка камеры...');
+                    setupCameraSelect();
+                    console.log('Настройка обработчиков событий...');
+                    setupScannerEventListeners();
+                    console.log('Обновление статистики...');
+                    updateScanStats();
+                    console.log('Сканер инициализирован');
+                }, 100);
+            }
+        }
+        
+        // Настройка выбора камеры
+        async function setupCameraSelect() {
+            const cameraSelect = document.getElementById('camera-select');
+            if (!cameraSelect) {
+                console.error('Элемент camera-select не найден');
+                return;
+            }
+            
+            try {
+                // Проверить поддержку getUserMedia
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    // Попробуем старый API для старых браузеров
+                    if (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia) {
+                        console.log('Используем старый API getUserMedia');
+                    } else {
+                        throw new Error('getUserMedia не поддерживается. Требуется HTTPS соединение на мобильных устройствах.');
+                    }
+                }
+                
+                // Проверим, находимся ли мы на HTTPS
+                if (isMobile && location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                    throw new Error('На мобильных устройствах требуется HTTPS соединение для доступа к камере. Пожалуйста, откройте сайт через HTTPS.');
+                }
+                
+                // Запросить разрешения на камеру
+                let videoDevices = [];
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    await navigator.mediaDevices.getUserMedia({ video: true });
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    videoDevices = devices.filter(device => device.kind === 'videoinput');
+                } else {
+                    // Используем старый API
+                    await getOldUserMedia({ video: true });
+                    videoDevices = [{ deviceId: 'default', label: 'Камера по умолчанию' }];
+                }
+                
+                cameraSelect.innerHTML = '<option value="">Выберите камеру...</option>';
+                
+                if (videoDevices.length === 0) {
+                    cameraSelect.innerHTML = '<option value="">Камеры не найдены</option>';
+                    return;
+                }
+                
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    let label = device.label || `Камера ${index + 1}`;
+                    
+                    // Определяем тип камеры для мобильных устройств
+                    if (isMobile) {
+                        if (label.toLowerCase().includes('back') || label.toLowerCase().includes('rear')) {
+                            label += ' (Задняя)';
+                        } else if (label.toLowerCase().includes('front') || label.toLowerCase().includes('selfie')) {
+                            label += ' (Передняя)';
+                        }
+                    }
+                    
+                    option.textContent = label;
+                    cameraSelect.appendChild(option);
+                });
+                
+                // Автоматически выбрать камеру
+                if (videoDevices.length > 0) {
+                    // На мобильных устройствах предпочитаем заднюю камеру
+                    if (isMobile) {
+                        const backCamera = videoDevices.find(device => 
+                            device.label.toLowerCase().includes('back') || 
+                            device.label.toLowerCase().includes('rear')
+                        );
+                        if (backCamera) {
+                            cameraSelect.value = backCamera.deviceId;
+                            console.log('Выбрана задняя камера для мобильного устройства');
+                        } else {
+                            cameraSelect.value = videoDevices[0].deviceId;
+                            console.log('Выбрана первая доступная камера');
+                        }
+                    } else {
+                        cameraSelect.value = videoDevices[0].deviceId;
+                        console.log('Выбрана первая камера');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Ошибка получения списка камер:', error);
+                cameraSelect.innerHTML = '<option value="">Ошибка: ' + error.message + '</option>';
+            }
+        }
+        
+        // Настройка обработчиков событий сканера
+        function setupScannerEventListeners() {
+            const startBtn = document.getElementById('start-camera');
+            const stopBtn = document.getElementById('stop-camera');
+            const captureBtn = document.getElementById('capture-photo');
+            const refreshBtn = document.getElementById('refresh-cameras');
+            const testBtn = document.getElementById('test-scan');
+            const toggleBtn = document.getElementById('toggle-scan');
+            
+            if (startBtn) startBtn.addEventListener('click', startCamera);
+            if (stopBtn) stopBtn.addEventListener('click', stopCamera);
+            if (captureBtn) captureBtn.addEventListener('click', capturePhoto);
+            if (refreshBtn) refreshBtn.addEventListener('click', setupCameraSelect);
+            if (testBtn) testBtn.addEventListener('click', testScanning);
+            if (toggleBtn) toggleBtn.addEventListener('click', toggleScanning);
+        }
+        
+        // Запуск камеры
+        async function startCamera() {
+            const cameraSelect = document.getElementById('camera-select');
+            const resolutionSelect = document.getElementById('resolution-select');
+            const video = document.getElementById('scanner-video');
+            const placeholder = document.getElementById('scanner-placeholder');
+            const overlay = document.getElementById('scanner-overlay');
+            const startBtn = document.getElementById('start-camera');
+            const stopBtn = document.getElementById('stop-camera');
+            const captureBtn = document.getElementById('capture-photo');
+            
+            if (!cameraSelect || !video) {
+                console.error('Не найдены необходимые элементы DOM');
+                return;
+            }
+            
+            const deviceId = cameraSelect.value;
+            if (!deviceId) {
+                alert('Пожалуйста, выберите камеру');
+                return;
+            }
+            
+            try {
+                // Остановить предыдущий поток
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+                
+                // Получить разрешение
+                const resolution = resolutionSelect ? resolutionSelect.value.split('x') : ['1280', '720'];
+                const width = parseInt(resolution[0]);
+                const height = parseInt(resolution[1]);
+                
+                // Настройки камеры
+                const constraints = {
+                    video: {
+                        deviceId: { exact: deviceId },
+                        width: { ideal: width },
+                        height: { ideal: height },
+                        facingMode: isMobile ? 'environment' : 'user', // На мобильных предпочитаем заднюю камеру
+                        frameRate: { ideal: isMobile ? 30 : 15 }, // На мобильных выше FPS для лучшего сканирования
+                        focusMode: isMobile ? 'continuous' : 'single' // На мобильных непрерывная фокусировка
+                    }
+                };
+                
+                console.log('Запуск камеры с настройками:', constraints);
+                
+                // Попробуем новый API, если не работает - старый
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                } else {
+                    // Используем старый API для старых браузеров
+                    currentStream = await getOldUserMedia(constraints);
+                }
+                video.srcObject = currentStream;
+                
+                // Дождаться загрузки видео
+                video.onloadedmetadata = () => {
+                    console.log('Видео загружено, размер:', video.videoWidth, 'x', video.videoHeight);
+                    
+                    if (video.paused) {
+                        video.play().catch(e => console.warn('Ошибка воспроизведения видео:', e));
+                    }
+                    
+                    // Показать видео и скрыть плейсхолдер
+                    video.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                    if (overlay) {
+                        overlay.classList.remove('hidden');
+                        // Показать индикатор сканирования
+                        const scanStatus = document.getElementById('scan-status');
+                        if (scanStatus) scanStatus.classList.remove('hidden');
+                    }
+                    
+                    // Обновить кнопки
+                    if (startBtn) startBtn.disabled = true;
+                    if (stopBtn) stopBtn.disabled = false;
+                    if (captureBtn) captureBtn.disabled = false;
+                    
+                    // Активировать тестовую кнопку и кнопку переключения сканирования
+                    const testBtn = document.getElementById('test-scan');
+                    const toggleBtn = document.getElementById('toggle-scan');
+                    if (testBtn) testBtn.disabled = false;
+                    if (toggleBtn) toggleBtn.disabled = false;
+                    
+                    // Инициализировать сканер только если он еще не инициализирован
+                    if (!isScannerInitialized) {
+                        initQRScanner();
+                    }
+                };
+                
+            } catch (error) {
+                console.error('Ошибка запуска камеры:', error);
+                let errorMessage = 'Не удалось запустить камеру.';
+                
+                if (error.name === 'NotAllowedError') {
+                    errorMessage = 'Доступ к камере запрещен. Разрешите доступ к камере в настройках браузера.';
+                } else if (error.name === 'NotFoundError') {
+                    errorMessage = 'Камера не найдена. Проверьте подключение камеры.';
+                } else if (error.name === 'NotReadableError') {
+                    errorMessage = 'Камера используется другим приложением.';
+                }
+                
+                alert(errorMessage);
+            }
+        }
+        
+        // Остановка камеры
+        function stopCamera() {
+            console.log('Остановка камеры...');
+            
+            const video = document.getElementById('scanner-video');
+            const placeholder = document.getElementById('scanner-placeholder');
+            const overlay = document.getElementById('scanner-overlay');
+            const startBtn = document.getElementById('start-camera');
+            const stopBtn = document.getElementById('stop-camera');
+            const captureBtn = document.getElementById('capture-photo');
+            
+            // Сначала останавливаем сканирование
+            isScanning = false;
+            isScannerInitialized = false;
+            
+            // Остановить поток
+            if (currentStream) {
+                console.log('Остановка видеопотока...');
+                currentStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('Трек остановлен:', track.kind);
+                });
+                currentStream = null;
+            }
+            
+            // Остановить сканер
+            if (scanner) {
+                console.log('Остановка сканера...');
+                try {
+                    scanner.reset();
+                } catch (e) {
+                    console.warn('Ошибка при сбросе сканера:', e);
+                }
+                scanner = null;
+            }
+            
+            // Очистить srcObject видео
+            if (video) {
+                video.srcObject = null;
+                video.load(); // Сбросить видео элемент
+            }
+            
+            // Скрыть видео и показать плейсхолдер
+            if (video) video.classList.add('hidden');
+            if (placeholder) placeholder.classList.remove('hidden');
+            if (overlay) {
+                overlay.classList.add('hidden');
+                // Скрыть индикатор сканирования
+                const scanStatus = document.getElementById('scan-status');
+                if (scanStatus) scanStatus.classList.add('hidden');
+            }
+            
+            // Обновить кнопки
+            if (startBtn) startBtn.disabled = false;
+            if (stopBtn) stopBtn.disabled = true;
+            if (captureBtn) captureBtn.disabled = true;
+            
+            // Деактивировать тестовую кнопку и кнопку переключения сканирования
+            const testBtn = document.getElementById('test-scan');
+            const toggleBtn = document.getElementById('toggle-scan');
+            if (testBtn) testBtn.disabled = true;
+            if (toggleBtn) toggleBtn.disabled = true;
+            
+            console.log('Камера остановлена');
+        }
+        
+        // Инициализация QR сканера
+        function initQRScanner() {
+            console.log('Инициализация QR сканера...');
+            
+            // Предотвращаем повторную инициализацию
+            if (isScannerInitialized && scanner) {
+                console.log('Сканер уже инициализирован, пропускаем...');
+                return;
+            }
+            
+            if (typeof ZXing === 'undefined') {
+                console.error('ZXing library не загружена');
+                alert('Библиотека сканирования не загружена. Перезагрузите страницу.');
+                return;
+            }
+            
+            const video = document.getElementById('scanner-video');
+            if (!video) {
+                console.error('Элемент video не найден');
+                return;
+            }
+            
+            try {
+                console.log('Создание сканера...');
+                scanner = new ZXing.BrowserMultiFormatReader();
+                isScanning = true;
+                isScannerInitialized = true;
+                
+                console.log('Запуск сканирования...');
+                
+                // Используем decodeFromVideoDevice с правильной настройкой
+                const hints = new Map();
+                hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+                    ZXing.BarcodeFormat.QR_CODE,
+                    ZXing.BarcodeFormat.DATA_MATRIX,
+                    ZXing.BarcodeFormat.CODE_128,
+                    ZXing.BarcodeFormat.CODE_39
+                ]);
+                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                
+                // Настройки для уменьшения частоты сканирования
+                const options = {
+                    delayBetweenScanSuccess: isMobile ? 2000 : 3000, // На мобильных быстрее
+                    delayBetweenScanAttempts: isMobile ? 500 : 1000   // На мобильных чаще сканируем
+                };
+                
+                scanner.decodeFromVideoDevice(undefined, video, (result, error) => {
+                    if (result) {
+                        console.log('Найден код:', result);
+                        handleScanResult(result);
+                    }
+                    // Полностью игнорируем ошибки NotFoundException - они нормальны
+                    // Не выводим их в консоль, чтобы избежать спама
+                }, hints, options);
+                
+                console.log('QR сканер запущен');
+            } catch (error) {
+                console.error('Ошибка инициализации сканера:', error);
+                alert('Ошибка инициализации сканера: ' + error.message);
+            }
+        }
+        
+        // Переключение сканирования
+        function toggleScanning() {
+            const toggleBtn = document.getElementById('toggle-scan');
+            const scanStatus = document.getElementById('scan-status');
+            
+            if (isScanning) {
+                // Остановить сканирование
+                isScanning = false;
+                if (scanner) {
+                    try {
+                        scanner.reset();
+                    } catch (e) {
+                        console.warn('Ошибка при сбросе сканера:', e);
+                    }
+                }
+                
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<span>${I_Play("w-4 h-4")}</span><span>Запустить сканирование</span>';
+                    toggleBtn.className = 'flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors';
+                }
+                
+                if (scanStatus) {
+                    scanStatus.textContent = 'Сканирование остановлено';
+                    scanStatus.className = 'absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium';
+                }
+                
+                console.log('Сканирование остановлено');
+            } else {
+                // Запустить сканирование
+                isScanning = true;
+                if (!isScannerInitialized) {
+                    initQRScanner();
+                }
+                
+                if (toggleBtn) {
+                    toggleBtn.innerHTML = '<span>${I_Square("w-4 h-4")}</span><span>Остановить сканирование</span>';
+                    toggleBtn.className = 'flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors';
+                }
+                
+                if (scanStatus) {
+                    scanStatus.textContent = 'Сканирование...';
+                    scanStatus.className = 'absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium';
+                }
+                
+                console.log('Сканирование запущено');
+            }
+        }
+        
+        // Тестирование сканирования
+        function testScanning() {
+            console.log('Тестирование сканирования...');
+            const video = document.getElementById('scanner-video');
+            if (!video || !scanner) {
+                alert('Сканер не инициализирован');
+                return;
+            }
+            
+            try {
+                scanner.decodeFromVideoElement(video)
+                    .then(result => {
+                        console.log('Тест успешен, найден код:', result);
+                        handleScanResult(result);
+                    })
+                    .catch(error => {
+                        console.log('Тест не удался:', error.name, error.message);
+                        alert('Тест сканирования: ' + error.message);
+                    });
+            } catch (error) {
+                console.error('Ошибка тестирования:', error);
+                alert('Ошибка тестирования: ' + error.message);
+            }
+        }
+        
+        // Обработка результата сканирования
+        function handleScanResult(result) {
+            if (!isScanning) return;
+            
+            console.log('Обработка результата сканирования:', result);
+            
+            // Показать визуальную индикацию успешного сканирования
+            const overlay = document.getElementById('scanner-overlay');
+            const scanStatus = document.getElementById('scan-status');
+            if (overlay) {
+                overlay.style.borderColor = '#10B981'; // Зеленый цвет
+                overlay.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+            }
+            if (scanStatus) {
+                scanStatus.textContent = '✓ Найдено!';
+                scanStatus.className = 'absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium';
+            }
+            
+            setTimeout(() => {
+                if (overlay) {
+                    overlay.style.borderColor = '#10B981';
+                    overlay.style.backgroundColor = 'transparent';
+                }
+                if (scanStatus) {
+                    scanStatus.textContent = 'Сканирование...';
+                    scanStatus.className = 'absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium hidden';
+                }
+            }, 2000);
+            
+            scanStats.total++;
+            
+            const resultText = result.getText();
+            const format = result.getBarcodeFormat();
+            
+            console.log('Отсканировано:', resultText, 'Формат:', format);
+            
+            // Определить тип кода
+            let codeType = 'unknown';
+            if (format === 'QR_CODE') {
+                codeType = 'qr';
+                scanStats.qr++;
+            } else if (format === 'DATA_MATRIX') {
+                codeType = 'datamatrix';
+                scanStats.datamatrix++;
+            }
+            
+            scanStats.successful++;
+            
+            // Добавить результат в интерфейс
+            addScanResult(resultText, codeType, format);
+            
+            // Обновить статистику
+            updateScanStats();
+            
+            // Временно остановить сканирование для показа результата
+            setTimeout(() => {
+                if (isScanning && scanner) {
+                    initQRScanner();
+                }
+            }, 2000);
+        }
+        
+        // Добавление результата сканирования в интерфейс
+        function addScanResult(text, type, format) {
+            const resultsContainer = document.getElementById('scan-results');
+            if (!resultsContainer) return;
+            
+            // Удалить плейсхолдер если есть
+            const placeholder = resultsContainer.querySelector('.text-center');
+            if (placeholder) {
+                placeholder.remove();
+            }
+            
+            // Создать элемент результата
+            const resultElement = document.createElement('div');
+            resultElement.className = 'bg-gray-700/50 rounded-lg p-4 border border-gray-600/40';
+            
+            const typeIcon = type === 'qr' ? '📱' : type === 'datamatrix' ? '🔲' : '❓';
+            const typeColor = type === 'qr' ? 'text-yellow-400' : type === 'datamatrix' ? 'text-purple-400' : 'text-gray-400';
+            
+            resultElement.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="text-2xl">${typeIcon}</div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-sm font-medium ${typeColor}">${format}</span>
+                            <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <div class="bg-gray-800/50 rounded p-2 font-mono text-sm text-gray-200 break-all">
+                            ${text}
+                        </div>
+                        <div class="mt-2 flex gap-2">
+                            <button class="copy-result text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors" data-text="${text.replace(/"/g, '&quot;')}">
+                                Копировать
+                            </button>
+                            <button class="search-result text-xs px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition-colors" data-text="${text.replace(/"/g, '&quot;')}">
+                                Найти в каталоге
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Добавить в начало списка
+            resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
+            
+            // Добавить обработчики кнопок
+            const copyBtn = resultElement.querySelector('.copy-result');
+            const searchBtn = resultElement.querySelector('.search-result');
+            
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(text).then(() => {
+                        copyBtn.textContent = 'Скопировано!';
+                        setTimeout(() => {
+                            copyBtn.textContent = 'Копировать';
+                        }, 2000);
+                    });
+                });
+            }
+            
+            if (searchBtn) {
+                searchBtn.addEventListener('click', () => {
+                    // Переключиться на каталог и выполнить поиск
+                    S.view = 'catalog';
+                    S.searchQuery = text;
+                    render();
+                });
+            }
+        }
+        
+        // Обновление статистики сканирования
+        function updateScanStats() {
+            const totalEl = document.getElementById('total-scans');
+            const successfulEl = document.getElementById('successful-scans');
+            const qrEl = document.getElementById('qr-scans');
+            const datamatrixEl = document.getElementById('datamatrix-scans');
+            
+            if (totalEl) totalEl.textContent = scanStats.total;
+            if (successfulEl) successfulEl.textContent = scanStats.successful;
+            if (qrEl) qrEl.textContent = scanStats.qr;
+            if (datamatrixEl) datamatrixEl.textContent = scanStats.datamatrix;
+        }
+        
+        // Сделать снимок
+        function capturePhoto() {
+            const video = document.getElementById('scanner-video');
+            const canvas = document.getElementById('scanner-canvas');
+            
+            if (!video || !canvas) return;
+            
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0);
+            
+            // Показать canvas и скрыть video
+            canvas.classList.remove('hidden');
+            video.classList.add('hidden');
+            
+            // Через 3 секунды вернуть video
+            setTimeout(() => {
+                canvas.classList.add('hidden');
+                video.classList.remove('hidden');
+            }, 3000);
+        }
+        
+        // Инициализация сканера при смене представления
+        // Добавляем обработчик для инициализации сканера
+        document.addEventListener('DOMContentLoaded', function() {
+            // Инициализируем сканер при загрузке страницы
+            if (S.view === 'tools' && S.toolSubView === 'scanner') {
+                setTimeout(initScanner, 100);
+            }
+            
+            // Отслеживаем изменения в DOM для автоматической инициализации сканера
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        const scannerContent = document.querySelector('#scanner-video');
+                        if (scannerContent && S.view === 'tools' && S.toolSubView === 'scanner' && !isScannerInitialized) {
+                            setTimeout(initScannerOnViewChange, 100);
+                        }
+                    }
+                });
+            });
+            
+            // Наблюдаем за изменениями в основном контейнере
+            const mainContainer = document.getElementById('main');
+            if (mainContainer) {
+                observer.observe(mainContainer, { childList: true, subtree: true });
+            }
+        });
+        
   </script>
   
   <!-- Указатель для sidebar-toggle на малых устройствах -->
