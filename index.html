@@ -5407,14 +5407,24 @@ function renderScannerContent() {
                             </div>
                         </div>
                         <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">
-                            <div class="absolute inset-4 border-2 border-green-400 rounded-lg transition-all duration-300">
-                                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-green-400"></div>
-                                <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-green-400"></div>
-                                <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-green-400"></div>
-                                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-green-400"></div>
-                            </div>
-                            <div id="scan-status" class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium hidden">
-                                Сканирование...
+                            <!-- Зеленая рамка точно по размеру камеры с отступом внутрь -->
+                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80">
+                                <!-- Полупрозрачная зеленая подсветка -->
+                                <div class="absolute inset-0 bg-green-400/20 rounded-lg"></div>
+                                
+                                <!-- Зеленая рамка с отступом внутрь -->
+                                <div class="absolute inset-4 border-2 border-green-400 rounded-lg transition-all duration-300">
+                                    <!-- Угловые маркеры максимально близко к центру -->
+                                    <div class="absolute top-16 left-16 w-6 h-6 border-t-2 border-l-2 border-green-400"></div>
+                                    <div class="absolute top-16 right-16 w-6 h-6 border-t-2 border-r-2 border-green-400"></div>
+                                    <div class="absolute bottom-16 left-16 w-6 h-6 border-b-2 border-l-2 border-green-400"></div>
+                                    <div class="absolute bottom-16 right-16 w-6 h-6 border-b-2 border-r-2 border-green-400"></div>
+                                </div>
+                                
+                                <!-- Статус сканирования в углу области камеры -->
+                                <div id="scan-status" class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium hidden">
+                                    Сканирование...
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -26858,8 +26868,16 @@ function animateCloseButtonClick(button) {
             const overlay = document.getElementById('scanner-overlay');
             const scanStatus = document.getElementById('scan-status');
             if (overlay) {
-                overlay.style.borderColor = '#10B981'; // Зеленый цвет
-                overlay.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+                // Находим рамку внутри overlay
+                const frame = overlay.querySelector('div[class*="border-green-400"]');
+                const background = overlay.querySelector('div[class*="bg-green-400"]');
+                
+                if (frame) {
+                    frame.style.borderColor = '#10B981'; // Зеленый цвет
+                }
+                if (background) {
+                    background.style.backgroundColor = 'rgba(16, 185, 129, 0.3)'; // Более яркая подсветка
+                }
             }
             if (scanStatus) {
                 scanStatus.textContent = '✓ Найдено!';
@@ -26868,8 +26886,15 @@ function animateCloseButtonClick(button) {
             
             setTimeout(() => {
                 if (overlay) {
-                    overlay.style.borderColor = '#10B981';
-                    overlay.style.backgroundColor = 'transparent';
+                    const frame = overlay.querySelector('div[class*="border-green-400"]');
+                    const background = overlay.querySelector('div[class*="bg-green-400"]');
+                    
+                    if (frame) {
+                        frame.style.borderColor = '#10B981';
+                    }
+                    if (background) {
+                        background.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'; // Возвращаем обычную подсветку
+                    }
                 }
                 if (scanStatus) {
                     scanStatus.textContent = 'Сканирование...';
