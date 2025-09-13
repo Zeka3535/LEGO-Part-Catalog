@@ -25960,7 +25960,18 @@ function animateCloseButtonClick(button) {
                     
                     // Инициализируем сканер только после запуска камеры
                     if (!isScannerInitialized) {
-                        initQRScanner();
+                        console.log('Запуск сканера после запуска камеры...');
+                        console.log('isMobile:', isMobile, 'isScanning:', isScanning);
+                        
+                        if (isMobile) {
+                            // Для мобильных устройств запускаем мобильный сканер
+                            console.log('Запускаем мобильный сканер...');
+                            startMobileScanner();
+                        } else {
+                            // Для ПК используем стандартный сканер
+                            console.log('Запускаем стандартный сканер...');
+                            initQRScanner();
+                        }
                     }
                 };
                 
@@ -26068,6 +26079,7 @@ function animateCloseButtonClick(button) {
         // Запуск мобильного сканера
         function startMobileScanner() {
             console.log('Инициализация мобильного сканера...');
+            console.log('isScanning:', isScanning, 'isMobile:', isMobile);
             
             // Очищаем предыдущий сканер
             if (mobileScanner) {
@@ -26191,7 +26203,7 @@ function animateCloseButtonClick(button) {
                 
                 // Для мобильных устройств используем улучшенный метод
                 if (isMobile) {
-                    console.log('Запуск мобильного сканирования...');
+                    console.log('Запуск мобильного сканирования через initQRScanner...');
                     startMobileScanner();
                 } else {
                     // Для ПК используем стандартный метод
@@ -26446,8 +26458,14 @@ function animateCloseButtonClick(button) {
             
             // Временно остановить сканирование для показа результата
             setTimeout(() => {
-                if (isScanning && scanner) {
-                    initQRScanner();
+                if (isScanning) {
+                    if (isMobile) {
+                        // Для мобильных устройств перезапускаем мобильный сканер
+                        startMobileScanner();
+                    } else if (scanner) {
+                        // Для ПК перезапускаем стандартный сканер
+                        initQRScanner();
+                    }
                 }
             }, 2000);
         }
