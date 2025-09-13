@@ -25583,8 +25583,19 @@ function animateCloseButtonClick(button) {
         // Определение мобильного устройства
         function detectMobile() {
             const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-            isMobile = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
-            console.log('Мобильное устройство:', isMobile);
+            
+            // Проверяем по User Agent
+            const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+            
+            // Дополнительные проверки для мобильных устройств
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isSmallScreen = window.innerWidth <= 768 || window.innerHeight <= 768;
+            const isMobileOrientation = window.screen && (window.screen.orientation || window.screen.mozOrientation || window.screen.msOrientation);
+            
+            // Определяем мобильное устройство по совокупности признаков
+            isMobile = isMobileUA || (isTouchDevice && isSmallScreen);
+            
+            console.log('Мобильное устройство:', isMobile, 'UA:', isMobileUA, 'Touch:', isTouchDevice, 'Small:', isSmallScreen);
             
             // Обновляем интерфейс для мобильных устройств
             if (isMobile) {
@@ -25977,6 +25988,9 @@ function animateCloseButtonClick(button) {
                 addLog('Камера уже запускается, пропускаем...', 'warning');
                 return;
             }
+            
+            // Определяем мобильное устройство перед запуском камеры
+            detectMobile();
             
             addLog('Начинаем запуск камеры...', 'info');
             isCameraStarting = true;
