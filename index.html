@@ -462,7 +462,7 @@
 .wishlist-move-btn {
     width: 24px;
     height: 24px;
-    border: none;
+    border: 1px solid rgba(55, 65, 81, 0.5); /* border-gray-700/50 */
     border-radius: 4px;
     background: rgba(17, 24, 39, 0.4);
     color: rgba(255, 255, 255, 0.8);
@@ -482,6 +482,7 @@
     color: white;
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    border-color: rgba(75, 85, 99, 0.7); /* border-gray-600/70 */
 }
 
 .wishlist-move-btn:disabled {
@@ -489,6 +490,7 @@
     cursor: not-allowed;
     transform: none;
     background: rgba(17, 24, 39, 0.2);
+    border-color: rgba(55, 65, 81, 0.2); /* border-gray-700/20 */
 }
 
 .wishlist-move-btn:disabled:hover {
@@ -496,6 +498,7 @@
     color: rgba(255, 255, 255, 0.3);
     transform: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border-color: rgba(55, 65, 81, 0.2); /* border-gray-700/20 */
 }
 
 .wishlist-move-btn.opacity-50 {
@@ -693,17 +696,20 @@
 .wishlist-move-btn {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(4px);
+    border: 1px solid rgba(55, 65, 81, 0.5); /* border-gray-700/50 */
 }
 
 .wishlist-move-btn:hover:not(:disabled) {
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-color: rgba(75, 85, 99, 0.7); /* border-gray-600/70 */
 }
 
 .wishlist-move-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none !important;
+    border-color: rgba(55, 65, 81, 0.2); /* border-gray-700/20 */
 }
 
 
@@ -3828,6 +3834,29 @@ body.tab-switching button[data-view] {
             display: block !important;
             margin: 0 auto !important;
         }
+        
+        /* Стили для карточек каталога на мобильных устройствах */
+        .part-card,
+        .set-card,
+        .minifig-card {
+            min-width: 0;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        
+        /* Обеспечиваем правильное отображение карточек на краю экрана */
+        .part-card .card-image-container,
+        .set-card .card-image-container,
+        .minifig-card .card-image-container {
+            overflow: hidden;
+        }
+        
+        /* Кнопки в карточках каталога всегда видны на мобильных */
+        .part-card button,
+        .set-card button,
+        .minifig-card button {
+            opacity: 1 !important;
+        }
     }
     
   </style>
@@ -5426,7 +5455,7 @@ function renderWishlistContent() {
                                 </div>
                             </div>
                         </div>
-                        <div class="wishlist-drop-zone grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4 md:gap-6 min-h-[200px] p-2 sm:p-4" data-wishlist-id="${singleWishlistId}">
+                        <div class="wishlist-drop-zone grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-2 sm:gap-4 p-2 sm:p-4 min-h-[200px]" data-wishlist-id="${singleWishlistId}">
                             ${items.map(item => renderWishlistItemCard(item, singleWishlistId)).join('')}
                         </div>
                     `}
@@ -5521,7 +5550,7 @@ function renderScannerContent() {
                         <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer rounded-t-xl" style="box-shadow: none !important;">
                             <div class="flex items-center gap-3">
                                 <div class="p-2 bg-blue-600/20 rounded-lg">
-                                    ${I_Scanner('w-5 h-5 text-blue-400')}
+                                    ${I_Camera('w-5 h-5 text-blue-400')}
                                 </div>
                                 <h3 class="text-lg font-semibold text-gray-200">Настройки камеры</h3>
                             </div>
@@ -5619,7 +5648,7 @@ function renderScannerContent() {
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="p-2 bg-blue-600/20 rounded-lg">
-                                ${I_Scanner('w-5 h-5 text-blue-400')}
+                                ${I_Camera('w-5 h-5 text-blue-400')}
                             </div>
                             <h3 class="text-lg font-semibold text-white">Выбор камеры</h3>
                         </div>
@@ -12004,6 +12033,20 @@ const CATEGORY_ICONS = {
     'Other': I_Other
 };
 
+const CATEGORY_COLORS = {
+    'Bricks': 'text-red-400',           // Красный для кирпичей
+    'Plates': 'text-orange-400',        // Оранжевый для пластин
+    'Technic': 'text-blue-400',         // Синий для техника
+    'Slopes & Wedges': 'text-green-400', // Зеленый для склонов
+    'Tiles': 'text-yellow-400',         // Желтый для плиток
+    'Panels, Doors & Windows': 'text-purple-400', // Фиолетовый для панелей
+    'Wheels & Tyres': 'text-gray-400',  // Серый для колес
+    'Minifig': 'text-pink-400',         // Розовый для минифигурок
+    'Bars, Hinges & Connectors': 'text-cyan-400', // Голубой для соединителей
+    'Arches & Curves': 'text-indigo-400', // Индиго для арок
+    'Other': 'text-gray-500'            // Темно-серый для прочего
+};
+
 function filterThemeTreeForCollection(e, t) {
     return Array.isArray(e) ? e.map(e => {
         if (!e || !e.id) return null;
@@ -12307,7 +12350,7 @@ function renderSidebar() {
                 {
                     id: 'analytics',
                     name: 'Аналитика',
-                    icon: I_Analytics('w-5 h-5'),
+                    icon: I_Analytics('w-5 h-5 text-purple-400'),
                     description: 'Статистика и анализ коллекции'
                 },
                 {
@@ -12325,7 +12368,7 @@ function renderSidebar() {
                 {
                     id: 'cloud-backup',
                     name: 'Облачное хранилище',
-                    icon: I_Cloud('w-5 h-5'),
+                    icon: I_Cloud('w-5 h-5 text-cyan-400'),
                     description: 'Синхронизация данных с облачным хранилищем'
                 }
             ];
@@ -12431,7 +12474,19 @@ function renderSidebar() {
                               </li>
                            `
                         }).join("");
-                    const l = (CATEGORY_ICONS[e.name] || I_Other)("w-5 h-5 mr-3 text-gray-400 flex-shrink-0");
+                    // Более надежная проверка названий категорий
+                    let categoryColor = CATEGORY_COLORS[e.name];
+                    if (!categoryColor) {
+                        // Проверяем частичные совпадения для категорий с возможными вариациями названий
+                        if (e.name.includes('Wheel') || e.name.includes('Tyre')) {
+                            categoryColor = 'text-gray-400';
+                        } else if (e.name.includes('Other') || e.name === 'Other') {
+                            categoryColor = 'text-gray-500';
+                        } else {
+                            categoryColor = 'text-gray-500';
+                        }
+                    }
+                    const l = (CATEGORY_ICONS[e.name] || I_Other)(`w-5 h-5 mr-3 ${categoryColor} flex-shrink-0`);
                     const totalPartsInCategory = e.children.reduce((total, child) => {
                         return total + getCategoryPartCount(child.id);
                     }, 0);
@@ -12497,7 +12552,19 @@ function renderSidebar() {
                       </li>
                    `
                 }).join("");
-            const l = (CATEGORY_ICONS[e.name] || I_Other)("w-5 h-5 mr-3 text-gray-400 flex-shrink-0");
+            // Более надежная проверка названий категорий
+            let categoryColor = CATEGORY_COLORS[e.name];
+            if (!categoryColor) {
+                // Проверяем частичные совпадения для категорий с возможными вариациями названий
+                if (e.name.includes('Wheel') || e.name.includes('Tyre')) {
+                    categoryColor = 'text-gray-400';
+                } else if (e.name.includes('Other') || e.name === 'Other') {
+                    categoryColor = 'text-gray-500';
+                } else {
+                    categoryColor = 'text-gray-500';
+                }
+            }
+            const l = (CATEGORY_ICONS[e.name] || I_Other)(`w-5 h-5 mr-3 ${categoryColor} flex-shrink-0`);
             return `
                   <li class="space-y-1">
                       <button data-parent-category="${e.name}" class="w-full text-left flex items-start justify-between p-2 rounded-md hover:bg-gray-700 transition-colors duration-150">
@@ -12536,26 +12603,26 @@ function renderSidebar() {
         ` : ''}
 
         <div class="space-y-2 mb-4 flex-shrink-0">
-            <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3")}<span>Каталог</span></button>
-            <button data-view="collection" class="${n("collection")}" title="Переключиться на просмотр вашей личной коллекции">${I_Coll("w-5 h-5 mr-3")}<span>Коллекция</span></button>
-            <button data-view="tools" class="${n("tools")}" title="Инструменты для анализа и работы с коллекцией">${I_Toolbox("w-5 h-5 mr-3")}<span>Инструменты</span></button>
+            <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3 text-blue-400")}<span>Каталог</span></button>
+            <button data-view="collection" class="${n("collection")}" title="Переключиться на просмотр вашей личной коллекции">${I_Coll("w-5 h-5 mr-3 text-green-400")}<span>Коллекция</span></button>
+            <button data-view="tools" class="${n("tools")}" title="Инструменты для анализа и работы с коллекцией">${I_Toolbox("w-5 h-5 mr-3 text-indigo-400")}<span>Инструменты</span></button>
         </div>
 
         ${S.view !== "tools" ? `
         <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1">
             <button data-sub-view="parts" class="${r("parts")}" title="Показать детали" data-long-press="parts">
-                ${I_Brick("w-5 h-5")}
+                ${I_Brick("w-5 h-5 text-blue-400")}
                 <span class="mt-1">Детали</span>
                 ${s("parts",e,t)}
             </button>
             <button data-sub-view="sets" class="${r("sets")} relative" title="Показать наборы" data-long-press="sets">
-                ${I_Set("w-5 h-5")}
+                ${I_Set("w-5 h-5 text-green-400")}
                 <span class="mt-1">Наборы</span>
                 ${s("sets",o,l)}
                 ${S.view === "catalog" && S.selFigNum && S.showRelatedSets ? `<div class="absolute top-1 right-1 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold">${I_Minifig("w-3 h-3")}</div>` : ''}
             </button>
             <button data-sub-view="minifigs" class="${r("minifigs")}" title="Показать минифигурки" data-long-press="minifigs">
-                ${I_Minifig("w-5 h-5")}
+                ${I_Minifig("w-5 h-5 text-purple-400")}
                 <span class="mt-1">Фигурки</span>
                 ${s("minifigs",a,i)}
             </button>
@@ -12665,7 +12732,7 @@ function renderSidebar() {
             `:""}
             ${S.view !== "tools" ? `
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
-                ${I_Settings("w-5 h-5 mr-2")} Настройки
+                ${I_Settings("w-5 h-5 mr-2 text-gray-300")} Настройки
             </button>
             ` : ''}
         </div>
@@ -12674,7 +12741,7 @@ function renderSidebar() {
         <!-- Кнопка настроек внизу только для аналитики -->
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
-                ${I_Settings("w-5 h-5 mr-2")} Настройки
+                ${I_Settings("w-5 h-5 mr-2 text-gray-300")} Настройки
             </button>
         </div>
         ` : ''}
@@ -15085,7 +15152,7 @@ function renderSettingsModal() {
                         <h3 class="text-md font-semibold text-white mb-2">Защита от случайной перезагрузки</h3>
                         <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm text-gray-300 flex items-center gap-2">🛡️ Подтверждать перезагрузку</span>
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Shield('w-4 h-4 text-blue-400')} Подтверждать перезагрузку</span>
                                 <button data-action="toggle-prevent-exit" class="toggle-switch ${S.preventAccidentalExit? 'on' : ''}" aria-pressed="${S.preventAccidentalExit}"><span class="knob"></span></button>
                             </div>
                             <p class="text-xs text-gray-400">Рекомендуется для мобильных устройств: предотвратит потерю незаписанных изменений при случайном обновлении страницы.</p>
