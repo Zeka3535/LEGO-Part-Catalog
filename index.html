@@ -26192,22 +26192,30 @@ function animateCloseButtonClick(button) {
                             addLog(`⚠ Камера 0 не найдена, выбрана первая доступная: ${videoDevices[0].label}`, 'warning');
                         }
                         
-                        // Автозапуск камеры на мобильных устройствах (только если камера не запущена)
-                        if (!currentStream && !isCameraStarting) {
-                            addLog('Автозапуск камеры...', 'info');
-                            setTimeout(() => {
-                                if (!currentStream && !isCameraStarting) {
-                                    startCamera();
-                                }
-                            }, 500);
-                        } else {
-                            addLog('Камера уже запущена или запускается, пропускаем автозапуск', 'info');
-                        }
+                        // Автозапуск камеры на мобильных устройствах
+                        addLog('Автозапуск камеры...', 'info');
+                        setTimeout(() => {
+                            if (!currentStream && !isCameraStarting) {
+                                startCamera();
+                            } else {
+                                addLog('Камера уже запущена или запускается, пропускаем автозапуск', 'info');
+                            }
+                        }, 500);
                     } else {
                         addLog('Не мобильное устройство, выбираем первую камеру', 'info');
                         cameraSelect.value = videoDevices[0].deviceId;
                         console.log('Выбрана первая камера:', videoDevices[0].label);
                         addLog(`Выбрана камера: ${videoDevices[0].label}`, 'info');
+                        
+                        // Автозапуск камеры для ПК устройств
+                        addLog('Автозапуск камеры...', 'info');
+                        setTimeout(() => {
+                            if (!currentStream && !isCameraStarting) {
+                                startCamera();
+                            } else {
+                                addLog('Камера уже запущена или запускается, пропускаем автозапуск', 'info');
+                            }
+                        }, 500);
                     }
                 }
                 
@@ -26316,10 +26324,11 @@ function animateCloseButtonClick(button) {
             if (clearResultsBtn) clearResultsBtn.addEventListener('click', clearScanResults);
             if (requestPermissionBtn) requestPermissionBtn.addEventListener('click', requestCameraPermission);
             
-            // Обработчик изменения выбора камеры (НЕ запускаем камеру автоматически)
+            // Обработчик изменения выбора камеры (автозапуск после выбора)
             if (cameraSelect) {
                 cameraSelect.addEventListener('change', (e) => {
                     console.log('Выбрана камера:', e.target.value);
+                    
                     // Если камера уже запущена, перезапускаем с новой камерой
                     if (currentStream) {
                         console.log('Камера уже запущена, перезапускаем с новой камерой...');
@@ -26327,6 +26336,13 @@ function animateCloseButtonClick(button) {
                         setTimeout(() => {
                             startCamera();
                         }, 500);
+                    } else {
+                        // Если камера не запущена, запускаем её
+                        console.log('Запускаем камеру после выбора...');
+                        addLog('Запуск камеры после выбора...', 'info');
+                        setTimeout(() => {
+                            startCamera();
+                        }, 100);
                     }
                 });
             }
@@ -26835,12 +26851,18 @@ function animateCloseButtonClick(button) {
                             addLog(`Найден код (мобильный): ${result.getText()}`, 'success');
                             handleScanResult(result);
                             
-                            // Останавливаем сканирование (без перезапуска камеры)
+                            // Останавливаем сканирование и перезапускаем камеру
                             isScanning = false;
-                            console.log('Сканирование остановлено после успешного результата');
-                            addLog('Сканирование остановлено после успешного результата', 'info');
+                            console.log('Перезапуск камеры после успешного сканирования...');
+                            addLog('Перезапуск камеры после успешного сканирования...', 'info');
                             
-                            // Не перезапускаем камеру автоматически - пользователь может продолжить сканирование вручную
+                            // Останавливаем камеру и перезапускаем через 1 секунду
+                            setTimeout(() => {
+                                stopCamera();
+                                setTimeout(() => {
+                                    startCamera();
+                                }, 500);
+                            }, 1000);
                         } else {
                             // Продолжаем сканирование через 200ms
                             setTimeout(scanFrame, 200);
