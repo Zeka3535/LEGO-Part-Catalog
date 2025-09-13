@@ -5370,6 +5370,10 @@ function renderScannerContent() {
                             <span>${I_Search('w-4 h-4')}</span>
                             <span>Тест сканирования</span>
                         </button>
+                        <button id="force-scan" class="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors" disabled style="display: none;">
+                            <span>${I_Search('w-4 h-4')}</span>
+                            <span>Принудительное сканирование</span>
+                        </button>
                         <button id="toggle-scan" class="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors" disabled>
                             <span>${I_Square('w-4 h-4')}</span>
                             <span>Остановить сканирование</span>
@@ -25550,6 +25554,12 @@ function animateCloseButtonClick(button) {
                 httpsWarning.style.display = 'block';
             }
             
+            // Показываем кнопку принудительного сканирования для мобильных устройств
+            const forceBtn = document.getElementById('force-scan');
+            if (forceBtn) {
+                forceBtn.style.display = 'block';
+            }
+            
             // Добавляем мобильные классы для лучшего отображения
             const video = document.getElementById('scanner-video');
             if (video) {
@@ -25823,6 +25833,7 @@ function animateCloseButtonClick(button) {
             const captureBtn = document.getElementById('capture-photo');
             const refreshBtn = document.getElementById('refresh-cameras');
             const testBtn = document.getElementById('test-scan');
+            const forceBtn = document.getElementById('force-scan');
             const toggleBtn = document.getElementById('toggle-scan');
             const cameraSelect = document.getElementById('camera-select');
             
@@ -25831,6 +25842,7 @@ function animateCloseButtonClick(button) {
             if (captureBtn) captureBtn.addEventListener('click', capturePhoto);
             if (refreshBtn) refreshBtn.addEventListener('click', setupCameraSelect);
             if (testBtn) testBtn.addEventListener('click', testScanning);
+            if (forceBtn) forceBtn.addEventListener('click', forceScanning);
             if (toggleBtn) toggleBtn.addEventListener('click', toggleScanning);
             
             // Обработчик изменения выбора камеры (НЕ запускаем камеру автоматически)
@@ -25890,7 +25902,15 @@ function animateCloseButtonClick(button) {
                         height: { ideal: height },
                         facingMode: isMobile ? 'environment' : 'user', // На мобильных предпочитаем заднюю камеру
                         frameRate: { ideal: isMobile ? 30 : 15 }, // На мобильных выше FPS для лучшего сканирования
-                        focusMode: isMobile ? 'continuous' : 'single' // На мобильных непрерывная фокусировка
+                        focusMode: isMobile ? 'continuous' : 'single', // На мобильных непрерывная фокусировка
+                        // Дополнительные настройки для мобильных устройств
+                        ...(isMobile && {
+                            aspectRatio: { ideal: 16/9 },
+                            whiteBalanceMode: 'continuous',
+                            exposureMode: 'continuous',
+                            focusMode: 'continuous',
+                            torch: false // Отключаем вспышку по умолчанию
+                        })
                     }
                 };
                 
@@ -25930,8 +25950,10 @@ function animateCloseButtonClick(button) {
                     
                     // Активировать тестовую кнопку и кнопку переключения сканирования
                     const testBtn = document.getElementById('test-scan');
+                    const forceBtn = document.getElementById('force-scan');
                     const toggleBtn = document.getElementById('toggle-scan');
                     if (testBtn) testBtn.disabled = false;
+                    if (forceBtn) forceBtn.disabled = false;
                     if (toggleBtn) toggleBtn.disabled = false;
                     
                     // Инициализируем сканер только после запуска камеры
@@ -26015,8 +26037,10 @@ function animateCloseButtonClick(button) {
             
             // Деактивировать тестовую кнопку и кнопку переключения сканирования
             const testBtn = document.getElementById('test-scan');
+            const forceBtn = document.getElementById('force-scan');
             const toggleBtn = document.getElementById('toggle-scan');
             if (testBtn) testBtn.disabled = true;
+            if (forceBtn) forceBtn.disabled = true;
             if (toggleBtn) toggleBtn.disabled = true;
             
             console.log('Камера остановлена');
@@ -26058,26 +26082,70 @@ function animateCloseButtonClick(button) {
                     ZXing.BarcodeFormat.QR_CODE,
                     ZXing.BarcodeFormat.DATA_MATRIX,
                     ZXing.BarcodeFormat.CODE_128,
-                    ZXing.BarcodeFormat.CODE_39
+                    ZXing.BarcodeFormat.CODE_39,
+                    ZXing.BarcodeFormat.EAN_13,
+                    ZXing.BarcodeFormat.EAN_8,
+                    ZXing.BarcodeFormat.UPC_A,
+                    ZXing.BarcodeFormat.UPC_E
                 ]);
                 hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
                 
-                // Настройки для уменьшения частоты сканирования
+                // Дополнительные настройки для мобильных устройств
+                if (isMobile) {
+                    hints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
+                    hints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
+                    hints.set(ZXing.DecodeHintType.CHARACTER_SET, 'UTF-8');
+                }
+                
+                // Настройки для мобильных устройств
                 const options = {
-                    delayBetweenScanSuccess: isMobile ? 2000 : 3000, // На мобильных быстрее
-                    delayBetweenScanAttempts: isMobile ? 500 : 1000   // На мобильных чаще сканируем
+                    delayBetweenScanSuccess: isMobile ? 1000 : 3000, // На мобильных быстрее
+                    delayBetweenScanAttempts: isMobile ? 200 : 1000, // На мобильных чаще сканируем
+                    tryHarder: isMobile, // На мобильных используем более агрессивное сканирование
+                    tryHarderThreshold: isMobile ? 0.5 : 0.8 // Порог для мобильных устройств
                 };
                 
-                scanner.decodeFromVideoDevice(undefined, video, (result, error) => {
-                    if (result) {
-                        console.log('Найден код:', result);
-                        handleScanResult(result);
-                    }
-                    // Полностью игнорируем ошибки NotFoundException - они нормальны
-                    // Не выводим их в консоль, чтобы избежать спама
-                }, hints, options);
+                // Для мобильных устройств используем альтернативный метод
+                if (isMobile) {
+                    // Используем decodeFromVideoElement для мобильных устройств
+                    const scanMobile = () => {
+                        if (!isScanning || !scanner) return;
+                        
+                        scanner.decodeFromVideoElement(video, hints).then(result => {
+                            console.log('Найден код (мобильный):', result);
+                            handleScanResult(result);
+                            
+                            // Продолжаем сканирование через небольшую задержку
+                            setTimeout(scanMobile, 1000);
+                        }).catch(error => {
+                            if (!(error instanceof ZXing.NotFoundException)) {
+                                console.log('Ошибка сканирования (мобильный):', error.name);
+                            }
+                            
+                            // Продолжаем сканирование через небольшую задержку
+                            setTimeout(scanMobile, 200);
+                        });
+                    };
+                    
+                    // Запускаем сканирование
+                    scanMobile();
+                } else {
+                    // Для ПК используем стандартный метод
+                    scanner.decodeFromVideoDevice(undefined, video, (result, error) => {
+                        if (result) {
+                            console.log('Найден код:', result);
+                            handleScanResult(result);
+                        }
+                        // Полностью игнорируем ошибки NotFoundException - они нормальны
+                        // Не выводим их в консоль, чтобы избежать спама
+                    }, hints, options);
+                }
                 
                 console.log('QR сканер запущен');
+                if (isMobile) {
+                    console.log('Мобильный режим: используем decodeFromVideoElement с частотой 200ms');
+                    console.log('Поддерживаемые форматы:', Array.from(hints.get(ZXing.DecodeHintType.POSSIBLE_FORMATS)));
+                }
             } catch (error) {
                 console.error('Ошибка инициализации сканера:', error);
                 alert('Ошибка инициализации сканера: ' + error.message);
@@ -26132,6 +26200,69 @@ function animateCloseButtonClick(button) {
             }
         }
         
+        // Принудительное сканирование для мобильных устройств
+        function forceScanning() {
+            console.log('Принудительное сканирование...');
+            const video = document.getElementById('scanner-video');
+            if (!video || !scanner) {
+                alert('Сканер не инициализирован');
+                return;
+            }
+            
+            try {
+                // Создаем canvas для захвата кадра
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                
+                // Рисуем кадр на canvas
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Создаем ImageData
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // Создаем LuminanceSource
+                const luminanceSource = new ZXing.RGBLuminanceSource(
+                    imageData.data,
+                    canvas.width,
+                    canvas.height
+                );
+                
+                // Создаем BinaryBitmap
+                const binaryBitmap = new ZXing.BinaryBitmap(
+                    new ZXing.HybridBinarizer(luminanceSource)
+                );
+                
+                // Настройки для принудительного сканирования
+                const hints = new Map();
+                hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+                    ZXing.BarcodeFormat.QR_CODE,
+                    ZXing.BarcodeFormat.DATA_MATRIX,
+                    ZXing.BarcodeFormat.CODE_128,
+                    ZXing.BarcodeFormat.CODE_39
+                ]);
+                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                hints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
+                hints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
+                
+                // Пытаемся декодировать
+                const reader = new ZXing.MultiFormatReader();
+                const result = reader.decode(binaryBitmap, hints);
+                
+                console.log('Принудительное сканирование успешно:', result);
+                handleScanResult(result);
+                
+            } catch (error) {
+                if (!(error instanceof ZXing.NotFoundException)) {
+                    console.log('Принудительное сканирование не удалось:', error.name, error.message);
+                    alert('Принудительное сканирование: ' + error.message);
+                } else {
+                    console.log('Код не найден при принудительном сканировании');
+                }
+            }
+        }
+        
         // Тестирование сканирования
         function testScanning() {
             console.log('Тестирование сканирования...');
@@ -26142,14 +26273,34 @@ function animateCloseButtonClick(button) {
             }
             
             try {
-                scanner.decodeFromVideoElement(video)
+                // Для мобильных устройств используем специальные настройки
+                const hints = new Map();
+                hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+                    ZXing.BarcodeFormat.QR_CODE,
+                    ZXing.BarcodeFormat.DATA_MATRIX,
+                    ZXing.BarcodeFormat.CODE_128,
+                    ZXing.BarcodeFormat.CODE_39
+                ]);
+                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                
+                if (isMobile) {
+                    hints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
+                    hints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
+                    console.log('Используем мобильные настройки для тестирования');
+                }
+                
+                scanner.decodeFromVideoElement(video, hints)
                     .then(result => {
                         console.log('Тест успешен, найден код:', result);
                         handleScanResult(result);
                     })
                     .catch(error => {
-                        console.log('Тест не удался:', error.name, error.message);
-                        alert('Тест сканирования: ' + error.message);
+                        if (!(error instanceof ZXing.NotFoundException)) {
+                            console.log('Тест не удался:', error.name, error.message);
+                            alert('Тест сканирования: ' + error.message);
+                        } else {
+                            console.log('Код не найден (это нормально для теста)');
+                        }
                     });
             } catch (error) {
                 console.error('Ошибка тестирования:', error);
