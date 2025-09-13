@@ -25467,6 +25467,7 @@ function animateCloseButtonClick(button) {
         let isProcessingScan = false;
         let isScannerInitialized = false;
         let isMobile = false;
+        let isCameraStarting = false;
         let mobileScanner = null;
         let mobileScanInterval = null;
         let scanStats = {
@@ -25865,6 +25866,14 @@ function animateCloseButtonClick(button) {
         
         // Запуск камеры
         async function startCamera() {
+            // Защита от повторного запуска
+            if (isCameraStarting) {
+                console.log('Камера уже запускается, пропускаем...');
+                return;
+            }
+            
+            isCameraStarting = true;
+            
             const cameraSelect = document.getElementById('camera-select');
             const resolutionSelect = document.getElementById('resolution-select');
             const video = document.getElementById('scanner-video');
@@ -25876,6 +25885,7 @@ function animateCloseButtonClick(button) {
             
             if (!cameraSelect || !video) {
                 console.error('Не найдены необходимые элементы DOM');
+                isCameraStarting = false;
                 return;
             }
             
@@ -25935,6 +25945,12 @@ function animateCloseButtonClick(button) {
                         video.play().catch(e => console.warn('Ошибка воспроизведения видео:', e));
                     }
                     
+                    // Защита от повторного запуска сканера
+                    if (isScannerInitialized && isScanning) {
+                        console.log('Сканер уже работает, пропускаем повторную инициализацию');
+                        return;
+                    }
+                    
                     // Показать видео и скрыть плейсхолдер
                     video.classList.remove('hidden');
                     if (placeholder) placeholder.classList.add('hidden');
@@ -25958,19 +25974,39 @@ function animateCloseButtonClick(button) {
                     if (forceBtn) forceBtn.disabled = false;
                     if (toggleBtn) toggleBtn.disabled = false;
                     
-                    // Инициализируем сканер только после запуска камеры
-                    if (!isScannerInitialized) {
-                        console.log('Запуск сканера после запуска камеры...');
-                        console.log('isMobile:', isMobile, 'isScanning:', isScanning);
-                        
-                        // Для всех устройств используем стандартный сканер
-                        console.log('Запускаем сканер...');
-                        initQRScanner();
+                    // Инициализируем сканер после запуска камеры
+                    console.log('Запуск сканера после запуска камеры...');
+                    console.log('isMobile:', isMobile, 'isScanning:', isScanning);
+                    console.log('isScannerInitialized:', isScannerInitialized);
+                    
+                    // Сбрасываем флаг инициализации для мобильных устройств
+                    if (isMobile) {
+                        isScannerInitialized = false;
+                        console.log('Сброшен флаг инициализации для мобильного устройства');
                     }
+                    
+                    // Запускаем сканер
+                    console.log('Запускаем сканер...');
+                    initQRScanner();
+                    
+                    // Для мобильных устройств добавляем дополнительную проверку
+                    if (isMobile) {
+                        setTimeout(() => {
+                            if (!isScanning) {
+                                console.log('Мобильное устройство: принудительный запуск сканирования');
+                                isScanning = true;
+                                initQRScanner();
+                            }
+                        }, 1000);
+                    }
+                    
+                    // Сбрасываем флаг запуска камеры
+                    isCameraStarting = false;
                 };
                 
             } catch (error) {
                 console.error('Ошибка запуска камеры:', error);
+                isCameraStarting = false;
                 let errorMessage = 'Не удалось запустить камеру.';
                 
                 if (error.name === 'NotAllowedError') {
@@ -26068,6 +26104,7 @@ function animateCloseButtonClick(button) {
             if (toggleBtn) toggleBtn.disabled = true;
             
             console.log('Камера остановлена');
+            isCameraStarting = false;
         }
         
         // Запуск мобильного сканера (упрощенная версия как на ПК)
@@ -26134,10 +26171,16 @@ function animateCloseButtonClick(button) {
         function initQRScanner() {
             console.log('Инициализация QR сканера...');
             
-            // Предотвращаем повторную инициализацию
-            if (isScannerInitialized && scanner) {
-                console.log('Сканер уже инициализирован, пропускаем...');
+            // Проверяем, нужно ли перезапускать сканер
+            if (isScannerInitialized && scanner && isScanning) {
+                console.log('Сканер уже инициализирован и работает, пропускаем...');
                 return;
+            }
+            
+            // Для мобильных устройств принудительно сбрасываем флаги
+            if (isMobile) {
+                console.log('Мобильное устройство: принудительный сброс флагов');
+                isScannerInitialized = false;
             }
             
             if (typeof ZXing === 'undefined') {
@@ -26207,8 +26250,15 @@ function animateCloseButtonClick(button) {
                 }, hints, options);
                 
                 console.log('QR сканер запущен');
+                console.log('isScanning:', isScanning, 'isScannerInitialized:', isScannerInitialized);
+                
                 if (isMobile) {
                     console.log('Мобильный режим: используем decodeFromVideoDevice с оптимизированными настройками');
+                    console.log('Поддерживаемые форматы:', Array.from(hints.get(ZXing.DecodeHintType.POSSIBLE_FORMATS)));
+                    console.log('Настройки:', options);
+                    console.log('Видео готово:', video.readyState, 'Размер:', video.videoWidth, 'x', video.videoHeight);
+                } else {
+                    console.log('ПК режим: стандартные настройки сканирования');
                     console.log('Поддерживаемые форматы:', Array.from(hints.get(ZXing.DecodeHintType.POSSIBLE_FORMATS)));
                 }
             } catch (error) {
@@ -26443,6 +26493,25 @@ function animateCloseButtonClick(button) {
             // Временно остановить сканирование для показа результата
             setTimeout(() => {
                 if (isScanning && scanner) {
+                    console.log('Перезапуск сканера после успешного сканирования...');
+                    console.log('isMobile:', isMobile, 'isScanning:', isScanning);
+                    
+                    // Сначала останавливаем текущий сканер
+                    try {
+                        scanner.reset();
+                    } catch (e) {
+                        console.warn('Ошибка при сбросе сканера:', e);
+                    }
+                    
+                    // Сбрасываем флаги для перезапуска
+                    isScannerInitialized = false;
+                    
+                    // Для мобильных устройств принудительно перезапускаем
+                    if (isMobile) {
+                        console.log('Мобильное устройство: принудительный перезапуск сканера');
+                        isScanning = true;
+                    }
+                    
                     // Перезапускаем сканер для всех устройств одинаково
                     initQRScanner();
                 }
