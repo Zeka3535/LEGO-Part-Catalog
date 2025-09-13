@@ -22181,6 +22181,19 @@ async function preloadImages() {
 }
 
 async function initializeApp() {
+    // Простая блокировка навигации браузера
+    console.log('🚫 Блокируем навигацию браузера для одностраничного приложения');
+    
+    // Блокируем кнопку "назад" через popstate
+    window.addEventListener('popstate', (event) => {
+        console.log('🚫 Попытка навигации назад заблокирована');
+        // Возвращаемся на текущую страницу
+        window.history.pushState(null, '', window.location.href);
+    });
+    
+    // Блокируем кнопку "вперед" через pushState
+    window.history.pushState(null, '', window.location.href);
+    
     // Проверяем, не является ли это OAuth callback, чтобы предотвратить циклические перезагрузки
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('code') || urlParams.has('state') || urlParams.has('access_token')) {
