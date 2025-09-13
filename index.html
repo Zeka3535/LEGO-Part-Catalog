@@ -25963,15 +25963,9 @@ function animateCloseButtonClick(button) {
                         console.log('Запуск сканера после запуска камеры...');
                         console.log('isMobile:', isMobile, 'isScanning:', isScanning);
                         
-                        if (isMobile) {
-                            // Для мобильных устройств запускаем мобильный сканер
-                            console.log('Запускаем мобильный сканер...');
-                            startMobileScanner();
-                        } else {
-                            // Для ПК используем стандартный сканер
-                            console.log('Запускаем стандартный сканер...');
-                            initQRScanner();
-                        }
+                        // Для всех устройств используем стандартный сканер
+                        console.log('Запускаем сканер...');
+                        initQRScanner();
                     }
                 };
                 
@@ -26076,7 +26070,7 @@ function animateCloseButtonClick(button) {
             console.log('Камера остановлена');
         }
         
-        // Запуск мобильного сканера
+        // Запуск мобильного сканера (упрощенная версия как на ПК)
         function startMobileScanner() {
             console.log('Инициализация мобильного сканера...');
             console.log('isScanning:', isScanning, 'isMobile:', isMobile);
@@ -26093,53 +26087,47 @@ function animateCloseButtonClick(button) {
             // Создаем новый мобильный сканер
             mobileScanner = new ZXing.BrowserMultiFormatReader();
             
-            // Настройки для мобильного сканера
+            // Настройки для мобильного сканера (аналогично ПК)
             const mobileHints = new Map();
             mobileHints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
                 ZXing.BarcodeFormat.QR_CODE,
                 ZXing.BarcodeFormat.DATA_MATRIX,
                 ZXing.BarcodeFormat.CODE_128,
-                ZXing.BarcodeFormat.CODE_39
+                ZXing.BarcodeFormat.CODE_39,
+                ZXing.BarcodeFormat.EAN_13,
+                ZXing.BarcodeFormat.EAN_8,
+                ZXing.BarcodeFormat.UPC_A,
+                ZXing.BarcodeFormat.UPC_E
             ]);
             mobileHints.set(ZXing.DecodeHintType.TRY_HARDER, true);
             mobileHints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
-            mobileHints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
+            mobileHints.set(ZXing.DecodeHintType.PURE_BARCODE, true);
+            mobileHints.set(ZXing.DecodeHintType.CHARACTER_SET, 'UTF-8');
             
-            // Функция сканирования одного кадра
-            const scanSingleFrame = () => {
-                if (!isScanning || !mobileScanner) return;
-                
-                const video = document.getElementById('scanner-video');
-                if (!video || video.readyState !== 4) {
-                    // Видео еще не готово, повторяем через 100ms
-                    setTimeout(scanSingleFrame, 100);
-                    return;
-                }
-                
-                mobileScanner.decodeFromVideoElement(video, mobileHints).then(result => {
-                    console.log('Найден код (мобильный):', result);
-                    handleScanResult(result);
-                    
-                    // После успешного сканирования перезапускаем сканер через 2 секунды
-                    console.log('Перезапуск мобильного сканера через 2 секунды...');
-                    setTimeout(() => {
-                        if (isScanning) {
-                            startMobileScanner();
-                        }
-                    }, 2000);
-                    
-                }).catch(error => {
-                    if (!(error instanceof ZXing.NotFoundException)) {
-                        console.log('Ошибка сканирования (мобильный):', error.name);
-                    }
-                    
-                    // Продолжаем сканирование через 50ms для высокой частоты
-                    setTimeout(scanSingleFrame, 50);
-                });
+            // Опции для мобильного сканера
+            const mobileOptions = {
+                delayBetweenScanSuccess: 2000, // 2 секунды между успешными сканированиями
+                delayBetweenScanAttempts: 200, // 200ms между попытками
+                tryHarder: true,
+                tryHarderThreshold: 0.5
             };
             
-            // Запускаем сканирование
-            scanSingleFrame();
+            try {
+                // Используем тот же метод что и на ПК - decodeFromVideoDevice
+                console.log('Запуск мобильного сканирования через decodeFromVideoDevice...');
+                mobileScanner.decodeFromVideoDevice(undefined, video, (result, error) => {
+                    if (result) {
+                        console.log('Найден код (мобильный):', result);
+                        handleScanResult(result);
+                    }
+                    // Игнорируем ошибки NotFoundException - они нормальны
+                }, mobileHints, mobileOptions);
+                
+                console.log('Мобильный сканер запущен успешно');
+            } catch (error) {
+                console.error('Ошибка запуска мобильного сканера:', error);
+                alert('Ошибка запуска мобильного сканера: ' + error.message);
+            }
         }
         
         // Инициализация QR сканера
@@ -26201,25 +26189,19 @@ function animateCloseButtonClick(button) {
                     tryHarderThreshold: isMobile ? 0.5 : 0.8 // Порог для мобильных устройств
                 };
                 
-                // Для мобильных устройств используем улучшенный метод
-                if (isMobile) {
-                    console.log('Запуск мобильного сканирования через initQRScanner...');
-                    startMobileScanner();
-                } else {
-                    // Для ПК используем стандартный метод
-                    scanner.decodeFromVideoDevice(undefined, video, (result, error) => {
-                        if (result) {
-                            console.log('Найден код:', result);
-                            handleScanResult(result);
-                        }
-                        // Полностью игнорируем ошибки NotFoundException - они нормальны
-                        // Не выводим их в консоль, чтобы избежать спама
-                    }, hints, options);
-                }
+                // Для всех устройств используем одинаковый метод
+                scanner.decodeFromVideoDevice(undefined, video, (result, error) => {
+                    if (result) {
+                        console.log('Найден код:', result);
+                        handleScanResult(result);
+                    }
+                    // Полностью игнорируем ошибки NotFoundException - они нормальны
+                    // Не выводим их в консоль, чтобы избежать спама
+                }, hints, options);
                 
                 console.log('QR сканер запущен');
                 if (isMobile) {
-                    console.log('Мобильный режим: используем decodeFromVideoElement с частотой 200ms');
+                    console.log('Мобильный режим: используем decodeFromVideoDevice с оптимизированными настройками');
                     console.log('Поддерживаемые форматы:', Array.from(hints.get(ZXing.DecodeHintType.POSSIBLE_FORMATS)));
                 }
             } catch (error) {
@@ -26270,14 +26252,9 @@ function animateCloseButtonClick(button) {
                 // Запустить сканирование
                 isScanning = true;
                 
-                if (isMobile) {
-                    // Для мобильных устройств запускаем мобильный сканер
-                    startMobileScanner();
-                } else {
-                    // Для ПК используем стандартный сканер
-                    if (!isScannerInitialized) {
-                        initQRScanner();
-                    }
+                // Для всех устройств используем стандартный сканер
+                if (!isScannerInitialized) {
+                    initQRScanner();
                 }
                 
                 if (toggleBtn) {
@@ -26458,14 +26435,9 @@ function animateCloseButtonClick(button) {
             
             // Временно остановить сканирование для показа результата
             setTimeout(() => {
-                if (isScanning) {
-                    if (isMobile) {
-                        // Для мобильных устройств перезапускаем мобильный сканер
-                        startMobileScanner();
-                    } else if (scanner) {
-                        // Для ПК перезапускаем стандартный сканер
-                        initQRScanner();
-                    }
+                if (isScanning && scanner) {
+                    // Перезапускаем сканер для всех устройств одинаково
+                    initQRScanner();
                 }
             }, 2000);
         }
