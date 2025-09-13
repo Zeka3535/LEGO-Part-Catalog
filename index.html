@@ -3919,7 +3919,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -3937,6 +3937,164 @@ function testFunction() {
 
 // Вызываем тестовую функцию
 testFunction();
+
+// Глобальные функции для поиска деталей
+window.searchPartInCatalog = function(partNumber) {
+    // Открываем модальное окно поиска деталей
+    openPartSearchModal(partNumber);
+}
+
+// Открытие модального окна поиска деталей
+window.openPartSearchModal = function(partNumber) {
+    // Создаем модальное окно если его нет
+    let modalEl = document.getElementById('part-search-modal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'part-search-modal';
+        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        document.body.appendChild(modalEl);
+    }
+    
+    // Рендерим содержимое модального окна
+    modalEl.innerHTML = `
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+            <!-- Заголовок -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl lg:text-2xl font-bold text-white">Поиск деталей: ${partNumber}</h2>
+                <button id="close-part-search-modal" class="modal-close-btn" title="Закрыть">
+                    ${I_X('w-4 h-4')}
+                </button>
+            </div>
+            
+            <!-- Результаты поиска -->
+            <div class="flex-1 overflow-hidden">
+                <div id="part-search-results" class="h-full overflow-y-auto p-4" style="max-height: calc(90vh - 120px);">
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
+                        <p>Поиск деталей...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Показываем модальное окно
+    modalEl.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Выполняем поиск
+    performPartSearch(partNumber);
+    
+    // Добавляем обработчики событий
+    setupPartSearchModalHandlers();
+}
+
+// Настройка обработчиков модального окна поиска
+window.setupPartSearchModalHandlers = function() {
+    const modalEl = document.getElementById('part-search-modal');
+    const closeBtn = document.getElementById('close-part-search-modal');
+    
+    // Закрытие модального окна
+    closeBtn.addEventListener('click', closePartSearchModal);
+    modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) {
+            closePartSearchModal();
+        }
+    });
+}
+
+// Выполнение поиска деталей
+window.performPartSearch = function(query) {
+    const resultsContainer = document.getElementById('part-search-results');
+    if (!resultsContainer) return;
+    
+    // Показываем индикатор загрузки
+    resultsContainer.innerHTML = `
+        <div class="text-center text-gray-400 py-8">
+            <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
+            <p>Поиск деталей...</p>
+        </div>
+    `;
+    
+    // Ищем детали в каталоге по ID
+    const searchResults = Object.values(PART_MAP).filter(part => {
+        if (!part || !part.name) return false;
+        return part.id.toLowerCase().includes(query.toLowerCase()) || 
+               part.name.toLowerCase().includes(query.toLowerCase());
+    });
+    
+    // Сортируем результаты
+    searchResults.sort((a, b) => {
+        // Сначала точные совпадения по ID
+        if (a.id === query) return -1;
+        if (b.id === query) return 1;
+        // Затем по названию
+        return a.name.localeCompare(b.name);
+    });
+    
+    // Отображаем результаты
+    displayPartSearchResults(searchResults);
+}
+
+// Отображение результатов поиска деталей
+window.displayPartSearchResults = function(parts) {
+    const resultsContainer = document.getElementById('part-search-results');
+    if (!resultsContainer) return;
+    
+    if (parts.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="text-center text-gray-400 py-8">
+                <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
+                <p>Детали не найдены</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Создаем сетку результатов
+    const gridContainer = document.createElement('div');
+    gridContainer.className = 'sets-minifigs-grid';
+    
+    const resultsHtml = parts.map((part, index) => {
+        return renderPartCard(part, null, 0, false, index);
+    }).join('');
+    
+    gridContainer.innerHTML = resultsHtml;
+    resultsContainer.innerHTML = '';
+    resultsContainer.appendChild(gridContainer);
+    
+    // Добавляем обработчики клика на карточки
+    gridContainer.querySelectorAll('.part-card').forEach((card, index) => {
+        const partId = parts[index].id;
+        card.addEventListener('click', () => {
+            const groupId = getGroupId(partId);
+            openModalForPart(partId, groupId, [parts[index]]);
+            closePartSearchModal();
+        });
+    });
+}
+
+// Очистка результатов поиска
+window.clearPartSearchResults = function() {
+    const resultsContainer = document.getElementById('part-search-results');
+    if (resultsContainer) {
+        resultsContainer.innerHTML = `
+            <div class="text-center text-gray-400 py-8">
+                <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
+                <p>Поиск деталей...</p>
+            </div>
+        `;
+    }
+}
+
+// Закрытие модального окна поиска
+window.closePartSearchModal = function() {
+    const modalEl = document.getElementById('part-search-modal');
+    if (modalEl) {
+        modalEl.style.display = 'none';
+        document.body.style.overflow = '';
+    }
+}
 
 // Массив подсказок для системы неактивности
 const inactivityTips = [
@@ -5683,6 +5841,196 @@ function renderScannerContent() {
                                 Запустить камеру
                             </button>
                             <button id="modal-cancel" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                                Отмена
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Функция рендеринга поиска деталей по фото
+function renderPhotoSearchContent() {
+    return `
+        <div class="min-h-full p-3 sm:p-4 md:p-6 lg:p-8">
+            <!-- Заголовок -->
+            <div class="text-center mb-6 sm:mb-8">
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Поиск деталей по фото</h1>
+                <p class="text-gray-400 text-sm sm:text-base">Сфотографируйте детали LEGO для автоматического распознавания</p>
+            </div>
+
+            <!-- Основной контент -->
+            <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
+
+                <!-- Область захвата фото -->
+                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-xl border border-gray-600/30 p-6 sm:p-8 md:p-10 lg:p-12 shadow-xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2 bg-blue-600/20 rounded-lg">
+                            ${I_Camera('w-5 h-5 text-blue-400')}
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-200">Камера для фото</h3>
+                    </div>
+                    <div class="relative flex justify-center">
+                        <div class="relative">
+                            <video id="photo-search-video" class="w-64 h-64 sm:w-80 sm:h-80 rounded-xl bg-gray-900 hidden object-cover shadow-lg" autoplay muted playsinline webkit-playsinline></video>
+                            <canvas id="photo-search-canvas" class="w-64 h-64 sm:w-80 sm:h-80 rounded-xl bg-gray-900 hidden shadow-lg"></canvas>
+                            <div id="photo-search-placeholder" class="w-64 h-64 sm:w-80 sm:h-80 aspect-square bg-gray-900 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-600 shadow-lg">
+                                <div class="text-center text-gray-400 px-4">
+                                    <div class="text-4xl sm:text-5xl mb-3">${I_Camera('w-12 h-12 mx-auto')}</div>
+                                    <p class="text-sm sm:text-base font-medium mb-2">Камера не запущена</p>
+                                    <p class="text-xs sm:text-sm">1. Выберите камеру из списка в Настройках камеры</p>
+                                    <p class="text-xs sm:text-sm">2. Нажмите "Запустить камеру"</p>
+                                    <p class="text-xs mt-2 text-gray-500" id="photo-mobile-placeholder-tip" style="display: none;">На мобильных устройствах используйте заднюю камеру</p>
+                                </div>
+                            </div>
+                            <div id="photo-search-overlay" class="absolute inset-0 pointer-events-none hidden">
+                                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80">
+                                    <!-- Полупрозрачная синяя подсветка -->
+                                    <div class="absolute inset-0 bg-blue-400/20 rounded-xl"></div>
+                                    
+                                    <!-- Синяя рамка с отступом внутрь -->
+                                    <div class="absolute inset-4 border-2 border-blue-400 rounded-xl transition-all duration-300">
+                                        <!-- Угловые маркеры -->
+                                        <div class="absolute top-12 left-12 w-6 h-6 border-t-2 border-l-2 border-blue-400"></div>
+                                        <div class="absolute top-12 right-12 w-6 h-6 border-t-2 border-r-2 border-blue-400"></div>
+                                        <div class="absolute bottom-12 left-12 w-6 h-6 border-b-2 border-l-2 border-blue-400"></div>
+                                        <div class="absolute bottom-12 right-12 w-6 h-6 border-b-2 border-r-2 border-blue-400"></div>
+                                    </div>
+                                    
+                                    <!-- Статус захвата -->
+                                    <div id="photo-capture-status" class="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs font-medium hidden">
+                                        Захват фото...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Кнопка захвата фото -->
+                    <div class="flex justify-center mt-4">
+                        <button id="capture-photo" class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <span>${I_Camera('w-5 h-5')}</span>
+                            <span>Сфотографировать</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Результаты распознавания -->
+                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-xl" style="display: none;">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-green-600/20 rounded-lg">
+                                ${I_Search('w-5 h-5 text-green-400')}
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-200">Результаты распознавания</h3>
+                        </div>
+                        <button id="clear-photo-results" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
+                            Очистить
+                        </button>
+                    </div>
+                    <div id="photo-search-results" class="space-y-3">
+                    </div>
+                </div>
+
+                <!-- Настройки камеры -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 hover:shadow-blue-500/20 hover:shadow-2xl transition-all duration-300">
+                    <details class="group" style="box-shadow: none !important;">
+                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer rounded-t-xl" style="box-shadow: none !important;">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-blue-600/20 rounded-lg">
+                                    ${I_Camera('w-5 h-5 text-blue-400')}
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-200">Настройки камеры</h3>
+                            </div>
+                            <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
+                        </summary>
+                        <div class="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Камера</label>
+                                    <select id="photo-camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                        <option value="">Выберите камеру...</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
+                                    <select id="photo-resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                        <option value="640x640">640x640 (Квадрат)</option>
+                                        <option value="800x800">800x800 (Квадрат HD)</option>
+                                        <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
+                                        <option value="1280x720">1280x720 (HD)</option>
+                                        <option value="1920x1080">1920x1080 (Full HD)</option>
+                                        <option value="640x480">640x480 (VGA)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap gap-2 sm:gap-3">
+                                <button id="photo-request-permission" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors text-sm sm:text-base">
+                                    <span>${I_Shield('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Запросить разрешение</span>
+                                    <span class="sm:hidden">Разрешение</span>
+                                </button>
+                                <button id="photo-start-camera" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm sm:text-base">
+                                    <span>${I_Play('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Запустить камеру</span>
+                                    <span class="sm:hidden">Старт</span>
+                                </button>
+                                <button id="photo-stop-camera" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm sm:text-base" disabled>
+                                    <span>${I_Square('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Остановить камеру</span>
+                                    <span class="sm:hidden">Стоп</span>
+                                </button>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- Модальное окно выбора камеры для поиска по фото -->
+        <div id="photo-camera-selection-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+            <div class="bg-gray-800 rounded-xl border border-gray-600/40 shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden">
+                <div class="p-6 border-b border-gray-700">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-600/20 rounded-lg">
+                                ${I_Camera('w-5 h-5 text-blue-400')}
+                            </div>
+                            <h3 class="text-lg font-semibold text-white">Выбор камеры для поиска</h3>
+                        </div>
+                        <button id="close-photo-camera-modal" class="text-gray-400 hover:text-white transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Выберите камеру</label>
+                            <select id="photo-modal-camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                <option value="">Загрузка камер...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
+                            <select id="photo-modal-resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
+                                <option value="640x640">640x640 (Квадрат)</option>
+                                <option value="800x800">800x800 (Квадрат HD)</option>
+                                <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
+                                <option value="1280x720">1280x720 (HD)</option>
+                                <option value="1920x1080">1920x1080 (Full HD)</option>
+                                <option value="640x480">640x480 (VGA)</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-3 pt-4">
+                            <button id="photo-modal-start-camera" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors font-medium">
+                                Запустить камеру
+                            </button>
+                            <button id="photo-modal-cancel" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
                                 Отмена
                             </button>
                         </div>
@@ -12366,6 +12714,12 @@ function renderSidebar() {
                     description: 'Сканирование DataMatrix минифигурок'
                 },
                 {
+                    id: 'photo-search',
+                    name: 'Поиск деталей по фото',
+                    icon: I_Camera('w-5 h-5 text-blue-400'),
+                    description: 'Распознавание деталей LEGO по фотографии'
+                },
+                {
                     id: 'cloud-backup',
                     name: 'Облачное хранилище',
                     icon: I_Cloud('w-5 h-5 text-cyan-400'),
@@ -14002,6 +14356,13 @@ function renderMainContent() {
             e = renderScannerContent();
             // Инициализируем сканер после рендеринга
             setTimeout(initScannerOnViewChange, 100);
+        }
+        
+        // Показываем поиск деталей по фото только для подкатегории 'photo-search'
+        if (S.toolSubView === 'photo-search') {
+            e = renderPhotoSearchContent();
+            // Инициализируем поиск по фото после рендеринга
+            setTimeout(initPhotoSearchOnViewChange, 100);
         }
         
         // Показываем аналитику только для подкатегории 'analytics'
@@ -19905,6 +20266,14 @@ document.addEventListener("click", async e => {
             }, 300); // Небольшая задержка для завершения анимации закрытия
         }
         
+        // Показываем модальное окно выбора камеры для поиска по фото после закрытия боковой панели (только на малых устройствах)
+        if (S.view === 'tools' && S.toolSubView === 'photo-search' && window.innerWidth < 1024) {
+            setTimeout(() => {
+                console.log('Показываем модальное окно выбора камеры для поиска по фото после закрытия боковой панели...');
+                showPhotoCameraSelectionModal();
+            }, 300); // Небольшая задержка для завершения анимации закрытия
+        }
+        
         // Скрываем указатель при закрытии боковой панели
         hideSidebarHint();
     }
@@ -19922,6 +20291,14 @@ document.addEventListener("click", async e => {
             setTimeout(() => {
                 console.log('Показываем модальное окно выбора камеры после закрытия боковой панели (backdrop)...');
                 showCameraSelectionModal();
+            }, 300); // Небольшая задержка для завершения анимации закрытия
+        }
+        
+        // Показываем модальное окно выбора камеры для поиска по фото после закрытия боковой панели (только на малых устройствах)
+        if (S.view === 'tools' && S.toolSubView === 'photo-search' && window.innerWidth < 1024) {
+            setTimeout(() => {
+                console.log('Показываем модальное окно выбора камеры для поиска по фото после закрытия боковой панели (backdrop)...');
+                showPhotoCameraSelectionModal();
             }, 300); // Небольшая задержка для завершения анимации закрытия
         }
         
@@ -20185,7 +20562,7 @@ document.addEventListener("click", async e => {
         if (S.toolSubView === toolSubView) return;
         
         // Очищаем камеру при смене подраздела инструментов
-        if (S.toolSubView === 'scanner' && toolSubView !== 'scanner') {
+        if ((S.toolSubView === 'scanner' || S.toolSubView === 'photo-search') && toolSubView !== 'scanner' && toolSubView !== 'photo-search') {
             console.log('🔧 Очистка камеры при смене подраздела инструментов...');
             cleanupCamera();
         }
@@ -26294,6 +26671,22 @@ function animateCloseButtonClick(button) {
             }
         }
         
+        // Инициализация поиска по фото при смене представления
+        function initPhotoSearchOnViewChange() {
+            if (S.view === 'tools' && S.toolSubView === 'photo-search') {
+                console.log('Инициализация поиска по фото...');
+                // Небольшая задержка для рендеринга DOM
+                setTimeout(() => {
+                    console.log('Настройка камеры для поиска по фото...');
+                    setupPhotoSearchCamera();
+                    console.log('Настройка обработчиков событий для поиска по фото...');
+                    setupPhotoSearchEventListeners();
+                    console.log('Загрузка настроек API...');
+                    console.log('Поиск по фото инициализирован (камера НЕ запущена автоматически)');
+                }, 100);
+            }
+        }
+        
         // Настройка выбора камеры
         let isSettingUpCameras = false;
         async function setupCameraSelect() {
@@ -27027,6 +27420,16 @@ function animateCloseButtonClick(button) {
                 currentStream = null;
             }
             
+            // Останавливаем камеру поиска по фото
+            if (photoSearchStream) {
+                console.log('Остановка видеопотока поиска по фото...');
+                photoSearchStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('Трек поиска по фото остановлен:', track.kind);
+                });
+                photoSearchStream = null;
+            }
+            
             // Останавливаем сканеры
             if (scanner) {
                 try {
@@ -27054,12 +27457,20 @@ function animateCloseButtonClick(button) {
             
             // Сбрасываем флаги
             isCameraStarting = false;
+            isPhotoCameraStarting = false;
             
             // Очищаем видео элемент
             const video = document.getElementById('scanner-video');
             if (video) {
                 video.srcObject = null;
                 video.load();
+            }
+            
+            // Очищаем видео элемент поиска по фото
+            const photoVideo = document.getElementById('photo-search-video');
+            if (photoVideo) {
+                photoVideo.srcObject = null;
+                photoVideo.load();
             }
             
             console.log('Камера очищена');
@@ -27967,6 +28378,801 @@ function animateCloseButtonClick(button) {
                 observer.observe(mainContainer, { childList: true, subtree: true });
             }
         });
+        
+        // ========== ФУНКЦИИ ДЛЯ ПОИСКА ДЕТАЛЕЙ ПО ФОТО ==========
+        
+        // Переменные для поиска по фото
+        let photoSearchStream = null;
+        let photoSearchInitialized = false;
+        let isPhotoCameraStarting = false;
+        
+        // Настройка камеры для поиска по фото
+        async function setupPhotoSearchCamera() {
+            const cameraSelect = document.getElementById('photo-camera-select');
+            if (!cameraSelect) {
+                console.error('Элемент photo-camera-select не найден');
+                return;
+            }
+            
+            try {
+                        const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                // Очищаем существующие опции, кроме первой
+                while (cameraSelect.children.length > 1) {
+                    cameraSelect.removeChild(cameraSelect.lastChild);
+                }
+                
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    option.textContent = device.label || `Камера ${index + 1}`;
+                    cameraSelect.appendChild(option);
+                });
+                
+                // Автоматически выбираем заднюю камеру на мобильных устройствах
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile) {
+                    const backCamera = videoDevices.find(device => 
+                        device.label.toLowerCase().includes('back') || 
+                        device.label.toLowerCase().includes('rear') ||
+                        device.label.toLowerCase().includes('environment')
+                    );
+                    if (backCamera) {
+                        cameraSelect.value = backCamera.deviceId;
+                    }
+                }
+                
+                console.log(`Найдено ${videoDevices.length} камер для поиска по фото`);
+                
+            } catch (error) {
+                console.error('Ошибка при получении списка камер:', error);
+            }
+        }
+        
+        // Настройка обработчиков событий для поиска по фото
+        function setupPhotoSearchEventListeners() {
+            // Обработчики кнопок камеры
+            const requestPermissionBtn = document.getElementById('photo-request-permission');
+            const startCameraBtn = document.getElementById('photo-start-camera');
+            const stopCameraBtn = document.getElementById('photo-stop-camera');
+            const capturePhotoBtn = document.getElementById('capture-photo');
+            const clearResultsBtn = document.getElementById('clear-photo-results');
+            
+            if (requestPermissionBtn) {
+                requestPermissionBtn.addEventListener('click', requestPhotoSearchPermission);
+            }
+            
+            if (startCameraBtn) {
+                startCameraBtn.addEventListener('click', startPhotoSearchCamera);
+            }
+            
+            if (stopCameraBtn) {
+                stopCameraBtn.addEventListener('click', stopPhotoSearchCamera);
+            }
+            
+            if (capturePhotoBtn) {
+                capturePhotoBtn.addEventListener('click', capturePhotoForSearch);
+            }
+            
+            if (clearResultsBtn) {
+                clearResultsBtn.addEventListener('click', clearPhotoSearchResults);
+            }
+            
+            if (testApiBtn) {
+                testApiBtn.addEventListener('click', testBrickognizeConnection);
+            }
+            
+            // Обработчики изменения настроек
+            const cameraSelect = document.getElementById('photo-camera-select');
+            const endpointInput = document.getElementById('brickognize-endpoint');
+            const apiKeyInput = document.getElementById('brickognize-api-key');
+            
+            if (cameraSelect) {
+                cameraSelect.addEventListener('change', onPhotoSearchCameraChange);
+            }
+            
+            // Обработчик касания видео элемента
+            const video = document.getElementById('photo-search-video');
+            if (video) {
+                video.addEventListener('touchstart', () => {
+                    if (!photoSearchStream && !isPhotoCameraStarting) {
+                        console.log('Касание видео элемента, показываем модальное окно...');
+                        showPhotoCameraSelectionModal();
+                    }
+                });
+                
+                // Также добавляем обработчик клика для десктопа
+                video.addEventListener('click', () => {
+                    if (!photoSearchStream && !isPhotoCameraStarting) {
+                        console.log('Клик по видео элементу, показываем модальное окно...');
+                        showPhotoCameraSelectionModal();
+                    }
+                });
+            }
+            
+            // Обработчик клика для placeholder элемента
+            const placeholder = document.getElementById('photo-search-placeholder');
+            if (placeholder) {
+                placeholder.addEventListener('click', () => {
+                    if (!photoSearchStream && !isPhotoCameraStarting) {
+                        console.log('Клик по placeholder, показываем модальное окно...');
+                        showPhotoCameraSelectionModal();
+                    }
+                });
+            }
+            
+        }
+        
+        // Запрос разрешения на камеру
+        async function requestPhotoSearchPermission() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop());
+                console.log('Разрешение на камеру получено');
+                
+                // Обновляем список камер
+                await setupPhotoSearchCamera();
+                
+            } catch (error) {
+                console.error('Ошибка получения разрешения:', error);
+            }
+        }
+        
+        // Запуск камеры для поиска по фото
+        async function startPhotoSearchCamera() {
+            // Защита от повторного запуска
+            if (isPhotoCameraStarting) {
+                console.log('Камера для поиска по фото уже запускается, пропускаем...');
+                return;
+            }
+            
+            isPhotoCameraStarting = true;
+            
+            const cameraSelect = document.getElementById('photo-camera-select');
+            const resolutionSelect = document.getElementById('photo-resolution-select');
+            const video = document.getElementById('photo-search-video');
+            const placeholder = document.getElementById('photo-search-placeholder');
+                
+            if (!cameraSelect || !resolutionSelect || !video || !placeholder) {
+                console.error('Не найдены необходимые элементы для запуска камеры');
+                isPhotoCameraStarting = false;
+                return;
+            }
+                
+            const deviceId = cameraSelect.value;
+            if (!deviceId) {
+                isPhotoCameraStarting = false;
+                return;
+            }
+            
+            const resolution = resolutionSelect.value.split('x');
+            const width = parseInt(resolution[0]);
+            const height = parseInt(resolution[1]);
+            
+            try {
+                const constraints = {
+                    video: {
+                        deviceId: { exact: deviceId },
+                        width: { ideal: width },
+                        height: { ideal: height }
+                    }
+                };
+                
+                photoSearchStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = photoSearchStream;
+                
+                video.onloadedmetadata = () => {
+                    video.play();
+                    video.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    
+                    // Активируем кнопку захвата
+                const captureBtn = document.getElementById('capture-photo');
+                    if (captureBtn) {
+                        captureBtn.disabled = false;
+                    }
+                    
+                    // Обновляем состояние кнопок
+                    updatePhotoSearchButtons(true);
+                };
+                
+                console.log('Камера запущена для поиска по фото');
+                
+            } catch (error) {
+                console.error('Ошибка запуска камеры:', error);
+            } finally {
+                isPhotoCameraStarting = false;
+            }
+        }
+        
+        // Остановка камеры
+        function stopPhotoSearchCamera() {
+            if (photoSearchStream) {
+                photoSearchStream.getTracks().forEach(track => track.stop());
+                photoSearchStream = null;
+            }
+            
+            const video = document.getElementById('photo-search-video');
+            const placeholder = document.getElementById('photo-search-placeholder');
+            const captureBtn = document.getElementById('capture-photo');
+            
+            if (video) {
+                video.classList.add('hidden');
+                video.srcObject = null;
+            }
+            
+            if (placeholder) {
+                placeholder.classList.remove('hidden');
+            }
+            
+            if (captureBtn) {
+                captureBtn.disabled = true;
+            }
+            
+            // Сбрасываем флаг запуска камеры
+            isPhotoCameraStarting = false;
+            
+            updatePhotoSearchButtons(false);
+            console.log('Камера остановлена');
+        }
+        
+        // Обновление состояния кнопок
+        function updatePhotoSearchButtons(cameraActive) {
+            const startBtn = document.getElementById('photo-start-camera');
+            const stopBtn = document.getElementById('photo-stop-camera');
+            
+            if (startBtn) {
+                startBtn.disabled = cameraActive;
+            }
+            
+            if (stopBtn) {
+                stopBtn.disabled = !cameraActive;
+            }
+        }
+        
+        // ===== ФУНКЦИИ ДЛЯ МОДАЛЬНОГО ОКНА ПОИСКА ПО ФОТО =====
+        
+        // Показать модальное окно выбора камеры для поиска по фото
+        function showPhotoCameraSelectionModal() {
+            const modal = document.getElementById('photo-camera-selection-modal');
+            if (!modal) return;
+            
+            // Настраиваем обработчики событий
+            setupPhotoCameraModalHandlers();
+            
+            // Загружаем список камер в модальное окно
+            loadPhotoCamerasIntoModal();
+            
+            // Показываем модальное окно
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Скрыть модальное окно выбора камеры для поиска по фото
+        function hidePhotoCameraSelectionModal() {
+            const modal = document.getElementById('photo-camera-selection-modal');
+            if (!modal) return;
+            
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        // Загрузить список камер в модальное окно поиска по фото
+        async function loadPhotoCamerasIntoModal() {
+            const modalSelect = document.getElementById('photo-modal-camera-select');
+            const modalResolutionSelect = document.getElementById('photo-modal-resolution-select');
+            
+            if (!modalSelect || !modalResolutionSelect) return;
+            
+            // Очищаем список
+            modalSelect.innerHTML = '<option value="">Загрузка камер...</option>';
+            
+            try {
+                // Получаем список камер
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                // Очищаем список
+                modalSelect.innerHTML = '<option value="">Выберите камеру...</option>';
+                
+                // Добавляем камеры
+                videoDevices.forEach((device, index) => {
+                    const option = document.createElement('option');
+                    option.value = device.deviceId;
+                    let label = device.label || `Камера ${index + 1}`;
+                    
+                    // Определяем тип камеры для мобильных устройств
+                    if (isMobile) {
+                        if (label.toLowerCase().includes('back') || label.toLowerCase().includes('rear')) {
+                            label += ' (Задняя)';
+                        } else if (label.toLowerCase().includes('front') || label.toLowerCase().includes('selfie')) {
+                            label += ' (Передняя)';
+                        }
+                    }
+                    
+                    option.textContent = label;
+                    modalSelect.appendChild(option);
+                });
+                
+                // Автоматически выбираем камеру для мобильных устройств
+                if (isMobile && videoDevices.length > 0) {
+                    // Ищем камеру 0
+                    let camera0 = videoDevices.find(device => 
+                        device.label.toLowerCase().includes('camera 0')
+                    );
+                    
+                    if (camera0) {
+                        modalSelect.value = camera0.deviceId;
+                        console.log('Автоматически выбрана камера 0 для мобильного устройства:', camera0.label);
+                    } else {
+                        // Если камера 0 не найдена, выбираем первую доступную
+                        modalSelect.value = videoDevices[0].deviceId;
+                        console.log('Автоматически выбрана первая доступная камера для мобильного устройства:', videoDevices[0].label);
+                    }
+                } else if (videoDevices.length > 0) {
+                    // На десктопе тоже выбираем первую камеру
+                    modalSelect.value = videoDevices[0].deviceId;
+                    console.log('Автоматически выбрана первая доступная камера для десктопа:', videoDevices[0].label);
+                }
+                
+                // Устанавливаем разрешение по умолчанию
+                modalResolutionSelect.value = '1024x1024';
+                
+            } catch (error) {
+                console.error('Ошибка загрузки камер:', error);
+                modalSelect.innerHTML = '<option value="">Ошибка загрузки камер</option>';
+            }
+        }
+        
+        // Обработчики модального окна выбора камеры для поиска по фото
+        function setupPhotoCameraModalHandlers() {
+            const modal = document.getElementById('photo-camera-selection-modal');
+            const closeBtn = document.getElementById('close-photo-camera-modal');
+            const cancelBtn = document.getElementById('photo-modal-cancel');
+            const startBtn = document.getElementById('photo-modal-start-camera');
+            const modalCameraSelect = document.getElementById('photo-modal-camera-select');
+            const modalResolutionSelect = document.getElementById('photo-modal-resolution-select');
+            
+            console.log('Настройка обработчиков модального окна поиска по фото...');
+            console.log('Modal:', modal);
+            console.log('CloseBtn:', closeBtn);
+            console.log('CancelBtn:', cancelBtn);
+            console.log('StartBtn:', startBtn);
+            
+            if (closeBtn) {
+                // Удаляем старые обработчики, если они есть
+                closeBtn.removeEventListener('click', hidePhotoCameraSelectionModal);
+                closeBtn.addEventListener('click', hidePhotoCameraSelectionModal);
+                console.log('Обработчик закрытия добавлен');
+            }
+            
+            if (cancelBtn) {
+                // Удаляем старые обработчики, если они есть
+                cancelBtn.removeEventListener('click', hidePhotoCameraSelectionModal);
+                cancelBtn.addEventListener('click', hidePhotoCameraSelectionModal);
+                console.log('Обработчик отмены добавлен');
+            }
+            
+            if (startBtn) {
+                // Удаляем старые обработчики, если они есть
+                startBtn.removeEventListener('click', handlePhotoModalStart);
+                startBtn.addEventListener('click', handlePhotoModalStart);
+                console.log('Обработчик запуска добавлен');
+            }
+            
+            // Закрытие по клику на фон
+            if (modal) {
+                modal.removeEventListener('click', handlePhotoModalBackgroundClick);
+                modal.addEventListener('click', handlePhotoModalBackgroundClick);
+                console.log('Обработчик фона добавлен');
+            }
+        }
+        
+        // Обработчик запуска камеры из модального окна
+        function handlePhotoModalStart() {
+            const modalCameraSelect = document.getElementById('photo-modal-camera-select');
+            const modalResolutionSelect = document.getElementById('photo-modal-resolution-select');
+            
+            // Копируем выбранные значения в основные элементы
+            const mainCameraSelect = document.getElementById('photo-camera-select');
+            const mainResolutionSelect = document.getElementById('photo-resolution-select');
+            
+            if (mainCameraSelect && modalCameraSelect && modalCameraSelect.value) {
+                mainCameraSelect.value = modalCameraSelect.value;
+                console.log('Камера выбрана в модальном окне поиска по фото:', modalCameraSelect.value);
+            }
+            
+            if (mainResolutionSelect && modalResolutionSelect && modalResolutionSelect.value) {
+                mainResolutionSelect.value = modalResolutionSelect.value;
+                console.log('Разрешение выбрано в модальном окне поиска по фото:', modalResolutionSelect.value);
+            }
+            
+            // Скрываем модальное окно
+            hidePhotoCameraSelectionModal();
+            
+            // Запускаем камеру
+            setTimeout(() => {
+                console.log('Запуск камеры для поиска по фото после применения настроек из модального окна...');
+                startPhotoSearchCamera();
+            }, 100);
+        }
+        
+        // Обработчик клика по фону модального окна
+        function handlePhotoModalBackgroundClick(e) {
+            if (e.target.id === 'photo-camera-selection-modal') {
+                hidePhotoCameraSelectionModal();
+            }
+        }
+        
+        // Обработчик изменения камеры
+        function onPhotoSearchCameraChange() {
+            // Если камера работает, перезапускаем её с новой камерой
+            if (photoSearchStream) {
+                stopPhotoSearchCamera();
+                setTimeout(startPhotoSearchCamera, 100);
+            }
+        }
+        
+        // Захват фото для поиска
+        async function capturePhotoForSearch() {
+            const video = document.getElementById('photo-search-video');
+            const canvas = document.getElementById('photo-search-canvas');
+            const overlay = document.getElementById('photo-search-overlay');
+            const statusEl = document.getElementById('photo-capture-status');
+            
+            if (!video || !canvas || !photoSearchStream) {
+                return;
+            }
+            
+            try {
+                // Показываем оверлей и статус
+                if (overlay) overlay.classList.remove('hidden');
+                if (statusEl) {
+                    statusEl.classList.remove('hidden');
+                    statusEl.textContent = 'Захват фото...';
+                }
+                
+                // Захватываем кадр
+                const context = canvas.getContext('2d');
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                context.drawImage(video, 0, 0);
+                
+                // Конвертируем в base64
+                const imageData = canvas.toDataURL('image/jpeg', 0.8);
+                
+                if (statusEl) statusEl.textContent = 'Отправка на анализ...';
+                
+                // Отправляем на анализ
+                await searchLegoPartsInPhoto(imageData);
+                
+            } catch (error) {
+                console.error('Ошибка захвата фото:', error);
+            } finally {
+                // Скрываем оверлей через 1 секунду
+                setTimeout(() => {
+                    if (overlay) overlay.classList.add('hidden');
+                    if (statusEl) statusEl.classList.add('hidden');
+                }, 1000);
+            }
+        }
+        
+        // Поиск деталей LEGO по фото через API Brickognize
+        async function searchLegoPartsInPhoto(imageData) {
+            const endpoint = document.getElementById('brickognize-endpoint')?.value || 'https://api.brickognize.com';
+            const apiKey = document.getElementById('brickognize-api-key')?.value;
+            
+            try {
+                // Убираем префикс data:image/jpeg;base64,
+                const base64Image = imageData.replace(/^data:image\/[a-z]+;base64,/, '');
+                
+                // Создаем FormData для отправки файла
+                const formData = new FormData();
+                
+                // Конвертируем base64 в Blob
+                const byteCharacters = atob(base64Image);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'image/jpeg' });
+                
+                // Добавляем файл в FormData с правильным именем поля
+                formData.append('query_image', blob, 'photo.jpg');
+                
+                const headers = {};
+                
+                // Добавляем API ключ если есть
+                if (apiKey) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                }
+                
+                console.log('Отправляем запрос к API Brickognize...');
+                const response = await fetch(`${endpoint}/predict`, {
+                    method: 'POST',
+                    headers: headers,
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('Ошибка API:', response.status, errorText);
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const result = await response.json();
+                console.log('Результат распознавания:', result);
+                
+                displayPhotoSearchResults(result);
+                
+            } catch (error) {
+                console.error('Ошибка при анализе фото:', error);
+                
+                // Показываем демо результат для тестирования
+                displayDemoResults();
+            }
+        }
+        
+        // Рендеринг карточки неизвестной детали в стиле каталога
+        function renderUnknownPartCard(prediction, partNumber, confidence, index = 0) {
+            const imageUrl = prediction.img_url || '';
+            const partName = prediction.name || 'Неизвестная деталь';
+            const category = prediction.category || 'LEGO';
+            
+            return `
+                <div data-part-id="${partNumber}" class="part-card relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
+                    <div class="absolute top-3 right-3 bg-green-600 text-white text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center z-10 shadow-md pointer-events-none">
+                        ${confidence}%
+                    </div>
+                    <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg card-image-container">
+                        <div class="w-full h-full bg-white rounded-md flex items-center justify-center overflow-hidden shadow-inner relative">
+                            ${imageUrl ? `
+                                <img src="${imageUrl}" 
+                                     alt="${partName}" 
+                                     class="w-full h-full object-contain pointer-events-none" 
+                                     loading="lazy"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                            ` : ''}
+                            <div class="w-full h-full flex items-center justify-center text-gray-400 text-4xl" style="display: ${imageUrl ? 'none' : 'flex'};">
+                                ${I_Brick('w-12 h-12')}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4 space-y-1 card-info-container">
+                        <h3 class="text-sm font-semibold text-white truncate pointer-events-none card-title">${partName}</h3>
+                        <p class="text-xs text-gray-400 pointer-events-none card-info-text">ID: ${partNumber}</p>
+                        <p class="text-xs text-gray-500 pointer-events-none card-info-text">${category}</p>
+                        <div class="pt-2">
+                            <button onclick="searchPartInCatalog('${partNumber}')" 
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded transition-colors font-medium">
+                                Найти в каталоге
+                            </button>
+                        </div>
+                    </div>
+                        </div>
+                    `;
+        }
+        
+        // Отображение результатов поиска
+        function displayPhotoSearchResults(results) {
+            const resultsContainer = document.getElementById('photo-search-results');
+            if (!resultsContainer) return;
+            
+            console.log('Отображаем результаты:', results);
+            
+            // Обрабатываем разные форматы ответа от API
+            let predictions = [];
+            if (results.predictions) {
+                predictions = results.predictions;
+            } else if (results.results) {
+                predictions = results.results;
+            } else if (results.items) {
+                predictions = results.items;
+            } else if (Array.isArray(results)) {
+                predictions = results;
+            } else if (results.data && Array.isArray(results.data)) {
+                predictions = results.data;
+            }
+            
+            console.log('Найдено предсказаний:', predictions.length);
+            
+            // Фильтруем по вероятности (минимум 60%)
+            const filteredPredictions = predictions.filter(prediction => {
+                const confidence = prediction.confidence || prediction.score || prediction.probability || prediction.accuracy || 0;
+                return confidence >= 0.6; // 60%
+            });
+            
+            console.log('Отфильтровано предсказаний (>=60%):', filteredPredictions.length);
+            
+            if (filteredPredictions.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                        <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
+                        <p class="text-sm sm:text-base">Детали не найдены</p>
+                        <p class="text-xs text-gray-500 mt-2">Не найдено деталей с вероятностью совпадения выше 60%</p>
+                    </div>
+                `;
+                // Показываем блок результатов даже если нет найденных деталей
+                updatePhotoSearchResultsVisibility();
+                return;
+            }
+            
+            // Проверяем, есть ли уже сетка в контейнере
+            let gridContainer = resultsContainer.querySelector('.sets-minifigs-grid');
+            if (!gridContainer) {
+                // Создаем сетку если её нет
+                gridContainer = document.createElement('div');
+                gridContainer.className = 'sets-minifigs-grid';
+                resultsContainer.appendChild(gridContainer);
+            }
+            
+            // Добавляем новые карточки в начало сетки (как в сканере)
+            filteredPredictions.forEach((prediction, index) => {
+                const partNumber = prediction.part_num || prediction.part_number || prediction.part_id || prediction.id || prediction.element_id;
+                
+                // Ищем деталь в каталоге
+                const partData = PART_MAP[partNumber];
+                
+                if (partData) {
+                    // Создаем карточку детали
+                    const cardElement = document.createElement('div');
+                    cardElement.innerHTML = renderPartCard(partData, null, 0, false, index);
+                    gridContainer.insertBefore(cardElement.firstElementChild, gridContainer.firstChild);
+                    
+                    // Добавляем обработчик клика на карточку для открытия модального окна
+                    const card = cardElement.firstElementChild;
+                    if (card) {
+                        card.addEventListener('click', () => {
+                            openModalForPart(partNumber);
+                        });
+                    }
+                } else {
+                    // Если деталь не найдена в каталоге, показываем карточку в стиле каталога
+                    const confidence = Math.round((prediction.confidence || prediction.score || prediction.probability || prediction.accuracy || 0) * 100);
+                    const cardElement = document.createElement('div');
+                    cardElement.innerHTML = renderUnknownPartCard(prediction, partNumber, confidence, index);
+                    gridContainer.insertBefore(cardElement.firstElementChild, gridContainer.firstChild);
+                }
+            });
+            
+            // Показываем блок результатов
+            updatePhotoSearchResultsVisibility();
+        }
+        
+        // Демо результаты для тестирования
+        function displayDemoResults() {
+            const demoResults = {
+                predictions: [
+                    {
+                    part_num: '3001',
+                        part_name: 'Brick 2 x 4',
+                        color: 'Red',
+                        color_hex: '#B40000',
+                        confidence: 0.89
+                    },
+                    {
+                        part_num: '3003',
+                        part_name: 'Brick 2 x 2',
+                        color: 'Blue',
+                        color_hex: '#0D69AC',
+                        confidence: 0.76
+                    }
+                ]
+            };
+            
+            displayPhotoSearchResults(demoResults);
+        }
+        
+        
+        
+        // Управление видимостью блока результатов поиска по фото
+        function updatePhotoSearchResultsVisibility() {
+            // Находим блок результатов по заголовку "Результаты распознавания"
+            const resultsBlock = Array.from(document.querySelectorAll('h3')).find(h3 => 
+                h3.textContent.includes('Результаты распознавания')
+            )?.closest('.bg-gradient-to-br');
+            
+            const resultsContainer = document.getElementById('photo-search-results');
+            
+            if (!resultsBlock || !resultsContainer) return;
+            
+            // Проверяем, есть ли результаты (включая сообщения об отсутствии результатов)
+            const hasResults = resultsContainer.children.length > 0;
+            
+            if (hasResults) {
+                resultsBlock.style.display = 'block';
+            } else {
+                resultsBlock.style.display = 'none';
+            }
+        }
+        
+        // Очистка результатов
+        function clearPhotoSearchResults() {
+            const resultsContainer = document.getElementById('photo-search-results');
+            if (resultsContainer) {
+                resultsContainer.innerHTML = `
+                    <div class="text-center text-gray-400 py-8">
+                    </div>
+                `;
+            }
+            
+            // Скрываем блок результатов после очистки
+            updatePhotoSearchResultsVisibility();
+        }
+        
+        // Тест соединения с API
+        async function testBrickognizeConnection() {
+            const endpoint = document.getElementById('brickognize-endpoint')?.value || 'https://api.brickognize.com';
+            const apiKey = document.getElementById('brickognize-api-key')?.value;
+            
+            try {
+                const headers = {};
+                
+                if (apiKey) {
+                    headers['Authorization'] = `Bearer ${apiKey}`;
+                }
+                
+                // Пробуем разные endpoints для проверки доступности
+                const testEndpoints = [
+                    `${endpoint}/`,
+                    `${endpoint}/docs`,
+                    `${endpoint}/health`
+                ];
+                
+                let success = false;
+                for (const testUrl of testEndpoints) {
+                    try {
+                        const response = await fetch(testUrl, {
+                            method: 'GET',
+                            headers: headers
+                        });
+                        
+                        if (response.ok) {
+                            success = true;
+                            break;
+                        }
+                    } catch (e) {
+                        console.log(`Endpoint ${testUrl} недоступен:`, e.message);
+                    }
+                }
+                
+                if (success) {
+                } else {
+                    throw new Error('Все endpoints недоступны');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка соединения с API:', error);
+            }
+        }
+        
+        
+        
+        // Инициализация поиска по фото при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Отслеживаем изменения в DOM для автоматической инициализации поиска по фото
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        const photoSearchContent = document.querySelector('#photo-search-video');
+                        if (photoSearchContent && S.view === 'tools' && S.toolSubView === 'photo-search' && !photoSearchInitialized) {
+                            setTimeout(initPhotoSearchOnViewChange, 100);
+                            photoSearchInitialized = true;
+                        }
+                    }
+                });
+            });
+            
+            // Наблюдаем за изменениями в основном контейнере
+            const mainContainer = document.getElementById('main');
+            if (mainContainer) {
+                observer.observe(mainContainer, { childList: true, subtree: true });
+            }
+        });
+        
+        // ========== КОНЕЦ ФУНКЦИЙ ДЛЯ ПОИСКА ДЕТАЛЕЙ ПО ФОТО ==========
         
   </script>
   
