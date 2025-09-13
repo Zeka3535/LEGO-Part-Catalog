@@ -107,22 +107,22 @@
     
     /* Стили для квадратной области сканирования */
     #scanner-video {
-        width: 320px;
-        height: 320px;
+        width: 256px;
+        height: 256px;
         object-fit: cover;
-        border-radius: 0.5rem;
+        border-radius: 0.75rem;
     }
     
     #scanner-canvas {
-        width: 320px;
-        height: 320px;
-        border-radius: 0.5rem;
+        width: 256px;
+        height: 256px;
+        border-radius: 0.75rem;
     }
     
     #scanner-placeholder {
-        width: 320px;
-        height: 320px;
-        border-radius: 0.5rem;
+        width: 256px;
+        height: 256px;
+        border-radius: 0.75rem;
     }
     
     /* Адаптивность для мобильных устройств */
@@ -130,8 +130,18 @@
         #scanner-video,
         #scanner-canvas,
         #scanner-placeholder {
-            width: 280px;
-            height: 280px;
+            width: 240px;
+            height: 240px;
+        }
+    }
+    
+    /* Адаптивность для очень маленьких экранов */
+    @media (max-width: 360px) {
+        #scanner-video,
+        #scanner-canvas,
+        #scanner-placeholder {
+            width: 200px;
+            height: 200px;
         }
     }
     
@@ -3880,7 +3890,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -5336,29 +5346,38 @@ function renderWishlistContent() {
 // Функция рендеринга сканера минифигурок
 function renderScannerContent() {
     return `
-        <div class="min-h-full p-2 sm:p-4 md:p-6 lg:p-8">
-            <!-- Заголовок и описание -->
-            
+        <div class="min-h-full p-3 sm:p-4 md:p-6 lg:p-8">
+            <!-- Заголовок -->
+            <div class="text-center mb-6 sm:mb-8">
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Сканер минифигурок</h1>
+                <p class="text-gray-400 text-sm sm:text-base">Отсканируйте код минифигурки для поиска набора</p>
+            </div>
+
             <!-- Основной контент -->
-            <div class="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-                <!-- Настройки камеры (свернутые) -->
-                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 shadow-lg">
-                    <details class="group">
-                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-700/30 transition-colors">
-                            <h3 class="text-lg font-semibold text-gray-200">Настройки камеры</h3>
+            <div class="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+                <!-- Настройки камеры -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 shadow-xl">
+                    <details class="group" open>
+                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-700/30 transition-colors rounded-t-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-blue-600/20 rounded-lg">
+                                    ${I_Scanner('w-5 h-5 text-blue-400')}
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-200">Настройки камеры</h3>
+                            </div>
                             <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
                         </summary>
                         <div class="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-300 mb-2">Камера</label>
-                                    <select id="camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <select id="camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                                         <option value="">Выберите камеру...</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
-                                    <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                                         <option value="640x640">640x640 (Квадрат)</option>
                                         <option value="800x800">800x800 (Квадрат HD)</option>
                                         <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
@@ -5369,26 +5388,36 @@ function renderScannerContent() {
                                     </select>
                                 </div>
                             </div>
-                            <div class="flex flex-wrap gap-2">
-                                <button id="request-permission" class="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
+                            <div class="flex flex-wrap gap-2 sm:gap-3">
+                                <button id="request-permission" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors text-sm sm:text-base">
                                     <span>${I_Shield('w-4 h-4')}</span>
-                                    <span>Запросить разрешение</span>
+                                    <span class="hidden sm:inline">Запросить разрешение</span>
+                                    <span class="sm:hidden">Разрешение</span>
                                 </button>
-                                <button id="start-camera" class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                                <button id="start-camera" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm sm:text-base">
                                     <span>${I_Play('w-4 h-4')}</span>
-                                    <span>Запустить камеру</span>
+                                    <span class="hidden sm:inline">Запустить камеру</span>
+                                    <span class="sm:hidden">Запустить</span>
                                 </button>
-                                <button id="stop-camera" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors" disabled>
+                                <button id="stop-camera" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors text-sm sm:text-base" disabled>
                                     <span>${I_Square('w-4 h-4')}</span>
-                                    <span>Остановить камеру</span>
+                                    <span class="hidden sm:inline">Остановить камеру</span>
+                                    <span class="sm:hidden">Остановить</span>
                                 </button>
-                                <button id="refresh-cameras" class="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                                <button id="refresh-cameras" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors text-sm sm:text-base">
                                     <span>${I_Refresh('w-4 h-4')}</span>
-                                    <span>Обновить камеры</span>
+                                    <span class="hidden sm:inline">Обновить камеры</span>
+                                    <span class="sm:hidden">Обновить</span>
                                 </button>
-                                <button id="test-minifig-scan" class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                                <button id="reset-camera-flag" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors text-sm sm:text-base">
+                                    <span>${I_Refresh('w-4 h-4')}</span>
+                                    <span class="hidden sm:inline">Сбросить флаг</span>
+                                    <span class="sm:hidden">Сброс</span>
+                                </button>
+                                <button id="test-minifig-scan" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors text-sm sm:text-base">
                                     <span>${I_Scanner('w-4 h-4')}</span>
-                                    <span>Тест минифигурки</span>
+                                    <span class="hidden sm:inline">Тест минифигурки</span>
+                                    <span class="sm:hidden">Тест</span>
                                 </button>
                             </div>
                         </div>
@@ -5396,37 +5425,44 @@ function renderScannerContent() {
                 </div>
 
                 <!-- Область сканирования -->
-                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg sm:rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-lg">
-                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Область сканирования</h3>
-                    <div class="relative">
-                        <video id="scanner-video" class="w-80 h-80 mx-auto rounded-lg bg-gray-900 hidden object-cover" autoplay muted playsinline webkit-playsinline></video>
-                        <canvas id="scanner-canvas" class="w-80 h-80 mx-auto rounded-lg bg-gray-900 hidden"></canvas>
-                        <div id="scanner-placeholder" class="w-80 h-80 mx-auto aspect-square bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-600">
-                            <div class="text-center text-gray-400">
-                                <p class="text-lg font-medium">Камера не запущена</p>
-                                <p class="text-sm">1. Выберите камеру из списка</p>
-                                <p class="text-sm">2. Нажмите "Запустить камеру"</p>
-                                <p class="text-xs mt-2" id="mobile-placeholder-tip" style="display: none;">На мобильных устройствах используйте заднюю камеру</p>
-                            </div>
+                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-xl">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="p-2 bg-green-600/20 rounded-lg">
+                            ${I_Scanner('w-5 h-5 text-green-400')}
                         </div>
-                        <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">
-                            <!-- Зеленая рамка точно по размеру камеры с отступом внутрь -->
-                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80">
-                                <!-- Полупрозрачная зеленая подсветка -->
-                                <div class="absolute inset-0 bg-green-400/20 rounded-lg"></div>
-                                
-                                <!-- Зеленая рамка с отступом внутрь -->
-                                <div class="absolute inset-4 border-2 border-green-400 rounded-lg transition-all duration-300">
-                                    <!-- Угловые маркеры максимально близко к центру -->
-                                    <div class="absolute top-16 left-16 w-6 h-6 border-t-2 border-l-2 border-green-400"></div>
-                                    <div class="absolute top-16 right-16 w-6 h-6 border-t-2 border-r-2 border-green-400"></div>
-                                    <div class="absolute bottom-16 left-16 w-6 h-6 border-b-2 border-l-2 border-green-400"></div>
-                                    <div class="absolute bottom-16 right-16 w-6 h-6 border-b-2 border-r-2 border-green-400"></div>
+                        <h3 class="text-lg font-semibold text-gray-200">Область сканирования</h3>
+                    </div>
+                    <div class="relative flex justify-center">
+                        <div class="relative">
+                            <video id="scanner-video" class="w-64 h-64 sm:w-80 sm:h-80 rounded-xl bg-gray-900 hidden object-cover shadow-lg" autoplay muted playsinline webkit-playsinline></video>
+                            <canvas id="scanner-canvas" class="w-64 h-64 sm:w-80 sm:h-80 rounded-xl bg-gray-900 hidden shadow-lg"></canvas>
+                            <div id="scanner-placeholder" class="w-64 h-64 sm:w-80 sm:h-80 aspect-square bg-gray-900 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-600 shadow-lg">
+                                <div class="text-center text-gray-400 px-4">
+                                    <div class="text-4xl sm:text-5xl mb-3">${I_Scanner('w-12 h-12 mx-auto')}</div>
+                                    <p class="text-sm sm:text-base font-medium mb-2">Камера не запущена</p>
+                                    <p class="text-xs sm:text-sm">1. Выберите камеру из списка</p>
+                                    <p class="text-xs sm:text-sm">2. Нажмите "Запустить камеру"</p>
+                                    <p class="text-xs mt-2 text-gray-500" id="mobile-placeholder-tip" style="display: none;">На мобильных устройствах используйте заднюю камеру</p>
                                 </div>
-                                
-                                <!-- Статус сканирования в углу области камеры -->
-                                <div id="scan-status" class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium hidden">
-                                    Сканирование...
+                            </div>
+                            <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">
+                                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80">
+                                    <!-- Полупрозрачная зеленая подсветка -->
+                                    <div class="absolute inset-0 bg-green-400/20 rounded-xl"></div>
+                                    
+                                    <!-- Зеленая рамка с отступом внутрь -->
+                                    <div class="absolute inset-4 border-2 border-green-400 rounded-xl transition-all duration-300">
+                                        <!-- Угловые маркеры -->
+                                        <div class="absolute top-12 left-12 w-6 h-6 border-t-2 border-l-2 border-green-400"></div>
+                                        <div class="absolute top-12 right-12 w-6 h-6 border-t-2 border-r-2 border-green-400"></div>
+                                        <div class="absolute bottom-12 left-12 w-6 h-6 border-b-2 border-l-2 border-green-400"></div>
+                                        <div class="absolute bottom-12 right-12 w-6 h-6 border-b-2 border-r-2 border-green-400"></div>
+                                    </div>
+                                    
+                                    <!-- Статус сканирования -->
+                                    <div id="scan-status" class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium hidden">
+                                        Сканирование...
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -5434,32 +5470,50 @@ function renderScannerContent() {
                 </div>
 
                 <!-- Результаты сканирования -->
-                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg sm:rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-lg">
+                <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-xl">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-200">Результаты сканирования</h3>
-                        <button id="clear-scan-results" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors">
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 bg-blue-600/20 rounded-lg">
+                                ${I_Search('w-5 h-5 text-blue-400')}
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-200">Результаты сканирования</h3>
+                        </div>
+                        <button id="clear-scan-results" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
                             Очистить
                         </button>
                     </div>
                     <div id="scan-results" class="space-y-3">
                         <div class="text-center text-gray-400 py-8">
-                            <div class="text-3xl mb-2">${I_Search('w-12 h-12')}</div>
-                            <p>Результаты сканирования появятся здесь</p>
+                            <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
+                            <p class="text-sm sm:text-base">Результаты сканирования появятся здесь</p>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Консольные логи для отладки -->
-                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-4 sm:p-6 shadow-lg">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-gray-200">Консольные логи</h3>
-                        <button id="clear-logs" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors">
-                            Очистить
-                        </button>
-                    </div>
-                    <div id="console-logs" class="bg-gray-900 rounded-lg p-3 h-48 overflow-y-auto text-xs font-mono text-gray-300 border border-gray-700">
-                        <div class="text-gray-500">Логи появятся здесь...</div>
-                    </div>
+                <!-- Консольные логи для отладки (свернутые) -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-xl border border-gray-600/40 shadow-xl">
+                    <details class="group">
+                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-700/30 transition-colors rounded-t-xl">
+                            <div class="flex items-center gap-3">
+                                <div class="p-2 bg-gray-600/20 rounded-lg">
+                                    ${I_Info('w-5 h-5 text-gray-400')}
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-200">Консольные логи</h3>
+                            </div>
+                            <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
+                        </summary>
+                        <div class="px-4 sm:px-6 pb-4 sm:pb-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <p class="text-sm text-gray-400">Отладочная информация</p>
+                                <button id="clear-logs" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors">
+                                    Очистить
+                                </button>
+                            </div>
+                            <div id="console-logs" class="bg-gray-900 rounded-lg p-3 h-32 sm:h-48 overflow-y-auto text-xs font-mono text-gray-300 border border-gray-700">
+                                <div class="text-gray-500">Логи появятся здесь...</div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
         </div>
@@ -25698,10 +25752,19 @@ function animateCloseButtonClick(button) {
             const isSmallScreen = window.innerWidth <= 768 || window.innerHeight <= 768;
             const isMobileOrientation = window.screen && (window.screen.orientation || window.screen.mozOrientation || window.screen.msOrientation);
             
-            // Определяем мобильное устройство по совокупности признаков
-            isMobile = isMobileUA || (isTouchDevice && isSmallScreen);
+            // Проверяем наличие мобильных API
+            const hasMobileAPIs = 'DeviceOrientationEvent' in window || 'DeviceMotionEvent' in window;
             
-            console.log('Мобильное устройство:', isMobile, 'UA:', isMobileUA, 'Touch:', isTouchDevice, 'Small:', isSmallScreen);
+            // Проверяем тип устройства через mediaDevices
+            const isMobileDevice = navigator.mediaDevices && 
+                navigator.mediaDevices.enumerateDevices && 
+                navigator.mediaDevices.getUserMedia;
+            
+            // Определяем мобильное устройство по совокупности признаков
+            // Более строгая проверка для избежания ложных срабатываний
+            isMobile = isMobileUA || (isTouchDevice && isSmallScreen && (hasMobileAPIs || isMobileDevice));
+            
+            console.log('Мобильное устройство:', isMobile, 'UA:', isMobileUA, 'Touch:', isTouchDevice, 'Small:', isSmallScreen, 'MobileAPIs:', hasMobileAPIs);
             
             // Обновляем интерфейс для мобильных устройств
             if (isMobile) {
@@ -25958,6 +26021,8 @@ function animateCloseButtonClick(button) {
                     setupScannerEventListeners();
                     console.log('Обновление статистики...');
                     updateScanStats();
+                    console.log('Запуск мониторинга камеры...');
+                    startCameraMonitoring();
                     console.log('Сканер инициализирован (камера НЕ запущена автоматически)');
                 }, 100);
             }
@@ -26243,6 +26308,7 @@ function animateCloseButtonClick(button) {
             const stopBtn = document.getElementById('stop-camera');
             const captureBtn = document.getElementById('capture-photo');
             const refreshBtn = document.getElementById('refresh-cameras');
+            const resetFlagBtn = document.getElementById('reset-camera-flag');
             const testBtn = document.getElementById('test-scan');
             const forceBtn = document.getElementById('force-scan');
             const toggleBtn = document.getElementById('toggle-scan');
@@ -26256,6 +26322,7 @@ function animateCloseButtonClick(button) {
             if (stopBtn) stopBtn.addEventListener('click', stopCamera);
             if (captureBtn) captureBtn.addEventListener('click', capturePhoto);
             if (refreshBtn) refreshBtn.addEventListener('click', setupCameraSelect);
+            if (resetFlagBtn) resetFlagBtn.addEventListener('click', resetCameraFlag);
             if (clearLogsBtn) clearLogsBtn.addEventListener('click', clearLogs);
             if (testBtn) testBtn.addEventListener('click', testScanning);
             if (forceBtn) forceBtn.addEventListener('click', forceScanning);
@@ -26425,8 +26492,20 @@ function animateCloseButtonClick(button) {
                 }
                 video.srcObject = currentStream;
                 
+                // Таймаут для сброса флага запуска камеры (на случай, если видео не загрузится)
+                const cameraStartTimeout = setTimeout(() => {
+                    if (isCameraStarting) {
+                        console.warn('Таймаут загрузки видео, сбрасываем флаг запуска камеры');
+                        addLog('Таймаут загрузки видео, сбрасываем флаг запуска камеры', 'warning');
+                        isCameraStarting = false;
+                    }
+                }, 10000); // 10 секунд таймаут
+                
                 // Дождаться загрузки видео
                 video.onloadedmetadata = () => {
+                    // Очищаем таймаут, так как видео загрузилось успешно
+                    clearTimeout(cameraStartTimeout);
+                    
                     console.log('Видео загружено, размер:', video.videoWidth, 'x', video.videoHeight);
                     addLog(`Видео загружено: ${video.videoWidth}x${video.videoHeight}`, 'success');
                     
@@ -26485,6 +26564,14 @@ function animateCloseButtonClick(button) {
                     }
                     
                     // Сбрасываем флаг запуска камеры
+                    isCameraStarting = false;
+                };
+                
+                // Обработка ошибок загрузки видео
+                video.onerror = (error) => {
+                    clearTimeout(cameraStartTimeout);
+                    console.error('Ошибка загрузки видео:', error);
+                    addLog('Ошибка загрузки видео', 'error');
                     isCameraStarting = false;
                 };
                 
@@ -26594,6 +26681,81 @@ function animateCloseButtonClick(button) {
             
             console.log('Камера остановлена');
             isCameraStarting = false;
+        }
+        
+        // Сброс флага запуска камеры
+        function resetCameraFlag() {
+            console.log('Принудительный сброс флага запуска камеры...');
+            addLog('Принудительный сброс флага запуска камеры...', 'info');
+            
+            isCameraStarting = false;
+            isScanning = false;
+            isScannerInitialized = false;
+            
+            // Очищаем мобильный сканер
+            if (mobileScanInterval) {
+                clearInterval(mobileScanInterval);
+                mobileScanInterval = null;
+            }
+            
+            // Очищаем стандартный сканер
+            if (scanner) {
+                try {
+                    scanner.reset();
+                } catch (e) {
+                    console.warn('Ошибка при сбросе сканера:', e);
+                }
+            }
+            
+            // Очищаем мобильный сканер
+            if (mobileScanner) {
+                try {
+                    mobileScanner.reset();
+                } catch (e) {
+                    console.warn('Ошибка при сбросе мобильного сканера:', e);
+                }
+            }
+            
+            addLog('Флаг запуска камеры сброшен. Теперь можно попробовать запустить камеру снова.', 'success');
+        }
+        
+        // Мониторинг состояния камеры
+        function startCameraMonitoring() {
+            // Проверяем состояние камеры каждые 5 секунд
+            setInterval(() => {
+                if (isMobile && isCameraStarting) {
+                    const video = document.getElementById('scanner-video');
+                    if (video && video.readyState === 4) {
+                        // Видео загружено, но проверяем, не зависло ли оно
+                        const currentTime = video.currentTime;
+                        const lastTime = video.dataset.lastTime || 0;
+                        
+                        if (Math.abs(currentTime - lastTime) < 0.1) {
+                            // Видео не обновляется, возможно зависло
+                            console.warn('Камера может быть зависла, перезапускаем...');
+                            addLog('Камера может быть зависла, перезапускаем...', 'warning');
+                            
+                            // Сбрасываем флаг и перезапускаем
+                            isCameraStarting = false;
+                            setTimeout(() => {
+                                startCamera();
+                            }, 1000);
+                        }
+                        
+                        video.dataset.lastTime = currentTime;
+                    } else if (video && video.readyState !== 4) {
+                        // Видео не загружается слишком долго
+                        console.warn('Видео не загружается, перезапускаем камеру...');
+                        addLog('Видео не загружается, перезапускаем камеру...', 'warning');
+                        
+                        // Сбрасываем флаг и перезапускаем
+                        isCameraStarting = false;
+                        setTimeout(() => {
+                            startCamera();
+                        }, 1000);
+                    }
+                }
+            }, 5000);
         }
         
         // Запуск мобильного сканера с циклом
