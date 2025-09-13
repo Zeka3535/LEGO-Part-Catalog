@@ -26013,7 +26013,7 @@ function animateCloseButtonClick(button) {
         function initScanner() {
             if (S.view === 'tools' && S.toolSubView === 'scanner') {
                 detectMobile();
-                setupCameraSelect();
+                // setupCameraSelect вызывается в initScannerOnViewChange
                 setupScannerEventListeners();
                 updateScanStats();
             }
@@ -26075,77 +26075,34 @@ function animateCloseButtonClick(button) {
                     throw new Error('На мобильных устройствах требуется HTTPS соединение для доступа к камере. Пожалуйста, откройте сайт через HTTPS.');
                 }
                 
-                // Сначала запросим разрешение на камеру, затем получим список устройств
+                // Получаем список камер без запроса разрешений
                 let videoDevices = [];
-                let permissionGranted = false;
                 
-                console.log('Запрашиваем разрешение на доступ к камере...');
-                addLog('Запрос разрешения на камеру...', 'info');
+                console.log('Получаем список камер...');
+                addLog('Получение списка камер...', 'info');
                 
                 try {
-                    // Сначала запрашиваем разрешение на камеру с базовыми настройками
-                    const basicConstraints = { video: true };
-                    const testStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
-                    
-                    if (testStream) {
-                        permissionGranted = true;
-                        console.log('Разрешение на камеру получено');
-                        addLog('Разрешение на камеру получено', 'success');
+                    // Получаем список камер без запроса разрешений
+                    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                        console.log('Получаем список камер...');
+                        const devices = await navigator.mediaDevices.enumerateDevices();
+                        videoDevices = devices.filter(device => device.kind === 'videoinput');
+                        console.log('Найдено камер:', videoDevices.length);
                         
-                        // Останавливаем тестовый поток
-                        testStream.getTracks().forEach(track => track.stop());
-                        
-                        // Теперь получаем список камер
-                        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-                            console.log('Получаем список камер после получения разрешения...');
-                            const devices = await navigator.mediaDevices.enumerateDevices();
-                            videoDevices = devices.filter(device => device.kind === 'videoinput');
-                            console.log('Найдено камер:', videoDevices.length);
-                            
-                            // Если камеры найдены, добавляем их в список
-                            if (videoDevices.length > 0) {
-                                console.log('Камеры найдены через enumerateDevices');
-                            }
+                        // Если камеры найдены, добавляем их в список
+                        if (videoDevices.length > 0) {
+                            console.log('Камеры найдены через enumerateDevices');
                         }
                     }
                 } catch (error) {
-                    console.warn('Не удалось получить разрешение на камеру:', error);
-                    addLog(`Ошибка получения разрешения: ${error.message}`, 'error');
+                    console.warn('Не удалось получить список камер:', error);
+                    addLog(`Ошибка получения списка камер: ${error.message}`, 'error');
                 }
                 
-                // Если разрешение не получено или камеры не найдены, пробуем альтернативные методы
-                if (!permissionGranted || videoDevices.length === 0) {
-                    console.log('Пробуем альтернативные методы получения камеры...');
-                    
-                    // Для мобильных устройств пробуем получить камеру с environment
-                    if (isMobile) {
-                        try {
-                            console.log('Пробуем получить мобильную камеру с environment...');
-                            const mobileConstraints = {
-                                video: {
-                                    facingMode: 'environment',
-                                    width: { ideal: 640 },
-                                    height: { ideal: 640 }
-                                }
-                            };
-                            
-                            const testStream = await navigator.mediaDevices.getUserMedia(mobileConstraints);
-                            if (testStream) {
-                                videoDevices = [{ deviceId: 'environment', label: 'Задняя камера' }];
-                                testStream.getTracks().forEach(track => track.stop());
-                                console.log('Мобильная камера найдена');
-                                permissionGranted = true;
-                            }
-                        } catch (error) {
-                            console.warn('Не удалось получить мобильную камеру:', error);
-                        }
-                    }
-                    
-                    // Если все еще нет камер, создаем заглушку
-                    if (videoDevices.length === 0) {
-                        console.log('Создаем заглушку для камеры');
-                        videoDevices = [{ deviceId: 'default', label: 'Камера по умолчанию' }];
-                    }
+                // Если камеры не найдены, создаем заглушку
+                if (videoDevices.length === 0) {
+                    console.log('Создаем заглушку для камеры');
+                    videoDevices = [{ deviceId: 'default', label: 'Камера по умолчанию' }];
                 }
                 
                 cameraSelect.innerHTML = '<option value="">Выберите камеру...</option>';
@@ -26156,10 +26113,7 @@ function animateCloseButtonClick(button) {
                     return;
                 }
                 
-                // Если разрешение не получено, показываем предупреждение
-                if (!permissionGranted) {
-                    addLog('Внимание: разрешение на камеру не получено. Возможны проблемы с работой.', 'warning');
-                }
+                // Разрешения будут запрошены при запуске камеры
                 
                 videoDevices.forEach((device, index) => {
                     const option = document.createElement('option');
@@ -26242,7 +26196,9 @@ function animateCloseButtonClick(button) {
                         if (!currentStream && !isCameraStarting) {
                             addLog('Автозапуск камеры...', 'info');
                             setTimeout(() => {
-                                startCamera();
+                                if (!currentStream && !isCameraStarting) {
+                                    startCamera();
+                                }
                             }, 500);
                         } else {
                             addLog('Камера уже запущена или запускается, пропускаем автозапуск', 'info');
@@ -26302,8 +26258,10 @@ function animateCloseButtonClick(button) {
                     // Останавливаем тестовый поток
                     stream.getTracks().forEach(track => track.stop());
                     
-                    // Обновляем список камер
-                    await setupCameraSelect();
+                    // Обновляем список камер (только если не выполняется настройка)
+                    if (!isSettingUpCameras) {
+                        await setupCameraSelect();
+                    }
                     
                     // Показываем сообщение об успехе
                     alert('Разрешение на камеру получено! Теперь можно выбрать камеру и запустить сканирование.');
@@ -26380,6 +26338,13 @@ function animateCloseButtonClick(button) {
             if (isCameraStarting) {
                 console.log('Камера уже запускается, пропускаем...');
                 addLog('Камера уже запускается, пропускаем...', 'warning');
+                return;
+            }
+            
+            // Дополнительная защита - если камера уже запущена
+            if (currentStream) {
+                console.log('Камера уже запущена, пропускаем...');
+                addLog('Камера уже запущена, пропускаем...', 'warning');
                 return;
             }
             
