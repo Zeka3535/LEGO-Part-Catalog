@@ -25467,6 +25467,8 @@ function animateCloseButtonClick(button) {
         let isProcessingScan = false;
         let isScannerInitialized = false;
         let isMobile = false;
+        let mobileScanner = null;
+        let mobileScanInterval = null;
         let scanStats = {
             total: 0,
             successful: 0,
@@ -26014,6 +26016,23 @@ function animateCloseButtonClick(button) {
                 scanner = null;
             }
             
+            // Остановить мобильный сканер
+            if (mobileScanner) {
+                console.log('Остановка мобильного сканера...');
+                try {
+                    mobileScanner.reset();
+                } catch (e) {
+                    console.warn('Ошибка при сбросе мобильного сканера:', e);
+                }
+                mobileScanner = null;
+            }
+            
+            // Очистить интервал мобильного сканирования
+            if (mobileScanInterval) {
+                clearInterval(mobileScanInterval);
+                mobileScanInterval = null;
+            }
+            
             // Очистить srcObject видео
             if (video) {
                 video.srcObject = null;
@@ -26044,6 +26063,71 @@ function animateCloseButtonClick(button) {
             if (toggleBtn) toggleBtn.disabled = true;
             
             console.log('Камера остановлена');
+        }
+        
+        // Запуск мобильного сканера
+        function startMobileScanner() {
+            console.log('Инициализация мобильного сканера...');
+            
+            // Очищаем предыдущий сканер
+            if (mobileScanner) {
+                try {
+                    mobileScanner.reset();
+                } catch (e) {
+                    console.warn('Ошибка при сбросе предыдущего мобильного сканера:', e);
+                }
+            }
+            
+            // Создаем новый мобильный сканер
+            mobileScanner = new ZXing.BrowserMultiFormatReader();
+            
+            // Настройки для мобильного сканера
+            const mobileHints = new Map();
+            mobileHints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+                ZXing.BarcodeFormat.QR_CODE,
+                ZXing.BarcodeFormat.DATA_MATRIX,
+                ZXing.BarcodeFormat.CODE_128,
+                ZXing.BarcodeFormat.CODE_39
+            ]);
+            mobileHints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+            mobileHints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
+            mobileHints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
+            
+            // Функция сканирования одного кадра
+            const scanSingleFrame = () => {
+                if (!isScanning || !mobileScanner) return;
+                
+                const video = document.getElementById('scanner-video');
+                if (!video || video.readyState !== 4) {
+                    // Видео еще не готово, повторяем через 100ms
+                    setTimeout(scanSingleFrame, 100);
+                    return;
+                }
+                
+                mobileScanner.decodeFromVideoElement(video, mobileHints).then(result => {
+                    console.log('Найден код (мобильный):', result);
+                    handleScanResult(result);
+                    
+                    // После успешного сканирования перезапускаем сканер через 2 секунды
+                    console.log('Перезапуск мобильного сканера через 2 секунды...');
+                    setTimeout(() => {
+                        if (isScanning) {
+                            startMobileScanner();
+                        }
+                    }, 2000);
+                    
+                }).catch(error => {
+                    if (!(error instanceof ZXing.NotFoundException)) {
+                        console.log('Ошибка сканирования (мобильный):', error.name);
+                    }
+                    
+                    // Продолжаем сканирование через 50ms для высокой частоты
+                    setTimeout(scanSingleFrame, 50);
+                });
+            };
+            
+            // Запускаем сканирование
+            scanSingleFrame();
         }
         
         // Инициализация QR сканера
@@ -26105,30 +26189,10 @@ function animateCloseButtonClick(button) {
                     tryHarderThreshold: isMobile ? 0.5 : 0.8 // Порог для мобильных устройств
                 };
                 
-                // Для мобильных устройств используем альтернативный метод
+                // Для мобильных устройств используем улучшенный метод
                 if (isMobile) {
-                    // Используем decodeFromVideoElement для мобильных устройств
-                    const scanMobile = () => {
-                        if (!isScanning || !scanner) return;
-                        
-                        scanner.decodeFromVideoElement(video, hints).then(result => {
-                            console.log('Найден код (мобильный):', result);
-                            handleScanResult(result);
-                            
-                            // Продолжаем сканирование через небольшую задержку
-                            setTimeout(scanMobile, 1000);
-                        }).catch(error => {
-                            if (!(error instanceof ZXing.NotFoundException)) {
-                                console.log('Ошибка сканирования (мобильный):', error.name);
-                            }
-                            
-                            // Продолжаем сканирование через небольшую задержку
-                            setTimeout(scanMobile, 200);
-                        });
-                    };
-                    
-                    // Запускаем сканирование
-                    scanMobile();
+                    console.log('Запуск мобильного сканирования...');
+                    startMobileScanner();
                 } else {
                     // Для ПК используем стандартный метод
                     scanner.decodeFromVideoDevice(undefined, video, (result, error) => {
@@ -26160,12 +26224,23 @@ function animateCloseButtonClick(button) {
             if (isScanning) {
                 // Остановить сканирование
                 isScanning = false;
+                
                 if (scanner) {
                     try {
                         scanner.reset();
                     } catch (e) {
                         console.warn('Ошибка при сбросе сканера:', e);
                     }
+                }
+                
+                // Остановить мобильный сканер
+                if (mobileScanner) {
+                    try {
+                        mobileScanner.reset();
+                    } catch (e) {
+                        console.warn('Ошибка при сбросе мобильного сканера:', e);
+                    }
+                    mobileScanner = null;
                 }
                 
                 if (toggleBtn) {
@@ -26182,8 +26257,15 @@ function animateCloseButtonClick(button) {
             } else {
                 // Запустить сканирование
                 isScanning = true;
-                if (!isScannerInitialized) {
-                    initQRScanner();
+                
+                if (isMobile) {
+                    // Для мобильных устройств запускаем мобильный сканер
+                    startMobileScanner();
+                } else {
+                    // Для ПК используем стандартный сканер
+                    if (!isScannerInitialized) {
+                        initQRScanner();
+                    }
                 }
                 
                 if (toggleBtn) {
