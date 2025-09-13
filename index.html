@@ -5386,6 +5386,10 @@ function renderScannerContent() {
                                     <span>${I_Refresh('w-4 h-4')}</span>
                                     <span>Обновить камеры</span>
                                 </button>
+                                <button id="test-minifig-scan" class="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors">
+                                    <span>${I_Scanner('w-4 h-4')}</span>
+                                    <span>Тест минифигурки</span>
+                                </button>
                             </div>
                         </div>
                     </details>
@@ -5399,7 +5403,6 @@ function renderScannerContent() {
                         <canvas id="scanner-canvas" class="w-80 h-80 mx-auto rounded-lg bg-gray-900 hidden"></canvas>
                         <div id="scanner-placeholder" class="w-80 h-80 mx-auto aspect-square bg-gray-900 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-600">
                             <div class="text-center text-gray-400">
-                                <div class="text-4xl mb-2">${I_Camera('w-16 h-16')}</div>
                                 <p class="text-lg font-medium">Камера не запущена</p>
                                 <p class="text-sm">1. Выберите камеру из списка</p>
                                 <p class="text-sm">2. Нажмите "Запустить камеру"</p>
@@ -5432,34 +5435,16 @@ function renderScannerContent() {
 
                 <!-- Результаты сканирования -->
                 <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-lg sm:rounded-xl border border-gray-600/30 p-4 sm:p-6 shadow-lg">
-                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Результаты сканирования</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-200">Результаты сканирования</h3>
+                        <button id="clear-scan-results" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors">
+                            Очистить
+                        </button>
+                    </div>
                     <div id="scan-results" class="space-y-3">
                         <div class="text-center text-gray-400 py-8">
                             <div class="text-3xl mb-2">${I_Search('w-12 h-12')}</div>
                             <p>Результаты сканирования появятся здесь</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Статистика сканирования -->
-                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-4 sm:p-6 shadow-lg">
-                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Статистика</h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                        <div>
-                            <div class="text-2xl font-bold text-blue-400" id="total-scans">0</div>
-                            <div class="text-sm text-gray-400">Всего сканирований</div>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-green-400" id="successful-scans">0</div>
-                            <div class="text-sm text-gray-400">Успешных</div>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-yellow-400" id="qr-scans">0</div>
-                            <div class="text-sm text-gray-400">QR-коды</div>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-purple-400" id="datamatrix-scans">0</div>
-                            <div class="text-sm text-gray-400">DataMatrix</div>
                         </div>
                     </div>
                 </div>
@@ -22755,6 +22740,9 @@ async function loadDataFromCSV() {
         updateLoadingStatus("Загрузка минифигурок...", 65, "Минифигурки");
         await loadMinifigsFromCSV();
         
+        updateLoadingStatus("Загрузка таблицы минифигурок...", 67, "Таблица соответствий кодов минифигурок");
+        await loadFigTable();
+        
         updateLoadingStatus("Загрузка дополнительных данных...", 70, "Загрузка элементов и инвентарей");
         
         // Фаза 3: Дополнительные данные (загружаем последними, так как зависят от основных данных)
@@ -23140,6 +23128,137 @@ async function loadMinifigsFromCSV() {
         throw error;
     }
 }
+
+// Функция для загрузки таблицы соответствий кодов минифигурок
+async function loadFigTable() {
+    try {
+        const figTableText = await fetchTextWithProgress('./figtable.txt?v=' + Date.now(), 'Загрузка таблицы минифигурок...', 'figtable.txt');
+        const lines = figTableText.split('\n');
+        
+        // Создаем глобальную карту соответствий код -> ID минифигурки
+        window.FIG_CODE_MAP = {};
+        
+        for (let i = 0; i < lines.length; i += 4) {
+            if (i + 3 < lines.length) {
+                const codeLine = lines[i].trim();
+                const nameLine = lines[i + 1].trim();
+                const idLine = lines[i + 2].trim();
+                
+                // Извлекаем код (первые 7 цифр)
+                const codeMatch = codeLine.match(/^(\d{7}):/);
+                if (codeMatch) {
+                    const code = codeMatch[1];
+                    
+                    // Извлекаем ID минифигурки
+                    const idMatch = idLine.match(/i:\s*"([^"]+)"/);
+                    if (idMatch) {
+                        const minifigId = idMatch[1];
+                        window.FIG_CODE_MAP[code] = minifigId;
+                    }
+                }
+            }
+        }
+        
+        console.log('FigTable loaded successfully:', Object.keys(window.FIG_CODE_MAP).length, 'entries');
+        console.log('Примеры загруженных кодов:', Object.keys(window.FIG_CODE_MAP).slice(0, 5));
+        console.log('Примеры ID минифигурок:', Object.values(window.FIG_CODE_MAP).slice(0, 5));
+        console.log('SET_MAP размер:', Object.keys(SET_MAP).length);
+        console.log('Примеры наборов в SET_MAP:', Object.keys(SET_MAP).slice(0, 5));
+        
+        // Проверяем, есть ли набор "71050" в SET_MAP
+        if (SET_MAP['71050']) {
+            console.log('Найден набор 71050:', SET_MAP['71050']);
+        } else {
+            console.log('Набор 71050 НЕ найден в SET_MAP');
+            console.log('Поиск наборов с 71050:', Object.keys(SET_MAP).filter(key => key.includes('71050')));
+        }
+    } catch (error) {
+        console.error('Failed to load figtable.txt:', error);
+        // Не выбрасываем ошибку, так как это не критично для работы приложения
+        window.FIG_CODE_MAP = {};
+    }
+}
+
+// Функция для поиска набора минифигурок по ID минифигурки
+function findMinifigSetByFigId(figId) {
+    console.log('findMinifigSetByFigId вызвана с figId:', figId);
+    
+    if (!figId || !window.FIG_CODE_MAP) {
+        console.log('Нет figId или FIG_CODE_MAP не загружен');
+        return null;
+    }
+    
+    // Извлекаем номер набора из ID минифигурки (например, "71050-9" -> "71050")
+    const setId = figId.split('-')[0];
+    console.log('Извлеченный setId:', setId);
+    
+    // Ищем набор в каталоге наборов (SET_MAP)
+    const set = SET_MAP[setId];
+    console.log('Найден в SET_MAP:', set);
+    if (set) {
+        return set;
+    }
+    
+    // Если не найден по номеру набора, попробуем найти по полному ID в SET_MAP
+    const fullIdSet = SET_MAP[figId];
+    console.log('Найден по полному ID в SET_MAP:', fullIdSet);
+    if (fullIdSet) {
+        return fullIdSet;
+    }
+    
+    console.log('Набор не найден для figId:', figId, 'в каталоге наборов');
+    return null;
+}
+
+// Функция для получения ID минифигурки по коду сканирования
+function getMinifigIdFromScanCode(scanCode) {
+    console.log('getMinifigIdFromScanCode вызвана с кодом:', scanCode);
+    
+    if (!scanCode || !window.FIG_CODE_MAP) {
+        console.log('Нет кода или FIG_CODE_MAP не загружен');
+        return null;
+    }
+    
+    // Извлекаем первые 7 цифр из отсканированного кода
+    const codeMatch = scanCode.match(/^(\d{7})/);
+    console.log('Регулярное выражение найдено:', codeMatch);
+    
+    if (codeMatch) {
+        const code = codeMatch[1];
+        console.log('Извлеченный код (7 цифр):', code);
+        console.log('Поиск в FIG_CODE_MAP:', window.FIG_CODE_MAP[code]);
+        return window.FIG_CODE_MAP[code] || null;
+    }
+    
+    console.log('Код не соответствует формату 7 цифр');
+    return null;
+}
+
+// Функция для отображения карточки набора минифигурок в результатах сканирования
+function renderMinifigSetCardForScanner(setData, figId) {
+    if (!setData) {
+        return `
+            <div class="text-center text-gray-400 py-8">
+                <div class="text-3xl mb-2">❌</div>
+                <p class="text-lg font-medium mb-2">Набор минифигурок не найден</p>
+                <p class="text-sm">ID: ${figId}</p>
+            </div>
+        `;
+    }
+    
+    // Определяем тип данных и получаем правильные поля из SET_MAP
+    const setId = setData.set_num;
+    const setName = setData.name || 'Неизвестное название';
+    const imageUrl = setData.set_img_url;
+    const numParts = setData.num_parts;
+    const year = setData.year;
+    
+    console.log('Данные для карточки из SET_MAP:', { setId, setName, imageUrl, numParts, year });
+    
+    // Создаем карточку точно как в каталоге (используем renderSetCard)
+    return renderSetCard(setData, false, 0);
+}
+
 // Функция для загрузки отсутствующих URL изображений минифигурок из API
 async function fetchMissingMinifigImages() {
     const minifigsWithoutImages = Object.values(MINIFIG_MAP).filter(m => !m.minifig_img_url);
@@ -26127,6 +26246,8 @@ function animateCloseButtonClick(button) {
             const testBtn = document.getElementById('test-scan');
             const forceBtn = document.getElementById('force-scan');
             const toggleBtn = document.getElementById('toggle-scan');
+            const testMinifigBtn = document.getElementById('test-minifig-scan');
+            const clearResultsBtn = document.getElementById('clear-scan-results');
             const cameraSelect = document.getElementById('camera-select');
             const clearLogsBtn = document.getElementById('clear-logs');
             const requestPermissionBtn = document.getElementById('request-permission');
@@ -26139,6 +26260,8 @@ function animateCloseButtonClick(button) {
             if (testBtn) testBtn.addEventListener('click', testScanning);
             if (forceBtn) forceBtn.addEventListener('click', forceScanning);
             if (toggleBtn) toggleBtn.addEventListener('click', toggleScanning);
+            if (testMinifigBtn) testMinifigBtn.addEventListener('click', testMinifigScanning);
+            if (clearResultsBtn) clearResultsBtn.addEventListener('click', clearScanResults);
             if (requestPermissionBtn) requestPermissionBtn.addEventListener('click', requestCameraPermission);
             
             // Обработчик изменения выбора камеры (НЕ запускаем камеру автоматически)
@@ -26963,68 +27086,107 @@ function animateCloseButtonClick(button) {
             const resultsContainer = document.getElementById('scan-results');
             if (!resultsContainer) return;
             
-            // Удалить плейсхолдер если есть
+            // Удаляем плейсхолдер если есть
             const placeholder = resultsContainer.querySelector('.text-center');
             if (placeholder) {
                 placeholder.remove();
             }
             
-            // Создать элемент результата
-            const resultElement = document.createElement('div');
-            resultElement.className = 'bg-gray-700/50 rounded-lg p-4 border border-gray-600/40';
+            // Пытаемся найти набор минифигурок по отсканированному коду
+            console.log('Отсканированный код:', text);
+            console.log('FIG_CODE_MAP доступен:', !!window.FIG_CODE_MAP);
+            console.log('Количество записей в FIG_CODE_MAP:', window.FIG_CODE_MAP ? Object.keys(window.FIG_CODE_MAP).length : 0);
             
-            const typeIcon = type === 'qr' ? '📱' : type === 'datamatrix' ? '🔲' : '❓';
-            const typeColor = type === 'qr' ? 'text-yellow-400' : type === 'datamatrix' ? 'text-purple-400' : 'text-gray-400';
+            const figId = getMinifigIdFromScanCode(text);
+            let setData = null;
             
-            resultElement.innerHTML = `
-                <div class="flex items-start gap-3">
-                    <div class="text-2xl">${typeIcon}</div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="text-sm font-medium ${typeColor}">${format}</span>
-                            <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+            if (figId) {
+                setData = findMinifigSetByFigId(figId);
+                console.log('Найден ID минифигурки:', figId, 'Набор:', setData);
+            } else {
+                console.log('ID минифигурки не найден для кода:', text);
+            }
+            
+            if (setData) {
+                // Проверяем, есть ли уже сетка в контейнере
+                let gridContainer = resultsContainer.querySelector('.sets-minifigs-grid');
+                if (!gridContainer) {
+                    // Создаем сетку если её нет
+                    gridContainer = document.createElement('div');
+                    gridContainer.className = 'sets-minifigs-grid';
+                    resultsContainer.appendChild(gridContainer);
+                }
+                
+                // Добавляем новую карточку в сетку
+                const cardElement = document.createElement('div');
+                cardElement.innerHTML = renderMinifigSetCardForScanner(setData, figId);
+                gridContainer.appendChild(cardElement.firstElementChild);
+                
+                // Добавляем обработчик клика на карточку для открытия модального окна
+                const card = cardElement.firstElementChild;
+                if (card) {
+                    card.addEventListener('click', () => {
+                        openModalForSet(setData.set_num);
+                    });
+                }
+            } else {
+                // Показываем сообщение о том, что набор не найден (только если это первый результат)
+                if (resultsContainer.children.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="text-center text-gray-400 py-8">
+                            <div class="text-3xl mb-2">❌</div>
+                            <p class="text-lg font-medium mb-2">Набор минифигурок не найден</p>
+                            <p class="text-sm">Код: ${text}</p>
+                            <p class="text-xs mt-2">Попробуйте отсканировать другой код</p>
                         </div>
-                        <div class="bg-gray-800/50 rounded p-2 font-mono text-sm text-gray-200 break-all">
-                            ${text}
-                        </div>
-                        <div class="mt-2 flex gap-2">
-                            <button class="copy-result text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors" data-text="${text.replace(/"/g, '&quot;')}">
-                                Копировать
-                            </button>
-                            <button class="search-result text-xs px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition-colors" data-text="${text.replace(/"/g, '&quot;')}">
-                                Найти в каталоге
-                            </button>
-                        </div>
-                    </div>
+                    `;
+                }
+            }
+        }
+        
+        // Тестирование сканирования минифигурки
+        function testMinifigScanning() {
+            console.log('Тестирование сканирования минифигурки...');
+            
+            // Тестовый код из figtable.txt (6568967 -> 71050-9)
+            const testCode = '6568967';
+            
+            console.log('Тестовый код:', testCode);
+            console.log('FIG_CODE_MAP доступен:', !!window.FIG_CODE_MAP);
+            console.log('Количество записей в FIG_CODE_MAP:', window.FIG_CODE_MAP ? Object.keys(window.FIG_CODE_MAP).length : 0);
+            
+            if (window.FIG_CODE_MAP && Object.keys(window.FIG_CODE_MAP).length > 0) {
+                console.log('Примеры кодов в FIG_CODE_MAP:', Object.keys(window.FIG_CODE_MAP).slice(0, 5));
+                console.log('Поиск тестового кода:', window.FIG_CODE_MAP[testCode]);
+                
+                // Симулируем результат сканирования
+                const mockResult = {
+                    getText: () => testCode,
+                    getBarcodeFormat: () => 'DATA_MATRIX'
+                };
+                
+                addLog(`Тестирование с кодом: ${testCode}`, 'info');
+                handleScanResult(mockResult);
+            } else {
+                console.error('FIG_CODE_MAP не загружен или пуст');
+                addLog('Ошибка: FIG_CODE_MAP не загружен', 'error');
+                alert('Ошибка: Таблица минифигурок не загружена. Попробуйте обновить страницу.');
+            }
+        }
+        
+        // Очистка результатов сканирования
+        function clearScanResults() {
+            const resultsContainer = document.getElementById('scan-results');
+            if (!resultsContainer) return;
+            
+            resultsContainer.innerHTML = `
+                <div class="text-center text-gray-400 py-8">
+                    <div class="text-3xl mb-2">${I_Search('w-12 h-12')}</div>
+                    <p>Результаты сканирования появятся здесь</p>
                 </div>
             `;
             
-            // Добавить в начало списка
-            resultsContainer.insertBefore(resultElement, resultsContainer.firstChild);
-            
-            // Добавить обработчики кнопок
-            const copyBtn = resultElement.querySelector('.copy-result');
-            const searchBtn = resultElement.querySelector('.search-result');
-            
-            if (copyBtn) {
-                copyBtn.addEventListener('click', () => {
-                    navigator.clipboard.writeText(text).then(() => {
-                        copyBtn.textContent = 'Скопировано!';
-                        setTimeout(() => {
-                            copyBtn.textContent = 'Копировать';
-                        }, 2000);
-                    });
-                });
-            }
-            
-            if (searchBtn) {
-                searchBtn.addEventListener('click', () => {
-                    // Переключиться на каталог и выполнить поиск
-                    S.view = 'catalog';
-                    S.searchQuery = text;
-                    render();
-                });
-            }
+            addLog('Результаты сканирования очищены', 'info');
         }
         
         // Обновление статистики сканирования
