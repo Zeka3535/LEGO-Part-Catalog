@@ -25993,11 +25993,25 @@ function animateCloseButtonClick(button) {
                 // Автоматически выбрать камеру (но НЕ запускать её)
                 if (videoDevices.length > 0) {
                     console.log('Доступные камеры:', videoDevices.map(d => ({ deviceId: d.deviceId, label: d.label })));
+                    addLog(`Найдено камер: ${videoDevices.length}`, 'info');
+                    
+                    // Выводим список камер в лог
+                    videoDevices.forEach((device, index) => {
+                        addLog(`Камера ${index}: ${device.label} (ID: ${device.deviceId})`, 'info');
+                    });
                     
                     // На мобильных устройствах ищем камеру 0
                     if (isMobile) {
+                        addLog('Поиск камеры 0 для мобильного устройства...', 'info');
+                        
                         // Ищем камеру с deviceId "0" или содержащую "0" в deviceId
                         let camera0 = videoDevices.find(device => device.deviceId === '0');
+                        
+                        if (camera0) {
+                            addLog(`Найдена камера с deviceId "0": ${camera0.label}`, 'success');
+                        } else {
+                            addLog('Камера с deviceId "0" не найдена, ищем альтернативы...', 'warning');
+                        }
                         
                         // Если не найдена, ищем по различным вариантам
                         if (!camera0) {
@@ -26006,25 +26020,34 @@ function animateCloseButtonClick(button) {
                                 device.label.toLowerCase().includes('camera 0') ||
                                 device.label.toLowerCase().includes('camera0')
                             );
+                            
+                            if (camera0) {
+                                addLog(`Найдена камера по альтернативному поиску: ${camera0.label}`, 'success');
+                            }
                         }
                         
                         // Если все еще не найдена, ищем заднюю камеру
                         if (!camera0) {
+                            addLog('Ищем заднюю камеру...', 'info');
                             camera0 = videoDevices.find(device => 
                                 device.label.toLowerCase().includes('facing back') ||
                                 device.label.toLowerCase().includes('back')
                             );
+                            
+                            if (camera0) {
+                                addLog(`Найдена задняя камера: ${camera0.label}`, 'success');
+                            }
                         }
                         
                         if (camera0) {
                             cameraSelect.value = camera0.deviceId;
                             console.log('Выбрана камера для мобильного устройства:', camera0.label, 'deviceId:', camera0.deviceId);
-                            addLog(`Выбрана камера: ${camera0.label}`, 'info');
+                            addLog(`✓ Выбрана камера: ${camera0.label} (ID: ${camera0.deviceId})`, 'success');
                         } else {
                             // Если ничего не найдено, выбираем первую доступную
                             cameraSelect.value = videoDevices[0].deviceId;
                             console.log('Камера 0 не найдена, выбрана первая доступная:', videoDevices[0].label, 'deviceId:', videoDevices[0].deviceId);
-                            addLog(`Выбрана камера: ${videoDevices[0].label}`, 'info');
+                            addLog(`⚠ Камера 0 не найдена, выбрана первая доступная: ${videoDevices[0].label}`, 'warning');
                         }
                     } else {
                         cameraSelect.value = videoDevices[0].deviceId;
