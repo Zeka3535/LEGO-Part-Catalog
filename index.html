@@ -19739,6 +19739,10 @@ document.addEventListener("click", async e => {
             // Устанавливаем сортировку для деталей на популярные
             S.sortBy = 'popularity';
             console.log('🔧 Resetting subView to parts and sortBy to popularity when switching from tools');
+            
+            // Очищаем камеру при выходе из инструментов
+            console.log('🔧 Очистка камеры при выходе из инструментов...');
+            cleanupCamera();
         }
         
         // Скрываем указатель при переключении представлений (только если нет активных модальных окон)
@@ -19945,6 +19949,12 @@ document.addEventListener("click", async e => {
     if (toolSubViewBtn?.dataset.toolSubView) {
         const toolSubView = toolSubViewBtn.dataset.toolSubView;
         if (S.toolSubView === toolSubView) return;
+        
+        // Очищаем камеру при смене подраздела инструментов
+        if (S.toolSubView === 'scanner' && toolSubView !== 'scanner') {
+            console.log('🔧 Очистка камеры при смене подраздела инструментов...');
+            cleanupCamera();
+        }
         
         S.toolSubView = toolSubView;
         S.gridStale = true;
@@ -26758,6 +26768,64 @@ function animateCloseButtonClick(button) {
             }, 5000);
         }
         
+        // Очистка камеры при выходе из инструментов
+        function cleanupCamera() {
+            console.log('Очистка камеры при выходе из инструментов...');
+            addLog('Очистка камеры при выходе из инструментов...', 'info');
+            
+            // Останавливаем сканирование
+            isScanning = false;
+            isScannerInitialized = false;
+            
+            // Останавливаем камеру
+            if (currentStream) {
+                console.log('Остановка видеопотока...');
+                currentStream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('Трек остановлен:', track.kind);
+                });
+                currentStream = null;
+            }
+            
+            // Останавливаем сканеры
+            if (scanner) {
+                try {
+                    scanner.reset();
+                } catch (e) {
+                    console.warn('Ошибка при сбросе сканера:', e);
+                }
+                scanner = null;
+            }
+            
+            if (mobileScanner) {
+                try {
+                    mobileScanner.reset();
+                } catch (e) {
+                    console.warn('Ошибка при сбросе мобильного сканера:', e);
+                }
+                mobileScanner = null;
+            }
+            
+            // Очищаем интервалы
+            if (mobileScanInterval) {
+                clearInterval(mobileScanInterval);
+                mobileScanInterval = null;
+            }
+            
+            // Сбрасываем флаги
+            isCameraStarting = false;
+            
+            // Очищаем видео элемент
+            const video = document.getElementById('scanner-video');
+            if (video) {
+                video.srcObject = null;
+                video.load();
+            }
+            
+            console.log('Камера очищена');
+            addLog('Камера очищена', 'success');
+        }
+        
         // Запуск мобильного сканера с циклом
         function startMobileScanner() {
             console.log('Инициализация мобильного сканера...');
@@ -27240,6 +27308,9 @@ function animateCloseButtonClick(button) {
                 }, 2000);
             } else {
                 console.log('Мобильное устройство: перезапуск камеры обрабатывается в мобильном сканере');
+                // Сбрасываем флаг запуска камеры для мобильных устройств
+                isCameraStarting = false;
+                console.log('Флаг isCameraStarting сброшен для мобильного устройства');
             }
         }
         
