@@ -26001,6 +26001,7 @@ function animateCloseButtonClick(button) {
                     });
                     
                     // На мобильных устройствах ищем камеру 0
+                    addLog(`isMobile: ${isMobile}`, 'info');
                     if (isMobile) {
                         addLog('Поиск камеры 0 для мобильного устройства...', 'info');
                         
@@ -26048,6 +26049,7 @@ function animateCloseButtonClick(button) {
                             addLog(`⚠ Камера 0 не найдена, выбрана первая доступная: ${videoDevices[0].label}`, 'warning');
                         }
                     } else {
+                        addLog('Не мобильное устройство, выбираем первую камеру', 'info');
                         cameraSelect.value = videoDevices[0].deviceId;
                         console.log('Выбрана первая камера:', videoDevices[0].label);
                         addLog(`Выбрана камера: ${videoDevices[0].label}`, 'info');
