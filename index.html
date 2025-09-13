@@ -26104,12 +26104,12 @@ function animateCloseButtonClick(button) {
             mobileHints.set(ZXing.DecodeHintType.PURE_BARCODE, true);
             mobileHints.set(ZXing.DecodeHintType.CHARACTER_SET, 'UTF-8');
             
-            // Опции для мобильного сканера
+            // Опции для мобильного сканера - более сбалансированные
             const mobileOptions = {
                 delayBetweenScanSuccess: 2000, // 2 секунды между успешными сканированиями
-                delayBetweenScanAttempts: 200, // 200ms между попытками
+                delayBetweenScanAttempts: 500, // 500ms между попытками (уменьшили частоту)
                 tryHarder: true,
-                tryHarderThreshold: 0.5
+                tryHarderThreshold: 0.7 // Увеличили порог
             };
             
             try {
@@ -26172,21 +26172,28 @@ function animateCloseButtonClick(button) {
                     ZXing.BarcodeFormat.UPC_A,
                     ZXing.BarcodeFormat.UPC_E
                 ]);
-                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                hints.set(ZXing.DecodeHintType.TRY_HARDER, isMobile ? false : true); // Отключаем для мобильных
                 
                 // Дополнительные настройки для мобильных устройств
                 if (isMobile) {
+                    // Для мобильных устройств ограничиваем форматы для ускорения
+                    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+                        ZXing.BarcodeFormat.QR_CODE,
+                        ZXing.BarcodeFormat.DATA_MATRIX,
+                        ZXing.BarcodeFormat.CODE_128,
+                        ZXing.BarcodeFormat.CODE_39
+                    ]);
                     hints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
                     hints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
                     hints.set(ZXing.DecodeHintType.CHARACTER_SET, 'UTF-8');
                 }
                 
-                // Настройки для мобильных устройств
+                // Настройки для мобильных устройств - более сбалансированные
                 const options = {
-                    delayBetweenScanSuccess: isMobile ? 1000 : 3000, // На мобильных быстрее
-                    delayBetweenScanAttempts: isMobile ? 200 : 1000, // На мобильных чаще сканируем
-                    tryHarder: isMobile, // На мобильных используем более агрессивное сканирование
-                    tryHarderThreshold: isMobile ? 0.5 : 0.8 // Порог для мобильных устройств
+                    delayBetweenScanSuccess: isMobile ? 2000 : 3000, // Увеличили задержку для мобильных
+                    delayBetweenScanAttempts: isMobile ? 500 : 1000, // Уменьшили частоту сканирования
+                    tryHarder: !isMobile, // На мобильных отключаем для ускорения
+                    tryHarderThreshold: isMobile ? 0.7 : 0.8 // Увеличили порог для мобильных
                 };
                 
                 // Для всех устройств используем одинаковый метод
