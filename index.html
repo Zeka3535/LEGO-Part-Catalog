@@ -5339,24 +5339,32 @@ function renderScannerContent() {
         <div class="min-h-full p-2 sm:p-4 md:p-6 lg:p-8">
             <!-- Основной контент -->
             <div class="max-w-4xl mx-auto space-y-4 sm:space-y-6">
-                <!-- Настройки камеры (свернутые) -->
-                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 shadow-lg">
+                <!-- Настройки камеры (сворачиваемые в стиле модального окна) -->
+                <div class="bg-gray-800 rounded-lg shadow-xl border border-gray-700/50 overflow-hidden">
                     <details class="group">
-                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-700/30 transition-colors">
-                            <h3 class="text-lg font-semibold text-gray-200">Настройки камеры</h3>
-                            <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
+                        <summary class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center cursor-pointer hover:bg-gray-700/30 transition-colors">
+                            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+                                <span>${I_Camera('w-5 h-5')}</span>
+                                Настройки камеры
+                            </h3>
+                            <div class="flex items-center gap-2">
+                                <div class="text-xs text-gray-400 bg-gray-700/50 px-2 py-1 rounded">
+                                    DataMatrix
+                                </div>
+                                <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
+                            </div>
                         </summary>
-                        <div class="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+                        <div class="p-4 space-y-4">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-300 mb-2">Камера</label>
-                                    <select id="camera-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <select id="camera-select" class="w-full px-3 py-2 bg-gray-700/60 border border-gray-600/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                                         <option value="">Выберите камеру...</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-300 mb-2">Разрешение</label>
-                                    <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <select id="resolution-select" class="w-full px-3 py-2 bg-gray-700/60 border border-gray-600/50 rounded-lg text-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors">
                                         <option value="640x640">640x640 (Квадрат)</option>
                                         <option value="800x800">800x800 (Квадрат HD)</option>
                                         <option value="1024x1024">1024x1024 (Квадрат Full HD)</option>
@@ -5368,19 +5376,19 @@ function renderScannerContent() {
                                 </div>
                             </div>
                             <div class="flex flex-wrap gap-2">
-                                <button id="request-permission" class="flex items-center gap-2 px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors">
+                                <button id="request-permission" class="flex items-center gap-2 px-4 py-2 bg-yellow-600/80 hover:bg-yellow-600 text-white rounded-lg transition-colors shadow-lg hover:shadow-yellow-500/25">
                                     <span>${I_Shield('w-4 h-4')}</span>
                                     <span>Запросить разрешение</span>
                                 </button>
-                                <button id="start-camera" class="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors">
+                                <button id="start-camera" class="flex items-center gap-2 px-4 py-2 bg-green-600/80 hover:bg-green-600 text-white rounded-lg transition-colors shadow-lg hover:shadow-green-500/25">
                                     <span>${I_Play('w-4 h-4')}</span>
                                     <span>Запустить камеру</span>
                                 </button>
-                                <button id="stop-camera" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors" disabled>
+                                <button id="stop-camera" class="flex items-center gap-2 px-4 py-2 bg-red-600/80 hover:bg-red-600 text-white rounded-lg transition-colors shadow-lg hover:shadow-red-500/25" disabled>
                                     <span>${I_Square('w-4 h-4')}</span>
                                     <span>Остановить камеру</span>
                                 </button>
-                                <button id="refresh-cameras" class="flex items-center gap-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors">
+                                <button id="refresh-cameras" class="flex items-center gap-2 px-4 py-2 bg-gray-600/80 hover:bg-gray-600 text-white rounded-lg transition-colors shadow-lg hover:shadow-gray-500/25">
                                     <span>${I_Refresh('w-4 h-4')}</span>
                                     <span>Обновить камеры</span>
                                 </button>
@@ -5405,14 +5413,14 @@ function renderScannerContent() {
                             </div>
                         </div>
                         <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">
-                            <div class="absolute inset-4 border-2 border-green-400 rounded-lg transition-all duration-300">
-                                <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-green-400"></div>
-                                <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-green-400"></div>
-                                <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-green-400"></div>
-                                <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-green-400"></div>
-                            </div>
-                            <div id="scan-status" class="absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium hidden">
-                                Сканирование...
+                            <!-- Зеленая рамка точно по размеру камеры с отступом внутрь -->
+                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80">
+                                <div class="absolute inset-2 border-2 border-green-400 rounded-lg transition-all duration-300">
+                                    <div class="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-green-400"></div>
+                                    <div class="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-green-400"></div>
+                                    <div class="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-green-400"></div>
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-green-400"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -5429,28 +5437,6 @@ function renderScannerContent() {
                     </div>
                 </div>
 
-                <!-- Статистика сканирования -->
-                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-4 sm:p-6 shadow-lg">
-                    <h3 class="text-lg font-semibold text-gray-200 mb-4">Статистика</h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-                        <div>
-                            <div class="text-2xl font-bold text-blue-400" id="total-scans">0</div>
-                            <div class="text-sm text-gray-400">Всего сканирований</div>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-green-400" id="successful-scans">0</div>
-                            <div class="text-sm text-gray-400">Успешных</div>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-yellow-400" id="qr-scans">0</div>
-                            <div class="text-sm text-gray-400">QR-коды</div>
-                        </div>
-                        <div>
-                            <div class="text-2xl font-bold text-purple-400" id="datamatrix-scans">0</div>
-                            <div class="text-sm text-gray-400">DataMatrix</div>
-                        </div>
-                    </div>
-                </div>
                 
                 <!-- Консольные логи для отладки -->
                 <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-4 sm:p-6 shadow-lg">
@@ -26311,8 +26297,6 @@ function animateCloseButtonClick(button) {
                     if (overlay) {
                         overlay.classList.remove('hidden');
                         // Показать индикатор сканирования
-                        const scanStatus = document.getElementById('scan-status');
-                        if (scanStatus) scanStatus.classList.remove('hidden');
                     }
                     
                     // Обновить кнопки
@@ -26440,8 +26424,6 @@ function animateCloseButtonClick(button) {
             if (overlay) {
                 overlay.classList.add('hidden');
                 // Скрыть индикатор сканирования
-                const scanStatus = document.getElementById('scan-status');
-                if (scanStatus) scanStatus.classList.add('hidden');
             }
             
             // Обновить кнопки
@@ -26488,10 +26470,7 @@ function animateCloseButtonClick(button) {
             // Настройки для мобильного сканера
             const mobileHints = new Map();
             mobileHints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-                ZXing.BarcodeFormat.QR_CODE,
-                ZXing.BarcodeFormat.DATA_MATRIX,
-                ZXing.BarcodeFormat.CODE_128,
-                ZXing.BarcodeFormat.CODE_39
+                ZXing.BarcodeFormat.DATA_MATRIX
             ]);
             mobileHints.set(ZXing.DecodeHintType.TRY_HARDER, true);
             mobileHints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
@@ -26595,14 +26574,7 @@ function animateCloseButtonClick(button) {
                 // Используем decodeFromVideoDevice с правильной настройкой
                 const hints = new Map();
                 hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-                    ZXing.BarcodeFormat.QR_CODE,
-                    ZXing.BarcodeFormat.DATA_MATRIX,
-                    ZXing.BarcodeFormat.CODE_128,
-                    ZXing.BarcodeFormat.CODE_39,
-                    ZXing.BarcodeFormat.EAN_13,
-                    ZXing.BarcodeFormat.EAN_8,
-                    ZXing.BarcodeFormat.UPC_A,
-                    ZXing.BarcodeFormat.UPC_E
+                    ZXing.BarcodeFormat.DATA_MATRIX
                 ]);
                 hints.set(ZXing.DecodeHintType.TRY_HARDER, isMobile ? false : true); // Отключаем для мобильных
                 
@@ -26610,10 +26582,7 @@ function animateCloseButtonClick(button) {
                 if (isMobile) {
                     // Для мобильных устройств ограничиваем форматы для ускорения
                     hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-                        ZXing.BarcodeFormat.QR_CODE,
-                        ZXing.BarcodeFormat.DATA_MATRIX,
-                        ZXing.BarcodeFormat.CODE_128,
-                        ZXing.BarcodeFormat.CODE_39
+                        ZXing.BarcodeFormat.DATA_MATRIX
                     ]);
                     hints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
                     hints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
@@ -26659,7 +26628,6 @@ function animateCloseButtonClick(button) {
         // Переключение сканирования
         function toggleScanning() {
             const toggleBtn = document.getElementById('toggle-scan');
-            const scanStatus = document.getElementById('scan-status');
             
             if (isScanning) {
                 // Остановить сканирование
@@ -26689,7 +26657,6 @@ function animateCloseButtonClick(button) {
                 }
                 
                 if (scanStatus) {
-                    scanStatus.textContent = 'Сканирование остановлено';
                     scanStatus.className = 'absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-xs font-medium';
                 }
                 
@@ -26715,7 +26682,6 @@ function animateCloseButtonClick(button) {
                 }
                 
                 if (scanStatus) {
-                    scanStatus.textContent = 'Сканирование...';
                     scanStatus.className = 'absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium';
                 }
                 
@@ -26760,10 +26726,7 @@ function animateCloseButtonClick(button) {
                 // Настройки для принудительного сканирования
                 const hints = new Map();
                 hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-                    ZXing.BarcodeFormat.QR_CODE,
-                    ZXing.BarcodeFormat.DATA_MATRIX,
-                    ZXing.BarcodeFormat.CODE_128,
-                    ZXing.BarcodeFormat.CODE_39
+                    ZXing.BarcodeFormat.DATA_MATRIX
                 ]);
                 hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
                 hints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
@@ -26799,10 +26762,7 @@ function animateCloseButtonClick(button) {
                 // Для мобильных устройств используем специальные настройки
                 const hints = new Map();
                 hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-                    ZXing.BarcodeFormat.QR_CODE,
-                    ZXing.BarcodeFormat.DATA_MATRIX,
-                    ZXing.BarcodeFormat.CODE_128,
-                    ZXing.BarcodeFormat.CODE_39
+                    ZXing.BarcodeFormat.DATA_MATRIX
                 ]);
                 hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
                 
@@ -26854,13 +26814,11 @@ function animateCloseButtonClick(button) {
             
             // Показать визуальную индикацию успешного сканирования
             const overlay = document.getElementById('scanner-overlay');
-            const scanStatus = document.getElementById('scan-status');
             if (overlay) {
                 overlay.style.borderColor = '#10B981'; // Зеленый цвет
                 overlay.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
             }
             if (scanStatus) {
-                scanStatus.textContent = '✓ Найдено!';
                 scanStatus.className = 'absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium';
             }
             
@@ -26870,8 +26828,6 @@ function animateCloseButtonClick(button) {
                     overlay.style.backgroundColor = 'transparent';
                 }
                 if (scanStatus) {
-                    scanStatus.textContent = 'Сканирование...';
-                    scanStatus.className = 'absolute top-2 left-2 bg-green-500 text-white px-2 py-1 rounded text-xs font-medium hidden';
                 }
             }, 2000);
             
