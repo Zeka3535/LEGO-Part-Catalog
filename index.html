@@ -5476,6 +5476,19 @@ function renderScannerContent() {
                         </div>
                     </div>
                 </div>
+                
+                <!-- Консольные логи для отладки -->
+                <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-lg sm:rounded-xl border border-gray-600/40 p-4 sm:p-6 shadow-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-200">Консольные логи</h3>
+                        <button id="clear-logs" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors">
+                            Очистить
+                        </button>
+                    </div>
+                    <div id="console-logs" class="bg-gray-900 rounded-lg p-3 h-48 overflow-y-auto text-xs font-mono text-gray-300 border border-gray-700">
+                        <div class="text-gray-500">Логи появятся здесь...</div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
@@ -25511,6 +25524,61 @@ function animateCloseButtonClick(button) {
         };
         let lastScannedCode = null;
         let lastScanTime = 0;
+        let consoleLogs = [];
+        
+        // Функции для работы с логами
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = {
+                time: timestamp,
+                message: message,
+                type: type
+            };
+            
+            consoleLogs.push(logEntry);
+            
+            // Ограничиваем количество логов до 100
+            if (consoleLogs.length > 100) {
+                consoleLogs.shift();
+            }
+            
+            updateConsoleDisplay();
+        }
+        
+        function updateConsoleDisplay() {
+            const logsContainer = document.getElementById('console-logs');
+            if (!logsContainer) return;
+            
+            if (consoleLogs.length === 0) {
+                logsContainer.innerHTML = '<div class="text-gray-500">Логи появятся здесь...</div>';
+                return;
+            }
+            
+            const logsHtml = consoleLogs.map(log => {
+                const colorClass = {
+                    'info': 'text-gray-300',
+                    'success': 'text-green-400',
+                    'error': 'text-red-400',
+                    'warning': 'text-yellow-400',
+                    'debug': 'text-blue-400'
+                }[log.type] || 'text-gray-300';
+                
+                return `<div class="mb-1">
+                    <span class="text-gray-500">[${log.time}]</span>
+                    <span class="${colorClass}">${log.message}</span>
+                </div>`;
+            }).join('');
+            
+            logsContainer.innerHTML = logsHtml;
+            
+            // Прокручиваем вниз
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+        
+        function clearLogs() {
+            consoleLogs = [];
+            updateConsoleDisplay();
+        }
         
         // Определение мобильного устройства
         function detectMobile() {
@@ -25874,11 +25942,13 @@ function animateCloseButtonClick(button) {
             const forceBtn = document.getElementById('force-scan');
             const toggleBtn = document.getElementById('toggle-scan');
             const cameraSelect = document.getElementById('camera-select');
+            const clearLogsBtn = document.getElementById('clear-logs');
             
             if (startBtn) startBtn.addEventListener('click', startCamera);
             if (stopBtn) stopBtn.addEventListener('click', stopCamera);
             if (captureBtn) captureBtn.addEventListener('click', capturePhoto);
             if (refreshBtn) refreshBtn.addEventListener('click', setupCameraSelect);
+            if (clearLogsBtn) clearLogsBtn.addEventListener('click', clearLogs);
             if (testBtn) testBtn.addEventListener('click', testScanning);
             if (forceBtn) forceBtn.addEventListener('click', forceScanning);
             if (toggleBtn) toggleBtn.addEventListener('click', toggleScanning);
@@ -25904,9 +25974,11 @@ function animateCloseButtonClick(button) {
             // Защита от повторного запуска
             if (isCameraStarting) {
                 console.log('Камера уже запускается, пропускаем...');
+                addLog('Камера уже запускается, пропускаем...', 'warning');
                 return;
             }
             
+            addLog('Начинаем запуск камеры...', 'info');
             isCameraStarting = true;
             
             const cameraSelect = document.getElementById('camera-select');
@@ -25962,6 +26034,7 @@ function animateCloseButtonClick(button) {
                 };
                 
                 console.log('Запуск камеры с настройками:', constraints);
+                addLog(`Запуск камеры: ${width}x${height}, мобильное: ${isMobile}`, 'info');
                 
                 // Попробуем новый API, если не работает - старый
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -25975,6 +26048,7 @@ function animateCloseButtonClick(button) {
                 // Дождаться загрузки видео
                 video.onloadedmetadata = () => {
                     console.log('Видео загружено, размер:', video.videoWidth, 'x', video.videoHeight);
+                    addLog(`Видео загружено: ${video.videoWidth}x${video.videoHeight}`, 'success');
                     
                     if (video.paused) {
                         video.play().catch(e => console.warn('Ошибка воспроизведения видео:', e));
@@ -26020,11 +26094,13 @@ function animateCloseButtonClick(button) {
                     if (isMobile) {
                         // Для мобильных устройств принудительно запускаем мобильный сканер
                         console.log('Мобильное устройство: принудительный запуск мобильного сканера');
+                        addLog('Мобильное устройство: запуск мобильного сканера', 'info');
                         isScanning = true;
                         isScannerInitialized = false;
                         startMobileScanner();
                     } else {
                         // Для ПК используем стандартный сканер
+                        addLog('ПК: запуск стандартного сканера', 'info');
                         initQRScanner();
                     }
                     
@@ -26144,6 +26220,7 @@ function animateCloseButtonClick(button) {
         function startMobileScanner() {
             console.log('Инициализация мобильного сканера...');
             console.log('isScanning:', isScanning, 'isMobile:', isMobile);
+            addLog('Инициализация мобильного сканера...', 'info');
             
             // Очищаем предыдущий сканер
             if (mobileScanner) {
@@ -26180,6 +26257,7 @@ function animateCloseButtonClick(button) {
             const scanFrame = () => {
                 if (!isScanning || !mobileScanner) {
                     console.log('Мобильное сканирование остановлено');
+                    addLog('Мобильное сканирование остановлено', 'warning');
                     return;
                 }
                 
@@ -26194,6 +26272,7 @@ function animateCloseButtonClick(button) {
                     mobileScanner.decodeFromVideoElement(video, mobileHints).then(result => {
                         if (result && isScanning) {
                             console.log('Найден код (мобильный):', result);
+                            addLog(`Найден код (мобильный): ${result.getText()}`, 'success');
                             handleScanResult(result);
                             
                             // Останавливаем сканирование после успешного результата
@@ -26225,6 +26304,7 @@ function animateCloseButtonClick(button) {
             
             // Запускаем сканирование
             console.log('Запуск мобильного сканирования с циклом...');
+            addLog('Запуск мобильного сканирования с циклом...', 'info');
             scanFrame();
         }
         
@@ -26514,6 +26594,7 @@ function animateCloseButtonClick(button) {
             // Проверяем на дубликаты - если тот же код был отсканирован менее 3 секунд назад
             if (lastScannedCode === resultText && (currentTime - lastScanTime) < 3000) {
                 console.log('Дубликат кода, пропускаем:', resultText);
+                addLog(`Дубликат кода, пропускаем: ${resultText}`, 'warning');
                 return;
             }
             
@@ -26522,6 +26603,7 @@ function animateCloseButtonClick(button) {
             lastScanTime = currentTime;
             
             console.log('Обработка результата сканирования:', result);
+            addLog(`Обработка результата: ${resultText}`, 'info');
             
             // Показать визуальную индикацию успешного сканирования
             const overlay = document.getElementById('scanner-overlay');
