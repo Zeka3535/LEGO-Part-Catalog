@@ -26039,9 +26039,6 @@ function animateCloseButtonClick(button) {
                 // Попробуем новый API, если не работает - старый
                 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                     currentStream = await navigator.mediaDevices.getUserMedia(constraints);
-                } else {
-                    // Используем старый API для старых браузеров
-                    currentStream = await getOldUserMedia(constraints);
                 }
                 video.srcObject = currentStream;
                 
