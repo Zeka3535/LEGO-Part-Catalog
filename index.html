@@ -25881,13 +25881,68 @@ function animateCloseButtonClick(button) {
                     throw new Error('На мобильных устройствах требуется HTTPS соединение для доступа к камере. Пожалуйста, откройте сайт через HTTPS.');
                 }
                 
-                // Получить список камер без запроса разрешений
+                // Получить список камер с fallback методами
                 let videoDevices = [];
-                if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    videoDevices = devices.filter(device => device.kind === 'videoinput');
-                } else {
-                    // Для старых браузеров используем заглушку
+                
+                try {
+                    if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                        console.log('Попытка получить список камер через enumerateDevices...');
+                        const devices = await navigator.mediaDevices.enumerateDevices();
+                        videoDevices = devices.filter(device => device.kind === 'videoinput');
+                        console.log('Найдено камер через enumerateDevices:', videoDevices.length);
+                    }
+                } catch (error) {
+                    console.warn('Ошибка при получении списка камер через enumerateDevices:', error);
+                }
+                
+                // Если камеры не найдены, пробуем альтернативные методы
+                if (videoDevices.length === 0) {
+                    console.log('Камеры не найдены через enumerateDevices, пробуем альтернативные методы...');
+                    
+                    // Для мобильных устройств пробуем получить камеру с базовыми настройками
+                    if (isMobile) {
+                        try {
+                            console.log('Пробуем получить камеру для мобильного устройства...');
+                            const testConstraints = {
+                                video: {
+                                    facingMode: 'environment',
+                                    width: { ideal: 640 },
+                                    height: { ideal: 640 }
+                                }
+                            };
+                            
+                            // Пробуем получить камеру для определения доступности
+                            const testStream = await navigator.mediaDevices.getUserMedia(testConstraints);
+                            if (testStream) {
+                                videoDevices = [{ deviceId: 'environment', label: 'Задняя камера' }];
+                                testStream.getTracks().forEach(track => track.stop());
+                                console.log('Мобильная камера найдена через тестовый запрос');
+                            }
+                        } catch (error) {
+                            console.warn('Не удалось получить мобильную камеру:', error);
+                        }
+                    }
+                    
+                    // Если все еще нет камер, пробуем с базовыми настройками
+                    if (videoDevices.length === 0) {
+                        try {
+                            console.log('Пробуем получить камеру с базовыми настройками...');
+                            const basicConstraints = { video: true };
+                            const testStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+                            if (testStream) {
+                                videoDevices = [{ deviceId: 'default', label: 'Камера по умолчанию' }];
+                                testStream.getTracks().forEach(track => track.stop());
+                                console.log('Камера найдена через базовый запрос');
+                            }
+                        } catch (error) {
+                            console.warn('Не удалось получить камеру с базовыми настройками:', error);
+                        }
+                    }
+                }
+                
+                // Если камеры все еще не найдены, создаем заглушку
+                if (videoDevices.length === 0) {
+                    console.log('Создаем заглушку для камеры');
                     videoDevices = [{ deviceId: 'default', label: 'Камера по умолчанию' }];
                 }
                 
@@ -26027,32 +26082,101 @@ function animateCloseButtonClick(button) {
                 const width = parseInt(resolution[0]);
                 const height = parseInt(resolution[1]);
                 
-                // Настройки камеры
-                const constraints = {
-                    video: {
-                        deviceId: { exact: deviceId },
-                        width: { ideal: width },
-                        height: { ideal: height },
-                        facingMode: isMobile ? 'environment' : 'user', // На мобильных предпочитаем заднюю камеру
-                        frameRate: { ideal: isMobile ? 30 : 15 }, // На мобильных выше FPS для лучшего сканирования
-                        focusMode: isMobile ? 'continuous' : 'single', // На мобильных непрерывная фокусировка
-                        // Дополнительные настройки для мобильных устройств
-                        ...(isMobile && {
-                            aspectRatio: { ideal: 16/9 },
-                            whiteBalanceMode: 'continuous',
-                            exposureMode: 'continuous',
-                            focusMode: 'continuous',
-                            torch: false // Отключаем вспышку по умолчанию
-                        })
-                    }
-                };
+                // Настройки камеры с fallback методами
+                let constraints;
+                
+                if (deviceId === 'environment') {
+                    // Для мобильных устройств с environment камерой
+                    constraints = {
+                        video: {
+                            facingMode: 'environment',
+                            width: { ideal: width },
+                            height: { ideal: height },
+                            frameRate: { ideal: isMobile ? 30 : 15 },
+                            ...(isMobile && {
+                                aspectRatio: { ideal: 16/9 },
+                                whiteBalanceMode: 'continuous',
+                                exposureMode: 'continuous',
+                                focusMode: 'continuous',
+                                torch: false
+                            })
+                        }
+                    };
+                } else if (deviceId === 'default') {
+                    // Для камеры по умолчанию
+                    constraints = {
+                        video: {
+                            width: { ideal: width },
+                            height: { ideal: height },
+                            frameRate: { ideal: isMobile ? 30 : 15 },
+                            ...(isMobile && {
+                                facingMode: 'environment',
+                                aspectRatio: { ideal: 16/9 },
+                                whiteBalanceMode: 'continuous',
+                                exposureMode: 'continuous',
+                                focusMode: 'continuous'
+                            })
+                        }
+                    };
+                } else {
+                    // Для конкретной камеры по ID
+                    constraints = {
+                        video: {
+                            deviceId: { exact: deviceId },
+                            width: { ideal: width },
+                            height: { ideal: height },
+                            facingMode: isMobile ? 'environment' : 'user',
+                            frameRate: { ideal: isMobile ? 30 : 15 },
+                            focusMode: isMobile ? 'continuous' : 'single',
+                            ...(isMobile && {
+                                aspectRatio: { ideal: 16/9 },
+                                whiteBalanceMode: 'continuous',
+                                exposureMode: 'continuous',
+                                focusMode: 'continuous',
+                                torch: false
+                            })
+                        }
+                    };
+                }
                 
                 console.log('Запуск камеры с настройками:', constraints);
                 addLog(`Запуск камеры: ${width}x${height}, мобильное: ${isMobile}`, 'info');
                 
-                // Попробуем новый API, если не работает - старый
-                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                    currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                // Попробуем запустить камеру с fallback методами
+                try {
+                    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                        console.log('Пробуем запустить камеру через новый API...');
+                        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    } else {
+                        throw new Error('getUserMedia не поддерживается');
+                    }
+                } catch (error) {
+                    console.warn('Ошибка при запуске камеры через новый API:', error);
+                    
+                    // Fallback 1: Пробуем с упрощенными настройками
+                    try {
+                        console.log('Пробуем запустить камеру с упрощенными настройками...');
+                        const simpleConstraints = {
+                            video: {
+                                width: { ideal: width },
+                                height: { ideal: height },
+                                ...(isMobile && { facingMode: 'environment' })
+                            }
+                        };
+                        currentStream = await navigator.mediaDevices.getUserMedia(simpleConstraints);
+                    } catch (error2) {
+                        console.warn('Ошибка при запуске камеры с упрощенными настройками:', error2);
+                        
+                        // Fallback 2: Пробуем с базовыми настройками
+                        try {
+                            console.log('Пробуем запустить камеру с базовыми настройками...');
+                            const basicConstraints = { video: true };
+                            currentStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+                        } catch (error3) {
+                            console.error('Не удалось запустить камеру ни одним способом:', error3);
+                            throw new Error(`Не удалось запустить камеру: ${error3.message}`);
+                        }
+                    }
                 }
                 video.srcObject = currentStream;
                 
