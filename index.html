@@ -162,6 +162,7 @@
     
     /* Стили для выравнивания высоты кнопок в панели поиска */
     #search-button,
+    #ai-search-button,
     #filter-button {
         height: 40px; /* Фиксированная высота кнопок */
         min-height: 40px;
@@ -171,6 +172,26 @@
         align-items: center;
         justify-content: center;
         flex-shrink: 0; /* Предотвращаем сжатие */
+    }
+    
+    /* Принудительное скрытие кнопок */
+    #search-button.hidden,
+    #ai-search-button.hidden,
+    #clear-search.hidden,
+    #search-icon.hidden {
+        display: none !important;
+    }
+    
+    /* Стили для иконки поиска */
+    #search-icon {
+        height: 40px;
+        min-height: 40px;
+        width: 40px;
+        min-width: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none; /* Не перехватывает клики */
     }
     
     #clear-search {
@@ -846,6 +867,7 @@
     /* Обеспечиваем одинаковую высоту для всех элементов в панели поиска */
     #search-input,
     #search-button,
+    #ai-search-button,
     #filter-button {
         box-sizing: border-box;
     }
@@ -902,6 +924,7 @@
     /* Медиа-запрос для мобильных устройств */
     @media (max-width: 640px) {
         #search-button,
+        #ai-search-button,
         #filter-button {
             height: 40px;
             min-height: 40px;
@@ -4085,7 +4108,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -4118,6 +4141,28 @@ window.searchPartInCatalog = function(partNumber, category = '', partName = '') 
     
     // Открываем модальное окно выбора типа поиска
     openSearchTypeSelectionModal();
+}
+
+// Функция для открытия AI поиска
+window.openAISearch = function() {
+    console.log('Открываем AI поиск по фотографии');
+    
+    // Переключаемся на представление инструментов и AI поиск
+    S.view = 'tools';
+    S.toolSubView = 'photo-search';
+    
+    // Очищаем поисковый запрос
+    S.q = '';
+    
+    // Обновляем UI
+    updateUI();
+    
+    // Закрываем боковую панель на мобильных устройствах
+    if (window.innerWidth < 1024) {
+        setTimeout(() => {
+            showPhotoCameraSelectionModal();
+        }, 300);
+    }
 }
 
 // Модальное окно выбора типа поиска
@@ -15117,12 +15162,18 @@ function renderHeader() {
                     <div class="relative flex-grow">
                         <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" title="Поиск ${searchContext}" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off"/>
                         <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.q?"":"hidden"}" title="Очистить поисковый запрос">${I_X("w-5 h-5")}</button>
+                        <div id="search-icon" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 ${S.q?"hidden":""}" title="Поиск">
+                            ${I_Search("w-5 h-5")}
+                        </div>
                         <div id="autocomplete-dropdown">
                             <!-- Предложения автодополнения будут добавлены здесь -->
                         </div>
                     </div>
-                     <button id="search-button" class="px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0" aria-label="Поиск" title="Выполнить поиск ${searchContext}">
+                     <button id="search-button" class="px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0 hidden" aria-label="Поиск" title="Выполнить поиск ${searchContext}">
                         ${I_Search("w-5 h-5")}
+                    </button>
+                    <button id="ai-search-button" class="px-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0" aria-label="AI поиск" title="AI поиск по фотографии" onclick="openAISearch()">
+                        ${I_Camera("w-5 h-5")}
                     </button>
                     <button id="filter-button" class="px-3 bg-gray-600 text-white rounded-md hover:bg-gray-500 transition-colors duration-150 shadow-lg hover:shadow-gray-500/25 flex-shrink-0" aria-label="Фильтры" title="Открыть панель фильтров и сортировки">
                         ${I_Filter("w-5 h-5")}
@@ -15131,7 +15182,12 @@ function renderHeader() {
                 </div>
             </div>
             ${selBar}
-        `
+        `;
+    
+    // Настраиваем видимость кнопок поиска после рендеринга заголовка
+    setTimeout(() => {
+        setupSearchButtonsVisibility();
+    }, 0);
 }
 function renderSetCard(e, t, o = 0) {
     if (!e) return "";
@@ -18465,6 +18521,50 @@ function updateUI() {
             // Сбрасываем случайное изображение минифигурки при изменении поискового запроса
             resetRandomMinifigImage();
             
+            // Переключаем видимость кнопок поиска и AI поиска
+            const searchButton = document.getElementById('search-button');
+            const aiSearchButton = document.getElementById('ai-search-button');
+            const clearButton = document.getElementById('clear-search');
+            const searchIcon = document.getElementById('search-icon');
+            
+            if (S.q && S.q.trim().length > 0) {
+                // Показываем кнопку поиска и скрываем AI поиск и иконку поиска
+                if (searchButton) {
+                    searchButton.classList.remove('hidden');
+                    searchButton.style.display = 'flex';
+                }
+                if (aiSearchButton) {
+                    aiSearchButton.classList.add('hidden');
+                    aiSearchButton.style.display = 'none';
+                }
+                if (clearButton) {
+                    clearButton.classList.remove('hidden');
+                    clearButton.style.display = 'flex';
+                }
+                if (searchIcon) {
+                    searchIcon.classList.add('hidden');
+                    searchIcon.style.display = 'none';
+                }
+            } else {
+                // Скрываем кнопку поиска и показываем AI поиск и иконку поиска
+                if (searchButton) {
+                    searchButton.classList.add('hidden');
+                    searchButton.style.display = 'none';
+                }
+                if (aiSearchButton) {
+                    aiSearchButton.classList.remove('hidden');
+                    aiSearchButton.style.display = 'flex';
+                }
+                if (clearButton) {
+                    clearButton.classList.add('hidden');
+                    clearButton.style.display = 'none';
+                }
+                if (searchIcon) {
+                    searchIcon.classList.remove('hidden');
+                    searchIcon.style.display = 'flex';
+                }
+            }
+            
             // Показываем автодополнение с дебаунсингом
             if (S.q && S.q.trim().length > 0) {
                 // Очищаем предыдущий таймаут
@@ -18936,6 +19036,68 @@ function updateUI() {
     
     // Настраиваем обработчики долгого нажатия для кнопок бокового меню
     setupLongPressHandlers();
+    
+    // Настраиваем видимость кнопок поиска и AI поиска после рендеринга
+    setTimeout(() => {
+        setupSearchButtonsVisibility();
+    }, 0);
+}
+
+// Функция для настройки видимости кнопок поиска
+function setupSearchButtonsVisibility() {
+    // Проверяем, что мы не в режиме tools (AI поиск)
+    if (S.view === 'tools') {
+        console.log('🔍 Skipping setupSearchButtonsVisibility - in tools view');
+        return;
+    }
+    
+    const searchButton = document.getElementById('search-button');
+    const aiSearchButton = document.getElementById('ai-search-button');
+    const clearButton = document.getElementById('clear-search');
+    const searchIcon = document.getElementById('search-icon');
+    
+    console.log('🔍 setupSearchButtonsVisibility called:', {
+        searchButton: !!searchButton,
+        aiSearchButton: !!aiSearchButton,
+        clearButton: !!clearButton,
+        searchIcon: !!searchIcon,
+        S_q: S.q,
+        S_q_length: S.q ? S.q.length : 0,
+        S_view: S.view
+    });
+    
+    if (searchButton && aiSearchButton && clearButton && searchIcon) {
+        if (S.q && S.q.trim().length > 0) {
+            // Показываем кнопку поиска и скрываем AI поиск и иконку поиска
+            console.log('🔍 Showing search button, hiding AI search button and search icon');
+            searchButton.classList.remove('hidden');
+            searchButton.style.display = 'flex';
+            aiSearchButton.classList.add('hidden');
+            aiSearchButton.style.display = 'none';
+            clearButton.classList.remove('hidden');
+            clearButton.style.display = 'flex';
+            searchIcon.classList.add('hidden');
+            searchIcon.style.display = 'none';
+        } else {
+            // Скрываем кнопку поиска и показываем AI поиск и иконку поиска
+            console.log('🔍 Hiding search button, showing AI search button and search icon');
+            searchButton.classList.add('hidden');
+            searchButton.style.display = 'none';
+            aiSearchButton.classList.remove('hidden');
+            aiSearchButton.style.display = 'flex';
+            clearButton.classList.add('hidden');
+            clearButton.style.display = 'none';
+            searchIcon.classList.remove('hidden');
+            searchIcon.style.display = 'flex';
+        }
+    } else {
+        console.log('🔍 Some buttons not found:', {
+            searchButton: !!searchButton,
+            aiSearchButton: !!aiSearchButton,
+            clearButton: !!clearButton,
+            searchIcon: !!searchIcon
+        });
+    }
 }
 function generateCsvData() {
     const t = (t) => {
@@ -23244,6 +23406,7 @@ document.addEventListener("click", async e => {
         return closeWishlistModal();
     }
     if (t.closest("#search-button")) return triggerSearch();
+    if (t.closest("#ai-search-button")) return openAISearch();
     if (t.closest("#clear-search")) {
         S.q = "";
         S.selFigNum = null;
@@ -23260,6 +23423,30 @@ document.addEventListener("click", async e => {
         resetRandomMinifigImage();
         // Устанавливаем флаг сброса состояния поиска
         window.searchStateReset = true;
+        
+        // Переключаем видимость кнопок при очистке поиска
+        const searchButton = document.getElementById('search-button');
+        const aiSearchButton = document.getElementById('ai-search-button');
+        const clearButton = document.getElementById('clear-search');
+        const searchIcon = document.getElementById('search-icon');
+        
+        if (searchButton) {
+            searchButton.classList.add('hidden');
+            searchButton.style.display = 'none';
+        }
+        if (aiSearchButton) {
+            aiSearchButton.classList.remove('hidden');
+            aiSearchButton.style.display = 'flex';
+        }
+        if (clearButton) {
+            clearButton.classList.add('hidden');
+            clearButton.style.display = 'none';
+        }
+        if (searchIcon) {
+            searchIcon.classList.remove('hidden');
+            searchIcon.style.display = 'flex';
+        }
+        
         document.getElementById("search-input")?.focus();
         return void triggerSearch()
     }
