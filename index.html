@@ -5870,7 +5870,7 @@ function renderPhotoSearchContent() {
                         <div class="p-2 bg-blue-600/20 rounded-lg">
                             ${I_Camera('w-5 h-5 text-blue-400')}
                         </div>
-                        <h3 class="text-lg font-semibold text-gray-200">Камера для фото</h3>
+                        <h3 class="text-lg font-semibold text-gray-200">Камера для распознования</h3>
                     </div>
                     <div class="relative flex justify-center">
                         <div class="relative">
@@ -28524,9 +28524,9 @@ function animateCloseButtonClick(button) {
             // Защита от повторного запуска
             if (isPhotoCameraStarting) {
                 console.log('Камера для поиска по фото уже запускается, пропускаем...');
-                return;
-            }
-            
+                    return;
+                }
+                
             isPhotoCameraStarting = true;
             
             const cameraSelect = document.getElementById('photo-camera-select');
@@ -28702,11 +28702,21 @@ function animateCloseButtonClick(button) {
                         device.label.toLowerCase().includes('camera 0')
                     );
                     
+                    if (!camera0) {
+                        camera0 = videoDevices.find(device => device.deviceId === '0');
+                    }
+                    
+                    if (!camera0) {
+                        camera0 = videoDevices.find(device => 
+                            device.label.toLowerCase().includes('facing back') ||
+                            device.label.toLowerCase().includes('back')
+                        );
+                    }
+                    
                     if (camera0) {
                         modalSelect.value = camera0.deviceId;
-                        console.log('Автоматически выбрана камера 0 для мобильного устройства:', camera0.label);
+                        console.log('Автоматически выбрана задняя камера для мобильного устройства:', camera0.label);
                     } else {
-                        // Если камера 0 не найдена, выбираем первую доступную
                         modalSelect.value = videoDevices[0].deviceId;
                         console.log('Автоматически выбрана первая доступная камера для мобильного устройства:', videoDevices[0].label);
                     }
@@ -28987,15 +28997,8 @@ function animateCloseButtonClick(button) {
             console.log('Отфильтровано предсказаний (>=60%):', filteredPredictions.length);
             
             if (filteredPredictions.length === 0) {
-                resultsContainer.innerHTML = `
-                    <div class="text-center text-gray-400 py-8">
-                        <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
-                        <p class="text-sm sm:text-base">Детали не найдены</p>
-                        <p class="text-xs text-gray-500 mt-2">Не найдено деталей с вероятностью совпадения выше 60%</p>
-                    </div>
-                `;
-                // Показываем блок результатов даже если нет найденных деталей
-                updatePhotoSearchResultsVisibility();
+                // Показываем сообщение об ошибке в поле камеры
+                showCameraErrorMessage('Детали не найдены');
                 return;
             }
             
@@ -29092,10 +29095,8 @@ function animateCloseButtonClick(button) {
         function clearPhotoSearchResults() {
             const resultsContainer = document.getElementById('photo-search-results');
             if (resultsContainer) {
-                resultsContainer.innerHTML = `
-                    <div class="text-center text-gray-400 py-8">
-                    </div>
-                `;
+                // Полностью очищаем контейнер
+                resultsContainer.innerHTML = '';
             }
             
             // Скрываем блок результатов после очистки
@@ -29295,6 +29296,39 @@ function animateCloseButtonClick(button) {
     
     // Запускаем инициализацию после загрузки страницы
     window.addEventListener('load', initCloudBackup);
+    
+    // Функция для показа сообщения об ошибке в поле камеры
+    function showCameraErrorMessage(message) {
+        const videoContainer = document.querySelector('#photo-search-video').parentElement;
+        if (!videoContainer) return;
+        
+        // Удаляем предыдущее сообщение если есть
+        const existingMessage = videoContainer.querySelector('.camera-error-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Создаем новое сообщение
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'camera-error-message absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg z-10 whitespace-nowrap';
+        errorMessage.textContent = message;
+        
+        // Добавляем в контейнер видео
+        videoContainer.appendChild(errorMessage);
+        
+        // Автоматически скрываем через 3 секунды
+        setTimeout(() => {
+            if (errorMessage.parentElement) {
+                errorMessage.style.opacity = '0';
+                errorMessage.style.transition = 'opacity 0.3s ease-out';
+                setTimeout(() => {
+                    if (errorMessage.parentElement) {
+                        errorMessage.remove();
+                    }
+                }, 300);
+            }
+        }, 3000);
+    }
   </script>
 
 </body>
