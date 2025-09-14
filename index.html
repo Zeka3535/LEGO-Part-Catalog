@@ -28203,6 +28203,9 @@ function animateCloseButtonClick(button) {
             
             if (!modalSelect || !modalResolutionSelect) return;
             
+            // Определяем мобильное устройство
+            detectMobile();
+            
             // Очищаем список
             modalSelect.innerHTML = '<option value="">Загрузка камер...</option>';
             
@@ -28261,6 +28264,7 @@ function animateCloseButtonClick(button) {
                 } else if (videoDevices.length > 0) {
                     // На десктопе тоже выбираем первую камеру
                     modalSelect.value = videoDevices[0].deviceId;
+                    console.log('Автоматически выбрана первая доступная камера для десктопа:', videoDevices[0].label);
                 }
                 
                 // Устанавливаем разрешение по умолчанию
@@ -28469,33 +28473,64 @@ function animateCloseButtonClick(button) {
                 return;
             }
             
+            // Определяем мобильное устройство
+            detectMobile();
+            
             try {
-                        const devices = await navigator.mediaDevices.enumerateDevices();
+                const devices = await navigator.mediaDevices.enumerateDevices();
                 const videoDevices = devices.filter(device => device.kind === 'videoinput');
                 
-                // Очищаем существующие опции, кроме первой
-                while (cameraSelect.children.length > 1) {
-                    cameraSelect.removeChild(cameraSelect.lastChild);
-                }
+                // Очищаем список
+                cameraSelect.innerHTML = '<option value="">Выберите камеру...</option>';
                 
+                // Добавляем камеры
                 videoDevices.forEach((device, index) => {
                     const option = document.createElement('option');
                     option.value = device.deviceId;
-                    option.textContent = device.label || `Камера ${index + 1}`;
+                    let label = device.label || `Камера ${index + 1}`;
+                    
+                    // Определяем тип камеры для мобильных устройств
+                    if (isMobile) {
+                        if (label.toLowerCase().includes('back') || label.toLowerCase().includes('rear')) {
+                            label += ' (Задняя)';
+                        } else if (label.toLowerCase().includes('front') || label.toLowerCase().includes('selfie')) {
+                            label += ' (Передняя)';
+                        }
+                    }
+                    
+                    option.textContent = label;
                     cameraSelect.appendChild(option);
                 });
                 
-                // Автоматически выбираем заднюю камеру на мобильных устройствах
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                if (isMobile) {
-                    const backCamera = videoDevices.find(device => 
-                        device.label.toLowerCase().includes('back') || 
-                        device.label.toLowerCase().includes('rear') ||
-                        device.label.toLowerCase().includes('environment')
+                // Автоматически выбираем камеру для мобильных устройств
+                if (isMobile && videoDevices.length > 0) {
+                    // Ищем камеру 0
+                    let camera0 = videoDevices.find(device => 
+                        device.label.toLowerCase().includes('camera 0')
                     );
-                    if (backCamera) {
-                        cameraSelect.value = backCamera.deviceId;
+                    
+                    if (!camera0) {
+                        camera0 = videoDevices.find(device => device.deviceId === '0');
                     }
+                    
+                    if (!camera0) {
+                        camera0 = videoDevices.find(device => 
+                            device.label.toLowerCase().includes('facing back') ||
+                            device.label.toLowerCase().includes('back')
+                        );
+                    }
+                    
+                    if (camera0) {
+                        cameraSelect.value = camera0.deviceId;
+                        console.log('Автоматически выбрана задняя камера для мобильного устройства:', camera0.label);
+                    } else {
+                        cameraSelect.value = videoDevices[0].deviceId;
+                        console.log('Автоматически выбрана первая доступная камера для мобильного устройства:', videoDevices[0].label);
+                    }
+                } else if (videoDevices.length > 0) {
+                    // На десктопе тоже выбираем первую камеру
+                    cameraSelect.value = videoDevices[0].deviceId;
+                    console.log('Автоматически выбрана первая доступная камера для десктопа:', videoDevices[0].label);
                 }
                 
                 console.log(`Найдено ${videoDevices.length} камер для поиска по фото`);
