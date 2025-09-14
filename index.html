@@ -1484,6 +1484,25 @@
     #settings-modal-container .toggle-switch.on .knob {
         transform: translateX(20px) !important;
     }
+    
+    /* Стили для переключателя типов поиска */
+    .search-type-btn {
+        transition: all 0.2s ease;
+    }
+    
+    .search-type-btn:hover {
+        background-color: rgba(59, 130, 246, 0.1);
+    }
+    
+    .search-type-btn.active {
+        background-color: #2563eb;
+        color: white;
+    }
+    
+    .search-type-btn.active:hover {
+        background-color: #1d4ed8;
+    }
+    
     /* Анимация панели мультивыбора */
     @keyframes msSlideFadeIn {
         from { opacity: 0; transform: translateY(-10px); }
@@ -1509,7 +1528,9 @@
     #related-sets-modal-container,
     #camera-selection-modal,
     #photo-camera-selection-modal,
-    #image-viewer-container {
+    #image-viewer-container,
+    #universal-search-modal,
+    #search-type-selection-modal {
         opacity: 0;
         transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.25s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         backdrop-filter: blur(0px);
@@ -1526,7 +1547,9 @@
     #related-sets-modal-container.visible,
     #camera-selection-modal.visible,
     #photo-camera-selection-modal.visible,
-    #image-viewer-container.visible {
+    #image-viewer-container.visible,
+    #universal-search-modal.visible,
+    #search-type-selection-modal.visible {
         opacity: 1;
         backdrop-filter: blur(4px);
         visibility: visible;
@@ -4062,7 +4085,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -4085,43 +4108,721 @@ testFunction();
 window.searchPartInCatalog = function(partNumber, category = '', partName = '') {
     console.log(`searchPartInCatalog вызвана с параметрами:`, { partNumber, category, partName });
     
-    // Определяем тип элемента по категории
-    const isSet = category && (
-        category.toLowerCase().includes('set') || 
-        category.toLowerCase().includes('theme') ||
-        category.toLowerCase().includes('series') ||
-        category.toLowerCase().includes('collection') ||
-        category.toLowerCase().includes('star wars') ||
-        category.toLowerCase().includes('marvel') ||
-        category.toLowerCase().includes('dc') ||
-        category.toLowerCase().includes('ninjago') ||
-        category.toLowerCase().includes('city') ||
-        category.toLowerCase().includes('friends') ||
-        category.toLowerCase().includes('creator') ||
-        category.toLowerCase().includes('technic')
-    );
+    // Сохраняем данные для поиска
+    window.searchData = {
+        partNumber: partNumber,
+        category: category,
+        partName: partName,
+        query: partName || partNumber
+    };
     
-    const isMinifig = category && (
-        category.toLowerCase().includes('minifig') ||
-        category.toLowerCase().includes('figure') ||
-        category.toLowerCase().includes('character') ||
-        category.toLowerCase().includes('person')
-    );
+    // Открываем модальное окно выбора типа поиска
+    openSearchTypeSelectionModal();
+}
+
+// Модальное окно выбора типа поиска
+window.openSearchTypeSelectionModal = function() {
+    console.log('Открываем модальное окно выбора типа поиска');
     
-    console.log(`Определение типа: isSet=${isSet}, isMinifig=${isMinifig}`);
+    // Создаем модальное окно если его нет
+    let modalEl = document.getElementById('search-type-selection-modal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'search-type-selection-modal';
+        modalEl.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4';
+        document.body.appendChild(modalEl);
+    }
     
-    if (isMinifig) {
-        // Поиск в каталоге минифигурок через модальное окно (приоритет)
-        console.log(`Поиск минифигурки по названию: ${partName}`);
-        searchInMinifigsCatalogModal(partName);
-    } else if (isSet) {
-        // Поиск в каталоге наборов через модальное окно
-        console.log(`Поиск набора по названию: ${partName}`);
-        searchInSetsCatalogModal(partName);
+    const searchData = window.searchData || {};
+    
+    // Создаем содержимое модального окна
+    modalEl.innerHTML = `
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-5xl max-h-[95vh] flex flex-col">
+            <!-- Заголовок -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4" title="Выберите тип поиска: ${searchData.partName || searchData.query}">Выберите тип поиска: ${(searchData.partName || searchData.query).length > 30 ? (searchData.partName || searchData.query).substring(0, 30) + '...' : (searchData.partName || searchData.query)}</h2>
+                <button id="close-search-type-selection-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
+                    ${I_X('w-4 h-4')}
+                </button>
+            </div>
+            
+            <!-- Информация о найденном элементе -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700">
+                <div class="bg-gray-700/50 rounded-lg p-4">
+                    <div class="text-center">
+                        <p class="text-sm text-gray-300 mb-2">Найденный элемент:</p>
+                        <p class="text-white font-medium text-lg truncate" title="${searchData.partName || searchData.query}">${searchData.partName || searchData.query}</p>
+                        ${searchData.category ? `<p class="text-sm text-gray-400 mt-2">${searchData.category}</p>` : ''}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Кнопки выбора типа -->
+            <div class="flex-1 p-4 overflow-y-auto">
+                <div class="space-y-3">
+                    <button 
+                        onclick="selectSearchType('parts')" 
+                        class="group bg-gray-700 hover:bg-blue-600 text-white rounded-lg transition-all duration-200 flex items-center p-3 space-x-3 hover:shadow-lg hover:shadow-blue-500/25 w-full"
+                    >
+                        <div class="w-10 h-10 bg-blue-500 group-hover:bg-blue-400 rounded-full flex items-center justify-center transition-colors flex-shrink-0">
+                            ${I_Brick('w-5 h-5')}
+                        </div>
+                        <div class="flex-1 text-left min-w-0">
+                            <div class="font-semibold text-sm mb-1">Детали</div>
+                            <div class="text-xs text-gray-300 group-hover:text-blue-100">Поиск по ID</div>
+                            <div class="text-xs text-gray-400 mt-1 font-mono truncate">${searchData.partNumber}</div>
+                        </div>
+                    </button>
+                    
+                    <button 
+                        onclick="selectSearchType('sets')" 
+                        class="group bg-gray-700 hover:bg-green-600 text-white rounded-lg transition-all duration-200 flex items-center p-3 space-x-3 hover:shadow-lg hover:shadow-green-500/25 w-full"
+                    >
+                        <div class="w-10 h-10 bg-green-500 group-hover:bg-green-400 rounded-full flex items-center justify-center transition-colors flex-shrink-0">
+                            ${I_Set('w-5 h-5')}
+                        </div>
+                        <div class="flex-1 text-left min-w-0">
+                            <div class="font-semibold text-sm mb-1">Наборы</div>
+                            <div class="text-xs text-gray-300 group-hover:text-green-100">Поиск по названию</div>
+                            <div class="text-xs text-gray-400 mt-1 truncate" title="${searchData.partName || searchData.query}">${(searchData.partName || searchData.query).length > 25 ? (searchData.partName || searchData.query).substring(0, 25) + '...' : (searchData.partName || searchData.query)}</div>
+                        </div>
+                    </button>
+                    
+                    <button 
+                        onclick="selectSearchType('minifigs')" 
+                        class="group bg-gray-700 hover:bg-purple-600 text-white rounded-lg transition-all duration-200 flex items-center p-3 space-x-3 hover:shadow-lg hover:shadow-purple-500/25 w-full"
+                    >
+                        <div class="w-10 h-10 bg-purple-500 group-hover:bg-purple-400 rounded-full flex items-center justify-center transition-colors flex-shrink-0">
+                            ${I_Dice('w-5 h-5')}
+                        </div>
+                        <div class="flex-1 text-left min-w-0">
+                            <div class="font-semibold text-sm mb-1">Минифигурки</div>
+                            <div class="text-xs text-gray-300 group-hover:text-purple-100">Поиск по названию</div>
+                            <div class="text-xs text-gray-400 mt-1 truncate" title="${searchData.partName || searchData.query}">${(searchData.partName || searchData.query).length > 25 ? (searchData.partName || searchData.query).substring(0, 25) + '...' : (searchData.partName || searchData.query)}</div>
+                        </div>
+                    </button>
+                    
+                    <button 
+                        onclick="selectSearchType('box')" 
+                        class="group bg-gray-700 hover:bg-orange-600 text-white rounded-lg transition-all duration-200 flex items-center p-3 space-x-3 hover:shadow-lg hover:shadow-orange-500/25 w-full"
+                    >
+                        <div class="w-10 h-10 bg-orange-500 group-hover:bg-orange-400 rounded-full flex items-center justify-center transition-colors flex-shrink-0">
+                            ${I_Square('w-5 h-5')}
+                        </div>
+                        <div class="flex-1 text-left min-w-0">
+                            <div class="font-semibold text-sm mb-1">Коробка набора</div>
+                            <div class="text-xs text-gray-300 group-hover:text-orange-100">Поиск по ID</div>
+                            <div class="text-xs text-gray-400 mt-1 font-mono truncate">${searchData.partNumber}</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Показываем модальное окно
+    modalEl.classList.remove('hidden');
+    modalEl.classList.add('visible');
+    
+    // Настраиваем обработчики
+    setupSearchTypeSelectionHandlers();
+}
+
+// Закрытие модального окна выбора типа поиска
+window.closeSearchTypeSelectionModal = function() {
+    const modalEl = document.getElementById('search-type-selection-modal');
+    if (modalEl) {
+        modalEl.classList.add('hidden');
+        modalEl.classList.remove('visible');
+    }
+}
+
+// Выбор типа поиска
+window.selectSearchType = function(type) {
+    console.log(`Выбран тип поиска: ${type}`);
+    
+    // Закрываем модальное окно выбора
+    closeSearchTypeSelectionModal();
+    
+    // Открываем соответствующее окно поиска
+    switch(type) {
+        case 'parts':
+            openPartsSearchModal();
+            break;
+        case 'sets':
+            openSetsSearchModal();
+            break;
+        case 'minifigs':
+            openMinifigsSearchModal();
+            break;
+        case 'box':
+            openBoxSearchModal();
+            break;
+    }
+}
+
+// Настройка обработчиков модального окна выбора типа поиска
+window.setupSearchTypeSelectionHandlers = function() {
+    const modalEl = document.getElementById('search-type-selection-modal');
+    const closeBtn = document.getElementById('close-search-type-selection-modal');
+    
+    // Закрытие модального окна
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeSearchTypeSelectionModal);
+    }
+    
+    if (modalEl) {
+        modalEl.addEventListener('click', (e) => {
+            if (e.target === modalEl) {
+                closeSearchTypeSelectionModal();
+            }
+        });
+    }
+}
+
+// Поиск деталей
+window.openPartsSearchModal = function() {
+    const searchData = window.searchData || {};
+    const searchQuery = searchData.partNumber || searchData.query || '';
+    
+    console.log(`Открываем поиск деталей с запросом: ${searchQuery}`);
+    
+    // Используем существующую функцию поиска деталей
+    openPartSearchModal(searchQuery);
+}
+
+// Поиск наборов
+window.openSetsSearchModal = function() {
+    const searchData = window.searchData || {};
+    const searchQuery = searchData.partName || searchData.query || '';
+    
+    console.log(`Открываем поиск наборов с запросом: ${searchQuery}`);
+    
+    // Используем существующую функцию поиска наборов
+    searchInSetsCatalogModal(searchQuery);
+}
+
+// Поиск минифигурок
+window.openMinifigsSearchModal = function() {
+    const searchData = window.searchData || {};
+    const searchQuery = searchData.partName || searchData.query || '';
+    
+    console.log(`Открываем поиск минифигурок с запросом: ${searchQuery}`);
+    
+    // Используем существующую функцию поиска минифигурок
+    searchInMinifigsCatalogModal(searchQuery);
+}
+
+// Поиск коробки набора
+window.openBoxSearchModal = function() {
+    const searchData = window.searchData || {};
+    const searchQuery = searchData.partNumber || searchData.query || '';
+    
+    console.log(`Открываем поиск коробки набора с запросом: ${searchQuery}`);
+    
+    // Создаем модальное окно если его нет
+    let modalEl = document.getElementById('box-search-modal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'box-search-modal';
+        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        document.body.appendChild(modalEl);
+    }
+    
+    // Ищем набор по точному ID
+    const setId = searchQuery.trim();
+    const setData = SET_MAP[setId];
+    
+    let searchResults = [];
+    if (setData) {
+        searchResults = [setData];
+        console.log(`Найден набор по ID: ${setId} - ${setData.name}`);
     } else {
-        // Поиск в каталоге деталей (по ID или названию)
-        console.log(`Поиск детали: ${partNumber} (${partName})`);
-        openPartSearchModal(partNumber);
+        console.log(`Набор с ID ${setId} не найден`);
+    }
+    
+    // Ограничиваем количество результатов
+    const limitedResults = searchResults.slice(0, 50);
+    
+    console.log(`Найдено ${limitedResults.length} наборов по ID "${setId}"`);
+    
+    // Рендерим содержимое модального окна
+    modalEl.innerHTML = `
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+            <!-- Заголовок -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4" title="Поиск коробки набора: ${setId}">Поиск коробки набора: ${setId.length > 30 ? setId.substring(0, 30) + '...' : setId}</h2>
+                <button id="close-box-search-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
+                    ${I_X('w-4 h-4')}
+                </button>
+            </div>
+            
+            <!-- Результаты поиска -->
+            <div class="flex-1 overflow-y-auto p-4">
+                ${limitedResults.length > 0 ? `
+                    <div class="sets-minifigs-grid">
+                        ${limitedResults.map(set => renderSetCard(set)).join('')}
+                    </div>
+                ` : `
+                    <div class="text-center py-12">
+                        <div class="text-gray-400 text-lg mb-4">Коробка набора не найдена</div>
+                        <div class="text-gray-500 text-sm">Набор с ID "${setId}" не найден в коллекции</div>
+                    </div>
+                `}
+            </div>
+        </div>
+    `;
+    
+    // Показываем модальное окно
+    modalEl.classList.remove('hidden');
+    modalEl.classList.add('visible');
+    
+    // Настраиваем обработчики
+    const closeBtn = document.getElementById('close-box-search-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modalEl.classList.add('hidden');
+            modalEl.classList.remove('visible');
+        });
+    }
+    
+    modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) {
+            modalEl.classList.add('hidden');
+            modalEl.classList.remove('visible');
+        }
+    });
+}
+
+// Единое окно поиска с переключателем типов элементов
+window.openUniversalSearchModal = function(searchData = '') {
+    // Поддерживаем обратную совместимость со строковым параметром
+    if (typeof searchData === 'string') {
+        searchData = { query: searchData, type: 'parts' };
+    }
+    
+    console.log(`Открываем единое окно поиска с данными:`, searchData);
+    
+    // Создаем модальное окно если его нет
+    let modalEl = document.getElementById('universal-search-modal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'universal-search-modal';
+        modalEl.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4';
+        document.body.appendChild(modalEl);
+    }
+    
+    // Создаем содержимое модального окна
+    modalEl.innerHTML = `
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+            <!-- Заголовок -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4" title="Универсальный поиск: ${searchData.query}">Универсальный поиск: ${searchData.query.length > 30 ? searchData.query.substring(0, 30) + '...' : searchData.query}</h2>
+                <button id="close-universal-search-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
+                    ${I_X('w-4 h-4')}
+                </button>
+            </div>
+            
+            <!-- Поле поиска и переключатель -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 space-y-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <input 
+                            type="text" 
+                            id="universal-search-input" 
+                            placeholder="Введите поисковый запрос..." 
+                            value="${searchData.query}"
+                            class="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                    </div>
+                    <button 
+                        onclick="performUniversalSearch()" 
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    >
+                        Поиск
+                    </button>
+                </div>
+                
+                <!-- Переключатель типов -->
+                <div class="flex space-x-1 bg-gray-700 rounded-lg p-1">
+                    <button 
+                        onclick="switchSearchType('parts')" 
+                        id="search-type-parts" 
+                        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors search-type-btn ${searchData.type === 'parts' ? 'active' : ''}"
+                    >
+                        Детали
+                    </button>
+                    <button 
+                        onclick="switchSearchType('sets')" 
+                        id="search-type-sets" 
+                        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors search-type-btn ${searchData.type === 'sets' ? 'active' : ''}"
+                    >
+                        Наборы
+                    </button>
+                    <button 
+                        onclick="switchSearchType('minifigs')" 
+                        id="search-type-minifigs" 
+                        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors search-type-btn ${searchData.type === 'minifigs' ? 'active' : ''}"
+                    >
+                        Минифигурки
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Результаты поиска -->
+            <div class="flex-1 overflow-hidden relative" style="min-height: 500px;">
+                <div id="universal-search-scroll-progress"><div class="bar"></div></div>
+                <div id="universal-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 200px);">
+                    <div class="text-center text-gray-400 py-8">
+                        Введите поисковый запрос и нажмите "Поиск"
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Сохраняем данные поиска в глобальной переменной
+    window.universalSearchData = searchData;
+    console.log('Сохранены данные поиска:', window.universalSearchData);
+    
+    // Показываем модальное окно
+    modalEl.classList.remove('hidden');
+    modalEl.classList.add('visible');
+    
+    // Фокусируемся на поле ввода
+    const input = document.getElementById('universal-search-input');
+    if (input) {
+        input.focus();
+        input.select();
+    }
+    
+    // Обработчик Enter в поле поиска
+    const searchInput = document.getElementById('universal-search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performUniversalSearch();
+            }
+        });
+    }
+    
+    // Если есть поисковый запрос, выполняем поиск сразу
+    if (searchData.query) {
+        setTimeout(() => {
+            performUniversalSearch();
+        }, 100);
+    }
+    
+    // Настраиваем обработчики
+    setupUniversalSearchModalHandlers();
+}
+
+// Настройка обработчиков модального окна универсального поиска
+window.setupUniversalSearchModalHandlers = function() {
+    const modalEl = document.getElementById('universal-search-modal');
+    const closeBtn = document.getElementById('close-universal-search-modal');
+    
+    // Закрытие модального окна
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeUniversalSearchModal);
+    }
+    
+    if (modalEl) {
+        modalEl.addEventListener('click', (e) => {
+            if (e.target === modalEl) {
+                closeUniversalSearchModal();
+            }
+        });
+    }
+    
+    // Настройка скролл-индикатора
+    const scrollContainer = document.getElementById('universal-search-results');
+    const progressBar = document.getElementById('universal-search-scroll-progress');
+    
+    if (scrollContainer && progressBar) {
+        scrollContainer.addEventListener('scroll', () => {
+            const scrollTop = scrollContainer.scrollTop;
+            const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+            const progress = (scrollTop / scrollHeight) * 100;
+            progressBar.querySelector('.bar').style.width = `${progress}%`;
+        });
+    }
+}
+
+// Закрытие единого окна поиска
+window.closeUniversalSearchModal = function() {
+    const modalEl = document.getElementById('universal-search-modal');
+    if (modalEl) {
+        modalEl.classList.add('hidden');
+        modalEl.classList.remove('visible');
+    }
+}
+
+// Переключение типа поиска
+window.switchSearchType = function(type) {
+    // Убираем активный класс со всех кнопок
+    document.querySelectorAll('.search-type-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-blue-600', 'text-white');
+        btn.classList.add('text-gray-400', 'hover:text-white');
+    });
+    
+    // Добавляем активный класс к выбранной кнопке
+    const activeBtn = document.getElementById(`search-type-${type}`);
+    if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-blue-600', 'text-white');
+        activeBtn.classList.remove('text-gray-400', 'hover:text-white');
+    }
+    
+    // Сохраняем текущий тип поиска
+    window.currentSearchType = type;
+    
+    // Обновляем поле поиска в зависимости от типа
+    const searchInput = document.getElementById('universal-search-input');
+    console.log('Данные поиска при переключении:', window.universalSearchData);
+    
+    if (searchInput && window.universalSearchData) {
+        let newQuery = '';
+        
+        switch(type) {
+            case 'parts':
+                // Для деталей используем ID
+                newQuery = window.universalSearchData.partId || window.universalSearchData.query || '';
+                console.log(`Для деталей: partId="${window.universalSearchData.partId}", query="${window.universalSearchData.query}"`);
+                break;
+            case 'sets':
+                // Для наборов используем название
+                newQuery = window.universalSearchData.setName || window.universalSearchData.query || '';
+                console.log(`Для наборов: setName="${window.universalSearchData.setName}", query="${window.universalSearchData.query}"`);
+                break;
+            case 'minifigs':
+                // Для минифигурок используем название
+                newQuery = window.universalSearchData.minifigName || window.universalSearchData.query || '';
+                console.log(`Для минифигурок: minifigName="${window.universalSearchData.minifigName}", query="${window.universalSearchData.query}"`);
+                break;
+        }
+        
+        // Всегда обновляем поле поиска, даже если newQuery пустой
+        searchInput.value = newQuery;
+        console.log(`Переключились на ${type}, установлен запрос: "${newQuery}"`);
+        
+        // Выполняем поиск с новым запросом
+        performUniversalSearch();
+    } else if (searchInput) {
+        // Если нет данных поиска, просто выполняем поиск с текущим значением
+        console.log(`Переключились на ${type}, используем текущий запрос: "${searchInput.value}"`);
+        performUniversalSearch();
+    }
+}
+
+// Выполнение универсального поиска
+window.performUniversalSearch = function() {
+    const searchInput = document.getElementById('universal-search-input');
+    const searchTerm = searchInput ? searchInput.value.trim() : '';
+    const searchType = window.currentSearchType || 'parts';
+    
+    if (!searchTerm) {
+        return;
+    }
+    
+    console.log(`Выполняем поиск: "${searchTerm}" по типу: ${searchType}`);
+    
+    // Очищаем предыдущие результаты
+    const resultsContainer = document.getElementById('universal-search-results');
+    if (resultsContainer) {
+        resultsContainer.innerHTML = '<div class="text-center text-gray-400 py-4">Поиск...</div>';
+    }
+    
+    // Выполняем поиск в зависимости от типа
+    setTimeout(() => {
+        switch(searchType) {
+            case 'parts':
+                searchUniversalParts(searchTerm);
+                break;
+            case 'sets':
+                searchUniversalSets(searchTerm);
+                break;
+            case 'minifigs':
+                searchUniversalMinifigs(searchTerm);
+                break;
+        }
+    }, 100);
+}
+
+// Поиск деталей в универсальном окне (только по ID)
+function searchUniversalParts(searchTerm) {
+    if (!searchTerm || searchTerm.trim().length < 1) {
+        displayUniversalResults([], 'parts');
+        return;
+    }
+    
+    const searchTermLower = searchTerm.toLowerCase().trim();
+    console.log(`Поиск деталей по ID: ${searchTerm}`);
+    
+    // Ищем детали только по точному или частичному совпадению ID
+    const results = Object.values(PART_MAP).filter(part => {
+        if (!part || !part.id) return false;
+        
+        const partId = part.id.toLowerCase();
+        // Точное совпадение ID или частичное совпадение
+        return partId === searchTermLower || partId.includes(searchTermLower);
+    });
+    
+    // Сортируем результаты: сначала точные совпадения, затем частичные
+    results.sort((a, b) => {
+        const aId = a.id.toLowerCase();
+        const bId = b.id.toLowerCase();
+        
+        // Точные совпадения идут первыми
+        if (aId === searchTermLower && bId !== searchTermLower) return -1;
+        if (aId !== searchTermLower && bId === searchTermLower) return 1;
+        
+        // Затем по длине ID (более короткие первыми)
+        if (aId.length !== bId.length) return aId.length - bId.length;
+        
+        // Затем по алфавиту
+        return aId.localeCompare(bId);
+    });
+    
+    console.log(`Найдено ${results.length} деталей по ID: ${searchTerm}`);
+    displayUniversalResults(results, 'parts');
+}
+
+// Поиск наборов в универсальном окне
+function searchUniversalSets(searchTerm) {
+    // Используем ту же логику поиска, что и в модальном окне наборов
+    const keywords = extractKeywords(searchTerm);
+    console.log(`Извлеченные ключевые слова:`, keywords);
+    
+    const searchResults = Object.values(SET_MAP).filter(set => {
+        if (!set || !set.name) return false;
+        
+        const setName = set.name.toLowerCase();
+        const setTheme = (set.theme_name || '').toLowerCase();
+        const setDescription = (set.description || '').toLowerCase();
+        
+        return keywords.some(keyword => 
+            setName.includes(keyword) || 
+            setTheme.includes(keyword) ||
+            setDescription.includes(keyword)
+        );
+    });
+    
+    // Сортируем результаты по релевантности
+    searchResults.sort((a, b) => {
+        const aName = a.name.toLowerCase();
+        const bName = b.name.toLowerCase();
+        
+        const aStartsWith = keywords.some(keyword => aName.startsWith(keyword));
+        const bStartsWith = keywords.some(keyword => bName.startsWith(keyword));
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        
+        const aMatches = keywords.filter(keyword => aName.includes(keyword)).length;
+        const bMatches = keywords.filter(keyword => bName.includes(keyword)).length;
+        
+        if (aMatches !== bMatches) return bMatches - aMatches;
+        
+        return a.name.localeCompare(b.name);
+    });
+    
+    displayUniversalResults(searchResults, 'sets');
+}
+
+// Поиск минифигурок в универсальном окне
+function searchUniversalMinifigs(searchTerm) {
+    // Используем ту же логику поиска, что и в модальном окне минифигурок
+    const keywords = extractKeywords(searchTerm);
+    console.log(`Извлеченные ключевые слова:`, keywords);
+    
+    const searchResults = Object.values(MINIFIG_MAP).filter(minifig => {
+        if (!minifig || !minifig.name) return false;
+        
+        const minifigName = minifig.name.toLowerCase();
+        const minifigSetNum = (minifig.set_num || '').toLowerCase();
+        
+        return keywords.some(keyword => 
+            minifigName.includes(keyword) || 
+            minifigSetNum.includes(keyword)
+        );
+    });
+    
+    // Сортируем результаты по релевантности
+    searchResults.sort((a, b) => {
+        const aName = a.name.toLowerCase();
+        const bName = b.name.toLowerCase();
+        
+        const aStartsWith = keywords.some(keyword => aName.startsWith(keyword));
+        const bStartsWith = keywords.some(keyword => bName.startsWith(keyword));
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        
+        const aMatches = keywords.filter(keyword => aName.includes(keyword)).length;
+        const bMatches = keywords.filter(keyword => bName.includes(keyword)).length;
+        
+        if (aMatches !== bMatches) return bMatches - aMatches;
+        
+        return a.name.localeCompare(b.name);
+    });
+    
+    displayUniversalResults(searchResults, 'minifigs');
+}
+
+// Отображение результатов в универсальном окне
+function displayUniversalResults(results, type) {
+    const resultsContainer = document.getElementById('universal-search-results');
+    if (!resultsContainer) return;
+    
+    if (results.length === 0) {
+        resultsContainer.innerHTML = `
+            <div class="text-center py-8">
+                <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto text-gray-400')}</div>
+                <p class="text-sm text-gray-400">Ничего не найдено</p>
+                <p class="text-xs text-gray-500 mt-2">Попробуйте изменить поисковый запрос или см</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Ограничиваем количество результатов
+    const limitedResults = results.slice(0, 50);
+    
+    let html = `<div class="sets-minifigs-grid">`;
+    
+    limitedResults.forEach((item, index) => {
+        if (type === 'parts') {
+            html += renderPartCard(item, false, 0, false, index);
+        } else if (type === 'sets') {
+            html += renderSetCard(item, false, index);
+        } else if (type === 'minifigs') {
+            html += renderMinifigCard(item, false, index);
+        }
+    });
+    
+    html += `</div>`;
+    
+    if (results.length > 50) {
+        html += `<div class="text-center text-gray-400 mt-4">Показано 50 из ${results.length} результатов</div>`;
+    }
+    
+    resultsContainer.innerHTML = html;
+}
+
+// Открытие деталей элемента
+window.openItemDetails = function(itemId, type) {
+    closeUniversalSearchModal();
+    
+    switch(type) {
+        case 'parts':
+            openPartSearchModal(itemId);
+            break;
+        case 'sets':
+            openModalForSet(itemId);
+            break;
+        case 'minifigs':
+            openModalForMinifig(itemId);
+            break;
     }
 }
 
@@ -4671,7 +5372,7 @@ window.searchInSetsCatalogModal = function(searchTerm) {
                             ${limitedResults.map(set => renderSetCard(set, false, 0)).join('')}
                         </div>` :
                         `<div class="text-center py-8">
-                            <div class="text-4xl mb-3">${I_SEARCH('w-12 h-12 mx-auto text-gray-400')}</div>
+                            <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto text-gray-400')}</div>
                             <p class="text-sm text-gray-400">Наборы не найдены</p>
                             <p class="text-xs text-gray-500 mt-2">Попробуйте изменить поисковый запрос</p>
                         </div>`
@@ -4766,7 +5467,7 @@ window.searchInMinifigsCatalogModal = function(searchTerm) {
                             ${limitedResults.map(minifig => renderMinifigCard(minifig, false, 0)).join('')}
                         </div>` :
                         `<div class="text-center py-8">
-                            <div class="text-4xl mb-3">${I_SEARCH('w-12 h-12 mx-auto text-gray-400')}</div>
+                            <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto text-gray-400')}</div>
                             <p class="text-sm text-gray-400">Минифигурки не найдены</p>
                             <p class="text-xs text-gray-500 mt-2">Попробуйте изменить поисковый запрос</p>
                         </div>`
@@ -5393,7 +6094,7 @@ const inactivityTips = [
     "📱 Интерфейс оптимизирован для всех устройств",
     "🔧 Настройки интерфейса сохраняются между сессиями",
     "📷 Сканер DataMatrix распознает коды серий минифигурок с помощью камеры",
-    "🤖 AI распознавание деталей работает через Brickognize API для поиска по фотографиям",
+    "🤖 AI распознавание работает через Brickognize API для поиска по фотографиям",
     "📷 Используйте сканер DataMatrix для быстрого добавления минифигурок в коллекцию",
     "🤖 Сфотографируйте детали для автоматического распознавания через AI",
     "📝 Создавайте списки желаний для планирования будущих покупок",
@@ -7107,8 +7808,8 @@ function renderPhotoSearchContent() {
         <div class="min-h-full p-3 sm:p-4 md:p-6 lg:p-8">
             <!-- Заголовок -->
             <div class="text-center mb-6 sm:mb-8">
-                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Поиск деталей по фото</h1>
-                <p class="text-gray-400 text-sm sm:text-base">Сфотографируйте детали или минифигурки для автоматического AI распознавания</p>
+                <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Поиск по фото</h1>
+                <p class="text-gray-400 text-sm sm:text-base">Сфотографируйте деталь, коробку набора или минифигурку для автоматического AI распознавания</p>
             </div>
 
             <!-- Основной контент -->
@@ -13979,9 +14680,9 @@ function renderSidebar() {
                 },
                 {
                     id: 'photo-search',
-                    name: 'Поиск деталей по фото',
+                    name: 'Поиск по фото',
                     icon: I_Camera('w-5 h-5 text-blue-400'),
-                    description: 'AI распознавание деталей и минифигурок по фотографии'
+                    description: 'AI распознавание деталей, коробок наборов и минифигурок по фотографии'
                 },
                 {
                     id: 'cloud-backup',
@@ -16981,7 +17682,7 @@ function renderSettingsModal() {
                                <li><strong>Система подсказок</strong> - интерактивные советы при неактивности</li>
                                <li><strong>Продвинутое кэширование</strong> - offline режим и быстрая загрузка</li>
                                <li><strong>Сканер DataMatrix</strong> - распознавание камерой DataMatrix кодов серий минифигурок</li>
-                               <li><strong>AI распознавание деталей</strong> - поиск деталей и минифигурок по фотографиям</li>
+                               <li><strong>AI распознавание по фото</strong> - поиск деталей, коробок наборов и минифигурок по фотографиям</li>
                                <li><strong>Списки желаний</strong> - создание и управление списками желаемых элементов</li>
                                <li><strong>Фильтрация и сортировка</strong> - продвинутые инструменты поиска и организации</li>
                                <li><strong>Адаптивный дизайн</strong> - оптимизация для мобильных и десктопных устройств</li>
@@ -17021,7 +17722,7 @@ function renderSettingsModal() {
                                        </h4>
                                        <div class="pl-6 space-y-1">
                                            <p class="text-xs text-gray-400">
-                                               <strong>Brickognize API</strong> - для распознавания деталей LEGO по фотографиям
+                                               <strong>Brickognize API</strong> - для распознавания деталей, коробок наборов и минифигурок LEGO по фотографиям
                                            </p>
                                            <p class="text-xs text-gray-400">
                                                <a href="https://brickognize.com/" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:underline">brickognize.com</a> - внешний сервис AI распознавания
@@ -24138,9 +24839,9 @@ async function initializeApp() {
     "📱 Интерфейс оптимизирован для всех устройств",
     "🔧 Настройки интерфейса сохраняются между сессиями",
     "📷 Сканер DataMatrix распознает коды серий минифигурок с помощью камеры",
-    "🤖 AI распознавание деталей работает через Brickognize API для поиска по фотографиям",
+    "🤖 AI распознавание работает через Brickognize API для поиска по фотографиям",
     "📷 Используйте сканер DataMatrix для быстрого добавления минифигурок в коллекцию",
-    "🤖 Сфотографируйте детали для автоматического распознавания через AI",
+    "🤖 Сфотографируйте деталь, коробку набора или минифигурку для автоматического распознавания через AI",
     "📝 Создавайте списки желаний для планирования будущих покупок",
     "🔍 Продвинутая фильтрация и сортировка помогают быстро находить нужные элементы",
     "📱 Адаптивный дизайн обеспечивает удобство использования на любых устройствах",
@@ -30901,4 +31602,5 @@ function animateCloseButtonClick(button) {
   </script>
 
 </body>
+</html></html>
 </html></html>
