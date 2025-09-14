@@ -2259,6 +2259,37 @@
         border-radius: inherit;
         transform: translateY(0);
     }
+    
+    /* Индикаторы в модальных окнах поиска наборов и минифигурок */
+    #sets-search-scroll-progress, #minifigs-search-scroll-progress {
+        position: absolute;
+        right: 2px;
+        top: 12px;
+        bottom: 12px;
+        width: 5px;
+        background: rgba(55, 65, 81, 0.3);
+        border-radius: 3px;
+        opacity: 0;
+        transform: translateX(8px);
+        transition: opacity .2s ease, transform .2s ease;
+        z-index: 15;
+        pointer-events: none;
+    }
+    #sets-search-scroll-progress.visible, #minifigs-search-scroll-progress.visible { 
+        opacity: .9; 
+        transform: translateX(0); 
+    }
+    #sets-search-scroll-progress .bar, #minifigs-search-scroll-progress .bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 48px;
+        background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+        box-shadow: 0 0 10px rgba(59,130,246,.35);
+        border-radius: inherit;
+        transform: translateY(0);
+    }
     /* Image viewer должен быть поверх модальных окон */
     #image-viewer-container.visible {
         pointer-events: auto !important;
@@ -3947,7 +3978,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -3967,9 +3998,705 @@ function testFunction() {
 testFunction();
 
 // Глобальные функции для поиска деталей
-window.searchPartInCatalog = function(partNumber) {
-    // Открываем модальное окно поиска деталей
-    openPartSearchModal(partNumber);
+window.searchPartInCatalog = function(partNumber, category = '', partName = '') {
+    console.log(`searchPartInCatalog вызвана с параметрами:`, { partNumber, category, partName });
+    
+    // Определяем тип элемента по категории
+    const isSet = category && (
+        category.toLowerCase().includes('set') || 
+        category.toLowerCase().includes('theme') ||
+        category.toLowerCase().includes('series') ||
+        category.toLowerCase().includes('collection') ||
+        category.toLowerCase().includes('star wars') ||
+        category.toLowerCase().includes('marvel') ||
+        category.toLowerCase().includes('dc') ||
+        category.toLowerCase().includes('ninjago') ||
+        category.toLowerCase().includes('city') ||
+        category.toLowerCase().includes('friends') ||
+        category.toLowerCase().includes('creator') ||
+        category.toLowerCase().includes('technic')
+    );
+    
+    const isMinifig = category && (
+        category.toLowerCase().includes('minifig') ||
+        category.toLowerCase().includes('figure') ||
+        category.toLowerCase().includes('character') ||
+        category.toLowerCase().includes('person')
+    );
+    
+    console.log(`Определение типа: isSet=${isSet}, isMinifig=${isMinifig}`);
+    
+    if (isMinifig) {
+        // Поиск в каталоге минифигурок через модальное окно (приоритет)
+        console.log(`Поиск минифигурки по названию: ${partName}`);
+        searchInMinifigsCatalogModal(partName);
+    } else if (isSet) {
+        // Поиск в каталоге наборов через модальное окно
+        console.log(`Поиск набора по названию: ${partName}`);
+        searchInSetsCatalogModal(partName);
+    } else {
+        // Поиск в каталоге деталей (по ID или названию)
+        console.log(`Поиск детали: ${partNumber} (${partName})`);
+        openPartSearchModal(partNumber);
+    }
+}
+
+// Извлечение ключевых слов из поискового запроса
+window.extractKeywords = function(searchTerm) {
+    if (!searchTerm) return [];
+    
+    // Убираем лишние символы и разбиваем на слова
+    const words = searchTerm
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, ' ') // Убираем специальные символы, кроме дефисов
+        .split(/\s+/)
+        .filter(word => word.length > 1) // Уменьшаем минимальную длину для лучшего поиска
+        .filter(word => !isStopWord(word)); // Убираем стоп-слова
+    
+    // Добавляем варианты слов (убираем окончания и добавляем синонимы)
+    const keywords = new Set();
+    
+    words.forEach(word => {
+        keywords.add(word);
+        
+        // Добавляем варианты без окончаний
+        if (word.endsWith('s') && word.length > 3) {
+            keywords.add(word.slice(0, -1)); // убираем 's'
+        }
+        if (word.endsWith('ing') && word.length > 4) {
+            keywords.add(word.slice(0, -3)); // убираем 'ing'
+        }
+        if (word.endsWith('ed') && word.length > 3) {
+            keywords.add(word.slice(0, -2)); // убираем 'ed'
+        }
+        if (word.endsWith('er') && word.length > 3) {
+            keywords.add(word.slice(0, -2)); // убираем 'er'
+        }
+        if (word.endsWith('ly') && word.length > 3) {
+            keywords.add(word.slice(0, -2)); // убираем 'ly'
+        }
+        
+        // Добавляем синонимы для LEGO-терминов
+        const synonyms = getLegoSynonyms(word);
+        synonyms.forEach(synonym => keywords.add(synonym));
+    });
+    
+    return Array.from(keywords);
+}
+
+// Функция для получения синонимов LEGO-терминов
+window.getLegoSynonyms = function(word) {
+    const synonyms = {
+        'brick': ['block', 'piece', 'element'],
+        'block': ['brick', 'piece', 'element'],
+        'piece': ['brick', 'block', 'element'],
+        'element': ['brick', 'block', 'piece'],
+        'minifig': ['minifigure', 'figure', 'character'],
+        'minifigure': ['minifig', 'figure', 'character'],
+        'figure': ['minifig', 'minifigure', 'character'],
+        'character': ['minifig', 'minifigure', 'figure'],
+        'set': ['kit', 'model', 'build'],
+        'kit': ['set', 'model', 'build'],
+        'model': ['set', 'kit', 'build'],
+        'build': ['set', 'kit', 'model'],
+        'vehicle': ['car', 'truck', 'plane', 'aircraft', 'ship', 'boat'],
+        'car': ['vehicle', 'auto', 'automobile'],
+        'truck': ['vehicle', 'lorry'],
+        'plane': ['aircraft', 'airplane', 'vehicle'],
+        'aircraft': ['plane', 'airplane', 'vehicle'],
+        'ship': ['boat', 'vessel', 'vehicle'],
+        'boat': ['ship', 'vessel', 'vehicle'],
+        'building': ['structure', 'house', 'castle', 'tower'],
+        'house': ['building', 'home', 'structure'],
+        'castle': ['building', 'fortress', 'structure'],
+        'tower': ['building', 'structure'],
+        'robot': ['android', 'mech', 'mecha'],
+        'android': ['robot', 'mech', 'mecha'],
+        'mech': ['robot', 'android', 'mecha'],
+        'mecha': ['robot', 'android', 'mech'],
+        'space': ['cosmic', 'galactic', 'astronaut'],
+        'cosmic': ['space', 'galactic', 'astronaut'],
+        'galactic': ['space', 'cosmic', 'astronaut'],
+        'astronaut': ['space', 'cosmic', 'galactic'],
+        'pirates': ['pirate', 'swashbuckler'],
+        'pirate': ['pirates', 'swashbuckler'],
+        'swashbuckler': ['pirate', 'pirates'],
+        'ninja': ['ninjas', 'warrior'],
+        'ninjas': ['ninja', 'warrior'],
+        'warrior': ['ninja', 'ninjas'],
+        'knight': ['knights', 'warrior'],
+        'knights': ['knight', 'warrior'],
+        'dragon': ['dragons', 'beast'],
+        'dragons': ['dragon', 'beast'],
+        'beast': ['dragon', 'dragons'],
+        'monster': ['monsters', 'creature'],
+        'monsters': ['monster', 'creature'],
+        'creature': ['monster', 'monsters'],
+        'superhero': ['superheroes', 'hero'],
+        'superheroes': ['superhero', 'hero'],
+        'hero': ['superhero', 'superheroes'],
+        'villain': ['villains', 'antagonist'],
+        'villains': ['villain', 'antagonist'],
+        'antagonist': ['villain', 'villains']
+    };
+    
+    return synonyms[word] || [];
+}
+
+// Функция нечеткого поиска (расстояние Левенштейна)
+window.fuzzyMatch = function(str1, str2) {
+    const len1 = str1.length;
+    const len2 = str2.length;
+    
+    if (len1 === 0) return len2;
+    if (len2 === 0) return len1;
+    
+    const matrix = Array(len2 + 1).fill(null).map(() => Array(len1 + 1).fill(null));
+    
+    for (let i = 0; i <= len1; i++) matrix[0][i] = i;
+    for (let j = 0; j <= len2; j++) matrix[j][0] = j;
+    
+    for (let j = 1; j <= len2; j++) {
+        for (let i = 1; i <= len1; i++) {
+            const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+            matrix[j][i] = Math.min(
+                matrix[j][i - 1] + 1,      // deletion
+                matrix[j - 1][i] + 1,      // insertion
+                matrix[j - 1][i - 1] + cost // substitution
+            );
+        }
+    }
+    
+    return matrix[len2][len1];
+}
+
+// Функция для проверки нечеткого совпадения
+window.isFuzzyMatch = function(text, keyword, threshold = 0.7) {
+    const textLower = text.toLowerCase();
+    const keywordLower = keyword.toLowerCase();
+    
+    // Точное совпадение
+    if (textLower.includes(keywordLower)) return true;
+    
+    // Нечеткое совпадение
+    const words = textLower.split(/\s+/);
+    for (const word of words) {
+        if (word.length < 3) continue; // Пропускаем короткие слова
+        
+        const distance = fuzzyMatch(keywordLower, word);
+        const similarity = 1 - (distance / Math.max(keywordLower.length, word.length));
+        
+        if (similarity >= threshold) return true;
+    }
+    
+    return false;
+}
+
+// Функция для поиска по фразам и частичным совпадениям
+window.searchByPhrase = function(text, searchTerm) {
+    const textLower = text.toLowerCase();
+    const searchLower = searchTerm.toLowerCase();
+    
+    // Точное совпадение фразы
+    if (textLower.includes(searchLower)) {
+        return { exact: true, score: 100 };
+    }
+    
+    // Поиск по словам фразы
+    const searchWords = searchLower.split(/\s+/).filter(word => word.length > 1);
+    if (searchWords.length === 0) return { exact: false, score: 0 };
+    
+    let matchedWords = 0;
+    let totalScore = 0;
+    
+    searchWords.forEach(word => {
+        if (textLower.includes(word)) {
+            matchedWords++;
+            totalScore += 50;
+        } else if (isFuzzyMatch(textLower, word, 0.7)) {
+            matchedWords++;
+            totalScore += 25;
+        }
+    });
+    
+    // Бонус за совпадение всех слов
+    if (matchedWords === searchWords.length) {
+        totalScore += 50;
+    }
+    
+    // Бонус за порядок слов
+    const textWords = textLower.split(/\s+/);
+    let orderBonus = 0;
+    for (let i = 0; i < searchWords.length - 1; i++) {
+        const word1 = searchWords[i];
+        const word2 = searchWords[i + 1];
+        const pos1 = textWords.indexOf(word1);
+        const pos2 = textWords.indexOf(word2);
+        
+        if (pos1 !== -1 && pos2 !== -1 && pos2 > pos1) {
+            orderBonus += 10;
+        }
+    }
+    
+    return {
+        exact: false,
+        score: totalScore + orderBonus,
+        matchedWords,
+        totalWords: searchWords.length
+    };
+}
+
+// Проверка на стоп-слова
+window.isStopWord = function(word) {
+    const stopWords = [
+        'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by',
+        'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had',
+        'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must',
+        'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
+        'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
+        'holiday', 'sweater', 'shirt', 'jacket', 'costume', 'outfit', 'uniform'
+    ];
+    return stopWords.includes(word.toLowerCase());
+}
+
+// Поиск в каталоге наборов
+window.searchInSetsCatalog = function(searchTerm) {
+    console.log(`Поиск наборов по контексту: ${searchTerm}`);
+    console.log(`SET_MAP содержит ${Object.keys(SET_MAP).length} наборов`);
+    
+    // Извлекаем ключевые слова из поискового запроса
+    const keywords = extractKeywords(searchTerm);
+    console.log(`Извлеченные ключевые слова:`, keywords);
+    
+    if (keywords.length === 0) return [];
+    
+    // Ищем наборы с подсчетом релевантности
+    const searchResults = Object.values(SET_MAP).map(set => {
+        if (!set || !set.name) return null;
+        
+        const setName = set.name.toLowerCase();
+        const setTheme = (set.theme_name || '').toLowerCase();
+        const setDescription = (set.description || '').toLowerCase();
+        const setYear = set.year || 0;
+        
+        // Подсчитываем релевантность
+        let relevanceScore = 0;
+        let matchCount = 0;
+        
+        // Сначала проверяем поиск по фразе (для точных совпадений)
+        const phraseResult = searchByPhrase(setName, searchTerm);
+        if (phraseResult.exact) {
+            relevanceScore += 150; // Высший приоритет для точных фраз
+            matchCount++;
+        } else if (phraseResult.score > 0) {
+            relevanceScore += phraseResult.score;
+            matchCount++;
+        }
+        
+        // Затем проверяем по отдельным ключевым словам
+        keywords.forEach(keyword => {
+            // Точное совпадение в начале названия (высший приоритет)
+            if (setName.startsWith(keyword)) {
+                relevanceScore += 100;
+                matchCount++;
+            }
+            // Точное совпадение в названии
+            else if (setName.includes(keyword)) {
+                relevanceScore += 50;
+                matchCount++;
+            }
+            // Нечеткое совпадение в названии
+            else if (isFuzzyMatch(setName, keyword, 0.8)) {
+                relevanceScore += 25;
+                matchCount++;
+            }
+            // Совпадение в теме
+            if (setTheme.includes(keyword)) {
+                relevanceScore += 30;
+                matchCount++;
+            }
+            // Нечеткое совпадение в теме
+            else if (isFuzzyMatch(setTheme, keyword, 0.8)) {
+                relevanceScore += 15;
+                matchCount++;
+            }
+            // Совпадение в описании
+            if (setDescription.includes(keyword)) {
+                relevanceScore += 20;
+                matchCount++;
+            }
+            // Нечеткое совпадение в описании
+            else if (isFuzzyMatch(setDescription, keyword, 0.8)) {
+                relevanceScore += 10;
+                matchCount++;
+            }
+        });
+        
+        // Бонус за количество совпадений
+        if (matchCount > 0) {
+            relevanceScore += matchCount * 10;
+        }
+        
+        // Бонус за недавние наборы (если год указан)
+        if (setYear > 2010) {
+            relevanceScore += 5;
+        }
+        
+        // Бонус за популярные темы
+        const popularThemes = ['star wars', 'marvel', 'dc', 'harry potter', 'friends', 'creator', 'technic', 'city'];
+        if (popularThemes.some(theme => setTheme.includes(theme))) {
+            relevanceScore += 15;
+        }
+        
+        return matchCount > 0 ? { ...set, relevanceScore, matchCount } : null;
+    }).filter(Boolean);
+    
+    // Сортируем результаты по релевантности
+    searchResults.sort((a, b) => {
+        // Сначала по релевантности
+        if (a.relevanceScore !== b.relevanceScore) {
+            return b.relevanceScore - a.relevanceScore;
+        }
+        
+        // Затем по количеству совпадений
+        if (a.matchCount !== b.matchCount) {
+            return b.matchCount - a.matchCount;
+        }
+        
+        // Затем по году (новые сначала)
+        if (a.year !== b.year) {
+            return (b.year || 0) - (a.year || 0);
+        }
+        
+        // Затем по алфавиту
+        return a.name.localeCompare(b.name);
+    });
+    
+    console.log(`Найдено ${searchResults.length} наборов по контексту "${searchTerm}"`);
+    
+    if (searchResults.length > 0) {
+        // Переключаемся на представление наборов и показываем результаты
+        S.view = 'sets';
+        S.searchQuery = searchTerm;
+        renderMainContent();
+        console.log(`Переключились на представление наборов, найдено ${searchResults.length} наборов`);
+    } else {
+        console.log('Наборы не найдены');
+        alert(`Наборы по контексту "${searchTerm}" не найдены`);
+    }
+}
+
+// Поиск в каталоге минифигурок
+window.searchInMinifigsCatalog = function(searchTerm) {
+    console.log(`Поиск минифигурок по контексту: ${searchTerm}`);
+    console.log(`MINIFIG_MAP содержит ${Object.keys(MINIFIG_MAP).length} минифигурок`);
+    
+    // Извлекаем ключевые слова из поискового запроса
+    const keywords = extractKeywords(searchTerm);
+    console.log(`Извлеченные ключевые слова:`, keywords);
+    
+    if (keywords.length === 0) return [];
+    
+    // Ищем минифигурки с подсчетом релевантности
+    const searchResults = Object.values(MINIFIG_MAP).map(minifig => {
+        if (!minifig || !minifig.name) return null;
+        
+        const minifigName = minifig.name.toLowerCase();
+        const minifigTheme = (minifig.theme_name || '').toLowerCase();
+        const minifigYear = minifig.year || 0;
+        
+        // Подсчитываем релевантность
+        let relevanceScore = 0;
+        let matchCount = 0;
+        
+        // Сначала проверяем поиск по фразе (для точных совпадений)
+        const phraseResult = searchByPhrase(minifigName, searchTerm);
+        if (phraseResult.exact) {
+            relevanceScore += 150; // Высший приоритет для точных фраз
+            matchCount++;
+        } else if (phraseResult.score > 0) {
+            relevanceScore += phraseResult.score;
+            matchCount++;
+        }
+        
+        // Затем проверяем по отдельным ключевым словам
+        keywords.forEach(keyword => {
+            // Точное совпадение в начале названия (высший приоритет)
+            if (minifigName.startsWith(keyword)) {
+                relevanceScore += 100;
+                matchCount++;
+            }
+            // Точное совпадение в названии
+            else if (minifigName.includes(keyword)) {
+                relevanceScore += 50;
+                matchCount++;
+            }
+            // Нечеткое совпадение в названии
+            else if (isFuzzyMatch(minifigName, keyword, 0.8)) {
+                relevanceScore += 25;
+                matchCount++;
+            }
+            // Совпадение в теме
+            if (minifigTheme.includes(keyword)) {
+                relevanceScore += 30;
+                matchCount++;
+            }
+            // Нечеткое совпадение в теме
+            else if (isFuzzyMatch(minifigTheme, keyword, 0.8)) {
+                relevanceScore += 15;
+                matchCount++;
+            }
+        });
+        
+        // Бонус за количество совпадений
+        if (matchCount > 0) {
+            relevanceScore += matchCount * 10;
+        }
+        
+        // Бонус за недавние минифигурки (если год указан)
+        if (minifigYear > 2010) {
+            relevanceScore += 5;
+        }
+        
+        // Бонус за популярные темы
+        const popularThemes = ['star wars', 'marvel', 'dc', 'harry potter', 'friends', 'creator', 'technic', 'city'];
+        if (popularThemes.some(theme => minifigTheme.includes(theme))) {
+            relevanceScore += 15;
+        }
+        
+        // Бонус за уникальные персонажи (содержат имя персонажа)
+        if (minifigName.includes('(') && minifigName.includes(')')) {
+            relevanceScore += 10;
+        }
+        
+        return matchCount > 0 ? { ...minifig, relevanceScore, matchCount } : null;
+    }).filter(Boolean);
+    
+    // Сортируем результаты по релевантности
+    searchResults.sort((a, b) => {
+        // Сначала по релевантности
+        if (a.relevanceScore !== b.relevanceScore) {
+            return b.relevanceScore - a.relevanceScore;
+        }
+        
+        // Затем по количеству совпадений
+        if (a.matchCount !== b.matchCount) {
+            return b.matchCount - a.matchCount;
+        }
+        
+        // Затем по году (новые сначала)
+        if (a.year !== b.year) {
+            return (b.year || 0) - (a.year || 0);
+        }
+        
+        // Затем по алфавиту
+        return a.name.localeCompare(b.name);
+    });
+    
+    console.log(`Найдено ${searchResults.length} минифигурок по контексту "${searchTerm}"`);
+    
+    if (searchResults.length > 0) {
+        // Переключаемся на представление минифигурок и показываем результаты
+        S.view = 'minifigs';
+        S.searchQuery = searchTerm;
+        renderMainContent();
+        console.log(`Переключились на представление минифигурок, найдено ${searchResults.length} минифигурок`);
+    } else {
+        console.log('Минифигурки не найдены');
+        alert(`Минифигурки по контексту "${searchTerm}" не найдены`);
+    }
+}
+
+// Поиск в каталоге наборов через модальное окно
+window.searchInSetsCatalogModal = function(searchTerm) {
+    console.log(`Поиск наборов в модальном окне: ${searchTerm}`);
+    
+    // Создаем модальное окно если его нет
+    let modalEl = document.getElementById('sets-search-modal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'sets-search-modal';
+        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        document.body.appendChild(modalEl);
+    }
+    
+    // Извлекаем ключевые слова из поискового запроса
+    const keywords = extractKeywords(searchTerm);
+    console.log(`Извлеченные ключевые слова:`, keywords);
+    
+    // Ищем наборы по ключевым словам
+    const searchResults = Object.values(SET_MAP).filter(set => {
+        if (!set || !set.name) return false;
+        
+        const setName = set.name.toLowerCase();
+        const setTheme = (set.theme_name || '').toLowerCase();
+        const setDescription = (set.description || '').toLowerCase();
+        
+        // Проверяем совпадение по ключевым словам
+        return keywords.some(keyword => 
+            setName.includes(keyword) || 
+            setTheme.includes(keyword) ||
+            setDescription.includes(keyword)
+        );
+    });
+    
+    // Сортируем результаты по релевантности
+    searchResults.sort((a, b) => {
+        const aName = a.name.toLowerCase();
+        const bName = b.name.toLowerCase();
+        
+        // Приоритет: точное совпадение в начале названия
+        const aStartsWith = keywords.some(keyword => aName.startsWith(keyword));
+        const bStartsWith = keywords.some(keyword => bName.startsWith(keyword));
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        
+        // Затем по количеству совпадений
+        const aMatches = keywords.filter(keyword => aName.includes(keyword)).length;
+        const bMatches = keywords.filter(keyword => bName.includes(keyword)).length;
+        
+        if (aMatches !== bMatches) return bMatches - aMatches;
+        
+        // Затем по алфавиту
+        return a.name.localeCompare(b.name);
+    });
+    
+    // Ограничиваем количество результатов
+    const limitedResults = searchResults.slice(0, 50);
+    
+    console.log(`Найдено ${limitedResults.length} наборов по контексту "${searchTerm}"`);
+    
+    // Рендерим содержимое модального окна
+    modalEl.innerHTML = `
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+            <!-- Заголовок -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4" title="Поиск наборов: ${searchTerm}">Поиск наборов: ${searchTerm.length > 30 ? searchTerm.substring(0, 30) + '...' : searchTerm}</h2>
+                <button id="close-sets-search-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
+                    ${I_X('w-4 h-4')}
+                </button>
+            </div>
+            
+            <!-- Результаты поиска -->
+            <div class="flex-1 overflow-hidden relative" style="min-height: 500px;">
+                <div id="sets-search-scroll-progress"><div class="bar"></div></div>
+                <div id="sets-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 120px);">
+                    ${limitedResults.length > 0 ? 
+                        `<div class="sets-minifigs-grid">
+                            ${limitedResults.map(set => renderSetCard(set, false, 0)).join('')}
+                        </div>` :
+                        `<div class="text-center py-8">
+                            <div class="text-4xl mb-3">${I_SEARCH('w-12 h-12 mx-auto text-gray-400')}</div>
+                            <p class="text-sm text-gray-400">Наборы не найдены</p>
+                            <p class="text-xs text-gray-500 mt-2">Попробуйте изменить поисковый запрос</p>
+                        </div>`
+                    }
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Показываем модальное окно
+    modalEl.style.display = 'flex';
+    
+    // Настраиваем обработчики
+    setupSetsSearchModalHandlers();
+}
+
+// Поиск в каталоге минифигурок через модальное окно
+window.searchInMinifigsCatalogModal = function(searchTerm) {
+    console.log(`Поиск минифигурок в модальном окне: ${searchTerm}`);
+    
+    // Создаем модальное окно если его нет
+    let modalEl = document.getElementById('minifigs-search-modal');
+    if (!modalEl) {
+        modalEl = document.createElement('div');
+        modalEl.id = 'minifigs-search-modal';
+        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        document.body.appendChild(modalEl);
+    }
+    
+    // Извлекаем ключевые слова из поискового запроса
+    const keywords = extractKeywords(searchTerm);
+    console.log(`Извлеченные ключевые слова:`, keywords);
+    
+    // Ищем минифигурки по ключевым словам
+    const searchResults = Object.values(MINIFIG_MAP).filter(minifig => {
+        if (!minifig || !minifig.name) return false;
+        
+        const minifigName = minifig.name.toLowerCase();
+        const minifigTheme = (minifig.theme_name || '').toLowerCase();
+        
+        // Проверяем совпадение по ключевым словам
+        return keywords.some(keyword => 
+            minifigName.includes(keyword) || 
+            minifigTheme.includes(keyword)
+        );
+    });
+    
+    // Сортируем результаты по релевантности
+    searchResults.sort((a, b) => {
+        const aName = a.name.toLowerCase();
+        const bName = b.name.toLowerCase();
+        
+        // Приоритет: точное совпадение в начале названия
+        const aStartsWith = keywords.some(keyword => aName.startsWith(keyword));
+        const bStartsWith = keywords.some(keyword => bName.startsWith(keyword));
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        
+        // Затем по количеству совпадений
+        const aMatches = keywords.filter(keyword => aName.includes(keyword)).length;
+        const bMatches = keywords.filter(keyword => bName.includes(keyword)).length;
+        
+        if (aMatches !== bMatches) return bMatches - aMatches;
+        
+        // Затем по алфавиту
+        return a.name.localeCompare(b.name);
+    });
+    
+    // Ограничиваем количество результатов
+    const limitedResults = searchResults.slice(0, 50);
+    
+    console.log(`Найдено ${limitedResults.length} минифигурок по контексту "${searchTerm}"`);
+    
+    // Рендерим содержимое модального окна
+    modalEl.innerHTML = `
+        <div class="bg-gray-800 rounded-lg shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
+            <!-- Заголовок -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4" title="Поиск минифигурок: ${searchTerm}">Поиск минифигурок: ${searchTerm.length > 30 ? searchTerm.substring(0, 30) + '...' : searchTerm}</h2>
+                <button id="close-minifigs-search-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
+                    ${I_X('w-4 h-4')}
+                </button>
+            </div>
+            
+            <!-- Результаты поиска -->
+            <div class="flex-1 overflow-hidden relative" style="min-height: 500px;">
+                <div id="minifigs-search-scroll-progress"><div class="bar"></div></div>
+                <div id="minifigs-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 120px);">
+                    ${limitedResults.length > 0 ? 
+                        `<div class="sets-minifigs-grid">
+                            ${limitedResults.map(minifig => renderMinifigCard(minifig, false, 0)).join('')}
+                        </div>` :
+                        `<div class="text-center py-8">
+                            <div class="text-4xl mb-3">${I_SEARCH('w-12 h-12 mx-auto text-gray-400')}</div>
+                            <p class="text-sm text-gray-400">Минифигурки не найдены</p>
+                            <p class="text-xs text-gray-500 mt-2">Попробуйте изменить поисковый запрос</p>
+                        </div>`
+                    }
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Показываем модальное окно
+    modalEl.style.display = 'flex';
+    
+    // Настраиваем обработчики
+    setupMinifigsSearchModalHandlers();
 }
 
 // Открытие модального окна поиска деталей
@@ -4016,6 +4743,305 @@ window.openPartSearchModal = function(partNumber) {
     
     // Добавляем обработчики событий
     setupPartSearchModalHandlers();
+}
+
+// Настройка обработчиков модального окна поиска наборов
+window.setupSetsSearchModalHandlers = function() {
+    const modalEl = document.getElementById('sets-search-modal');
+    const closeBtn = document.getElementById('close-sets-search-modal');
+    
+    // Закрытие модального окна
+    closeBtn.addEventListener('click', closeSetsSearchModal);
+    modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) {
+            closeSetsSearchModal();
+        }
+    });
+    
+    // Настройка скролл-индикатора и перелистывания с задержкой
+    setTimeout(() => {
+        console.log('Настройка скролла и перелистывания для наборов');
+        setupSetsSearchScrollProgress();
+        setupSetsSearchSwipe();
+        
+        // Добавляем обработчики кликов на карточки наборов
+        const scrollContainer = document.getElementById('sets-search-results');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('click', (e) => {
+                const setCard = e.target.closest('.set-card');
+                if (setCard) {
+                    const setId = setCard.dataset.setNum;
+                    if (setId) {
+                        // Закрываем модальное окно поиска
+                        closeSetsSearchModal();
+                        // Открываем модальное окно набора
+                        openModalForSet(setId);
+                    }
+                }
+            });
+        }
+    }, 100);
+}
+
+// Настройка обработчиков модального окна поиска минифигурок
+window.setupMinifigsSearchModalHandlers = function() {
+    const modalEl = document.getElementById('minifigs-search-modal');
+    const closeBtn = document.getElementById('close-minifigs-search-modal');
+    
+    // Закрытие модального окна
+    closeBtn.addEventListener('click', closeMinifigsSearchModal);
+    modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) {
+            closeMinifigsSearchModal();
+        }
+    });
+    
+    // Настройка скролл-индикатора и перелистывания с задержкой
+    setTimeout(() => {
+        setupMinifigsSearchScrollProgress();
+        setupMinifigsSearchSwipe();
+        
+        // Добавляем обработчики кликов на карточки минифигурок
+        const scrollContainer = document.getElementById('minifigs-search-results');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('click', (e) => {
+                const minifigCard = e.target.closest('.minifig-card');
+                if (minifigCard) {
+                    const minifigId = minifigCard.dataset.figNum;
+                    if (minifigId) {
+                        // Закрываем модальное окно поиска
+                        closeMinifigsSearchModal();
+                        // Открываем модальное окно минифигурки
+                        openModalForMinifig(minifigId);
+                    }
+                }
+            });
+        }
+    }, 100);
+}
+
+// Закрытие модального окна поиска наборов
+window.closeSetsSearchModal = function() {
+    const modalEl = document.getElementById('sets-search-modal');
+    if (modalEl) {
+        modalEl.style.display = 'none';
+    }
+}
+
+// Закрытие модального окна поиска минифигурок
+window.closeMinifigsSearchModal = function() {
+    const modalEl = document.getElementById('minifigs-search-modal');
+    if (modalEl) {
+        modalEl.style.display = 'none';
+    }
+}
+
+// Настройка скролл-индикатора для поиска наборов
+window.setupSetsSearchScrollProgress = function() {
+    const track = document.getElementById('sets-search-scroll-progress');
+    const scrollArea = document.getElementById('sets-search-results');
+    
+    if (!track || !scrollArea) return;
+    
+    const bar = track.querySelector('.bar');
+    if (!bar) return;
+    
+    const updateScrollProgress = () => {
+        const max = scrollArea.scrollHeight - scrollArea.clientHeight;
+        if (max <= 0) {
+            track.classList.remove('visible');
+            return;
+        }
+        
+        const percent = (scrollArea.scrollTop / max) * 100;
+        const barHeight = Math.max(48, (scrollArea.clientHeight / scrollArea.scrollHeight) * scrollArea.clientHeight);
+        
+        bar.style.height = `${barHeight}px`;
+        bar.style.transform = `translateY(${percent * (scrollArea.clientHeight - barHeight) / 100}px)`;
+        track.classList.add('visible');
+    };
+    
+    // Удаляем старые обработчики если есть
+    if (scrollArea._scrollHandler) {
+        scrollArea.removeEventListener('scroll', scrollArea._scrollHandler);
+    }
+    
+    // Добавляем новый обработчик
+    scrollArea._scrollHandler = updateScrollProgress;
+    scrollArea.addEventListener('scroll', updateScrollProgress);
+    
+    // Наблюдаем за изменениями размера контента
+    if (scrollArea._resizeObserver) {
+        scrollArea._resizeObserver.disconnect();
+    }
+    
+    scrollArea._resizeObserver = new ResizeObserver(updateScrollProgress);
+    scrollArea._resizeObserver.observe(scrollArea);
+    
+    // Обновляем при загрузке с небольшой задержкой
+    setTimeout(updateScrollProgress, 100);
+}
+
+// Настройка скролл-индикатора для поиска минифигурок
+window.setupMinifigsSearchScrollProgress = function() {
+    const track = document.getElementById('minifigs-search-scroll-progress');
+    const scrollArea = document.getElementById('minifigs-search-results');
+    
+    if (!track || !scrollArea) return;
+    
+    const bar = track.querySelector('.bar');
+    if (!bar) return;
+    
+    const updateScrollProgress = () => {
+        const max = scrollArea.scrollHeight - scrollArea.clientHeight;
+        if (max <= 0) {
+            track.classList.remove('visible');
+            return;
+        }
+        
+        const percent = (scrollArea.scrollTop / max) * 100;
+        const barHeight = Math.max(48, (scrollArea.clientHeight / scrollArea.scrollHeight) * scrollArea.clientHeight);
+        
+        bar.style.height = `${barHeight}px`;
+        bar.style.transform = `translateY(${percent * (scrollArea.clientHeight - barHeight) / 100}px)`;
+        track.classList.add('visible');
+    };
+    
+    // Удаляем старые обработчики если есть
+    if (scrollArea._scrollHandler) {
+        scrollArea.removeEventListener('scroll', scrollArea._scrollHandler);
+    }
+    
+    // Добавляем новый обработчик
+    scrollArea._scrollHandler = updateScrollProgress;
+    scrollArea.addEventListener('scroll', updateScrollProgress);
+    
+    // Наблюдаем за изменениями размера контента
+    if (scrollArea._resizeObserver) {
+        scrollArea._resizeObserver.disconnect();
+    }
+    
+    scrollArea._resizeObserver = new ResizeObserver(updateScrollProgress);
+    scrollArea._resizeObserver.observe(scrollArea);
+    
+    // Обновляем при загрузке с небольшой задержкой
+    setTimeout(updateScrollProgress, 100);
+}
+
+// Настройка перелистывания для поиска наборов
+window.setupSetsSearchSwipe = function() {
+    const scrollContainer = document.getElementById('sets-search-results');
+    console.log('Настройка перелистывания для наборов:', { scrollContainer });
+    if (!scrollContainer) {
+        console.log('Контейнер для перелистывания наборов не найден');
+        return;
+    }
+    
+    let startY = 0;
+    let startX = 0;
+    let isScrolling = false;
+    
+    const handleTouchStart = (e) => {
+        startY = e.touches[0].clientY;
+        startX = e.touches[0].clientX;
+        isScrolling = false;
+    };
+    
+    const handleTouchMove = (e) => {
+        if (!isScrolling) {
+            const deltaY = Math.abs(e.touches[0].clientY - startY);
+            const deltaX = Math.abs(e.touches[0].clientX - startX);
+            isScrolling = deltaY > deltaX;
+        }
+    };
+    
+    const handleTouchEnd = (e) => {
+        if (!isScrolling) {
+            const deltaY = e.changedTouches[0].clientY - startY;
+            const threshold = 50;
+            
+            if (Math.abs(deltaY) > threshold) {
+                // Прокручиваем вверх или вниз
+                const scrollAmount = deltaY > 0 ? -300 : 300;
+                scrollContainer.scrollBy({
+                    top: scrollAmount,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    };
+    
+    // Удаляем старые обработчики если есть
+    if (scrollContainer._touchStartHandler) {
+        scrollContainer.removeEventListener('touchstart', scrollContainer._touchStartHandler);
+        scrollContainer.removeEventListener('touchmove', scrollContainer._touchMoveHandler);
+        scrollContainer.removeEventListener('touchend', scrollContainer._touchEndHandler);
+    }
+    
+    // Добавляем новые обработчики
+    scrollContainer._touchStartHandler = handleTouchStart;
+    scrollContainer._touchMoveHandler = handleTouchMove;
+    scrollContainer._touchEndHandler = handleTouchEnd;
+    
+    scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+    scrollContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+}
+
+// Настройка перелистывания для поиска минифигурок
+window.setupMinifigsSearchSwipe = function() {
+    const scrollContainer = document.getElementById('minifigs-search-results');
+    if (!scrollContainer) return;
+    
+    let startY = 0;
+    let startX = 0;
+    let isScrolling = false;
+    
+    const handleTouchStart = (e) => {
+        startY = e.touches[0].clientY;
+        startX = e.touches[0].clientX;
+        isScrolling = false;
+    };
+    
+    const handleTouchMove = (e) => {
+        if (!isScrolling) {
+            const deltaY = Math.abs(e.touches[0].clientY - startY);
+            const deltaX = Math.abs(e.touches[0].clientX - startX);
+            isScrolling = deltaY > deltaX;
+        }
+    };
+    
+    const handleTouchEnd = (e) => {
+        if (!isScrolling) {
+            const deltaY = e.changedTouches[0].clientY - startY;
+            const threshold = 50;
+            
+            if (Math.abs(deltaY) > threshold) {
+                // Прокручиваем вверх или вниз
+                const scrollAmount = deltaY > 0 ? -300 : 300;
+                scrollContainer.scrollBy({
+                    top: scrollAmount,
+                    behavior: 'smooth'
+                });
+            }
+        }
+    };
+    
+    // Удаляем старые обработчики если есть
+    if (scrollContainer._touchStartHandler) {
+        scrollContainer.removeEventListener('touchstart', scrollContainer._touchStartHandler);
+        scrollContainer.removeEventListener('touchmove', scrollContainer._touchMoveHandler);
+        scrollContainer.removeEventListener('touchend', scrollContainer._touchEndHandler);
+    }
+    
+    // Добавляем новые обработчики
+    scrollContainer._touchStartHandler = handleTouchStart;
+    scrollContainer._touchMoveHandler = handleTouchMove;
+    scrollContainer._touchEndHandler = handleTouchEnd;
+    
+    scrollContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+    scrollContainer.addEventListener('touchmove', handleTouchMove, { passive: true });
+    scrollContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
 }
 
 // Настройка обработчиков модального окна поиска
@@ -4086,28 +5112,69 @@ window.performPartSearch = function(query) {
         </div>
     `;
     
-    // Ищем детали в каталоге по ID
-    const searchResults = Object.values(PART_MAP).filter(part => {
+    // Этап 1: Поиск по точному ID
+    let searchResults = Object.values(PART_MAP).filter(part => {
         if (!part || !part.name) return false;
-        return part.id.toLowerCase().includes(query.toLowerCase()) || 
-               part.name.toLowerCase().includes(query.toLowerCase());
+        return part.id === query;
     });
     
-    // Сортируем результаты
+    // Если найдены результаты по точному ID, показываем их
+    if (searchResults.length > 0) {
+        console.log(`Найдено ${searchResults.length} деталей по точному ID: ${query}`);
+        displayPartSearchResults(searchResults, 'По ID');
+        return;
+    }
+    
+    // Этап 2: Поиск по частичному ID
+    searchResults = Object.values(PART_MAP).filter(part => {
+        if (!part || !part.name) return false;
+        return part.id.toLowerCase().includes(query.toLowerCase());
+    });
+    
+    // Если найдены результаты по частичному ID, показываем их
+    if (searchResults.length > 0) {
+        console.log(`Найдено ${searchResults.length} деталей по частичному ID: ${query}`);
+        searchResults.sort((a, b) => a.name.localeCompare(b.name));
+        displayPartSearchResults(searchResults, 'По частичному ID');
+        return;
+    }
+    
+    // Этап 3: Поиск по названию среди всего каталога
+    console.log(`Поиск по ID не дал результатов, ищем по названию: ${query}`);
+    searchResults = Object.values(PART_MAP).filter(part => {
+        if (!part || !part.name) return false;
+        return part.name.toLowerCase().includes(query.toLowerCase());
+    });
+    
+    // Сортируем результаты по релевантности
     searchResults.sort((a, b) => {
-        // Сначала точные совпадения по ID
-        if (a.id === query) return -1;
-        if (b.id === query) return 1;
-        // Затем по названию
+        const queryLower = query.toLowerCase();
+        const aNameLower = a.name.toLowerCase();
+        const bNameLower = b.name.toLowerCase();
+        
+        // Приоритет: точное совпадение в начале названия
+        const aStartsWith = aNameLower.startsWith(queryLower);
+        const bStartsWith = bNameLower.startsWith(queryLower);
+        
+        if (aStartsWith && !bStartsWith) return -1;
+        if (!aStartsWith && bStartsWith) return 1;
+        
+        // Затем по алфавиту
         return a.name.localeCompare(b.name);
     });
     
+    // Ограничиваем количество результатов для производительности
+    if (searchResults.length > 50) {
+        searchResults = searchResults.slice(0, 50);
+        console.log(`Ограничено до 50 результатов из ${searchResults.length} найденных`);
+    }
+    
     // Отображаем результаты
-    displayPartSearchResults(searchResults);
+    displayPartSearchResults(searchResults, 'По названию');
 }
 
 // Отображение результатов поиска деталей
-window.displayPartSearchResults = function(parts) {
+window.displayPartSearchResults = function(parts, searchType = '') {
     const resultsContainer = document.getElementById('part-search-results');
     if (!resultsContainer) return;
     
@@ -4116,10 +5183,26 @@ window.displayPartSearchResults = function(parts) {
             <div class="text-center text-gray-400 py-8">
                 <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
                 <p>Детали не найдены</p>
+                <p class="text-xs text-gray-500 mt-2">Попробуйте изменить поисковый запрос</p>
             </div>
         `;
         return;
     }
+    
+    // Создаем заголовок с информацией о поиске
+    const headerHtml = `
+        <div class="mb-4 p-3 bg-gray-800/50 rounded-lg border border-gray-700">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="text-green-400">${I_CheckCircle('w-5 h-5')}</div>
+                    <span class="text-sm font-medium text-gray-200">
+                        Найдено: <span class="text-green-400 font-bold">${parts.length}</span> ${parts.length === 1 ? 'элемент' : parts.length < 5 ? 'элемента' : 'элементов'}
+                    </span>
+                </div>
+                ${searchType ? `<span class="text-xs text-gray-400 bg-gray-700 px-2 py-1 rounded">${searchType}</span>` : ''}
+            </div>
+        </div>
+    `;
     
     // Создаем сетку результатов
     const gridContainer = document.createElement('div');
@@ -4130,7 +5213,7 @@ window.displayPartSearchResults = function(parts) {
     }).join('');
     
     gridContainer.innerHTML = resultsHtml;
-    resultsContainer.innerHTML = '';
+    resultsContainer.innerHTML = headerHtml;
     resultsContainer.appendChild(gridContainer);
     
     // Добавляем обработчики клика на карточки
@@ -29042,7 +30125,7 @@ function animateCloseButtonClick(button) {
             const category = prediction.category || 'LEGO';
             
             return `
-                <div data-part-id="${partNumber}" class="part-card relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer" onclick="searchPartInCatalog('${partNumber}')">
+                <div data-part-id="${partNumber}" class="part-card relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer" onclick="searchPartInCatalog('${partNumber}', '${category.replace(/'/g, "\\'")}', '${partName.replace(/'/g, "\\'")}')">
                     <div class="absolute top-3 right-3 bg-green-600 text-white text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center z-10 shadow-md pointer-events-none">
                         ${confidence}%
                     </div>
