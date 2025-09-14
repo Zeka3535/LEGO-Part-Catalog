@@ -28183,9 +28183,14 @@ function animateCloseButtonClick(button) {
                     
                     if (camera0) {
                         modalSelect.value = camera0.deviceId;
+                        console.log('Автоматически выбрана задняя камера для мобильного устройства:', camera0.label);
                     } else {
                         modalSelect.value = videoDevices[0].deviceId;
+                        console.log('Автоматически выбрана первая доступная камера для мобильного устройства:', videoDevices[0].label);
                     }
+                } else if (videoDevices.length > 0) {
+                    // На десктопе тоже выбираем первую камеру
+                    modalSelect.value = videoDevices[0].deviceId;
                 }
                 
                 // Устанавливаем разрешение по умолчанию
