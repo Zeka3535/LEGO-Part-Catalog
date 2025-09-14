@@ -2231,6 +2231,34 @@
         border-radius: inherit;
         transform: translateY(0);
     }
+    
+    /* Индикатор в модальном окне поиска деталей */
+    #part-search-scroll-progress {
+        position: absolute;
+        right: 2px;
+        top: 12px;
+        bottom: 12px;
+        width: 5px;
+        background: rgba(55, 65, 81, 0.3);
+        border-radius: 3px;
+        opacity: 0;
+        transform: translateX(8px);
+        transition: opacity .2s ease, transform .2s ease;
+        z-index: 15;
+        pointer-events: none;
+    }
+    #part-search-scroll-progress.visible { opacity: .9; transform: translateX(0); }
+    #part-search-scroll-progress .bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 48px;
+        background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+        box-shadow: 0 0 10px rgba(59,130,246,.35);
+        border-radius: inherit;
+        transform: translateY(0);
+    }
     /* Image viewer должен быть поверх модальных окон */
     #image-viewer-container.visible {
         pointer-events: auto !important;
@@ -3919,7 +3947,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -3967,8 +3995,9 @@ window.openPartSearchModal = function(partNumber) {
             </div>
             
             <!-- Результаты поиска -->
-            <div class="flex-1 overflow-hidden">
-                <div id="part-search-results" class="h-full overflow-y-auto p-4" style="max-height: calc(90vh - 120px);">
+            <div class="flex-1 overflow-hidden relative">
+                <div id="part-search-scroll-progress"><div class="bar"></div></div>
+                <div id="part-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 120px);">
                     <div class="text-center text-gray-400 py-8">
                         <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
                         <p>Поиск деталей...</p>
@@ -4001,6 +4030,47 @@ window.setupPartSearchModalHandlers = function() {
             closePartSearchModal();
         }
     });
+    
+    // Настройка индикатора прокрутки
+    setupPartSearchScrollProgress();
+}
+
+// Настройка индикатора прокрутки для модального окна поиска деталей
+window.setupPartSearchScrollProgress = function() {
+    const track = document.getElementById('part-search-scroll-progress');
+    const scrollArea = document.getElementById('part-search-results');
+    
+    if (!track || !scrollArea) return;
+    
+    const bar = track.querySelector('.bar');
+    if (!bar) return;
+    
+    const updateScrollProgress = () => {
+        const max = scrollArea.scrollHeight - scrollArea.clientHeight;
+        if (max <= 0) {
+            track.classList.remove('visible');
+            return;
+        }
+        
+        const percent = Math.min(100, Math.max(0, (scrollArea.scrollTop / max) * 100));
+        const containerH = track.clientHeight || 0;
+        const barH = bar.clientHeight || 24;
+        const maxOffset = Math.max(0, containerH - barH);
+        const offset = (percent / 100) * maxOffset;
+        
+        bar.style.transform = `translateY(${offset}px)`;
+        track.classList.add('visible');
+    };
+    
+    // Обновляем при прокрутке
+    scrollArea.addEventListener('scroll', updateScrollProgress);
+    
+    // Обновляем при изменении размера
+    const resizeObserver = new ResizeObserver(updateScrollProgress);
+    resizeObserver.observe(scrollArea);
+    
+    // Первоначальное обновление
+    setTimeout(updateScrollProgress, 100);
 }
 
 // Выполнение поиска деталей
@@ -28937,7 +29007,7 @@ function animateCloseButtonClick(button) {
             const category = prediction.category || 'LEGO';
             
             return `
-                <div data-part-id="${partNumber}" class="part-card relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer">
+                <div data-part-id="${partNumber}" class="part-card relative bg-gray-800 rounded-lg overflow-hidden group cursor-pointer" onclick="searchPartInCatalog('${partNumber}')">
                     <div class="absolute top-3 right-3 bg-green-600 text-white text-xs font-bold rounded-full w-8 h-8 flex items-center justify-center z-10 shadow-md pointer-events-none">
                         ${confidence}%
                     </div>
@@ -28959,12 +29029,6 @@ function animateCloseButtonClick(button) {
                         <h3 class="text-sm font-semibold text-white truncate pointer-events-none card-title">${partName}</h3>
                         <p class="text-xs text-gray-400 pointer-events-none card-info-text">ID: ${partNumber}</p>
                         <p class="text-xs text-gray-500 pointer-events-none card-info-text">${category}</p>
-                        <div class="pt-2">
-                            <button onclick="searchPartInCatalog('${partNumber}')" 
-                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded transition-colors font-medium">
-                                Найти в каталоге
-                            </button>
-                        </div>
                     </div>
                         </div>
                     `;
