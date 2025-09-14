@@ -1,9 +1,9 @@
 Файл разбит на 6 частей
-Исходный файл: C:\Users\evgen\Downloads\каталог-lego\dist\Downloads\rebrickable_2025-08-25_20-36-43\inventory_parts.csv
-Размер исходного файла: 114.84 MB
-Строк в исходном файле: 1 409 673
+Исходный файл: C:\Users\evgen\Downloads\каталог-lego\dist\Downloads\rebrickable_2025-09-14_16-21-14\inventory_parts.csv
+Размер исходного файла: 115.47 MB
+Строк в исходном файле: 1 417 558
 Максимальный размер части: 20 MB
-Строк на часть: 234 946
+Строк на часть: 236 260
 
 Список частей:
 inventory_parts_part_001.csv: 20.24 MB
@@ -11,4 +11,4 @@ inventory_parts_part_002.csv: 20.24 MB
 inventory_parts_part_003.csv: 20.24 MB
 inventory_parts_part_004.csv: 20.23 MB
 inventory_parts_part_005.csv: 20.24 MB
-inventory_parts_part_006.csv: 13.65 MB
+inventory_parts_part_006.csv: 14.29 MB
