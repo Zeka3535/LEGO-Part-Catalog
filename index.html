@@ -1565,7 +1565,7 @@
         transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease !important;
     }
     .collapse-panel.open {
-        max-height: 1000px !important; /* достаточная высота для контента */
+        max-height: 5000px !important; /* достаточная высота для контента */
         opacity: 1 !important;
         padding: 0.75rem !important; /* соответствие классу p-3 */
     }
@@ -1579,7 +1579,7 @@
         transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease !important;
     }
     #settings-stats-panel.collapse-panel.open {
-        max-height: 1000px !important;
+        max-height: 5000px !important;
         opacity: 1 !important;
         padding: 0.75rem !important;
     }
@@ -1593,7 +1593,7 @@
         transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease !important;
     }
     #technologies-panel.collapse-panel.open {
-        max-height: 1000px !important;
+        max-height: 5000px !important;
         opacity: 1 !important;
         padding: 0.75rem !important;
     }
@@ -17599,6 +17599,29 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     <div>
+                        <h3 class="text-md font-semibold text-white mb-2">Настройки камеры</h3>
+                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
+                            <p class="text-xs text-gray-400">Управление сохраненными настройками камеры для DataMatrix сканера и AI поиска</p>
+                            <div class="flex gap-3">
+                                <button data-action="clear-camera-settings" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
+                                    ${I_Camera("w-5 h-5 mr-2")} Очистить настройки камеры
+                                </button>
+                            </div>
+                            <div id="camera-settings-status" class="text-xs text-gray-400"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-md font-semibold text-white mb-2">Полная очистка данных</h3>
+                        <div class="bg-red-900/20 border border-red-600/30 rounded-lg p-3 space-y-3">
+                            <p class="text-xs text-red-300">ОПАСНО: Удаляет ВСЕ данные сохранённые в приложении</p>
+                            <div class="flex gap-3">
+                                <button data-action="clear-all-data" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
+                                    ${I_Trash("w-5 h-5 mr-2")} Удалить все данные
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
                         <button data-action="toggle-settings-stats" class="w-full flex items-center justify-between text-left text-md font-semibold text-white mb-2">
                             <span>Статистика загрузки</span>
                             <span id="settings-stats-chevron" class="rotate">${I_Chev('w-5 h-5 text-gray-400')}</span>
@@ -17667,8 +17690,11 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-2">О сайте</h3>
-                        <div class="bg-gray-900/50 rounded-lg p-3 space-y-3 text-sm text-gray-400">
+                        <button data-action="toggle-about" class="w-full flex items-center justify-between text-left text-md font-semibold text-gray-300 mb-2">
+                            <span>О сайте</span>
+                            <span id="about-chevron" class="rotate">${I_Chev('w-5 h-5 text-gray-400')}</span>
+                        </button>
+                        <div id="about-panel" class="bg-gray-900/50 rounded-lg p-3 space-y-3 text-sm text-gray-400 collapse-panel">
                            <p>
                                Одностраничное веб‑приложение для локального просмотра и ведения собственной коллекции LEGO
                            </p>
@@ -17837,6 +17863,31 @@ function renderSettingsModal() {
         }
         
     }, 0);
+    
+    // Инициализируем состояние панели "О сайте"
+    setTimeout(() => {
+        const aboutPanel = document.getElementById('about-panel');
+        const aboutChevron = document.getElementById('about-chevron');
+        
+        if (aboutPanel) {
+            const isOpen = localStorage.getItem('aboutOpen') === 'true';
+            if (isOpen) {
+                aboutPanel.classList.add('open');
+            } else {
+                aboutPanel.classList.remove('open');
+            }
+        }
+        
+        if (aboutChevron) {
+            const isOpen = localStorage.getItem('aboutOpen') === 'true';
+            if (isOpen) {
+                aboutChevron.classList.add('rotate-180');
+            } else {
+                aboutChevron.classList.remove('rotate-180');
+            }
+        }
+        
+    }, 0);
     // Обновляем информацию об использовании хранилища/кэша (в МБ)
     ;(async () => {
         try {
@@ -17880,6 +17931,9 @@ function renderSettingsModal() {
             checkBackupFreshness();
         }, 500);
     }
+    
+    // Обновляем статус настроек камеры
+    updateCameraSettingsStatus();
 }
 
 function updateFilterModalUI() {
@@ -23994,6 +24048,27 @@ document.addEventListener("click", async e => {
                     }
                 }
                 break;
+            case "toggle-about":
+                const aboutPanel = document.getElementById('about-panel');
+                const aboutChevron = document.getElementById('about-chevron');
+                if (aboutPanel) {
+                    const wasOpen = aboutPanel.classList.contains('open');
+                    aboutPanel.classList.toggle('open');
+                    const isOpen = aboutPanel.classList.contains('open');
+                    
+                    // Сохраняем состояние панели
+                    localStorage.setItem('aboutOpen', String(isOpen));
+                    
+                    // Обновляем состояние шеврона
+                    if (aboutChevron) {
+                        if (isOpen) {
+                            aboutChevron.classList.add('rotate-180');
+                        } else {
+                            aboutChevron.classList.remove('rotate-180');
+                        }
+                    }
+                }
+                break;
                 const checkbox = document.getElementById('disable-color-images');
                 if (checkbox) {
                     localStorage.setItem('disableColorSpecificImages', checkbox.checked.toString());
@@ -24197,6 +24272,62 @@ document.addEventListener("click", async e => {
                 } catch (error) {
                                             updateSettingsModalStatus(`Ошибка очистки\nкэша: ${error.message}`, "error");
                 }
+                break;
+            case "clear-camera-settings":
+                updateSettingsModalStatus("Очистка настроек\nкамеры", "info");
+                try {
+                    const success = clearAllCameraSettings();
+                    if (success) {
+                        updateSettingsModalStatus("Настройки камеры\nочищены!", "success");
+                        
+                        // Обновляем статус настроек камеры
+                        updateCameraSettingsStatus();
+                    } else {
+                        updateSettingsModalStatus("Ошибка очистки\nнастроек камеры", "error");
+                    }
+                } catch (error) {
+                    updateSettingsModalStatus(`Ошибка очистки\nнастроек камеры: ${error.message}`, "error");
+                }
+                break;
+            case "clear-all-data":
+                // Показываем предупреждение и запрашиваем подтверждение
+                updateSettingsModalStatus("⚠️ ВНИМАНИЕ!\nЭто удалит ВСЕ данные", "error");
+                
+                // Ждем 2 секунды, затем показываем подтверждение
+                setTimeout(() => {
+                    const confirmed = confirm(
+                        "⚠️ КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ ⚠️\n\n" +
+                        "Вы собираетесь удалить ВСЕ данные приложения:\n" +
+                        "• Всю коллекцию (детали, наборы, минифигурки)\n" +
+                        "• Все настройки\n" +
+                        "• Весь кэш\n" +
+                        "• Все сохраненные данные\n\n" +
+                        "Это действие НЕОБРАТИМО!\n\n" +
+                        "Нажмите ОК для подтверждения или Отмена для отмены."
+                    );
+                    
+                    if (confirmed) {
+                        updateSettingsModalStatus("Начинаем полную\nочистку данных...", "info");
+                        
+                        // Выполняем полную очистку
+                        clearAllApplicationData().then((success) => {
+                            if (success) {
+                                updateSettingsModalStatus("Все данные удалены!\nПерезагружаем страницу...", "success");
+                                
+                                // Перезагружаем страницу через 2 секунды
+                                setTimeout(() => {
+                                    window.location.reload();
+                                }, 2000);
+                            } else {
+                                updateSettingsModalStatus("Ошибка при удалении\nданных", "error");
+                            }
+                        }).catch((error) => {
+                            updateSettingsModalStatus(`Ошибка: ${error.message}`, "error");
+                        });
+                    } else {
+                        updateSettingsModalStatus("Очистка отменена\nпользователем", "info");
+                    }
+                }, 2000);
                 break;
             // Кнопка "Информация" убрана; сведения о кэше обновляются автоматически при открытии настроек
 
@@ -26862,6 +26993,21 @@ function clearSettingsModalStatus() {
     }
 }
 
+// Функция для обновления статуса настроек камеры
+function updateCameraSettingsStatus() {
+    const statusElement = document.getElementById('camera-settings-status');
+    if (!statusElement) return;
+    
+    const hasSettings = hasCameraSettings();
+    if (hasSettings) {
+        statusElement.textContent = 'Настройки камеры сохранены';
+        statusElement.className = 'text-xs text-green-400 text-center';
+    } else {
+        statusElement.textContent = 'Настройки камеры не сохранены';
+        statusElement.className = 'text-xs text-gray-400 text-center';
+    }
+}
+
 // Функция для поиска в данных CSV вместо API
 function searchInCSVData(query, type = 'parts') {
     if (!query || query.trim().length < 2) return [];
@@ -28511,6 +28657,171 @@ function animateCloseButtonClick(button) {
         let lastScannedCode = null;
         let lastScanTime = 0;
         let consoleLogs = [];
+        
+        // ===== ФУНКЦИИ ДЛЯ СОХРАНЕНИЯ НАСТРОЕК КАМЕРЫ =====
+        
+        // Сохранение настроек камеры DataMatrix в localStorage
+        function saveDataMatrixCameraSettings(deviceId, resolution) {
+            try {
+                const settings = {
+                    deviceId: deviceId,
+                    resolution: resolution,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('datamatrix_camera_settings', JSON.stringify(settings));
+                console.log('Настройки камеры DataMatrix сохранены:', settings);
+            } catch (error) {
+                console.error('Ошибка сохранения настроек камеры DataMatrix:', error);
+            }
+        }
+        
+        // Загрузка настроек камеры DataMatrix из localStorage
+        function loadDataMatrixCameraSettings() {
+            try {
+                const saved = localStorage.getItem('datamatrix_camera_settings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    // Проверяем, что настройки не слишком старые (не старше 30 дней)
+                    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 дней в миллисекундах
+                    if (Date.now() - settings.timestamp < maxAge) {
+                        console.log('Настройки камеры DataMatrix загружены:', settings);
+                        return settings;
+                    } else {
+                        console.log('Настройки камеры DataMatrix устарели, удаляем');
+                        localStorage.removeItem('datamatrix_camera_settings');
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки настроек камеры DataMatrix:', error);
+            }
+            return null;
+        }
+        
+        // Сохранение настроек камеры AI поиска в localStorage
+        function savePhotoCameraSettings(deviceId, resolution) {
+            try {
+                const settings = {
+                    deviceId: deviceId,
+                    resolution: resolution,
+                    timestamp: Date.now()
+                };
+                localStorage.setItem('photo_camera_settings', JSON.stringify(settings));
+                console.log('Настройки камеры AI поиска сохранены:', settings);
+            } catch (error) {
+                console.error('Ошибка сохранения настроек камеры AI поиска:', error);
+            }
+        }
+        
+        // Загрузка настроек камеры AI поиска из localStorage
+        function loadPhotoCameraSettings() {
+            try {
+                const saved = localStorage.getItem('photo_camera_settings');
+                if (saved) {
+                    const settings = JSON.parse(saved);
+                    // Проверяем, что настройки не слишком старые (не старше 30 дней)
+                    const maxAge = 30 * 24 * 60 * 60 * 1000; // 30 дней в миллисекундах
+                    if (Date.now() - settings.timestamp < maxAge) {
+                        console.log('Настройки камеры AI поиска загружены:', settings);
+                        return settings;
+                    } else {
+                        console.log('Настройки камеры AI поиска устарели, удаляем');
+                        localStorage.removeItem('photo_camera_settings');
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка загрузки настроек камеры AI поиска:', error);
+            }
+            return null;
+        }
+        
+        // Очистка всех настроек камеры
+        function clearAllCameraSettings() {
+            try {
+                // Удаляем настройки DataMatrix камеры
+                localStorage.removeItem('datamatrix_camera_settings');
+                console.log('Настройки камеры DataMatrix удалены');
+                
+                // Удаляем настройки AI поиска камеры
+                localStorage.removeItem('photo_camera_settings');
+                console.log('Настройки камеры AI поиска удалены');
+                
+                return true;
+            } catch (error) {
+                console.error('Ошибка очистки настроек камеры:', error);
+                return false;
+            }
+        }
+        
+        // Проверка наличия сохраненных настроек камеры
+        function hasCameraSettings() {
+            const datamatrixSettings = localStorage.getItem('datamatrix_camera_settings');
+            const photoSettings = localStorage.getItem('photo_camera_settings');
+            return !!(datamatrixSettings || photoSettings);
+        }
+        
+        // Полная очистка всех данных приложения
+        async function clearAllApplicationData() {
+            try {
+                console.log('Начинаем полную очистку всех данных приложения...');
+                
+                // 1. Очищаем localStorage
+                localStorage.clear();
+                console.log('localStorage очищен');
+                
+                // 2. Очищаем sessionStorage
+                sessionStorage.clear();
+                console.log('sessionStorage очищен');
+                
+                // 3. Очищаем IndexedDB
+                if ('indexedDB' in window) {
+                    try {
+                        // Получаем список всех баз данных
+                        const databases = await indexedDB.databases();
+                        for (const db of databases) {
+                            if (db.name) {
+                                indexedDB.deleteDatabase(db.name);
+                                console.log(`База данных ${db.name} удалена`);
+                            }
+                        }
+                    } catch (error) {
+                        console.warn('Ошибка при очистке IndexedDB:', error);
+                    }
+                }
+                
+                // 4. Очищаем кэш приложения
+                if ('caches' in window) {
+                    try {
+                        const cacheNames = await caches.keys();
+                        await Promise.all(
+                            cacheNames.map(cacheName => caches.delete(cacheName))
+                        );
+                        console.log('Кэш приложения очищен');
+                    } catch (error) {
+                        console.warn('Ошибка при очистке кэша:', error);
+                    }
+                }
+                
+                // 5. Очищаем Service Worker кэш
+                if ('serviceWorker' in navigator) {
+                    try {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (const registration of registrations) {
+                            await registration.unregister();
+                            console.log('Service Worker отключен');
+                        }
+                    } catch (error) {
+                        console.warn('Ошибка при отключении Service Worker:', error);
+                    }
+                }
+                
+                console.log('Полная очистка данных завершена');
+                return true;
+                
+            } catch (error) {
+                console.error('Ошибка при полной очистке данных:', error);
+                return false;
+            }
+        }
         
         // Функции для работы с логами
         function addLog(message, type = 'info') {
@@ -30295,6 +30606,29 @@ function animateCloseButtonClick(button) {
             const modal = document.getElementById('camera-selection-modal');
             if (!modal) return;
             
+            // Проверяем сохраненные настройки камеры
+            const savedSettings = loadDataMatrixCameraSettings();
+            if (savedSettings && savedSettings.deviceId && savedSettings.resolution) {
+                console.log('Найдены сохраненные настройки камеры DataMatrix, запускаем камеру напрямую');
+                addLog('Используем сохраненные настройки камеры', 'info');
+                
+                // Устанавливаем сохраненные настройки в элементы интерфейса
+                const cameraSelect = document.getElementById('camera-select');
+                const resolutionSelect = document.getElementById('resolution-select');
+                
+                if (cameraSelect && resolutionSelect) {
+                    cameraSelect.value = savedSettings.deviceId;
+                    resolutionSelect.value = savedSettings.resolution;
+                    
+                    // Запускаем камеру с сохраненными настройками
+                    setTimeout(() => {
+                        startCamera();
+                    }, 100);
+                    return;
+                }
+            }
+            
+            // Если сохраненных настроек нет, показываем модальное окно выбора
             // Загружаем список камер в модальное окно
             loadCamerasIntoModal();
             
@@ -30472,6 +30806,11 @@ function animateCloseButtonClick(button) {
                         mainResolutionSelect.value = modalResolutionSelect.value;
                         console.log('Разрешение выбрано в модальном окне:', modalResolutionSelect.value);
                         addLog(`Разрешение выбрано: ${modalResolutionSelect.value}`, 'info');
+                    }
+                    
+                    // Сохраняем настройки камеры
+                    if (modalCameraSelect.value && modalResolutionSelect.value) {
+                        saveDataMatrixCameraSettings(modalCameraSelect.value, modalResolutionSelect.value);
                     }
                     
                     // Обновляем интерфейс камеры
@@ -30908,6 +31247,29 @@ function animateCloseButtonClick(button) {
             const modal = document.getElementById('photo-camera-selection-modal');
             if (!modal) return;
             
+            // Проверяем сохраненные настройки камеры
+            const savedSettings = loadPhotoCameraSettings();
+            if (savedSettings && savedSettings.deviceId && savedSettings.resolution) {
+                console.log('Найдены сохраненные настройки камеры AI поиска, запускаем камеру напрямую');
+                addLog('Используем сохраненные настройки камеры AI поиска', 'info');
+                
+                // Устанавливаем сохраненные настройки в элементы интерфейса
+                const cameraSelect = document.getElementById('photo-camera-select');
+                const resolutionSelect = document.getElementById('photo-resolution-select');
+                
+                if (cameraSelect && resolutionSelect) {
+                    cameraSelect.value = savedSettings.deviceId;
+                    resolutionSelect.value = savedSettings.resolution;
+                    
+                    // Запускаем камеру с сохраненными настройками
+                    setTimeout(() => {
+                        startPhotoSearchCamera();
+                    }, 100);
+                    return;
+                }
+            }
+            
+            // Если сохраненных настроек нет, показываем модальное окно выбора
             // Настраиваем обработчики событий
             setupPhotoCameraModalHandlers();
             
@@ -31067,6 +31429,11 @@ function animateCloseButtonClick(button) {
             if (mainResolutionSelect && modalResolutionSelect && modalResolutionSelect.value) {
                 mainResolutionSelect.value = modalResolutionSelect.value;
                 console.log('Разрешение выбрано в модальном окне поиска по фото:', modalResolutionSelect.value);
+            }
+            
+            // Сохраняем настройки камеры
+            if (modalCameraSelect && modalCameraSelect.value && modalResolutionSelect && modalResolutionSelect.value) {
+                savePhotoCameraSettings(modalCameraSelect.value, modalResolutionSelect.value);
             }
             
             // Скрываем модальное окно
