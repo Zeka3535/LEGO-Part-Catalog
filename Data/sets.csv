@@ -543,8 +543,10 @@ set_num,name,year,theme_id,num_parts,img_url
 10358-1,Transformers: Soundwave,2025,721,1505,https://cdn.rebrickable.com/media/sets/10358-1.jpg
 10359-1,Fountain Garden,2025,721,1302,https://cdn.rebrickable.com/media/sets/10359-1.jpg
 10360-1,Shuttle Carrier Aircraft,2025,721,2417,https://cdn.rebrickable.com/media/sets/10360-1.jpg
+10361-1,Holiday Express Train,2025,721,0,https://cdn.rebrickable.com/media/sets/10361-1.jpg
 10362-1,French Café,2025,721,1101,https://cdn.rebrickable.com/media/sets/10362-1.jpg
 10363-1,Leonardo da Vinci's Flying Machine,2025,721,493,https://cdn.rebrickable.com/media/sets/10363-1.jpg
+10365-1,Captain Jack Sparrow's Pirate Ship,2025,721,2862,https://cdn.rebrickable.com/media/sets/10365-1.jpg
 103660-1,Brick Tote Bag,2023,777,0,https://cdn.rebrickable.com/media/sets/103660-1.jpg
 10367-1,The Lord of the Rings: Balrog Book Nook,2025,721,1201,https://cdn.rebrickable.com/media/sets/10367-1.jpg
 10368-1,Chrysanthemum,2024,769,278,https://cdn.rebrickable.com/media/sets/10368-1.jpg
@@ -2868,7 +2870,7 @@ set_num,name,year,theme_id,num_parts,img_url
 21027-1,Berlin,2016,253,289,https://cdn.rebrickable.com/media/sets/21027-1.jpg
 21028-1,New York City,2016,253,598,https://cdn.rebrickable.com/media/sets/21028-1.jpg
 21029-1,Buckingham Palace,2016,252,780,https://cdn.rebrickable.com/media/sets/21029-1.jpg
-210-2-DBASE-1,Database Set for 210-2,1958,746,9,https://cdn.rebrickable.com/media/sets/210-2-dbase-1.jpg
+210-2-DBASE-1,Database Set for 210-2,1958,746,11,https://cdn.rebrickable.com/media/sets/210-2-dbase-1.jpg
 21030-1,United States Capitol Building,2016,252,1032,https://cdn.rebrickable.com/media/sets/21030-1.jpg
 2103-1,Busy Builder Starter Set,1999,440,7,https://cdn.rebrickable.com/media/sets/2103-1.jpg
 21031-1,Burj Khalifa,2016,252,333,https://cdn.rebrickable.com/media/sets/21031-1.jpg
@@ -3084,7 +3086,7 @@ set_num,name,year,theme_id,num_parts,img_url
 21259-1,The Pirate Ship Voyage,2024,577,166,https://cdn.rebrickable.com/media/sets/21259-1.jpg
 21260-1,The Cherry Blossom Garden,2024,577,304,https://cdn.rebrickable.com/media/sets/21260-1.jpg
 2126-1,Train Cars,1997,236,383,https://cdn.rebrickable.com/media/sets/2126-1.jpg
-21261-1,The Wolf Stronghold,2024,577,315,https://cdn.rebrickable.com/media/sets/21261-1.jpg
+21261-1,The Wolf Stronghold,2024,577,312,https://cdn.rebrickable.com/media/sets/21261-1.jpg
 21262-1,The Windmill Farm,2024,577,462,https://cdn.rebrickable.com/media/sets/21262-1.jpg
 21263-1,The Badlands Mineshaft,2024,577,554,https://cdn.rebrickable.com/media/sets/21263-1.jpg
 21264-1,The Ender Dragon and End Ship,2024,577,657,https://cdn.rebrickable.com/media/sets/21264-1.jpg
@@ -3104,7 +3106,7 @@ set_num,name,year,theme_id,num_parts,img_url
 21277-1,The Pickaxe Mine,2025,577,530,https://cdn.rebrickable.com/media/sets/21277-1.jpg
 21278-1,The Pillager Outpost and Ravager,2025,577,665,https://cdn.rebrickable.com/media/sets/21278-1.jpg
 21279-1,The Enderman Tower,2025,577,867,https://cdn.rebrickable.com/media/sets/21279-1.jpg
-21280-1,Minecraft Advent Calendar 2025,2025,207,0,https://cdn.rebrickable.com/media/sets/21280-1.jpg
+21280-1,Minecraft Advent Calendar 2025,2025,207,300,https://cdn.rebrickable.com/media/sets/21280-1.jpg
 21281-1,Baby Pig's Birthday Celebration,2024,577,351,https://cdn.rebrickable.com/media/sets/21281-1.jpg
 21282-1,The Parrot Houses,2025,577,535,https://cdn.rebrickable.com/media/sets/21282-1.jpg
 2129-1,Blast-Off Dragster,1997,1,64,https://cdn.rebrickable.com/media/sets/2129-1.jpg
@@ -3178,6 +3180,8 @@ set_num,name,year,theme_id,num_parts,img_url
 21359-1,Italian Riviera,2025,576,3252,https://cdn.rebrickable.com/media/sets/21359-1.jpg
 21360-1,Willy Wonka & the Chocolate Factory,2025,576,0,https://cdn.rebrickable.com/media/sets/21360-1.jpg
 2136-1,Airplane,1996,467,12,https://cdn.rebrickable.com/media/sets/2136-1.jpg
+21361-1,Gremlins: Gizmo,2025,576,0,https://cdn.rebrickable.com/media/sets/21361-1.jpg
+21362-1,Mineral Collection,2025,576,0,https://cdn.rebrickable.com/media/sets/21362-1.jpg
 2137-1,Swamp Boat,1997,467,8,https://cdn.rebrickable.com/media/sets/2137-1.jpg
 2138-1,Helicopter,1997,467,8,https://cdn.rebrickable.com/media/sets/2138-1.jpg
 2139-1,Steam Liner,1996,467,12,https://cdn.rebrickable.com/media/sets/2139-1.jpg
@@ -3313,7 +3317,7 @@ set_num,name,year,theme_id,num_parts,img_url
 2260-1,Ice Dragon Attack,2011,435,158,https://cdn.rebrickable.com/media/sets/2260-1.jpg
 226-1,8 Named Beams,1958,371,0,https://cdn.rebrickable.com/media/sets/226-1.jpg
 2261-1,Happy Gardener,1997,505,11,https://cdn.rebrickable.com/media/sets/2261-1.jpg
-226-1-DBASE-1,Database Set for Various 3009 prints For Set 226-1,1958,746,74,https://cdn.rebrickable.com/media/sets/226-1-dbase-1.jpg
+226-1-DBASE-1,Database Set for Various 3009 prints For Set 226-1,1958,746,76,https://cdn.rebrickable.com/media/sets/226-1-dbase-1.jpg
 226-2,Idea Book,1981,757,0,https://cdn.rebrickable.com/media/sets/226-2.jpg
 2262-1,Basic Set,1997,505,20,https://cdn.rebrickable.com/media/sets/2262-1.jpg
 2263-1,Turbo Shredder,2011,435,298,https://cdn.rebrickable.com/media/sets/2263-1.jpg
@@ -4746,7 +4750,7 @@ set_num,name,year,theme_id,num_parts,img_url
 30689-1,Birthday Party Animals,2025,22,60,https://cdn.rebrickable.com/media/sets/30689-1.jpg
 30690-1,Easter Egg Chick Painting Fun,2025,229,65,https://cdn.rebrickable.com/media/sets/30690-1.jpg
 3069-1,Cosmic Wing,1999,93,23,https://cdn.rebrickable.com/media/sets/3069-1.jpg
-30691-1,Mini Monster Truck,2025,672,55,https://cdn.rebrickable.com/media/sets/30691-1.jpg
+30691-1,Mini Convertible Monster Truck,2025,672,55,https://cdn.rebrickable.com/media/sets/30691-1.jpg
 30692-1,Christmas Chimney Fun with Santa,2025,228,60,https://cdn.rebrickable.com/media/sets/30692-1.jpg
 30693-1,Police Water Scooter,2025,61,29,https://cdn.rebrickable.com/media/sets/30693-1.jpg
 30694-1,Space Science Mech,2025,52,49,https://cdn.rebrickable.com/media/sets/30694-1.jpg
@@ -4768,6 +4772,7 @@ set_num,name,year,theme_id,num_parts,img_url
 30709-1,Ferrari 499P - Hypercar,2025,601,62,https://cdn.rebrickable.com/media/sets/30709-1.jpg
 30710-1,Skid-Steer Loader,2025,1,52,https://cdn.rebrickable.com/media/sets/30710-1.jpg
 3071-1,Light Flyer,1999,134,19,https://cdn.rebrickable.com/media/sets/3071-1.jpg
+30711-1,Play with Braille Bricks,2025,301,0,https://cdn.rebrickable.com/media/sets/30711-1.jpg
 307-2,VW Auto Showroom,1958,372,50,https://cdn.rebrickable.com/media/sets/307-2.jpg
 3072-1,Mega Tack,1999,134,23,https://cdn.rebrickable.com/media/sets/3072-1.jpg
 307-2-DBASE-1,Database Set for 307-2,1958,746,6,https://cdn.rebrickable.com/media/sets/307-2-dbase-1.jpg
@@ -5598,7 +5603,7 @@ set_num,name,year,theme_id,num_parts,img_url
 3615-2,Theatre Stories (Explore),2002,504,51,https://cdn.rebrickable.com/media/sets/3615-2.jpg
 3616-1,On the Move Police Station (Explore),2002,632,18,https://cdn.rebrickable.com/media/sets/3616-1.jpg
 3617-1,On the Move Hospital (Explore),2002,632,20,https://cdn.rebrickable.com/media/sets/3617-1.jpg
-3618-1,Family Farm (Explore),2002,632,58,https://cdn.rebrickable.com/media/sets/3618-1.jpg
+3618-1,Family Farm (Explore),2002,632,57,https://cdn.rebrickable.com/media/sets/3618-1.jpg
 3619-1,Traffic Town (Explore),2002,632,82,https://cdn.rebrickable.com/media/sets/3619-1.jpg
 3620-1,Playhouse (Explore),2002,652,91,https://cdn.rebrickable.com/media/sets/3620-1.jpg
 362-1,Windmill,1975,413,211,https://cdn.rebrickable.com/media/sets/362-1.jpg
@@ -6684,7 +6689,6 @@ set_num,name,year,theme_id,num_parts,img_url
 40578-1,Sandwich Shop,2022,52,110,https://cdn.rebrickable.com/media/sets/40578-1.jpg
 40579-1,Eiffel's Apartment,2022,598,228,https://cdn.rebrickable.com/media/sets/40579-1.jpg
 40580-1,Blacktron Cruiser,2023,598,356,https://cdn.rebrickable.com/media/sets/40580-1.jpg
-40580803-1,Ninjago Lunch Set,2025,733,0,https://cdn.rebrickable.com/media/sets/40580803-1.jpg
 4058-1,Cameraman 1,2001,273,4,https://cdn.rebrickable.com/media/sets/4058-1.jpg
 40581-1,BIONICLE Tahu and Takua,2023,598,219,https://cdn.rebrickable.com/media/sets/40581-1.jpg
 40581724-1,Boy Emoticon Lunch Set,2017,733,0,https://cdn.rebrickable.com/media/sets/40581724-1.jpg
@@ -6872,8 +6876,10 @@ set_num,name,year,theme_id,num_parts,img_url
 40765-1,Kamino Training Facility,2025,158,190,https://cdn.rebrickable.com/media/sets/40765-1.jpg
 40766-1,Tribute to Jane Austen's Books,2025,598,361,https://cdn.rebrickable.com/media/sets/40766-1.jpg
 40767-1,Up-Scaled Baby Astronaut,2025,598,250,https://cdn.rebrickable.com/media/sets/40767-1.jpg
-40770-1,Hogwarts Castle: Room of Requirement,2025,246,0,https://cdn.rebrickable.com/media/sets/40770-1.jpg
+40769-1,SEGA Genesis Controller,2025,747,260,https://cdn.rebrickable.com/media/sets/40769-1.jpg
+40770-1,Hogwarts Castle: Room of Requirement,2025,246,203,https://cdn.rebrickable.com/media/sets/40770-1.jpg
 4077-1,Plesiosaur,2001,273,13,https://cdn.rebrickable.com/media/sets/4077-1.jpg
+40771-1,TIE Fighter with Imperial Hangar Rack,2025,158,0,https://cdn.rebrickable.com/media/sets/40771-1.jpg
 40780-1,Birthday Cake,2025,598,160,https://cdn.rebrickable.com/media/sets/40780-1.jpg
 4078-1,T-Rex,2001,273,18,https://cdn.rebrickable.com/media/sets/4078-1.jpg
 40781-1,Badnik: Crabmeat,2025,747,181,https://cdn.rebrickable.com/media/sets/40781-1.jpg
@@ -6886,10 +6892,10 @@ set_num,name,year,theme_id,num_parts,img_url
 40789-1,Flying Moon Car,2025,576,211,https://cdn.rebrickable.com/media/sets/40789-1.jpg
 40790-1,LEGO House Chef,2025,599,7,https://cdn.rebrickable.com/media/sets/40790-1.jpg
 4079-1,Mini Rex,2001,273,4,https://cdn.rebrickable.com/media/sets/4079-1.jpg
-40791-1,The Goblet of Fire Figures,2025,610,0,https://cdn.rebrickable.com/media/sets/40791-1.jpg
+40791-1,The Goblet of Fire Figures,2025,610,671,https://cdn.rebrickable.com/media/sets/40791-1.jpg
 40792-1,Dumbo,2025,610,176,https://cdn.rebrickable.com/media/sets/40792-1.jpg
 40793-1,Tom & Jerry Figures,2024,610,212,https://cdn.rebrickable.com/media/sets/40793-1.jpg
-40794-1,Elphaba & Glinda Figures,2025,610,0,https://cdn.rebrickable.com/media/sets/40794-1.jpg
+40794-1,Elphaba & Glinda Figures,2025,610,325,https://cdn.rebrickable.com/media/sets/40794-1.jpg
 40795-1,Luke Skywalker (Rebel Pilot),2025,610,138,https://cdn.rebrickable.com/media/sets/40795-1.jpg
 40796-1,Revenge of the Sith Heroes & Villains,2025,610,656,https://cdn.rebrickable.com/media/sets/40796-1.jpg
 40797-1,Eeyore,2025,610,156,https://cdn.rebrickable.com/media/sets/40797-1.jpg
@@ -6899,15 +6905,18 @@ set_num,name,year,theme_id,num_parts,img_url
 4080-1,"Brick Bucket, Small (Explore)",2002,505,45,https://cdn.rebrickable.com/media/sets/4080-1.jpg
 40801-1,"Mike, Dustin, Lucas and Will Figures",2025,610,0,https://cdn.rebrickable.com/media/sets/40801-1.jpg
 4080-2,Small Bucket,2002,505,33,https://cdn.rebrickable.com/media/sets/4080-2.jpg
-40802-1,Luna Lovegood & Thestral Figures,2025,610,0,https://cdn.rebrickable.com/media/sets/40802-1.jpg
+40802-1,Luna Lovegood & Thestral Figures,2025,610,292,https://cdn.rebrickable.com/media/sets/40802-1.jpg
 40803-1,Optimus Prime Robot & Vehicle,2025,610,237,https://cdn.rebrickable.com/media/sets/40803-1.jpg
 40804-1,Bumblebee Robot & Vehicle,2025,610,253,https://cdn.rebrickable.com/media/sets/40804-1.jpg
 40805-1,Arcade Machine,2025,301,468,https://cdn.rebrickable.com/media/sets/40805-1.jpg
+40806-1,Gingerbread AT-AT Walker,2025,158,0,https://cdn.rebrickable.com/media/sets/40806-1.jpg
 40807-1,Birthday Numbers,2025,206,281,https://cdn.rebrickable.com/media/sets/40807-1.jpg
 40808-1,Easter Bunny and Chick Egg Hunt,2025,229,140,https://cdn.rebrickable.com/media/sets/40808-1.jpg
+40809-1,Festive Gingerbread House,2025,227,0,https://cdn.rebrickable.com/media/sets/40809-1.jpg
 40810-1,LEGOLAND Park Portal,2025,425,323,https://cdn.rebrickable.com/media/sets/40810-1.jpg
 4081-1,"Brick Bucket, Small (Explore)",2002,505,45,https://cdn.rebrickable.com/media/sets/4081-1.jpg
 40811-1,Altar of the Dead,2025,206,231,https://cdn.rebrickable.com/media/sets/40811-1.jpg
+40812-1,Snowman Ornaments,2025,227,0,https://cdn.rebrickable.com/media/sets/40812-1.jpg
 40813-1,Lucky Cat,2024,686,280,https://cdn.rebrickable.com/media/sets/40813-1.jpg
 40814-1,Baby Elephant in the Sky,2025,301,402,https://cdn.rebrickable.com/media/sets/40814-1.jpg
 40815-1,Birthday Party Cake,2025,206,219,https://cdn.rebrickable.com/media/sets/40815-1.jpg
@@ -6915,6 +6924,7 @@ set_num,name,year,theme_id,num_parts,img_url
 40817-1,Yellow Travel Suitcase,2025,301,184,https://cdn.rebrickable.com/media/sets/40817-1.jpg
 40818-1,Italy Postcard,2025,22,189,https://cdn.rebrickable.com/media/sets/40818-1.jpg
 40819-1,Up-Scaled Racing Driver Minifigure,2025,301,694,https://cdn.rebrickable.com/media/sets/40819-1.jpg
+40820-1,Up-Scaled Santa Minifigure,2025,227,0,https://cdn.rebrickable.com/media/sets/40820-1.jpg
 4082-1,"Brick Bucket, Small (Explore)",2002,505,45,https://cdn.rebrickable.com/media/sets/4082-1.jpg
 40821-1,Love Bears,2025,232,287,https://cdn.rebrickable.com/media/sets/40821-1.jpg
 40822-1,Jack-o'-Lantern Pickup Truck,2025,230,177,https://cdn.rebrickable.com/media/sets/40822-1.jpg
@@ -6931,6 +6941,7 @@ set_num,name,year,theme_id,num_parts,img_url
 4086-1,Large Bucket (Explore),2002,505,90,https://cdn.rebrickable.com/media/sets/4086-1.jpg
 4087-1,"Basic Flexible Bucket, Large (Explore)",2002,505,91,https://cdn.rebrickable.com/media/sets/4087-1.jpg
 4088-1,Clown Bucket (Explore),2002,505,90,https://cdn.rebrickable.com/media/sets/4088-1.jpg
+40884-1,Drift & Raven Figures,2025,610,0,https://cdn.rebrickable.com/media/sets/40884-1.jpg
 4089-1,Orange Bucket XL (Explore),2002,505,90,https://cdn.rebrickable.com/media/sets/4089-1.jpg
 4090-1,Motion Madness,2003,406,243,https://cdn.rebrickable.com/media/sets/4090-1.jpg
 409-1,38 Slimbricks Assorted Sizes (The Building Toy),1965,756,38,https://cdn.rebrickable.com/media/sets/409-1.jpg
@@ -7669,6 +7680,7 @@ set_num,name,year,theme_id,num_parts,img_url
 41838-1,Travel Moments,2024,301,1231,https://cdn.rebrickable.com/media/sets/41838-1.jpg
 41839-1,Message Board,2024,301,1743,https://cdn.rebrickable.com/media/sets/41839-1.jpg
 4184-1,Black Pearl,2011,263,805,https://cdn.rebrickable.com/media/sets/4184-1.jpg
+41843-1,Family Christmas Tree Decoration,2025,227,0,https://cdn.rebrickable.com/media/sets/41843-1.jpg
 4186868-1,"Large Train Engine with Tender Black (Motorizable, sets 4534, 4535)",2002,236,204,https://cdn.rebrickable.com/media/sets/4186868-1.jpg
 4186870-1,Open Freight Wagon (White Box),2002,236,121,https://cdn.rebrickable.com/media/sets/4186870-1.jpg
 4186872-1,Passenger Wagon Green (White Box),2002,236,194,https://cdn.rebrickable.com/media/sets/4186872-1.jpg
@@ -8084,7 +8096,7 @@ set_num,name,year,theme_id,num_parts,img_url
 42649-1,Heartlake City Candy Store,2025,494,376,https://cdn.rebrickable.com/media/sets/42649-1.jpg
 42650-1,Pet Accessories Shop,2025,494,375,https://cdn.rebrickable.com/media/sets/42650-1.jpg
 42651-1,Horse and Pet Vet Clinic,2025,494,437,https://cdn.rebrickable.com/media/sets/42651-1.jpg
-42652-1,Friendship Tree House Hangout,2025,494,702,https://cdn.rebrickable.com/media/sets/42652-1.jpg
+42652-1,Friendship Tree House Hangout,2025,494,701,https://cdn.rebrickable.com/media/sets/42652-1.jpg
 42653-1,Music Store & Apartment,2025,494,483,https://cdn.rebrickable.com/media/sets/42653-1.jpg
 42654-1,Pony Ranch & Stable,2025,494,742,https://cdn.rebrickable.com/media/sets/42654-1.jpg
 42655-1,Restaurant and Cooking School,2025,494,896,https://cdn.rebrickable.com/media/sets/42655-1.jpg
@@ -8097,7 +8109,7 @@ set_num,name,year,theme_id,num_parts,img_url
 42664-1,Travel Boat Adventure,2025,494,686,https://cdn.rebrickable.com/media/sets/42664-1.jpg
 42665-1,Puppy Playground,2025,494,66,https://cdn.rebrickable.com/media/sets/42665-1.jpg
 42666-1,Cat Birthday Party & Tree House,2025,494,321,https://cdn.rebrickable.com/media/sets/42666-1.jpg
-42668-1,Friends Advent Calendar 2025,2025,216,0,https://cdn.rebrickable.com/media/sets/42668-1.jpg
+42668-1,Friends Advent Calendar 2025,2025,216,237,https://cdn.rebrickable.com/media/sets/42668-1.jpg
 42669-1,Beekeepers' House and Flower Garden,2025,494,1161,https://cdn.rebrickable.com/media/sets/42669-1.jpg
 42670-1,Heartlake City Apartments and Stores,2025,494,2040,https://cdn.rebrickable.com/media/sets/42670-1.jpg
 4267-1,Large Bucket,1998,399,468,https://cdn.rebrickable.com/media/sets/4267-1.jpg
@@ -8179,10 +8191,10 @@ set_num,name,year,theme_id,num_parts,img_url
 4300-1,Green Racer,2003,112,21,https://cdn.rebrickable.com/media/sets/4300-1.jpg
 43008-1,Nike Dunk,2025,785,1180,https://cdn.rebrickable.com/media/sets/43008-1.jpg
 430-1,Biplane,1975,412,18,https://cdn.rebrickable.com/media/sets/430-1.jpg
-43010-1,Nike Slam Dunk,2025,785,0,https://cdn.rebrickable.com/media/sets/43010-1.jpg
+43010-1,Nike Slam Dunk,2025,785,809,https://cdn.rebrickable.com/media/sets/43010-1.jpg
 4301-1,Blue Racer,2003,112,24,https://cdn.rebrickable.com/media/sets/4301-1.jpg
 430-2,Six Trees and Bushes (The Building Toy),1966,371,6,https://cdn.rebrickable.com/media/sets/430-2.jpg
-43021-1,Nike Dunk Trickshot,2025,785,0,https://cdn.rebrickable.com/media/sets/43021-1.jpg
+43021-1,Nike Dunk Trickshot,2025,785,454,https://cdn.rebrickable.com/media/sets/43021-1.jpg
 4304-1,Chopper Cop,1998,94,24,https://cdn.rebrickable.com/media/sets/4304-1.jpg
 4305-1,Xcyber,1997,144,36,https://cdn.rebrickable.com/media/sets/4305-1.jpg
 4306-1,Rings,1980,668,15,https://cdn.rebrickable.com/media/sets/4306-1.jpg
@@ -8326,18 +8338,18 @@ set_num,name,year,theme_id,num_parts,img_url
 43265-1,Arendelle Frozen Castle,2025,687,177,https://cdn.rebrickable.com/media/sets/43265-1.jpg
 43266-1,Cinderella's Dress,2025,579,474,https://cdn.rebrickable.com/media/sets/43266-1.jpg
 43267-1,Princess Castle & Royal Pets,2025,579,787,https://cdn.rebrickable.com/media/sets/43267-1.jpg
-43268-1,Lilo and Stitch Beach House,2025,608,833,https://cdn.rebrickable.com/media/sets/43268-1.jpg
+43268-1,Lilo and Stitch Beach House,2025,608,834,https://cdn.rebrickable.com/media/sets/43268-1.jpg
 43269-1,101 Dalmatians Puppy,2025,608,1722,https://cdn.rebrickable.com/media/sets/43269-1.jpg
 43270-1,Moana's Adventure Canoe,2025,608,529,https://cdn.rebrickable.com/media/sets/43270-1.jpg
 43271-1,Lucky & Penny 101 Dalmatians Puppies,2025,608,268,https://cdn.rebrickable.com/media/sets/43271-1.jpg
 43272-1,Heihei,2025,608,566,https://cdn.rebrickable.com/media/sets/43272-1.jpg
-43273-1,Disney Advent Calendar 2025,2025,780,0,https://cdn.rebrickable.com/media/sets/43273-1.jpg
+43273-1,Disney Frozen Advent Calendar 2025,2025,780,231,https://cdn.rebrickable.com/media/sets/43273-1.jpg
 43274-1,Minnie's Pet Hotel,2025,388,161,https://cdn.rebrickable.com/media/sets/43274-1.jpg
 43275-1,Cinderella's Castle & Horse Carriage,2025,579,596,https://cdn.rebrickable.com/media/sets/43275-1.jpg
 43276-1,Snow White's Jewelry Box,2024,579,358,https://cdn.rebrickable.com/media/sets/43276-1.jpg
-43277-1,Cruella De Vil's Car,2025,608,0,https://cdn.rebrickable.com/media/sets/43277-1.jpg
+43277-1,Cruella De Vil's Car,2025,608,378,https://cdn.rebrickable.com/media/sets/43277-1.jpg
 43278-1,Mini Arendelle Castle & Elsa's Ice Palace,2025,687,306,https://cdn.rebrickable.com/media/sets/43278-1.jpg
-43279-1,WALL-E and EVE,2025,608,0,https://cdn.rebrickable.com/media/sets/43279-1.jpg
+43279-1,WALL-E and EVE,2025,608,811,https://cdn.rebrickable.com/media/sets/43279-1.jpg
 433-1,6 Street Lamps with Curved Top (The Building Toy),1966,371,6,https://cdn.rebrickable.com/media/sets/433-1.jpg
 43330800-1,Storage Heads Mini Set,2020,740,0,https://cdn.rebrickable.com/media/sets/43330800-1.jpg
 43330801-1,Storage Heads Mini Set,2024,740,0,https://cdn.rebrickable.com/media/sets/43330801-1.jpg
@@ -8482,7 +8494,7 @@ set_num,name,year,theme_id,num_parts,img_url
 4473-1,Police Helicopter,2012,61,112,https://cdn.rebrickable.com/media/sets/4473-1.jpg
 4475-1,Jabba's Message,2003,158,46,https://cdn.rebrickable.com/media/sets/4475-1.jpg
 4476-1,Jabba's Prize,2003,158,40,https://cdn.rebrickable.com/media/sets/4476-1.jpg
-4477-1,T-16 Skyhopper,2003,158,98,https://cdn.rebrickable.com/media/sets/4477-1.jpg
+4477-1,T-16 Skyhopper,2003,158,94,https://cdn.rebrickable.com/media/sets/4477-1.jpg
 4478-1,Geonosian Fighter (Black Box),2003,158,170,https://cdn.rebrickable.com/media/sets/4478-1.jpg
 4478-2,Geonosian Fighter (Blue Box),2004,158,170,https://cdn.rebrickable.com/media/sets/4478-2.jpg
 4479-1,TIE Bomber,2003,158,229,https://cdn.rebrickable.com/media/sets/4479-1.jpg
@@ -10799,6 +10811,7 @@ set_num,name,year,theme_id,num_parts,img_url
 5007564-1,Ninjago Kai Minifigure Plush,2020,735,0,https://cdn.rebrickable.com/media/sets/5007564-1.jpg
 5007565-1,Hot Dog Guy Minifigure Plush (Small),2022,735,0,https://cdn.rebrickable.com/media/sets/5007565-1.jpg
 5007566-1,Banana Guy Plush (Small),2021,735,0,https://cdn.rebrickable.com/media/sets/5007566-1.jpg
+5007567-1,Build Christmas Fun!,2021,761,45,https://cdn.rebrickable.com/media/sets/5007567-1.jpg
 5007576-1,Botanical Collection VIP Wrapping Paper,2023,739,0,https://cdn.rebrickable.com/media/sets/5007576-1.jpg
 5007579-1,Amazing But True – Fun Facts About the LEGO World and Our Own,2022,758,0,https://cdn.rebrickable.com/media/sets/5007579-1.jpg
 5007580-1,Party Ideas,2022,757,25,https://cdn.rebrickable.com/media/sets/5007580-1.jpg
@@ -11185,6 +11198,7 @@ set_num,name,year,theme_id,num_parts,img_url
 5009325-1,The Simpsons Living Room,2025,598,123,https://cdn.rebrickable.com/media/sets/5009325-1.jpg
 5009339-1,Brick Shaped Storage Box 2 x 2,2025,740,0,https://cdn.rebrickable.com/media/sets/5009339-1.jpg
 5009343-1,Compartment Storage Box (All Colors),2025,740,0,https://cdn.rebrickable.com/media/sets/5009343-1.jpg
+5009344-1,Ninjago Lunch Set,2025,733,0,https://cdn.rebrickable.com/media/sets/5009344-1.jpg
 5009345-1,Firework Guy Lunch Set,2025,733,0,https://cdn.rebrickable.com/media/sets/5009345-1.jpg
 5009346-1,Brick Pattern Lunch Box Set,2025,733,0,https://cdn.rebrickable.com/media/sets/5009346-1.jpg
 5009347-1,Bee Girl Lunch Set,2024,733,0,https://cdn.rebrickable.com/media/sets/5009347-1.jpg
@@ -11196,10 +11210,12 @@ set_num,name,year,theme_id,num_parts,img_url
 5009393-1,Star Wars Pencil Case with Stickers,2025,739,0,https://cdn.rebrickable.com/media/sets/5009393-1.jpg
 5009394-1,Jango Fett's Starship Key Chain,2025,503,0,https://cdn.rebrickable.com/media/sets/5009394-1.jpg
 5009408-1,Butterfly Garden,2025,598,150,https://cdn.rebrickable.com/media/sets/5009408-1.jpg
+5009410-1,Build and Play! Halloween,2025,761,38,https://cdn.rebrickable.com/media/sets/5009410-1.jpg
 5009413-1,E-Sports Gamer Girl Key Light,2025,503,0,https://cdn.rebrickable.com/media/sets/5009413-1.jpg
 5009414-1,Chewbacca Key Light,2022,503,0,https://cdn.rebrickable.com/media/sets/5009414-1.jpg
 5009415-1,Pirate Princess Key Light,2024,503,0,https://cdn.rebrickable.com/media/sets/5009415-1.jpg
 5009422-1,Italian Market Van,2025,598,142,https://cdn.rebrickable.com/media/sets/5009422-1.jpg
+5009438-1,LEGO Logo Journal,2025,739,0,https://cdn.rebrickable.com/media/sets/5009438-1.jpg
 5009461-1,Note Brick (Multicolor),2025,739,0,https://cdn.rebrickable.com/media/sets/5009461-1.jpg
 5009467-1,Gravity Drop,2025,757,0,https://cdn.rebrickable.com/media/sets/5009467-1.jpg
 5009512-1,"""Flying with the Fetts"" by Joe Hogan Poster",2025,736,0,https://cdn.rebrickable.com/media/sets/5009512-1.jpg
@@ -11223,15 +11239,36 @@ set_num,name,year,theme_id,num_parts,img_url
 5009575-1,Gabby’s Dollhouse: Official Character Guide with Poster,2025,758,0,https://cdn.rebrickable.com/media/sets/5009575-1.jpg
 5009576-1,Duplo Hippo Backpack,2025,777,0,https://cdn.rebrickable.com/media/sets/5009576-1.jpg
 5009593-1,Harry Potter Prints – 2nd Edition,2025,736,0,https://cdn.rebrickable.com/media/sets/5009593-1.jpg
+5009609-1,Captain Jack Sparrow's Compass,2025,598,151,https://cdn.rebrickable.com/media/sets/5009609-1.jpg
 5009631-1,Race Car Driver Key Light,2025,503,0,https://cdn.rebrickable.com/media/sets/5009631-1.jpg
 5009820-1,How to Build Everything,2025,757,0,https://cdn.rebrickable.com/media/sets/5009820-1.jpg
+5009861-1,Game Controller Key Chain,2025,503,0,https://cdn.rebrickable.com/media/sets/5009861-1.jpg
+5009862-1,Zombie Storage Head – Small,2025,740,0,https://cdn.rebrickable.com/media/sets/5009862-1.jpg
+5009864-1,Zombie Storage Head – Large,2025,740,0,https://cdn.rebrickable.com/media/sets/5009864-1.jpg
 5009867-1,Hogsmeade Sign,2025,501,0,https://cdn.rebrickable.com/media/sets/5009867-1.jpg
 5009868-1,Nike x LEGO Collection T-Shirt,2025,501,0,https://cdn.rebrickable.com/media/sets/5009868-1.jpg
 5009869-1,Nike Air Max Dn x LEGO Collection,2025,501,0,https://cdn.rebrickable.com/media/sets/5009869-1.jpg
 5009870-1,Nike x LEGO Collection Basketball,2025,501,0,https://cdn.rebrickable.com/media/sets/5009870-1.jpg
+5009871-1,Nike x LEGO Collection Basketball,2025,501,0,https://cdn.rebrickable.com/media/sets/5009871-1.jpg
 5009872-1,Italian Riviera Notebook,2025,739,0,https://cdn.rebrickable.com/media/sets/5009872-1.jpg
+5009894-1,Countdown to Christmas Puzzles,2025,741,0,https://cdn.rebrickable.com/media/sets/5009894-1.jpg
+5009905-1,Zombie Mug – Large,2025,733,0,https://cdn.rebrickable.com/media/sets/5009905-1.jpg
+5009937-1,Marvel Spider-Man: Explore the Spider-Verse,2025,759,3,https://cdn.rebrickable.com/media/sets/5009937-1.jpg
+5009938-1,Ninjago: Dragons Rising: Adventure Atlas: Journey Through the World of Ninjago,2025,758,4,https://cdn.rebrickable.com/media/sets/5009938-1.jpg
+5009939-1,Minecraft: Games Book: 50 Fun Ideas to Play with Your LEGO Collection!,2025,757,0,https://cdn.rebrickable.com/media/sets/5009939-1.jpg
 5009940-1,Brickbeard Poster,2025,736,0,https://cdn.rebrickable.com/media/sets/5009940-1.jpg
+5009945-1,Nike x LEGO Collection Heritage Backpack,2025,777,0,https://cdn.rebrickable.com/media/sets/5009945-1.jpg
+5009946-1,Nike x LEGO Collection Apex Bucket Hat,2025,501,0,https://cdn.rebrickable.com/media/sets/5009946-1.jpg
+5009947-1,Nike x LEGO Collection Everyday Essentials Crew Socks (3 Pairs),2025,501,0,https://cdn.rebrickable.com/media/sets/5009947-1.jpg
+5009948-1,Nike x LEGO Collection Cropped T Shirt,2025,501,0,https://cdn.rebrickable.com/media/sets/5009948-1.jpg
+5009949-1,Nike x LEGO Collection Jacket,2025,501,0,https://cdn.rebrickable.com/media/sets/5009949-1.jpg
+5009950-1,Nike Dunk Low x LEGO Collection – Big Kids Shoes,2025,501,0,https://cdn.rebrickable.com/media/sets/5009950-1.jpg
+5009951-1,Nike Dunk Low x LEGO Collection – Little Kids Shoes,2025,501,0,https://cdn.rebrickable.com/media/sets/5009951-1.jpg
+5009953-1,Nike x LEGO Collection Gathered Hair Ties (2 Pack),2025,501,0,https://cdn.rebrickable.com/media/sets/5009953-1.jpg
+5009966-1,Ninjago: Shatterspin,2025,759,0,https://cdn.rebrickable.com/media/sets/5009966-1.jpg
 50-1,Universal Building Set,1976,465,390,https://cdn.rebrickable.com/media/sets/50-1.jpg
+5010010-1,LEGO Batman Rogues Gallery Posters,2025,736,0,https://cdn.rebrickable.com/media/sets/5010010-1.jpg
+5010019-1,Harry Potter Family Calendar,2025,739,0,https://cdn.rebrickable.com/media/sets/5010019-1.jpg
 5010-1,"Building Plate 16 x 32, Green",1990,443,1,https://cdn.rebrickable.com/media/sets/5010-1.jpg
 5010909-1,Creative Animals with Building Plate Bundle,2020,505,0,https://cdn.rebrickable.com/media/sets/5010909-1.jpg
 5011-1,9V Basic Motor,1992,443,1,https://cdn.rebrickable.com/media/sets/5011-1.jpg
@@ -11349,7 +11386,6 @@ set_num,name,year,theme_id,num_parts,img_url
 5060373577245-1,Christmas Bauble,2024,738,0,https://cdn.rebrickable.com/media/sets/5060373577245-1.jpg
 5060373577399-1,DREAMZzz Backpack,2024,777,0,https://cdn.rebrickable.com/media/sets/5060373577399-1.jpg
 5060373577740-1,Harry Potter Monster Book of Monsters Pencil Case,2024,739,0,https://cdn.rebrickable.com/media/sets/5060373577740-1.jpg
-5060373579980-1,Game Controller Key Chain,2025,503,0,https://cdn.rebrickable.com/media/sets/5060373579980-1.jpg
 5061-1,"Connector Leads, 75cm and 25cm",1987,456,2,https://cdn.rebrickable.com/media/sets/5061-1.jpg
 5062-1,Shunting Trip Posts and Signal,1987,456,4,https://cdn.rebrickable.com/media/sets/5062-1.jpg
 5063-1,Power Supply Rail,1987,456,1,https://cdn.rebrickable.com/media/sets/5063-1.jpg
@@ -13560,7 +13596,7 @@ set_num,name,year,theme_id,num_parts,img_url
 60472-1,Scrapyard with Cars,2025,52,877,https://cdn.rebrickable.com/media/sets/60472-1.jpg
 60473-1,The City Tower,2025,52,1943,https://cdn.rebrickable.com/media/sets/60473-1.jpg
 60474-1,F1 Grid with VCARB & Sauber Race Cars,2025,52,313,https://cdn.rebrickable.com/media/sets/60474-1.jpg
-60475-1,City Advent Calendar 2025,2025,208,0,https://cdn.rebrickable.com/media/sets/60475-1.jpg
+60475-1,City Advent Calendar 2025,2025,208,186,https://cdn.rebrickable.com/media/sets/60475-1.jpg
 6048-1,Majisto's Magical Workshop,1993,190,188,https://cdn.rebrickable.com/media/sets/6048-1.jpg
 6049-1,Viking Voyager,1987,199,101,https://cdn.rebrickable.com/media/sets/6049-1.jpg
 605-1,Street Sweeper,1978,67,19,https://cdn.rebrickable.com/media/sets/605-1.jpg
@@ -13794,7 +13830,7 @@ set_num,name,year,theme_id,num_parts,img_url
 6241-1,Loot Island,2009,153,145,https://cdn.rebrickable.com/media/sets/6241-1.jpg
 6242-1,Soldiers' Fort,2009,153,371,https://cdn.rebrickable.com/media/sets/6242-1.jpg
 624210-1,LEGO House 6 Bricks,2017,599,6,https://cdn.rebrickable.com/media/sets/624210-1.jpg
-6242507-1,Fortuna Temple Pavilion and Puppy,2018,779,0,https://cdn.rebrickable.com/media/sets/6242507-1.jpg
+6242507-1,Fortuna Temple Pavilion and Puppy,2018,779,59,https://cdn.rebrickable.com/media/sets/6242507-1.jpg
 6243-1,Brickbeard's Bounty,2009,153,596,https://cdn.rebrickable.com/media/sets/6243-1.jpg
 6244-1,Armada Sentry,1996,148,74,https://cdn.rebrickable.com/media/sets/6244-1.jpg
 6244853-1,Lion Dance,2018,686,264,https://cdn.rebrickable.com/media/sets/6244853-1.jpg
@@ -14450,7 +14486,9 @@ set_num,name,year,theme_id,num_parts,img_url
 6565145-1,Sunflowers,2025,709,58,https://cdn.rebrickable.com/media/sets/6565145-1.jpg
 6565151-1,Steering Wheel,2025,408,33,https://cdn.rebrickable.com/media/sets/6565151-1.jpg
 6565152-1,Paddle,2025,408,23,https://cdn.rebrickable.com/media/sets/6565152-1.jpg
+6565155-1,Basketball Hoop,2025,598,49,https://cdn.rebrickable.com/media/sets/6565155-1.jpg
 6565157-1,Dreamzzz™ Zblob,2025,749,34,https://cdn.rebrickable.com/media/sets/6565157-1.jpg
+6565158-1,Butterbeer Truck,2025,246,61,https://cdn.rebrickable.com/media/sets/6565158-1.jpg
 6565180-1,Mother's Day Flower,2025,206,23,https://cdn.rebrickable.com/media/sets/6565180-1.jpg
 6565181-1,Crayons,2025,408,29,https://cdn.rebrickable.com/media/sets/6565181-1.jpg
 6565182-1,Lego Eid Mosaic,2025,598,158,https://cdn.rebrickable.com/media/sets/6565182-1.jpg
@@ -14500,6 +14538,7 @@ set_num,name,year,theme_id,num_parts,img_url
 6581-1,Dig 'N' Dump,1996,67,128,https://cdn.rebrickable.com/media/sets/6581-1.jpg
 65813-1,Special Edition Co-Pack with Sidorak and Toa Iruini (8756 8762),2005,324,0,https://cdn.rebrickable.com/media/sets/65813-1.jpg
 6581677-1,Creative Wildlife Panda and Flamingo,2025,598,48,https://cdn.rebrickable.com/media/sets/6581677-1.jpg
+6581684-1,Creative Wildlife Flower and Fish,2025,598,54,https://cdn.rebrickable.com/media/sets/6581684-1.jpg
 658-2,1:87 VW Van,1964,368,0,https://cdn.rebrickable.com/media/sets/658-2.jpg
 6582-1,Daredevil Flight Squad,1998,87,288,https://cdn.rebrickable.com/media/sets/6582-1.jpg
 65824-1,Knights Kingdom II Value Pack,2005,198,0,https://cdn.rebrickable.com/media/sets/65824-1.jpg
@@ -14509,6 +14548,7 @@ set_num,name,year,theme_id,num_parts,img_url
 6582904-1,Belgrade Grand Opening,2025,408,158,https://cdn.rebrickable.com/media/sets/6582904-1.jpg
 65829-1,Bionicle Value Pack,2005,324,0,https://cdn.rebrickable.com/media/sets/65829-1.jpg
 65830-1,Bionicle Value Pack,2005,324,0,https://cdn.rebrickable.com/media/sets/65830-1.jpg
+65835-1,Headphone Holder,2025,408,66,https://cdn.rebrickable.com/media/sets/65835-1.jpg
 65838-1,Fire Value Pack,2005,58,0,https://cdn.rebrickable.com/media/sets/65838-1.jpg
 6584-1,Extreme Team Challenge,1998,87,364,https://cdn.rebrickable.com/media/sets/6584-1.jpg
 65844-1,Star Wars Classic Vehicles Bonus Pack,2005,158,0,https://cdn.rebrickable.com/media/sets/65844-1.jpg
@@ -14533,6 +14573,7 @@ set_num,name,year,theme_id,num_parts,img_url
 6594-1,Gas Transit,1992,67,124,https://cdn.rebrickable.com/media/sets/6594-1.jpg
 6595-1,Surf Shack,1993,67,93,https://cdn.rebrickable.com/media/sets/6595-1.jpg
 6596072-1,Star Wars Celebration Japan 2025 Promotional Tile,2025,158,1,https://cdn.rebrickable.com/media/sets/6596072-1.jpg
+6596089-1,I [Heart] LEGO Store Perimeter Mall Tile,2025,408,1,https://cdn.rebrickable.com/media/sets/6596089-1.jpg
 6596-1,Wave Master,1995,67,134,https://cdn.rebrickable.com/media/sets/6596-1.jpg
 6597-1,Century Skyway,1994,67,905,https://cdn.rebrickable.com/media/sets/6597-1.jpg
 6598-1,Metro PD Station,1996,67,568,https://cdn.rebrickable.com/media/sets/6598-1.jpg
@@ -14683,6 +14724,7 @@ set_num,name,year,theme_id,num_parts,img_url
 662506-1,Wither Skeleton and Ender Explorer with TNT,2025,577,16,https://cdn.rebrickable.com/media/sets/662506-1.jpg
 662507-1,Enderman Duel,2025,577,27,https://cdn.rebrickable.com/media/sets/662507-1.jpg
 662508-1,Hero with Slime and Creeper,2025,577,10,https://cdn.rebrickable.com/media/sets/662508-1.jpg
+662509-1,Hero with Skeleton and Skeleton Horse,2025,577,40,https://cdn.rebrickable.com/media/sets/662509-1.jpg
 6625-1,Speed Trackers,1996,67,66,https://cdn.rebrickable.com/media/sets/6625-1.jpg
 66253-1,Duplo Value Pack,2008,504,0,https://cdn.rebrickable.com/media/sets/66253-1.jpg
 66254-1,Luke Skywalker Pilot Maquette,2007,501,0,https://cdn.rebrickable.com/media/sets/66254-1.jpg
@@ -15769,7 +15811,7 @@ set_num,name,year,theme_id,num_parts,img_url
 70748-1,Titanium Dragon,2015,435,361,https://cdn.rebrickable.com/media/sets/70748-1.jpg
 70749-1,Enter the Serpent,2015,435,529,https://cdn.rebrickable.com/media/sets/70749-1.jpg
 70750-1,Ninja DB X,2015,435,756,https://cdn.rebrickable.com/media/sets/70750-1.jpg
-7075-1,Captain Redbeard's Pirate Ship,2004,279,141,https://cdn.rebrickable.com/media/sets/7075-1.jpg
+7075-1,Captain Redbeard's Pirate Ship,2004,279,142,https://cdn.rebrickable.com/media/sets/7075-1.jpg
 70751-1,Temple of Airjitzu,2015,435,2033,https://cdn.rebrickable.com/media/sets/70751-1.jpg
 7075-2,Captain Redbeard's Pirate Ship - Limited Edition with Motor,2004,279,0,https://cdn.rebrickable.com/media/sets/7075-2.jpg
 70752-1,Jungle Trap,2015,435,58,https://cdn.rebrickable.com/media/sets/70752-1.jpg
@@ -16586,21 +16628,21 @@ set_num,name,year,theme_id,num_parts,img_url
 71049-8,VCARB,2025,774,29,https://cdn.rebrickable.com/media/sets/71049-8.jpg
 71049-9,Sauber,2025,774,29,https://cdn.rebrickable.com/media/sets/71049-9.jpg
 71050-0,Spider-Man Across the Spider-Verse - Random Box,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-0.jpg
-71050-1,Miles Morales / Spider-Man,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-1.jpg
-71050-10,Peter B. Parker / Spider-Man & May 'Mayday' Parker,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-10.jpg
-71050-11,Patrick O'Hara / Web-Slinger,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-11.jpg
-71050-12,Peter Parker / Werewolf Spider-Man,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-12.jpg
+71050-1,Miles Morales / Spider-Man,2025,784,7,https://cdn.rebrickable.com/media/sets/71050-1.jpg
+71050-10,Peter B. Parker / Spider-Man & May 'Mayday' Parker,2025,784,8,https://cdn.rebrickable.com/media/sets/71050-10.jpg
+71050-11,Patrick O'Hara / Web-Slinger,2025,784,9,https://cdn.rebrickable.com/media/sets/71050-11.jpg
+71050-12,Peter Parker / Werewolf Spider-Man,2025,784,5,https://cdn.rebrickable.com/media/sets/71050-12.jpg
 71050-13,Spider-Man - Across the Spider-Verse - Complete - All Sets,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-13.jpg
 71050-14,Spider-Man Across the Spider-Verse - Sealed Box,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-14.jpg
 71050-15,Spider-Man Across the Spider-Verse - Tower Box,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-15.jpg
-71050-2,Hobie Brown / Spider-Punk,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-2.jpg
-71050-3,Miles G. Morales / Prowler,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-3.jpg
-71050-4,Gwen Stacy / Spider-Gwen,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-4.jpg
-71050-5,Miguel O'Hara / Spider-Man 2099,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-5.jpg
-71050-6,Pavitr Prabhakar / Spider-Man India,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-6.jpg
-71050-7,Petra Parker / Cyborg Spider-Woman,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-7.jpg
-71050-8,Charlotte Webber / Sun-Spider,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-8.jpg
-71050-9,Margo Kess / Spider-Byte,2025,784,0,https://cdn.rebrickable.com/media/sets/71050-9.jpg
+71050-2,Hobie Brown / Spider-Punk,2025,784,8,https://cdn.rebrickable.com/media/sets/71050-2.jpg
+71050-3,Miles G. Morales / Prowler,2025,784,10,https://cdn.rebrickable.com/media/sets/71050-3.jpg
+71050-4,Gwen Stacy / Spider-Gwen,2025,784,8,https://cdn.rebrickable.com/media/sets/71050-4.jpg
+71050-5,Miguel O'Hara / Spider-Man 2099,2025,784,8,https://cdn.rebrickable.com/media/sets/71050-5.jpg
+71050-6,Pavitr Prabhakar / Spider-Man India,2025,784,8,https://cdn.rebrickable.com/media/sets/71050-6.jpg
+71050-7,Petra Parker / Cyborg Spider-Woman,2025,784,8,https://cdn.rebrickable.com/media/sets/71050-7.jpg
+71050-8,Charlotte Webber / Sun-Spider,2025,784,7,https://cdn.rebrickable.com/media/sets/71050-8.jpg
+71050-9,Margo Kess / Spider-Byte,2025,784,7,https://cdn.rebrickable.com/media/sets/71050-9.jpg
 710-6,Baseplate Assortment,1984,443,10,https://cdn.rebrickable.com/media/sets/710-6.jpg
 7106-1,Droid Escape,2001,158,45,https://cdn.rebrickable.com/media/sets/7106-1.jpg
 7110-1,Landspeeder,1999,158,49,https://cdn.rebrickable.com/media/sets/7110-1.jpg
@@ -17777,8 +17819,9 @@ set_num,name,year,theme_id,num_parts,img_url
 75414-1,The Force Burner Snowspeeder,2025,158,349,https://cdn.rebrickable.com/media/sets/75414-1.jpg
 75415-1,Kylo Ren Helmet,2025,158,529,https://cdn.rebrickable.com/media/sets/75415-1.jpg
 75416-1,Chopper (C1-10P) Astromech Droid,2025,158,1039,https://cdn.rebrickable.com/media/sets/75416-1.jpg
-75417-1,AT-ST Walker,2025,158,1513,https://cdn.rebrickable.com/media/sets/75417-1.jpg
-75418-1,Star Wars Advent Calendar 2025,2025,209,0,https://cdn.rebrickable.com/media/sets/75418-1.jpg
+75417-1,AT-ST Walker,2025,171,1513,https://cdn.rebrickable.com/media/sets/75417-1.jpg
+75418-1,Star Wars Advent Calendar 2025,2025,209,263,https://cdn.rebrickable.com/media/sets/75418-1.jpg
+75419-1,Death Star,2025,171,0,https://cdn.rebrickable.com/media/sets/75419-1.jpg
 7542-1,Flashin' Fashion Frame,2005,500,50,https://cdn.rebrickable.com/media/sets/7542-1.jpg
 75428-1,Battle Droid with STAP,2025,158,1088,https://cdn.rebrickable.com/media/sets/75428-1.jpg
 75429-1,AT-AT Driver Helmet,2025,158,730,https://cdn.rebrickable.com/media/sets/75429-1.jpg
@@ -17846,13 +17889,13 @@ set_num,name,year,theme_id,num_parts,img_url
 75682-1,Elphaba & Glinda Figures,2024,765,558,https://cdn.rebrickable.com/media/sets/75682-1.jpg
 75683-1,Glinda & Elphaba's Dormitory,2024,765,742,https://cdn.rebrickable.com/media/sets/75683-1.jpg
 75684-1,Welcome to Emerald City,2024,765,945,https://cdn.rebrickable.com/media/sets/75684-1.jpg
-75685-1,Emerald City Wall Art,2025,765,0,https://cdn.rebrickable.com/media/sets/75685-1.jpg
-75687-1,Elphaba's Retreat,2025,765,0,https://cdn.rebrickable.com/media/sets/75687-1.jpg
-75688-1,Glinda’s Wedding Day,2025,765,0,https://cdn.rebrickable.com/media/sets/75688-1.jpg
-75689-1,Emerald City & Kiamo Ko Castle,2025,765,0,https://cdn.rebrickable.com/media/sets/75689-1.jpg
-75690-1,Glinda & Elphaba Visit Munchkinland,2025,765,0,https://cdn.rebrickable.com/media/sets/75690-1.jpg
+75685-1,Emerald City Wall Art,2025,765,1518,https://cdn.rebrickable.com/media/sets/75685-1.jpg
+75687-1,Elphaba's Retreat,2025,765,228,https://cdn.rebrickable.com/media/sets/75687-1.jpg
+75688-1,Glinda’s Wedding Day,2025,765,476,https://cdn.rebrickable.com/media/sets/75688-1.jpg
+75689-1,Emerald City & Kiamo Ko Castle,2025,765,860,https://cdn.rebrickable.com/media/sets/75689-1.jpg
+75690-1,Glinda & Elphaba Visit Munchkinland,2025,765,744,https://cdn.rebrickable.com/media/sets/75690-1.jpg
 7569-1,Desert Attack,2010,271,57,https://cdn.rebrickable.com/media/sets/7569-1.jpg
-75691-1,Glinda & Elphaba Bookends,2025,765,0,https://cdn.rebrickable.com/media/sets/75691-1.jpg
+75691-1,Glinda & Elphaba Bookends,2025,765,1327,https://cdn.rebrickable.com/media/sets/75691-1.jpg
 7570-1,The Ostrich Race,2010,271,169,https://cdn.rebrickable.com/media/sets/7570-1.jpg
 757-1,Storage Tray,1987,443,1,https://cdn.rebrickable.com/media/sets/757-1.jpg
 7571-1,The Fight for the Dagger,2010,271,258,https://cdn.rebrickable.com/media/sets/7571-1.jpg
@@ -18314,7 +18357,7 @@ set_num,name,year,theme_id,num_parts,img_url
 76296-1,New Captain America Construction Figure,2024,782,359,https://cdn.rebrickable.com/media/sets/76296-1.jpg
 76297-1,Dancing Groot,2024,781,459,https://cdn.rebrickable.com/media/sets/76297-1.jpg
 76298-1,Iron Spider-Man Construction Figure,2024,706,303,https://cdn.rebrickable.com/media/sets/76298-1.jpg
-76300-1,Arkham Asylum,2025,697,0,https://cdn.rebrickable.com/media/sets/76300-1.jpg
+76300-1,Arkham Asylum,2025,697,2953,https://cdn.rebrickable.com/media/sets/76300-1.jpg
 7630-1,Front-End Loader,2009,56,108,https://cdn.rebrickable.com/media/sets/7630-1.jpg
 76301-1,Batman & Batmobile vs. Mr. Freeze,2025,697,63,https://cdn.rebrickable.com/media/sets/76301-1.jpg
 76302-1,Superman Mech vs. Lex Luthor,2025,701,120,https://cdn.rebrickable.com/media/sets/76302-1.jpg
@@ -18429,8 +18472,8 @@ set_num,name,year,theme_id,num_parts,img_url
 764521-1,Co-Pack,2008,52,0,https://cdn.rebrickable.com/media/sets/764521-1.jpg
 76453-1,Malfoy Manor,2025,246,1602,https://cdn.rebrickable.com/media/sets/76453-1.jpg
 76454-1,Hogwarts Castle: The Main Tower,2025,246,2131,https://cdn.rebrickable.com/media/sets/76454-1.jpg
-76456-1,Harry Potter Calendar 2025,2025,710,0,https://cdn.rebrickable.com/media/sets/76456-1.jpg
-76457-1,Hogsmeade Village – Collectors' Edition,2025,246,0,https://cdn.rebrickable.com/media/sets/76457-1.jpg
+76456-1,Harry Potter Advent  Calendar 2025,2025,710,278,https://cdn.rebrickable.com/media/sets/76456-1.jpg
+76457-1,Hogsmeade Village – Collectors' Edition,2025,246,3237,https://cdn.rebrickable.com/media/sets/76457-1.jpg
 76458-1,Thestral Family,2025,246,548,https://cdn.rebrickable.com/media/sets/76458-1.jpg
 7646-1,ETX Alien Infiltrator,2008,137,333,https://cdn.rebrickable.com/media/sets/7646-1.jpg
 7647-1,MX-41 Switch Fighter,2008,137,235,https://cdn.rebrickable.com/media/sets/7647-1.jpg
@@ -18640,8 +18683,9 @@ set_num,name,year,theme_id,num_parts,img_url
 77248-1,BWT Alpine F1 Team A524 Race Car,2025,601,258,https://cdn.rebrickable.com/media/sets/77248-1.jpg
 77249-1,Williams Racing FW46 F1 Race Car,2025,601,263,https://cdn.rebrickable.com/media/sets/77249-1.jpg
 77250-1,MoneyGram Haas F1 Team VF-24 Race Car,2025,601,242,https://cdn.rebrickable.com/media/sets/77250-1.jpg
-7725-1,Electric Passenger Train,1981,234,491,https://cdn.rebrickable.com/media/sets/7725-1.jpg
+7725-1,Electric Passenger Train,1981,234,493,https://cdn.rebrickable.com/media/sets/7725-1.jpg
 77251-1,McLaren F1 Team MCL38 Race Car,2025,601,269,https://cdn.rebrickable.com/media/sets/77251-1.jpg
+77255-1,Lightning McQueen,2026,601,0,https://cdn.rebrickable.com/media/sets/77255-1.jpg
 7726-1,Coast Guard Truck with Speed Boat,2008,55,362,https://cdn.rebrickable.com/media/sets/7726-1.jpg
 7727-1,Freight Steam Train,1983,234,570,https://cdn.rebrickable.com/media/sets/7727-1.jpg
 7728-1,Jet Pack,2008,137,25,https://cdn.rebrickable.com/media/sets/7728-1.jpg
@@ -21070,7 +21114,7 @@ set_num,name,year,theme_id,num_parts,img_url
 8715-1,Ultimate Creatures Accessory Set,2005,324,395,https://cdn.rebrickable.com/media/sets/8715-1.jpg
 8719-1,Zamor Spheres,2006,324,10,https://cdn.rebrickable.com/media/sets/8719-1.jpg
 8720-1,Power Pack,1991,19,56,https://cdn.rebrickable.com/media/sets/8720-1.jpg
-8720865558554-1,City: Een Doldwaze Zomer,2023,761,16,https://cdn.rebrickable.com/media/sets/8720865558554-1.jpg
+8720865558554-1,City: Een Doldwaze Zomer,2023,761,22,https://cdn.rebrickable.com/media/sets/8720865558554-1.jpg
 872-1,Supplementary Set,1978,4,77,https://cdn.rebrickable.com/media/sets/872-1.jpg
 8721-1,Velika,2006,324,21,https://cdn.rebrickable.com/media/sets/8721-1.jpg
 8722-1,Kazi,2006,324,25,https://cdn.rebrickable.com/media/sets/8722-1.jpg
@@ -21335,7 +21379,7 @@ set_num,name,year,theme_id,num_parts,img_url
 883929567218-1,Nexo Knights: Season 2 (DVD),2017,730,0,https://cdn.rebrickable.com/media/sets/883929567218-1.jpg
 883929573004-1,Friends: Triple Feature,2017,730,0,https://cdn.rebrickable.com/media/sets/883929573004-1.jpg
 883929573196-1,DC Comics Super Heroes: Double Feature,2017,730,0,https://cdn.rebrickable.com/media/sets/883929573196-1.jpg
-8840-1,Rally Shock n' Roll Racer,1991,1,229,https://cdn.rebrickable.com/media/sets/8840-1.jpg
+8840-1,Rally Shock n' Roll Racer,1991,1,222,https://cdn.rebrickable.com/media/sets/8840-1.jpg
 8841-1,Desert Racer,1983,1,180,https://cdn.rebrickable.com/media/sets/8841-1.jpg
 8842-1,Go-Cart,1986,1,282,https://cdn.rebrickable.com/media/sets/8842-1.jpg
 8842497-1,City Vehicles Bundle Deal 2 In 1,2019,52,0,https://cdn.rebrickable.com/media/sets/8842497-1.jpg
@@ -21573,6 +21617,7 @@ set_num,name,year,theme_id,num_parts,img_url
 892508-1,Lloyd,2025,435,8,https://cdn.rebrickable.com/media/sets/892508-1.jpg
 892509-1,Spectral Dragonian Warrior,2025,435,13,https://cdn.rebrickable.com/media/sets/892509-1.jpg
 8925-1,Barraki Deepsea Patrol,2007,341,228,https://cdn.rebrickable.com/media/sets/8925-1.jpg
+892510-1,Nokt,2025,435,10,https://cdn.rebrickable.com/media/sets/892510-1.jpg
 8926-1,Toa Undersea Attack,2007,341,399,https://cdn.rebrickable.com/media/sets/8926-1.jpg
 8927-1,Toa Terrain Crawler,2007,341,673,https://cdn.rebrickable.com/media/sets/8927-1.jpg
 8929-1,Defilak,2007,324,37,https://cdn.rebrickable.com/media/sets/8929-1.jpg
@@ -21772,6 +21817,11 @@ set_num,name,year,theme_id,num_parts,img_url
 910051-1,Mushroom Village,2025,719,0,https://cdn.rebrickable.com/media/sets/910051-1.jpg
 910052-1,Popcorn Wagon,2025,719,0,https://cdn.rebrickable.com/media/sets/910052-1.jpg
 910053-1,The Thieves of Tortuga,2025,719,0,https://cdn.rebrickable.com/media/sets/910053-1.jpg
+910054-1,The Art Factory,2026,719,0,https://cdn.rebrickable.com/media/sets/910054-1.jpg
+910055-1,Gold Mine Expedition,2026,719,0,https://cdn.rebrickable.com/media/sets/910055-1.jpg
+910056-1,Off-Road Adventure,2026,719,0,https://cdn.rebrickable.com/media/sets/910056-1.jpg
+910057-1,Outlaw Forest Den,2026,719,0,https://cdn.rebrickable.com/media/sets/910057-1.jpg
+910058-1,Sequoia Tree Trail,2026,719,0,https://cdn.rebrickable.com/media/sets/910058-1.jpg
 910-1,Universal Building Set,1976,465,318,https://cdn.rebrickable.com/media/sets/910-1.jpg
 9101-1,Duplo Toolo Large Set,1995,516,86,https://cdn.rebrickable.com/media/sets/9101-1.jpg
 9102-1,Small Duplo Toolo Set,1992,516,30,https://cdn.rebrickable.com/media/sets/9102-1.jpg
@@ -21913,6 +21963,7 @@ set_num,name,year,theme_id,num_parts,img_url
 912508-1,The Mandalorian,2025,158,7,https://cdn.rebrickable.com/media/sets/912508-1.jpg
 912509-1,Darth Maul,2025,158,7,https://cdn.rebrickable.com/media/sets/912509-1.jpg
 9125-1,Intelligent Train Set,2003,516,134,https://cdn.rebrickable.com/media/sets/9125-1.jpg
+912510-1,Droideka,2025,158,30,https://cdn.rebrickable.com/media/sets/912510-1.jpg
 9126-1,Dolls Medium Set,2001,516,28,https://cdn.rebrickable.com/media/sets/9126-1.jpg
 9127-1,Dolls Large Set,2001,516,76,https://cdn.rebrickable.com/media/sets/9127-1.jpg
 9128-1,Big Wheelers,1999,516,53,https://cdn.rebrickable.com/media/sets/9128-1.jpg
@@ -22289,6 +22340,7 @@ set_num,name,year,theme_id,num_parts,img_url
 952506-1,Firefighter with Bulldozer,2025,58,32,https://cdn.rebrickable.com/media/sets/952506-1.jpg
 952507-1,Policeman with Jetpack,2025,61,16,https://cdn.rebrickable.com/media/sets/952507-1.jpg
 952508-1,Explorer & Hovercraft,2025,614,25,https://cdn.rebrickable.com/media/sets/952508-1.jpg
+952509-1,Tractor,2025,57,30,https://cdn.rebrickable.com/media/sets/952509-1.jpg
 9525-1,Pre Vizsla's Mandalorian Fighter,2012,158,403,https://cdn.rebrickable.com/media/sets/9525-1.jpg
 9526-1,Palpatine's Arrest,2012,158,649,https://cdn.rebrickable.com/media/sets/9526-1.jpg
 9530-1,Letters Set,2008,516,156,https://cdn.rebrickable.com/media/sets/9530-1.jpg
@@ -22658,13 +22710,10 @@ set_num,name,year,theme_id,num_parts,img_url
 9780241657539-1,Minecraft: Ideas,2024,757,39,https://cdn.rebrickable.com/media/sets/9780241657539-1.jpg
 9780241661161-1,How to Build LEGO Robots,2024,757,0,https://cdn.rebrickable.com/media/sets/9780241661161-1.jpg
 9780241706008-1,Easter Ideas,2025,757,0,https://cdn.rebrickable.com/media/sets/9780241706008-1.jpg
-9780241712306-1,Ninjago: Dragons Rising: Adventure Atlas: Journey Through the World of Ninjago,2025,758,4,https://cdn.rebrickable.com/media/sets/9780241712306-1.jpg
 9780241712412-1,Star Wars: Character Encyclopedia: Updated Edition,2025,758,0,https://cdn.rebrickable.com/media/sets/9780241712412-1.jpg
 9780241712467-1,Dreamzzz: World Builder: Create a World of Play,2025,757,0,https://cdn.rebrickable.com/media/sets/9780241712467-1.jpg
 9780241712528-1,Ninjago: Dragons Rising: World Builder: Create a World of Play,2025,757,0,https://cdn.rebrickable.com/media/sets/9780241712528-1.jpg
 9780241716410-1,LEGO Minifigure: A Visual History: Updated and Expanded,2025,758,0,https://cdn.rebrickable.com/media/sets/9780241716410-1.jpg
-9780241716540-1,Marvel Spider-Man: Explore the Spider-Verse,2025,759,3,https://cdn.rebrickable.com/media/sets/9780241716540-1.jpg
-9780241719336-1,Minecraft: Games Book: 50 Fun Ideas to Play with Your LEGO Collection!,2025,757,0,https://cdn.rebrickable.com/media/sets/9780241719336-1.jpg
 9780241719459-1,Minecraft: Visual Dictionary,2025,758,0,https://cdn.rebrickable.com/media/sets/9780241719459-1.jpg
 9780241727416-1,LEGO Ideas Activity Book: Animals,2025,757,0,https://cdn.rebrickable.com/media/sets/9780241727416-1.jpg
 9780241727423-1,LEGO Ideas Activity Book: Space,2025,757,0,https://cdn.rebrickable.com/media/sets/9780241727423-1.jpg
@@ -22878,7 +22927,6 @@ set_num,name,year,theme_id,num_parts,img_url
 9780794448103-1,Harry Potter: Mischief Managed! 1001 Stickers,2021,760,0,https://cdn.rebrickable.com/media/sets/9780794448103-1.jpg
 9780794448110-1,Harry Potter: Let the Triwizard Tournament Begin!,2021,760,0,https://cdn.rebrickable.com/media/sets/9780794448110-1.jpg
 9780794448158-1,Jurassic World: Dino Lab Secrets,2021,761,7,https://cdn.rebrickable.com/media/sets/9780794448158-1.jpg
-9780794448165-1,Build Christmas Fun!,2021,761,45,https://cdn.rebrickable.com/media/sets/9780794448165-1.jpg
 9780794448172-1,DC Comics Super Heroes: Ready For Action,2022,760,0,https://cdn.rebrickable.com/media/sets/9780794448172-1.jpg
 9780794448325-1,Harry Potter: Color the Wizarding World!,2021,760,0,https://cdn.rebrickable.com/media/sets/9780794448325-1.jpg
 9780794448332-1,Harry Potter: Magic In Action!,2021,760,0,https://cdn.rebrickable.com/media/sets/9780794448332-1.jpg
@@ -22892,7 +22940,6 @@ set_num,name,year,theme_id,num_parts,img_url
 9780794451110-1,Harry Potter: Searching Adventure,2021,761,8,https://cdn.rebrickable.com/media/sets/9780794451110-1.jpg
 9780794451905-1,Harry Potter: Dumbledore's Secret Mission,2024,761,26,https://cdn.rebrickable.com/media/sets/9780794451905-1.jpg
 9780794452063-1,Ninjago: Dragons Rising: Ninja Power!,2024,761,27,https://cdn.rebrickable.com/media/sets/9780794452063-1.jpg
-9780794453565-1,Build and Play! Halloween,2025,761,38,https://cdn.rebrickable.com/media/sets/9780794453565-1.jpg
 9780804161329-1,Marvel Super Heroes: Prima's Official Game Guide,2013,758,0,https://cdn.rebrickable.com/media/sets/9780804161329-1.jpg
 9780804161527-1,Legends of Chima: Laval's Journey: Prima's Official Game Guide,2013,758,0,https://cdn.rebrickable.com/media/sets/9780804161527-1.jpg
 9780804163538-1,DC Comics Batman 3: Beyond Gotham: Prima's Official Game Guide,2014,758,0,https://cdn.rebrickable.com/media/sets/9780804163538-1.jpg
@@ -23190,7 +23237,6 @@ set_num,name,year,theme_id,num_parts,img_url
 9781529088526-1,"City: Space Mission: A Push, Pull and Slide Book",2023,759,0,https://cdn.rebrickable.com/media/sets/9781529088526-1.jpg
 9781529088540-1,"City: Farm Fun: A Push, Pull and Slide Book",2023,759,0,https://cdn.rebrickable.com/media/sets/9781529088540-1.jpg
 9781534325784-1,Ninjago: Volume 1: Garmadon,2023,759,10,https://cdn.rebrickable.com/media/sets/9781534325784-1.jpg
-9781534353725-1,Ninjago: Shatterspin,2025,759,0,https://cdn.rebrickable.com/media/sets/9781534353725-1.jpg
 9781553632832-1,Star Wars: Read Build Play - Battle for the Stolen Crystals,2016,761,196,https://cdn.rebrickable.com/media/sets/9781553632832-1.jpg
 9781597074025-1,Ninjago: It All Begins Here,2012,759,0,https://cdn.rebrickable.com/media/sets/9781597074025-1.jpg
 9781597077071-1,Ninjago: Night of the Nindroids,2014,759,0,https://cdn.rebrickable.com/media/sets/9781597077071-1.jpg
@@ -23290,7 +23336,6 @@ set_num,name,year,theme_id,num_parts,img_url
 9781797221779-1,How We Create: Inspiration Deck,2023,741,0,https://cdn.rebrickable.com/media/sets/9781797221779-1.jpg
 9781797225760-1,Mystery Minifigure Mini Puzzle (Green Edition) - 12 Pack,2023,741,0,https://cdn.rebrickable.com/media/sets/9781797225760-1.jpg
 9781797231549-1,Mystery Minifigure Mini Puzzle (Space Edition) - 12 Pack,2024,741,0,https://cdn.rebrickable.com/media/sets/9781797231549-1.jpg
-9781797233420-1,Countdown to Christmas Puzzles,2025,741,0,https://cdn.rebrickable.com/media/sets/9781797233420-1.jpg
 9781797234700-1,Minifigure Notecards: 12 Shaped Notecards with Envelopes,2025,739,0,https://cdn.rebrickable.com/media/sets/9781797234700-1.jpg
 9781797235219-1,Brick Erasers (Multicolor),2025,739,0,https://cdn.rebrickable.com/media/sets/9781797235219-1.jpg
 9781800181885-1,The Secret Life of LEGO Bricks,2022,758,0,https://cdn.rebrickable.com/media/sets/9781800181885-1.jpg
@@ -23519,6 +23564,9 @@ set_num,name,year,theme_id,num_parts,img_url
 9788325346386-1,Jurassic World: Jurajska Przygoda Bena,2025,761,15,https://cdn.rebrickable.com/media/sets/9788325346386-1.jpg
 9788325347161-1,City: Wyzwanie w Skateparku,2025,761,12,https://cdn.rebrickable.com/media/sets/9788325347161-1.jpg
 9788325347178-1,Ninjago: Uwolnić Smoka Chaosu!,2025,761,23,https://cdn.rebrickable.com/media/sets/9788325347178-1.jpg
+9788325347192-1,Star Wars: W służbie Imperium,2025,761,5,https://cdn.rebrickable.com/media/sets/9788325347192-1.jpg
+9788325347208-1,Harry Potter: Playtime Companions,2025,761,7,https://cdn.rebrickable.com/media/sets/9788325347208-1.jpg
+9788325347215-1,Ninjago: Ogień i Żar,2025,761,10,https://cdn.rebrickable.com/media/sets/9788325347215-1.jpg
 978832541404-1,DC Comics Super Heroes: Time to play! Robin,2023,761,0,https://cdn.rebrickable.com/media/sets/978832541404-1.jpg
 9788866130087-1,Ruled Notebook (White),2014,739,0,https://cdn.rebrickable.com/media/sets/9788866130087-1.jpg
 9788867326181-1,Ruled Notebook (Red),2014,739,0,https://cdn.rebrickable.com/media/sets/9788867326181-1.jpg
@@ -23844,6 +23892,8 @@ BONSAI-1,55cm Bonsai Tree Model,2021,598,0,https://cdn.rebrickable.com/media/set
 BOOK-1,50 Years of Play,1982,758,0,https://cdn.rebrickable.com/media/sets/book-1.jpg
 BOOK-2,Legends of Chima: Ultimate Sticker Book: Meet the Tribes,2014,760,0,https://cdn.rebrickable.com/media/sets/book-2.jpg
 BOOK-3,Play With Your Child,1998,757,1,https://cdn.rebrickable.com/media/sets/book-3.jpg
+BOOK-4,Star Wars: Sekrety ciemnej strony Mocy,2025,761,5,https://cdn.rebrickable.com/media/sets/book-4.jpg
+BOOK-5,Ninjago: Trening Mistrza Spinjitzu,2025,761,5,https://cdn.rebrickable.com/media/sets/book-5.jpg
 BOOKANDPENCIL-1,Book and Pencil,2020,301,19,https://cdn.rebrickable.com/media/sets/bookandpencil-1.jpg
 BORDEAUX-1,Grand Opening of the LEGO Store in Bordeaux,2016,408,12,https://cdn.rebrickable.com/media/sets/bordeaux-1.jpg
 BOWDOIN-1,Bowdoin Polar Bear,2013,598,36,https://cdn.rebrickable.com/media/sets/bowdoin-1.jpg
@@ -23856,13 +23906,13 @@ BUCKET-3,Friends Cinch Bucket,2020,740,0,https://cdn.rebrickable.com/media/sets/
 BUCKET-4,NINJAGO Cinch Bucket,2022,740,0,https://cdn.rebrickable.com/media/sets/bucket-4.jpg
 Build-a-Mini-0,Build-A-Minifigure Station Exclusive Parts,2018,746,17,https://cdn.rebrickable.com/media/sets/build-a-mini-0.jpg
 Build-a-Mini-2018,2018 Build-A-Minifigure Station Exclusive Parts,2018,746,3,https://cdn.rebrickable.com/media/sets/build-a-mini-2018.jpg
-Build-a-Mini-2019,2019 Build-A-Minifigure Station Exclusive Parts,2019,746,36,https://cdn.rebrickable.com/media/sets/build-a-mini-2019.jpg
-Build-a-Mini-2020,2020 Build-A-Minifigure Station Exclusive Parts,2020,746,22,https://cdn.rebrickable.com/media/sets/build-a-mini-2020.jpg
+Build-a-Mini-2019,2019 Build-A-Minifigure Station Exclusive Parts,2019,746,35,https://cdn.rebrickable.com/media/sets/build-a-mini-2019.jpg
+Build-a-Mini-2020,2020 Build-A-Minifigure Station Exclusive Parts,2020,746,21,https://cdn.rebrickable.com/media/sets/build-a-mini-2020.jpg
 Build-a-Mini-2021,2021 Build-A-Minifigure Station Exclusive Parts,2021,746,30,https://cdn.rebrickable.com/media/sets/build-a-mini-2021.jpg
 Build-a-Mini-2022,2022 Build-A-Minifigure Station Exclusive Parts,2022,746,55,https://cdn.rebrickable.com/media/sets/build-a-mini-2022.jpg
 Build-a-Mini-2023,2023 Build-A-Minifigure Station Exclusive Parts,2023,746,42,https://cdn.rebrickable.com/media/sets/build-a-mini-2023.jpg
 Build-a-Mini-2024,2024 Build-A-Minifigure Station Exclusive Parts,2024,746,54,https://cdn.rebrickable.com/media/sets/build-a-mini-2024.jpg
-Build-a-Mini-2025,2025 Build-A-Minifigure Station Exclusive Parts,2025,746,41,https://cdn.rebrickable.com/media/sets/build-a-mini-2025.jpg
+Build-a-Mini-2025,2025 Build-A-Minifigure Station Exclusive Parts,2025,746,51,https://cdn.rebrickable.com/media/sets/build-a-mini-2025.jpg
 BULL-1,Bull,2019,408,64,https://cdn.rebrickable.com/media/sets/bull-1.jpg
 BUNNY-1,Bunny,2019,229,32,https://cdn.rebrickable.com/media/sets/bunny-1.jpg
 C8500-1,Robotops (8500 + 8501 + 8502 + 8503),1999,20,96,https://cdn.rebrickable.com/media/sets/c8500-1.jpg
@@ -23981,12 +24031,12 @@ DALLAS-1,"LEGO Store Grand Opening Exclusive Set, NorthPark Center, Dallas, TX",
 DANISHHEART-1,Danish Heart,2023,227,16,https://cdn.rebrickable.com/media/sets/danishheart-1.jpg
 DATABASE-0,Unsorted Unused Parts Database Set,2023,746,12,https://cdn.rebrickable.com/media/sets/database-0.jpg
 DATABASE-1,Unused Parts Database Set - Pre-1965,1965,746,197,https://cdn.rebrickable.com/media/sets/database-1.jpg
-DATABASE-2,Unused Parts Database Set -1966 to 200﻿0,2000,746,206,https://cdn.rebrickable.com/media/sets/database-2.jpg
-DATABASE-2001,2001 - Unused Parts Database Set,2001,746,56,https://cdn.rebrickable.com/media/sets/database-2001.jpg
-DATABASE-2002,2002 - Unused Parts Database Set,2002,746,28,https://cdn.rebrickable.com/media/sets/database-2002.jpg
+DATABASE-2,Unused Parts Database Set -1966 to 200﻿0,2000,746,214,https://cdn.rebrickable.com/media/sets/database-2.jpg
+DATABASE-2001,2001 - Unused Parts Database Set,2001,746,58,https://cdn.rebrickable.com/media/sets/database-2001.jpg
+DATABASE-2002,2002 - Unused Parts Database Set,2002,746,29,https://cdn.rebrickable.com/media/sets/database-2002.jpg
 DATABASE-2003,2003 - Unused Parts Database Set,2003,746,47,https://cdn.rebrickable.com/media/sets/database-2003.jpg
 DATABASE-2004,2004 - Unused Parts Database Set,2004,746,84,https://cdn.rebrickable.com/media/sets/database-2004.jpg
-DATABASE-2005,2005 - Unused Parts Database Set,2005,746,72,https://cdn.rebrickable.com/media/sets/database-2005.jpg
+DATABASE-2005,2005 - Unused Parts Database Set,2005,746,73,https://cdn.rebrickable.com/media/sets/database-2005.jpg
 DATABASE-2006,2006 - Unused Parts Database Set,2006,746,16,https://cdn.rebrickable.com/media/sets/database-2006.jpg
 DATABASE-2007,2007 - Unused Parts Database Set,2007,746,21,https://cdn.rebrickable.com/media/sets/database-2007.jpg
 DATABASE-2008,2008 - Unused Parts Database Set,2008,746,35,https://cdn.rebrickable.com/media/sets/database-2008.jpg
@@ -24000,25 +24050,25 @@ DATABASE-2015,2015 - Unused Parts Database Set,2015,746,55,https://cdn.rebrickab
 DATABASE-2016,2016 - Unused Parts Database Set,2016,746,35,https://cdn.rebrickable.com/media/sets/database-2016.jpg
 DATABASE-2017,2017 - Unused Parts Database Set,2017,746,40,https://cdn.rebrickable.com/media/sets/database-2017.jpg
 DATABASE-2018,2018 - Unused Parts Database Set,2018,746,47,https://cdn.rebrickable.com/media/sets/database-2018.jpg
-DATABASE-2019,2019 - Unused Parts Database Set,2019,746,35,https://cdn.rebrickable.com/media/sets/database-2019.jpg
+DATABASE-2019,2019 - Unused Parts Database Set,2019,746,36,https://cdn.rebrickable.com/media/sets/database-2019.jpg
 DATABASE-2020,2020 - Unused Parts Database Set,2020,746,20,https://cdn.rebrickable.com/media/sets/database-2020.jpg
-DATABASE-2021,2021 - Unused Parts Database Set,2021,746,25,https://cdn.rebrickable.com/media/sets/database-2021.jpg
+DATABASE-2021,2021 - Unused Parts Database Set,2021,746,26,https://cdn.rebrickable.com/media/sets/database-2021.jpg
 DATABASE-2022,2022 - Unused Parts Database Set,2022,746,64,https://cdn.rebrickable.com/media/sets/database-2022.jpg
 DATABASE-2023,2023 - Unused Parts Database Set,2023,746,50,https://cdn.rebrickable.com/media/sets/database-2023.jpg
-DATABASE-2024,2024 - Unused Parts Database Set,2024,746,31,https://cdn.rebrickable.com/media/sets/database-2024.jpg
-DATABASE-2025,2025 - Unused Parts Database Set,2025,746,15,https://cdn.rebrickable.com/media/sets/database-2025.jpg
+DATABASE-2024,2024 - Unused Parts Database Set,2024,746,33,https://cdn.rebrickable.com/media/sets/database-2024.jpg
+DATABASE-2025,2025 - Unused Parts Database Set,2025,746,17,https://cdn.rebrickable.com/media/sets/database-2025.jpg
 DATABASE-HO-1,Database Set for 1:87 Mercedes Sport,1963,746,11,https://cdn.rebrickable.com/media/sets/database-ho-1.jpg
 DATABASE-HO-2,Database Set for 1:87 VW Vans,1958,746,26,https://cdn.rebrickable.com/media/sets/database-ho-2.jpg
 DATABASE-HO-3,Database Set for 1:87 VW Beetles (Short),1958,746,30,https://cdn.rebrickable.com/media/sets/database-ho-3.jpg
 DATABASE-HO-4,Database Set for 1:87 VW Beetles (Long),1959,746,14,https://cdn.rebrickable.com/media/sets/database-ho-4.jpg
 DATABASE-HO-5,Database Set for 1:38 VW Beetles,1957,746,10,https://cdn.rebrickable.com/media/sets/database-ho-5.jpg
 DATABASE-HO-6,Database Set for HO Bikes,1958,746,21,https://cdn.rebrickable.com/media/sets/database-ho-6.jpg
-DBASE-1,Database Set for Set 491-2,1966,746,14,https://cdn.rebrickable.com/media/sets/dbase-1.jpg
+DBASE-1,Database Set for Set 491-2,1966,746,15,https://cdn.rebrickable.com/media/sets/dbase-1.jpg
 DBASE-2,Database Set for Set 426-1,1966,746,13,https://cdn.rebrickable.com/media/sets/dbase-2.jpg
-DBASE-3,Database Set for 1210-2,1955,746,8,https://cdn.rebrickable.com/media/sets/dbase-3.jpg
+DBASE-3,Database Set for 1210-2,1955,746,10,https://cdn.rebrickable.com/media/sets/dbase-3.jpg
 DBASE-4,Database Set for Various 3009 prints For Set 1224.1-1,1955,746,12,https://cdn.rebrickable.com/media/sets/dbase-4.jpg
 DBASE-4696-1,Database Set for 4696-1,2004,746,154,https://cdn.rebrickable.com/media/sets/dbase-4696-1.jpg
-DBASE-5,Database Set for Various prints For Set 1224-2,1955,746,17,https://cdn.rebrickable.com/media/sets/dbase-5.jpg
+DBASE-5,Database Set for Various prints For Set 1224-2,1955,746,19,https://cdn.rebrickable.com/media/sets/dbase-5.jpg
 DBASE-6,Database Set for Set 700.0-1,1957,746,16,https://cdn.rebrickable.com/media/sets/dbase-6.jpg
 DC1-1,Commemorative Limited Edition Batman Announcement,2006,697,13,https://cdn.rebrickable.com/media/sets/dc1-1.jpg
 DCBHZ-1,Wonder Woman,2017,610,145,https://cdn.rebrickable.com/media/sets/dcbhz-1.jpg
@@ -24245,6 +24295,7 @@ fruit8-1,Tree - Hong Kong Lego Show Promotional,2007,22,1,https://cdn.rebrickabl
 G1753-1,Checkers,2006,504,25,https://cdn.rebrickable.com/media/sets/g1753-1.jpg
 GAC0460757-1,Space Explorers Wanted Wallet,2025,501,0,https://cdn.rebrickable.com/media/sets/gac0460757-1.jpg
 GAME-1,90 Years of Play Card Game,2023,741,0,https://cdn.rebrickable.com/media/sets/game-1.jpg
+GAMINGCONTROLLER-1,Gaming-Controller,2025,408,47,https://cdn.rebrickable.com/media/sets/gamingcontroller-1.jpg
 GANYMEDE-1,Ganymede,2019,669,38,https://cdn.rebrickable.com/media/sets/ganymede-1.jpg
 GANYMEDE-2,Ganymede,2019,669,39,https://cdn.rebrickable.com/media/sets/ganymede-2.jpg
 GARDENCITY-1,"LEGO Store Grand Opening Exclusive Set, Roosevelt Field Mall, Garden City, NY",2010,408,88,https://cdn.rebrickable.com/media/sets/gardencity-1.jpg
@@ -24826,7 +24877,6 @@ LMG010-1,Santa,2005,301,13,https://cdn.rebrickable.com/media/sets/lmg010-1.jpg
 LMP301A-1,Star Wars: Darth Vader on the Rebel Hunt,2019,759,0,https://cdn.rebrickable.com/media/sets/lmp301a-1.jpg
 LMP301B-1,Star Wars: C-3PO Lends a Hand,2019,759,0,https://cdn.rebrickable.com/media/sets/lmp301b-1.jpg
 LNC6423-1,Harry Potter: Magical Fun,2025,761,3,https://cdn.rebrickable.com/media/sets/lnc6423-1.jpg
-LNC6424-1,Harry Potter: Playtime Companions,2025,761,7,https://cdn.rebrickable.com/media/sets/lnc6424-1.jpg
 LNC6733-1,Ninjago: Dragons Rising: The Dragon Catcher,2024,761,9,https://cdn.rebrickable.com/media/sets/lnc6733-1.jpg
 LNO450-1,DC Comics Super Heroes: Giant Super Hero Activity Book,2017,760,0,https://cdn.rebrickable.com/media/sets/lno450-1.jpg
 LNR303-1,Star Wars: Rise of the Rebellion,2017,759,0,https://cdn.rebrickable.com/media/sets/lnr303-1.jpg
@@ -25050,7 +25100,6 @@ NEWORLEANS-1,"Grand Opening LEGO Store New Orleans, LA",2018,408,5,https://cdn.r
 NEXOKNIGHTS-1,Nexo Powers Wave 1 Power Shields,2017,746,35,https://cdn.rebrickable.com/media/sets/nexoknights-1.jpg
 NEXOKNIGHTS-2,Nexo Powers Wave 2 Power Shields,2017,746,35,https://cdn.rebrickable.com/media/sets/nexoknights-2.jpg
 NIGHTLIGHT-1,"Rechargeable Night Light, Torch & LEGO Minifigure Light Up Display",2016,733,0,https://cdn.rebrickable.com/media/sets/nightlight-1.jpg
-NIKE-1,Basketball Hoop,2025,598,49,https://cdn.rebrickable.com/media/sets/nike-1.jpg
 NINJATRU-1,Kai's Mask,2015,435,97,https://cdn.rebrickable.com/media/sets/ninjatru-1.jpg
 NINJATRU-2,Lloyd's Mask,2015,435,97,https://cdn.rebrickable.com/media/sets/ninjatru-2.jpg
 NINJATRU-3,Cole's Mask,2015,435,97,https://cdn.rebrickable.com/media/sets/ninjatru-3.jpg
