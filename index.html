@@ -1078,10 +1078,7 @@
         background: rgba(107, 114, 128, 0.1);
     }
     
-    /* Анимации для кнопок закрытия */
-    .modal-close-btn:not(.lg\:hidden) {
-        animation: buttonAppear 0.4s ease-out;
-    }
+    /* Анимации для кнопок закрытия убраны - применяются только через JavaScript */
     
   
     .sidebar-hint-close {
@@ -16529,28 +16526,117 @@ function renderSetCollectionControls() {
         qty: e
     } = S.setModal, t = S.setColl[S.selSetNum]?.qty || 0;
     return `
-            <div class="bg-gray-700/50 rounded-lg p-4">
-                <div class="space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h3 class="text-white font-semibold">Коллекция наборов</h3>
-                        <p class="text-sm text-gray-400 text-right">В коллекции: <span id="set-modal-in-collection-qty" class="font-bold text-white">${t}</span></p>
+            <div class="bg-gray-700/50 rounded-lg p-3 sm:p-4 md:p-3 lg:p-4 xl:p-5">
+                <div class="space-y-3 sm:space-y-4 md:space-y-3 lg:space-y-4">
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3">
+                        <h3 class="text-sm sm:text-base md:text-base lg:text-lg font-semibold text-white flex items-center justify-between w-full gap-2 sm:gap-3">
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                ${I_Set("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-blue-400")}
+                                <span class="hidden sm:inline">Коллекция наборов</span>
+                                <span class="sm:hidden">Коллекция</span>
+                            </div>
+                            <span class="text-xs sm:text-sm md:text-sm lg:text-base text-gray-400">
+                                (В коллекции: <span id="set-modal-in-collection-qty" class="font-bold text-white">${t}</span>)
+                            </span>
+                        </h3>
                     </div>
                     
-                    <div class="flex justify-between items-center gap-4">
-                        <div class="flex items-center gap-2">
-                            <button data-action="decrease-set-qty" class="p-2 rounded-full ${e > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors duration-150" ${e <= 0 ? 'disabled' : ''}" title="Уменьшить количество">${I_Minus("w-5 h-5")}</button>
-                            <input id="set-modal-quantity-input" type="number" value="${e}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                            <button data-action="increase-set-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 shadow-lg hover:shadow-gray-500/25" title="Увеличить количество">${I_Plus("w-5 h-5")}</button>
+                    <!-- Controls -->
+                    <div class="flex flex-col gap-3 sm:gap-4">
+                        <!-- Quantity Controls -->
+                        <div class="flex items-center justify-center gap-2 sm:gap-3">
+                            <button data-action="decrease-set-qty" 
+                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${e > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+                                ${e <= 0 ? 'disabled' : ''} 
+                                title="Уменьшить количество">
+                                ${I_Minus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                            </button>
+                            
+                            <input id="set-modal-quantity-input" 
+                                type="number" 
+                                value="${e}" 
+                                readonly 
+                                class="w-14 sm:w-16 md:w-16 lg:w-18 text-center bg-gray-900 text-white font-bold rounded-lg py-2 sm:py-2.5 md:py-2 lg:py-2.5 text-sm sm:text-base md:text-sm lg:text-base min-h-[44px] border border-gray-600 focus:border-blue-500 focus:outline-none"/>
+                            
+                            <button data-action="increase-set-qty" 
+                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+                                title="Увеличить количество">
+                                ${I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                            </button>
                         </div>
-                        <button data-action="update-set-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
-                            ${t>0?"Обновить":"Добавить"}
+                        
+                        <!-- Action Button -->
+                        <button data-action="update-set-collection" 
+                            class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-4 sm:px-5 md:px-5 lg:px-6 rounded-lg hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px]">
+                            ${t>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                            <span class="hidden sm:inline">${(() => {
+                                const getSetWord = (count) => {
+                                    if (count === 1) return "набор";
+                                    if (count >= 2 && count <= 4) return "набора";
+                                    return "наборов";
+                                };
+                                if (t > 0) {
+                                    return `Обновить до ${e} ${getSetWord(e)}`;
+                                } else {
+                                    if (e > 1) {
+                                        return `Добавить ${e} ${getSetWord(e)} в коллекцию`;
+                                    } else {
+                                        return "Добавить набор в коллекцию";
+                                    }
+                                }
+                            })()}</span>
+                            <span class="sm:hidden">${t>0 ? "Обновить" : (e > 1 ? "Добавить "+e : "Добавить")}</span>
                         </button>
                     </div>
+                    
+                    <!-- Delete Button -->
                     ${t>0?`
                         <div class="flex justify-center">
-                            <button data-action="delete-from-set-collection-modal" class="mt-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md py-1.5 px-3 transition-colors duration-150 shadow-lg hover:shadow-red-500/25">Удалить из коллекции</button>
+                            <button data-action="delete-from-set-collection-modal" 
+                                class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[40px] sm:min-h-[44px] w-full sm:w-auto">
+                                ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
+                                <span class="hidden sm:inline">${(() => {
+                                    const getSetWord = (count) => {
+                                        if (count === 1) return "набор";
+                                        if (count >= 2 && count <= 4) return "набора";
+                                        return "наборов";
+                                    };
+                                    if (e > 1) {
+                                        return `Удалить ${e} ${getSetWord(e)} из коллекции`;
+                                    } else {
+                                        return "Удалить набор из коллекции";
+                                    }
+                                })()}</span>
+                                <span class="sm:hidden">${e > 1 ? "Удалить "+e : "Удалить"}</span>
+                            </button>
                         </div>
-                    `:"<div></div>"}
+                    `:""}
+                    
+                    <!-- Info Text -->
+                    <div class="text-xs sm:text-sm md:text-sm lg:text-base text-gray-400 text-center leading-relaxed px-2 sm:px-4">
+                        ${(() => {
+                            const getSetWord = (count) => {
+                                if (count === 1) return "набор";
+                                if (count >= 2 && count <= 4) return "набора";
+                                return "наборов";
+                            };
+                            
+                            if (t > 0) {
+                                if (e > 1) {
+                                    return `Обновление установит точное количество наборов, деталей и минифигурок в коллекции. Удаление уберет ${e} ${getSetWord(e)} со всеми деталями и минифигурками.`;
+                                } else {
+                                    return "Обновление установит точное количество наборов, деталей и минифигурок в коллекции. Удаление уберет набор со всеми деталями и минифигурками.";
+                                }
+                            } else {
+                                if (e > 1) {
+                                    return `Добавление ${e} ${getSetWord(e)} автоматически добавит все детали, минифигурки и их детали с учетом количества в коллекцию`;
+                                } else {
+                                    return "Добавление набора автоматически добавит все детали, минифигурки и их детали в коллекцию";
+                                }
+                            }
+                        })()}
+                    </div>
                 </div>
             </div>
         `
@@ -16626,7 +16712,6 @@ function renderSetModalDetailsView() {
 
                     <div id="set-modal-controls-container">
                         ${renderSetCollectionControls()}
-                        ${renderSetBulkPartsControls()}
                     </div>
                     
                      ${S.setModal.status?`
@@ -16706,7 +16791,7 @@ function updateSetModalView() {
 
 // Прогресс прокрутки в модалке минифигурки
 ;(function(){
-    const setupMinifigScrollProgress = () => {
+    window.setupMinifigScrollProgress = () => {
         const track = document.getElementById('minifig-scroll-progress');
         const content = document.getElementById('minifig-modal-content');
         if (track && content) {
@@ -16742,11 +16827,12 @@ function updateSetModalView() {
         window.addEventListener('resize', () => { update(); }, { passive: true });
     };
     // Инициализация после каждого рендера модалки минифигурки
-    const _updateMinifigModalView = updateMinifigModalView;
-    updateMinifigModalView = function() {
-        _updateMinifigModalView();
-        setupMinifigScrollProgress();
-    };
+    // Убираем перехват updateMinifigModalView чтобы кнопка закрытия не обновлялась при действиях
+    // const _updateMinifigModalView = updateMinifigModalView;
+    // updateMinifigModalView = function() {
+    //     _updateMinifigModalView();
+    //     setupMinifigScrollProgress();
+    // };
 })();
 
 // Прогресс прокрутки в модалке сканера камеры
@@ -16979,7 +17065,7 @@ function renderSetInventory() {
 function updateSetModalControlsState() {
     if (!S.selSetNum) return;
     const e = document.getElementById("set-modal-controls-container");
-    e && (e.innerHTML = renderSetCollectionControls() + renderSetBulkPartsControls())
+    e && (e.innerHTML = renderSetCollectionControls())
 }
 function renderModal() {
     if (!S.selPartId) return void(partModalEl.classList.contains("modal-hidden") || closeModal());
@@ -17250,30 +17336,126 @@ function renderModalControls() {
         selColorId: e,
         qty: t
     } = S.partModal, o = e ? COLOR_MAP[e] : null;
-    if (!o || !S.selPartId) return "";
+    if (!S.selPartId) return "";
     const l = S.coll[S.selPartId]?.[e] || 0;
     return `
-            <div class="bg-gray-700/50 rounded-lg p-3">
-                <div class="space-y-2">
-                    <div class="flex justify-between items-center">
-                        <p class="text-white font-semibold truncate" title="${o.name}">${o.name}</p>
-                        <p class="text-sm text-gray-400 text-right">В коллекции: <span id="modal-in-collection-qty" class="font-bold text-white">${l}</span></p>
+            <div class="bg-gray-700/50 rounded-lg p-3 sm:p-4 md:p-3 lg:p-4 xl:p-5">
+                <div class="space-y-3 sm:space-y-4 md:space-y-3 lg:space-y-4">
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3">
+                        <h3 class="text-sm sm:text-base md:text-base lg:text-lg font-semibold text-white flex items-center justify-between w-full gap-2 sm:gap-3">
+                            <div class="flex items-center gap-2 sm:gap-3">
+                                ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-blue-400")}
+                                <span class="truncate" title="${o ? o.name : 'Выберите цвет'}">${o ? o.name : 'Выберите цвет'}</span>
+                            </div>
+                            <span class="text-xs sm:text-sm md:text-sm lg:text-base text-gray-400">
+                                (В коллекции: <span id="modal-in-collection-qty" class="font-bold text-white">${l}</span>)
+                            </span>
+                        </h3>
                     </div>
                     
-                    <div class="flex justify-between items-center gap-3">
-                        <div class="flex items-center gap-1.5">
-                            <button data-action="decrease-qty" class="p-2 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors duration-150" ${t <= 0 ? 'disabled' : ''} title="Уменьшить количество">${I_Minus("w-5 h-5")}</button>
-                            <input id="modal-quantity-input" type="number" value="${t}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                            <button data-action="increase-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 shadow-lg hover:shadow-gray-500/25" title="Увеличить количество">${I_Plus("w-5 h-5")}</button>
+                    <!-- Controls -->
+                    <div class="flex flex-col gap-3 sm:gap-4">
+                        <!-- Quantity Controls -->
+                        <div class="flex items-center justify-center gap-2 sm:gap-3">
+                            <button data-action="decrease-qty" 
+                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+                                ${t <= 0 ? 'disabled' : ''} 
+                                title="Уменьшить количество">
+                                ${I_Minus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                            </button>
+                            
+                            <input id="modal-quantity-input" 
+                                type="number" 
+                                value="${t}" 
+                                readonly 
+                                class="w-14 sm:w-16 md:w-16 lg:w-18 text-center bg-gray-900 text-white font-bold rounded-lg py-2 sm:py-2.5 md:py-2 lg:py-2.5 text-sm sm:text-base md:text-sm lg:text-base min-h-[44px] border border-gray-600 focus:border-blue-500 focus:outline-none"/>
+                            
+                            <button data-action="increase-qty" 
+                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+                                title="Увеличить количество">
+                                ${I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                            </button>
                         </div>
-                        <button id="modal-update-collection-btn" data-action="update-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
-                            ${l>0?"Обновить":"Добавить"}
+                        
+                        <!-- Action Button -->
+                        <button id="modal-update-collection-btn" data-action="update-collection" 
+                            class="flex items-center justify-center gap-2 sm:gap-3 ${o ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed'} text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-4 sm:px-5 md:px-5 lg:px-6 rounded-lg transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px]"
+                            ${!o ? 'disabled' : ''}>
+                            ${l>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                            <span class="hidden sm:inline">${(() => {
+                                if (!o) return "Выберите цвет";
+                                const getPartWord = (count) => {
+                                    if (count === 1) return "деталь";
+                                    if (count >= 2 && count <= 4) return "детали";
+                                    return "деталей";
+                                };
+                                if (l > 0) {
+                                    return `Обновить до ${t} ${getPartWord(t)}`;
+                                } else {
+                                    if (t > 1) {
+                                        return `Добавить ${t} ${getPartWord(t)} в коллекцию`;
+                                    } else {
+                                        return "Добавить деталь в коллекцию";
+                                    }
+                                }
+                            })()}</span>
+                            <span class="sm:hidden">${!o ? "Выберите цвет" : (l>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить"))}</span>
                         </button>
                     </div>
-                    <div id="modal-delete-container" class="h-12 flex items-center justify-center">
-                        ${l>0?`
-                            <button data-action="delete-from-collection-modal" class="mt-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md py-1.5 px-3 transition-colors duration-150 shadow-lg hover:shadow-red-500/25">Удалить из коллекции</button>
-                        `:""}
+                    
+                    <!-- Delete Button -->
+                    ${l>0?`
+                        <div class="flex justify-center">
+                            <button data-action="delete-from-collection-modal" 
+                                class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[40px] sm:min-h-[44px] w-full sm:w-auto">
+                                ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
+                                <span class="hidden sm:inline">${(() => {
+                                    const getPartWord = (count) => {
+                                        if (count === 1) return "деталь";
+                                        if (count >= 2 && count <= 4) return "детали";
+                                        return "деталей";
+                                    };
+                                    if (t > 1) {
+                                        return `Удалить ${t} ${getPartWord(t)} из коллекции`;
+                                    } else {
+                                        return "Удалить деталь из коллекции";
+                                    }
+                                })()}</span>
+                                <span class="sm:hidden">${t > 1 ? "Удалить "+t : "Удалить"}</span>
+                            </button>
+                        </div>
+                    `:""}
+                    
+                    <!-- Info Text -->
+                    <div class="text-xs sm:text-sm md:text-sm lg:text-base text-gray-400 text-center leading-relaxed px-2 sm:px-4">
+                        ${!o ? 
+                            "Выберите цвет детали для управления коллекцией" :
+                            (l>0 ? 
+                                (t > 1 ? 
+                                    `Обновление установит точное количество деталей в коллекции. Удаление уберет ${t} ${(() => {
+                                        const getPartWord = (count) => {
+                                            if (count === 1) return "деталь";
+                                            if (count >= 2 && count <= 4) return "детали";
+                                            return "деталей";
+                                        };
+                                        return getPartWord(t);
+                                    })()} из коллекции.` :
+                                    "Обновление установит точное количество деталей в коллекции. Удаление уберет деталь из коллекции."
+                                ) : 
+                                (t > 1 ? 
+                                    `Добавление ${t} ${(() => {
+                                        const getPartWord = (count) => {
+                                            if (count === 1) return "деталь";
+                                            if (count >= 2 && count <= 4) return "детали";
+                                            return "деталей";
+                                        };
+                                        return getPartWord(t);
+                                    })()} автоматически добавит их в коллекцию` :
+                                    "Добавление детали автоматически добавит её в коллекцию"
+                                )
+                            )
+                        }
                     </div>
                 </div>
             </div>
@@ -18070,17 +18252,78 @@ function updateModalPartially(e) {
     }
 }
 function updateModalControlsState() {
-    if (!S.selPartId || !S.partModal.selColorId) return;
+    if (!S.selPartId) return;
     const e = S.coll[S.selPartId]?.[S.partModal.selColorId] || 0,
         t = document.getElementById("modal-in-collection-qty");
     t && (t.textContent = String(e));
+    
+    // Обновляем кнопку "Добавить/Обновить"
     const o = document.getElementById("modal-update-collection-btn");
-    o && (o.textContent = e > 0 ? "Обновить" : "Добавить");
+    if (o) {
+        if (!S.partModal.selColorId) {
+            o.textContent = "Выберите цвет";
+            o.disabled = true;
+            o.className = o.className.replace('bg-blue-600 hover:bg-blue-700', 'bg-gray-600 cursor-not-allowed');
+        } else {
+            // Правильная логика для текста кнопки
+            if (e > 0) {
+                // Если деталь есть в коллекции - показываем "Обновить до X деталей"
+                const getPartWord = (count) => {
+                    if (count === 1) return "деталь";
+                    if (count >= 2 && count <= 4) return "детали";
+                    return "деталей";
+                };
+                o.innerHTML = `${I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")} <span class="hidden sm:inline">Обновить до ${S.partModal.qty} ${getPartWord(S.partModal.qty)}</span><span class="sm:hidden">Обновить</span>`;
+            } else {
+                // Если детали нет в коллекции - показываем "Добавить X деталей"
+                const getPartWord = (count) => {
+                    if (count === 1) return "деталь";
+                    if (count >= 2 && count <= 4) return "детали";
+                    return "деталей";
+                };
+                if (S.partModal.qty > 1) {
+                    o.innerHTML = `${I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")} <span class="hidden sm:inline">Добавить ${S.partModal.qty} ${getPartWord(S.partModal.qty)} в коллекцию</span><span class="sm:hidden">Добавить ${S.partModal.qty}</span>`;
+                } else {
+                    o.innerHTML = `${I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")} <span class="hidden sm:inline">Добавить деталь в коллекцию</span><span class="sm:hidden">Добавить</span>`;
+                }
+            }
+            o.disabled = false;
+            o.className = o.className.replace('bg-gray-600 cursor-not-allowed', 'bg-blue-600 hover:bg-blue-700');
+        }
+    }
+    
+    // Обновляем кнопку уменьшения количества
+    const decreaseBtn = document.querySelector('[data-action="decrease-qty"]');
+    if (decreaseBtn) {
+        if (S.partModal.qty > 0) {
+            decreaseBtn.disabled = false;
+            decreaseBtn.className = decreaseBtn.className.replace('bg-gray-700 cursor-not-allowed', 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25');
+        } else {
+            decreaseBtn.disabled = true;
+            decreaseBtn.className = decreaseBtn.className.replace('bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25', 'bg-gray-700 cursor-not-allowed');
+        }
+    }
+    
+    // Обновляем контейнер удаления
     const l = document.getElementById("modal-delete-container");
     if (l) {
-        const t = '<button data-action="delete-from-collection-modal" class="mt-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md py-1.5 px-3 transition-colors duration-150 shadow-lg hover:shadow-red-500/25">Удалить из коллекции</button>';
-        e > 0 ? l.innerHTML.trim() || (l.innerHTML = t) : l.innerHTML = ""
+        if (e > 0) {
+            const getPartWord = (count) => {
+                if (count === 1) return "деталь";
+                if (count >= 2 && count <= 4) return "детали";
+                return "деталей";
+            };
+            const deleteText = S.partModal.qty > 1 ? 
+                `Удалить ${S.partModal.qty} ${getPartWord(S.partModal.qty)} из коллекции` : 
+                "Удалить деталь из коллекции";
+            const t = `<button data-action="delete-from-collection-modal" class="mt-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md py-1.5 px-3 transition-colors duration-150 shadow-lg hover:shadow-red-500/25">${deleteText}</button>`;
+            l.innerHTML = t;
+        } else {
+            l.innerHTML = "";
+        }
     }
+    
+    // Обновляем поле ввода количества
     const a = document.getElementById("modal-quantity-input");
     a && (a.value = String(S.partModal.qty))
 }
@@ -18105,7 +18348,14 @@ function renderMinifigModal(e = !1) {
             <div id="minifig-modal-view-container" class="flex-grow overflow-y-auto no-scrollbar" style="min-height: 0;">
             </div>
         </div>
-        `, updateMinifigModalView()
+        `, updateMinifigModalView();
+        
+        // Настраиваем прогресс прокрутки только при рендере модалки, не при каждом обновлении
+        if (typeof setupMinifigScrollProgress === 'function') {
+            setupMinifigScrollProgress();
+        }
+        
+        // Убираем анимацию кнопки закрытия полностью - как в модалке наборов
 }
 
 function updateMinifigModalView() {
@@ -18258,28 +18508,119 @@ function renderMinifigModalDetailsView() {
     } = S.minifigModal;
     const o = S.minifigColl[S.selFigNum]?.qty || 0;
     const l = `
-        <div class="bg-gray-700/50 rounded-lg p-4">
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <h3 class="text-white font-semibold">Коллекция минифигурок</h3>
-                    <p class="text-sm text-gray-400 text-right">В коллекции: <span class="font-bold text-white">${o}</span></p>
+        <div class="bg-gray-700/50 rounded-lg p-3 sm:p-4 md:p-3 lg:p-4 xl:p-5">
+            <div class="space-y-3 sm:space-y-4 md:space-y-3 lg:space-y-4">
+                <!-- Header -->
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3">
+                    <h3 class="text-sm sm:text-base md:text-base lg:text-lg font-semibold text-white flex items-center justify-between w-full gap-2 sm:gap-3">
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            ${I_Minifig("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5 text-blue-400")}
+                            <span class="hidden sm:inline">Коллекция минифигурок</span>
+                            <span class="sm:hidden">Коллекция</span>
+                        </div>
+                        <span class="text-xs sm:text-sm md:text-sm lg:text-base text-gray-400">
+                            (В коллекции: <span class="font-bold text-white">${o}</span>)
+                        </span>
+                    </h3>
                 </div>
                 
-                <div class="flex justify-between items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <button data-action="decrease-minifig-qty" class="p-2 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-colors duration-150" ${t <= 0 ? 'disabled' : ''}" title="Уменьшить количество">${I_Minus("w-5 h-5")}</button>
-                        <input type="number" value="${t}" readonly class="w-12 text-center bg-gray-900 text-white font-bold rounded-md py-1"/>
-                        <button data-action="increase-minifig-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 shadow-lg hover:shadow-gray-500/25" title="Увеличить количество">${I_Plus("w-5 h-5")}</button>
+                <!-- Controls -->
+                <div class="flex flex-col gap-3 sm:gap-4">
+                    <!-- Quantity Controls -->
+                    <div class="flex items-center justify-center gap-2 sm:gap-3">
+                        <button data-action="decrease-minifig-qty" 
+                            class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+                            ${t <= 0 ? 'disabled' : ''} 
+                            title="Уменьшить количество">
+                            ${I_Minus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                        </button>
+                        
+                        <input type="number" 
+                            value="${t}" 
+                            readonly 
+                            class="w-14 sm:w-16 md:w-16 lg:w-18 text-center bg-gray-900 text-white font-bold rounded-lg py-2 sm:py-2.5 md:py-2 lg:py-2.5 text-sm sm:text-base md:text-sm lg:text-base min-h-[44px] border border-gray-600 focus:border-blue-500 focus:outline-none"/>
+                        
+                        <button data-action="increase-minifig-qty" 
+                            class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+                            title="Увеличить количество">
+                            ${I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                        </button>
                     </div>
-                    <button data-action="update-minifig-collection" class="flex-grow bg-blue-600 text-white font-bold py-2 px-4 rounded-md hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
-                        ${o>0?"Обновить":"Добавить"}
+                    
+                    <!-- Action Button -->
+                    <button data-action="update-minifig-collection" 
+                        class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-4 sm:px-5 md:px-5 lg:px-6 rounded-lg hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px]">
+                        ${o>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                        <span class="hidden sm:inline">${(() => {
+                            const getMinifigWord = (count) => {
+                                if (count === 1) return "минифигурку";
+                                if (count >= 2 && count <= 4) return "минифигурки";
+                                return "минифигурок";
+                            };
+                            if (o > 0) {
+                                return `Обновить до ${t} ${getMinifigWord(t)}`;
+                            } else {
+                                if (t > 1) {
+                                    return `Добавить ${t} ${getMinifigWord(t)} в коллекцию`;
+                                } else {
+                                    return "Добавить минифигурку в коллекцию";
+                                }
+                            }
+                        })()}</span>
+                        <span class="sm:hidden">${o>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить")}</span>
                     </button>
                 </div>
+                
+                <!-- Delete Button -->
                 ${o>0?`
                     <div class="flex justify-center">
-                        <button data-action="delete-from-minifig-collection-modal" class="mt-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md py-1.5 px-3 transition-colors duration-150 shadow-lg hover:shadow-red-500/25">Удалить из коллекции</button>
+                        <button data-action="delete-from-minifig-collection-modal" 
+                            class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[40px] sm:min-h-[44px] w-full sm:w-auto">
+                            ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
+                            <span class="hidden sm:inline">${(() => {
+                                const getMinifigWord = (count) => {
+                                    if (count === 1) return "минифигурку";
+                                    if (count >= 2 && count <= 4) return "минифигурки";
+                                    return "минифигурок";
+                                };
+                                if (t > 1) {
+                                    return `Удалить ${t} ${getMinifigWord(t)} из коллекции`;
+                                } else {
+                                    return "Удалить минифигурку из коллекции";
+                                }
+                            })()}</span>
+                            <span class="sm:hidden">${t > 1 ? "Удалить "+t : "Удалить"}</span>
+                        </button>
                     </div>
-                `:"<div></div>"}
+                `:""}
+                
+                <!-- Info Text -->
+                <div class="text-xs sm:text-sm md:text-sm lg:text-base text-gray-400 text-center leading-relaxed px-2 sm:px-4">
+                    ${o>0 ? 
+                        (t > 1 ? 
+                            `Обновление установит точное количество минифигурок в коллекции. Удаление уберет ${t} ${(() => {
+                                const getMinifigWord = (count) => {
+                                    if (count === 1) return "минифигурку";
+                                    if (count >= 2 && count <= 4) return "минифигурки";
+                                    return "минифигурок";
+                                };
+                                return getMinifigWord(t);
+                            })()} из коллекции.` :
+                            "Обновление установит точное количество минифигурок в коллекции. Удаление уберет минифигурку из коллекции."
+                        ) : 
+                        (t > 1 ? 
+                            `Добавление ${t} ${(() => {
+                                const getMinifigWord = (count) => {
+                                    if (count === 1) return "минифигурку";
+                                    if (count >= 2 && count <= 4) return "минифигурки";
+                                    return "минифигурок";
+                                };
+                                return getMinifigWord(t);
+                            })()} автоматически добавит их в коллекцию` :
+                            "Добавление минифигурки автоматически добавит её в коллекцию"
+                        )
+                    }
+                </div>
             </div>
         </div>`;
     return `
@@ -19638,19 +19979,59 @@ async function handleUpdateCollection(e, t, o) {
     }
 }
 
-function handleUpdateSetCollection(e, t) {
-    const o = (S.setColl[e]?.qty || 0) > 0;
-    t > 0 ? (S.setColl[e] = {
-        qty: t
-        }, o || (fetchAllSetInventory(e).catch(t => console.error(`Failed to proactively fetch inventory for ${e}`, t)), fetchSetMinifigs(e).catch(t => console.error(`Failed to proactively fetch minifigs for ${e}`, t)))) : delete S.setColl[e], S.collectionLastUpdate = Date.now(), saveState(), forceSaveState(), S.gridStale = !0, "collection" === S.view ? updateUI() : (renderSidebar(), mainEl.querySelector(`.set-card[data-set-num="${e}"]`)?.prepend(function() {
-        if (t > 0) {
-            let o = document.createElement("div");
-            return o.className = "absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md", o.textContent = String(t), o
+async function handleUpdateSetCollection(e, t) {
+    const wasInCollection = (S.setColl[e]?.qty || 0) > 0;
+    const oldQty = S.setColl[e]?.qty || 0;
+    
+    // Обновляем количество наборов
+    if (t > 0) {
+        S.setColl[e] = { qty: t };
+        
+        // Если набор добавляется впервые, загружаем инвентарь и минифигурки
+        if (!wasInCollection) {
+            fetchAllSetInventory(e).catch(err => console.error(`Failed to proactively fetch inventory for ${e}`, err));
+            fetchSetMinifigs(e).catch(err => console.error(`Failed to proactively fetch minifigs for ${e}`, err));
         }
-        return document.createDocumentFragment()
-    }())), (function(){
+        
+        // Обновляем детали и минифигурки в коллекции
+        await updateSetPartsAndMinifigsInCollection(e, t, oldQty);
+    } else {
+        // Удаляем набор и все связанные детали/минифигурки
+        delete S.setColl[e];
+        await removeSetPartsAndMinifigsFromCollection(e, oldQty);
+    }
+    
+    // Обновляем состояние
+    S.collectionLastUpdate = Date.now();
+    saveState();
+    forceSaveState();
+    S.gridStale = true;
+    
+    // Обновляем UI
+    if (S.view === 'collection') {
+        updateUI();
+    } else {
+        renderSidebar();
+        const setCard = mainEl.querySelector(`.set-card[data-set-num="${e}"]`);
+        if (setCard) {
+            // Удаляем старые индикаторы количества
+            const oldIndicator = setCard.querySelector('.collection-qty-indicator');
+            if (oldIndicator) oldIndicator.remove();
+            
+            // Добавляем новый индикатор если набор в коллекции
+            if (t > 0) {
+                const indicator = document.createElement("div");
+                indicator.className = "collection-qty-indicator absolute top-3 right-3 bg-blue-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md";
+                indicator.textContent = String(t);
+                setCard.prepend(indicator);
+            }
+        }
+    }
+    
+    // Анимация добавления
+    if (t > 0) {
         const card = mainEl.querySelector(`.set-card[data-set-num="${e}"]`);
-        if (card && t > 0) {
+        if (card) {
             card.classList.add('collection-added');
             card.setAttribute('data-collection-change', 'added');
             setTimeout(() => {
@@ -19658,26 +20039,704 @@ function handleUpdateSetCollection(e, t) {
                 card.removeAttribute('data-collection-change');
             }, 300);
         }
-    })(), S.selSetNum === e && updateSetModalControlsState()
-
-    // В режиме коллекции (после updateUI) — гарантируем анимацию на карточке набора
-    if (S.view === 'collection' && t > 0) {
-        setTimeout(() => {
-            const card = mainEl.querySelector(`.set-card[data-set-num="${e}"]`);
-            if (card) {
-                card.classList.add('collection-added');
-                card.setAttribute('data-collection-change', 'added');
-                setTimeout(() => {
-                    card.classList.remove('collection-added');
-                    card.removeAttribute('data-collection-change');
-                }, 300);
-            }
-        }, 0);
+    }
+    
+    // Обновляем модалку если она открыта
+    if (S.selSetNum === e) {
+        updateSetModalControlsState();
     }
     
     // Если набор был добавлен и у него нет изображения, загружаем его автоматически
     if (t > 0 && !SET_MAP[e]?.set_img_url) {
         fetchMissingImagesForCollection().catch(console.error);
+    }
+}
+
+// Функция для обновления деталей и минифигурок набора в коллекции
+async function updateSetPartsAndMinifigsInCollection(setNum, newQty, oldQty) {
+    try {
+        // Загружаем инвентарь набора если его нет
+        let inventory = S.setModal.inv || [];
+        if (inventory.length === 0) {
+            inventory = await fetchAllSetInventory(setNum) || [];
+        }
+        
+        // Вычисляем разность количества
+        const qtyDiff = newQty - oldQty;
+        
+        // Обновляем детали
+        inventory.forEach(item => {
+            const { part, color, quantity } = item;
+            if (!S.coll[part.part_num]) {
+                S.coll[part.part_num] = {};
+            }
+            const colorId = String(color.id);
+            const currentQty = S.coll[part.part_num][colorId] || 0;
+            const newPartQty = currentQty + (quantity * qtyDiff);
+            
+            if (newPartQty > 0) {
+                S.coll[part.part_num][colorId] = newPartQty;
+            } else {
+                delete S.coll[part.part_num][colorId];
+                if (Object.keys(S.coll[part.part_num]).length === 0) {
+                    delete S.coll[part.part_num];
+                }
+            }
+        });
+        
+        // Обновляем минифигурки и их детали
+        const minifigs = S.setModal.minifigs || await apiFetchPaginated(`/sets/${setNum}/minifigs/`) || [];
+        for (const minifig of minifigs) {
+            const figNum = minifig.set_num;
+            const figQty = minifig.quantity || 1; // Количество одинаковых минифигурок в наборе
+            const currentFigQty = S.minifigColl[figNum]?.qty || 0;
+            const newFigQty = currentFigQty + (figQty * qtyDiff);
+            
+            // Обновляем количество минифигурок в коллекции
+            if (newFigQty > 0) {
+                S.minifigColl[figNum] = { qty: newFigQty };
+            } else {
+                delete S.minifigColl[figNum];
+            }
+            
+            // Добавляем/удаляем детали минифигурки с учетом количества наборов и количества минифигурок
+            // Формула: количество_деталей_минифигурки * количество_одинаковых_минифигурок_в_наборе * разность_количества_наборов
+            try {
+                const minifigParts = await fetchMinifigParts(figNum);
+                if (minifigParts && minifigParts.length > 0) {
+                    minifigParts.forEach(part => {
+                        const partNum = part.part.part_num;
+                        const colorId = String(part.color.id);
+                        const partQty = part.quantity * figQty * qtyDiff; // Умножаем на количество минифигурок в наборе и разность наборов
+                        
+                        if (!S.coll[partNum]) {
+                            S.coll[partNum] = {};
+                        }
+                        S.coll[partNum][colorId] = (S.coll[partNum][colorId] || 0) + partQty;
+                        
+                        // Удаляем пустые записи
+                        if (S.coll[partNum][colorId] <= 0) {
+                            delete S.coll[partNum][colorId];
+                            if (Object.keys(S.coll[partNum]).length === 0) {
+                                delete S.coll[partNum];
+                            }
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error(`Error fetching parts for minifig ${figNum}:`, error);
+            }
+        }
+    } catch (error) {
+        console.error(`Error updating parts and minifigs for set ${setNum}:`, error);
+    }
+}
+
+// Функция для показа модалки удаления наборов
+function showSetDeleteModal(setNum, currentQty) {
+    const set = SET_MAP[setNum];
+    if (!set) return;
+    
+    // Создаем модалку удаления
+    const modalHtml = `
+        <div id="set-delete-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md p-6">
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    ${I_Trash("w-6 h-6 text-red-400")}
+                    <h3 class="text-lg font-semibold text-white">Удаление наборов</h3>
+                </div>
+                
+                <div class="mb-4 text-center">
+                    <p class="text-gray-300 mb-2">Набор: <span class="font-semibold text-white">${set.name}</span></p>
+                    <p class="text-sm text-gray-400">В коллекции: <span class="font-bold text-white">${currentQty}</span> ${(() => {
+                        const getSetWord = (count) => {
+                            if (count === 1) return "набор";
+                            if (count >= 2 && count <= 4) return "набора";
+                            return "наборов";
+                        };
+                        return getSetWord(currentQty);
+                    })()}</p>
+                </div>
+                
+                <div class="mb-6 text-center">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Сколько наборов удалить?
+                    </label>
+                    <div class="flex items-center justify-center gap-3">
+                        <button id="decrease-delete-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                            ${I_Minus("w-4 h-4")}
+                        </button>
+                        <input id="delete-quantity-input" type="number" value="1" min="1" max="${currentQty}" 
+                               class="w-20 text-center bg-gray-900 text-white font-bold rounded-lg py-2 text-lg min-h-[44px] border border-gray-600 focus:border-red-500 focus:outline-none"/>
+                        <button id="increase-delete-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                            ${I_Plus("w-4 h-4")}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-3">
+                    <button id="confirm-set-delete" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 shadow-lg hover:shadow-red-500/25">
+                        Удалить
+                    </button>
+                    <button id="delete-all-sets" class="bg-red-800 hover:bg-red-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 shadow-lg hover:shadow-red-700/25">
+                        Удалить все наборы
+                    </button>
+                    <button id="cancel-set-delete" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150">
+                        Отмена
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-xs text-gray-400 text-center">
+                    Будет удалено со всеми деталями и минифигурками
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Добавляем модалку в DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Обработчики событий
+    const modal = document.getElementById('set-delete-modal');
+    const qtyInput = document.getElementById('delete-quantity-input');
+    const decreaseBtn = document.getElementById('decrease-delete-qty');
+    const increaseBtn = document.getElementById('increase-delete-qty');
+    const cancelBtn = document.getElementById('cancel-set-delete');
+    const confirmBtn = document.getElementById('confirm-set-delete');
+    
+    // Управление количеством
+    decreaseBtn.addEventListener('click', () => {
+        const current = parseInt(qtyInput.value) || 1;
+        if (current > 1) {
+            qtyInput.value = current - 1;
+        }
+    });
+    
+    increaseBtn.addEventListener('click', () => {
+        const current = parseInt(qtyInput.value) || 1;
+        if (current < currentQty) {
+            qtyInput.value = current + 1;
+        }
+    });
+    
+    // Отмена
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // Подтверждение
+    confirmBtn.addEventListener('click', async () => {
+        const deleteQty = parseInt(qtyInput.value) || 1;
+        const newQty = Math.max(0, currentQty - deleteQty);
+        
+        // Устанавливаем новое количество наборов
+        if (newQty > 0) {
+            S.setColl[setNum] = { qty: newQty };
+        } else {
+            delete S.setColl[setNum];
+        }
+        
+        // Удаляем детали и минифигурки пропорционально количеству удаляемых наборов
+        await removeSetPartsAndMinifigsFromCollection(setNum, deleteQty);
+        
+        // Обновляем состояние
+        S.collectionLastUpdate = Date.now();
+        saveState();
+        forceSaveState();
+        S.gridStale = true;
+        
+        // Обновляем UI
+        if (S.view === 'collection') {
+            updateUI();
+        } else {
+            renderSidebar();
+        }
+        
+        modal.remove();
+    });
+    
+    // Удалить все наборы
+    const deleteAllBtn = document.getElementById('delete-all-sets');
+    deleteAllBtn.addEventListener('click', async () => {
+        // Удаляем все наборы
+        delete S.setColl[setNum];
+        
+        // Удаляем все детали и минифигурки
+        await removeSetPartsAndMinifigsFromCollection(setNum, currentQty);
+        
+        // Обновляем состояние
+        S.collectionLastUpdate = Date.now();
+        saveState();
+        forceSaveState();
+        S.gridStale = true;
+        
+        // Обновляем UI
+        if (S.view === 'collection') {
+            updateUI();
+        } else {
+            renderSidebar();
+        }
+        
+        modal.remove();
+    });
+    
+    // Закрытие по клику вне модалки
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Закрытие по Escape
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+// Функция для показа модалки удаления деталей
+function showPartDeleteModal(partId, colorId, currentQty) {
+    const part = PART_MAP[partId];
+    const color = COLOR_MAP[colorId];
+    if (!part || !color) return;
+    
+    // Создаем модалку удаления
+    const modalHtml = `
+        <div id="part-delete-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md p-6">
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    ${I_Trash("w-6 h-6 text-red-400")}
+                    <h3 class="text-lg font-semibold text-white">Удаление деталей</h3>
+                </div>
+                
+                <div class="mb-4 text-center">
+                    <p class="text-gray-300 mb-2">Деталь: <span class="font-semibold text-white">${part.name}</span></p>
+                    <p class="text-sm text-gray-400">Цвет: <span class="font-semibold text-white">${color.name}</span></p>
+                    <p class="text-sm text-gray-400">В коллекции: <span class="font-bold text-white">${currentQty}</span> ${(() => {
+                        const getPartWord = (count) => {
+                            if (count === 1) return "деталь";
+                            if (count >= 2 && count <= 4) return "детали";
+                            return "деталей";
+                        };
+                        return getPartWord(currentQty);
+                    })()}</p>
+                </div>
+                
+                <div class="mb-6 text-center">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Сколько деталей удалить?
+                    </label>
+                    <div class="flex items-center justify-center gap-3">
+                        <button id="decrease-part-delete-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                            ${I_Minus("w-4 h-4")}
+                        </button>
+                        <input id="part-delete-quantity-input" type="number" value="1" min="1" max="${currentQty}" 
+                               class="w-20 text-center bg-gray-900 text-white font-bold rounded-lg py-2 text-lg min-h-[44px] border border-gray-600 focus:border-red-500 focus:outline-none"/>
+                        <button id="increase-part-delete-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                            ${I_Plus("w-4 h-4")}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-3">
+                    <button id="confirm-part-delete" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 shadow-lg hover:shadow-red-500/25">
+                        Удалить
+                    </button>
+                    <button id="delete-all-parts" class="bg-red-800 hover:bg-red-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 shadow-lg hover:shadow-red-700/25">
+                        Удалить все детали
+                    </button>
+                    <button id="cancel-part-delete" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150">
+                        Отмена
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-xs text-gray-400 text-center">
+                    Будет удалено из коллекции
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Добавляем модалку в DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Обработчики событий
+    const modal = document.getElementById('part-delete-modal');
+    const qtyInput = document.getElementById('part-delete-quantity-input');
+    const decreaseBtn = document.getElementById('decrease-part-delete-qty');
+    const increaseBtn = document.getElementById('increase-part-delete-qty');
+    const cancelBtn = document.getElementById('cancel-part-delete');
+    const confirmBtn = document.getElementById('confirm-part-delete');
+    
+    // Управление количеством
+    decreaseBtn.addEventListener('click', () => {
+        const current = parseInt(qtyInput.value) || 1;
+        if (current > 1) {
+            qtyInput.value = current - 1;
+        }
+    });
+    
+    increaseBtn.addEventListener('click', () => {
+        const current = parseInt(qtyInput.value) || 1;
+        if (current < currentQty) {
+            qtyInput.value = current + 1;
+        }
+    });
+    
+    // Отмена
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // Подтверждение
+    confirmBtn.addEventListener('click', async () => {
+        const deleteQty = parseInt(qtyInput.value) || 1;
+        const newQty = Math.max(0, currentQty - deleteQty);
+        
+        // Устанавливаем новое количество деталей
+        if (newQty > 0) {
+            S.coll[partId][colorId] = newQty;
+        } else {
+            delete S.coll[partId][colorId];
+            if (Object.keys(S.coll[partId]).length === 0) {
+                delete S.coll[partId];
+            }
+        }
+        
+        // Обновляем состояние
+        S.collectionLastUpdate = Date.now();
+        saveState();
+        forceSaveState();
+        S.gridStale = true;
+        
+        // Обновляем UI
+        if (S.view === 'collection') {
+            updateUI();
+        } else {
+            renderSidebar();
+        }
+        
+        // Обновляем модалку
+        S.partModal.qty = newQty;
+        updateModalControlsState();
+        
+        modal.remove();
+    });
+    
+    // Удалить все детали
+    const deleteAllBtn = document.getElementById('delete-all-parts');
+    deleteAllBtn.addEventListener('click', async () => {
+        // Удаляем все детали этого цвета
+        delete S.coll[partId][colorId];
+        if (Object.keys(S.coll[partId]).length === 0) {
+            delete S.coll[partId];
+        }
+        
+        // Обновляем состояние
+        S.collectionLastUpdate = Date.now();
+        saveState();
+        forceSaveState();
+        S.gridStale = true;
+        
+        // Обновляем UI
+        if (S.view === 'collection') {
+            updateUI();
+        } else {
+            renderSidebar();
+        }
+        
+        // Обновляем модалку
+        S.partModal.qty = 0;
+        updateModalControlsState();
+        
+        modal.remove();
+    });
+    
+    // Закрытие по клику вне модалки
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Закрытие по Escape
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+// Функция для показа модалки удаления минифигурок
+function showMinifigDeleteModal(figNum, currentQty) {
+    const minifig = MINIFIG_MAP[figNum];
+    if (!minifig) return;
+    
+    // Создаем модалку удаления
+    const modalHtml = `
+        <div id="minifig-delete-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+            <div class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-md p-6">
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    ${I_Trash("w-6 h-6 text-red-400")}
+                    <h3 class="text-lg font-semibold text-white">Удаление минифигурок</h3>
+                </div>
+                
+                <div class="mb-4 text-center">
+                    <p class="text-gray-300 mb-2">Минифигурка: <span class="font-semibold text-white">${minifig.name}</span></p>
+                    <p class="text-sm text-gray-400">В коллекции: <span class="font-bold text-white">${currentQty}</span> ${(() => {
+                        const getMinifigWord = (count) => {
+                            if (count === 1) return "минифигурка";
+                            if (count >= 2 && count <= 4) return "минифигурки";
+                            return "минифигурок";
+                        };
+                        return getMinifigWord(currentQty);
+                    })()}</p>
+                </div>
+                
+                <div class="mb-6 text-center">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">
+                        Сколько минифигурок удалить?
+                    </label>
+                    <div class="flex items-center justify-center gap-3">
+                        <button id="decrease-minifig-delete-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                            ${I_Minus("w-4 h-4")}
+                        </button>
+                        <input id="minifig-delete-quantity-input" type="number" value="1" min="1" max="${currentQty}" 
+                               class="w-20 text-center bg-gray-900 text-white font-bold rounded-lg py-2 text-lg min-h-[44px] border border-gray-600 focus:border-red-500 focus:outline-none"/>
+                        <button id="increase-minifig-delete-qty" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center">
+                            ${I_Plus("w-4 h-4")}
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col gap-3">
+                    <button id="confirm-minifig-delete" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 shadow-lg hover:shadow-red-500/25">
+                        Удалить
+                    </button>
+                    <button id="delete-all-minifigs" class="bg-red-800 hover:bg-red-900 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150 shadow-lg hover:shadow-red-700/25">
+                        Удалить все минифигурки
+                    </button>
+                    <button id="cancel-minifig-delete" class="bg-gray-600 hover:bg-gray-500 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-150">
+                        Отмена
+                    </button>
+                </div>
+                
+                <div class="mt-4 text-xs text-gray-400 text-center">
+                    Будет удалено из коллекции
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Добавляем модалку в DOM
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Обработчики событий
+    const modal = document.getElementById('minifig-delete-modal');
+    const qtyInput = document.getElementById('minifig-delete-quantity-input');
+    const decreaseBtn = document.getElementById('decrease-minifig-delete-qty');
+    const increaseBtn = document.getElementById('increase-minifig-delete-qty');
+    const cancelBtn = document.getElementById('cancel-minifig-delete');
+    const confirmBtn = document.getElementById('confirm-minifig-delete');
+    
+    // Управление количеством
+    decreaseBtn.addEventListener('click', () => {
+        const current = parseInt(qtyInput.value) || 1;
+        if (current > 1) {
+            qtyInput.value = current - 1;
+        }
+    });
+    
+    increaseBtn.addEventListener('click', () => {
+        const current = parseInt(qtyInput.value) || 1;
+        if (current < currentQty) {
+            qtyInput.value = current + 1;
+        }
+    });
+    
+    // Отмена
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // Подтверждение
+    confirmBtn.addEventListener('click', async () => {
+        const deleteQty = parseInt(qtyInput.value) || 1;
+        const newQty = Math.max(0, currentQty - deleteQty);
+        
+        // Устанавливаем новое количество минифигурок
+        if (newQty > 0) {
+            S.minifigColl[figNum] = { qty: newQty };
+        } else {
+            delete S.minifigColl[figNum];
+        }
+        
+        // Обновляем состояние
+        S.collectionLastUpdate = Date.now();
+        saveState();
+        forceSaveState();
+        S.gridStale = true;
+        
+        // Обновляем UI
+        if (S.view === 'collection') {
+            updateUI();
+        } else {
+            renderSidebar();
+        }
+        
+        // Обновляем модалку
+        S.minifigModal.qty = newQty;
+        updateMinifigModalView();
+        
+        modal.remove();
+    });
+    
+    // Удалить все минифигурки
+    const deleteAllBtn = document.getElementById('delete-all-minifigs');
+    deleteAllBtn.addEventListener('click', async () => {
+        // Удаляем все минифигурки
+        delete S.minifigColl[figNum];
+        
+        // Обновляем состояние
+        S.collectionLastUpdate = Date.now();
+        saveState();
+        forceSaveState();
+        S.gridStale = true;
+        
+        // Обновляем UI
+        if (S.view === 'collection') {
+            updateUI();
+        } else {
+            renderSidebar();
+        }
+        
+        // Обновляем модалку
+        S.minifigModal.qty = 0;
+        updateMinifigModalView();
+        
+        modal.remove();
+    });
+    
+    // Закрытие по клику вне модалки
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    // Закрытие по Escape
+    const handleEscape = (e) => {
+        if (e.key === 'Escape') {
+            modal.remove();
+            document.removeEventListener('keydown', handleEscape);
+        }
+    };
+    document.addEventListener('keydown', handleEscape);
+}
+
+// Функция для удаления деталей и минифигурок набора из коллекции
+async function removeSetPartsAndMinifigsFromCollection(setNum, deleteQty) {
+    try {
+        // Загружаем инвентарь набора
+        let inventory = S.setModal.inv || [];
+        if (inventory.length === 0) {
+            inventory = await fetchAllSetInventory(setNum) || [];
+        }
+        
+        // Если инвентарь все еще пустой, загружаем его принудительно
+        if (inventory.length === 0) {
+            console.log(`Loading inventory for set ${setNum} during removal`);
+            inventory = await fetchAllSetInventory(setNum) || [];
+        }
+        
+        console.log(`Removing ${deleteQty} sets from collection. Inventory items: ${inventory.length}`);
+        
+        // Удаляем детали
+        inventory.forEach(item => {
+            const { part, color, quantity } = item;
+            if (S.coll[part.part_num]) {
+                const colorId = String(color.id);
+                const currentQty = S.coll[part.part_num][colorId] || 0;
+                const newPartQty = currentQty - (quantity * deleteQty);
+                
+                if (newPartQty > 0) {
+                    S.coll[part.part_num][colorId] = newPartQty;
+                } else {
+                    delete S.coll[part.part_num][colorId];
+                    if (Object.keys(S.coll[part.part_num]).length === 0) {
+                        delete S.coll[part.part_num];
+                    }
+                }
+            }
+        });
+        
+        // Удаляем минифигурки и их детали
+        let minifigs = S.setModal.minifigs || [];
+        if (minifigs.length === 0) {
+            minifigs = await apiFetchPaginated(`/sets/${setNum}/minifigs/`) || [];
+        }
+        
+        // Если минифигурки все еще пустые, загружаем их принудительно
+        if (minifigs.length === 0) {
+            console.log(`Loading minifigs for set ${setNum} during removal`);
+            minifigs = await apiFetchPaginated(`/sets/${setNum}/minifigs/`) || [];
+        }
+        
+        console.log(`Removing minifigs: ${minifigs.length} minifigs found`);
+        for (const minifig of minifigs) {
+            const figNum = minifig.set_num;
+            const figQty = minifig.quantity || 1; // Количество одинаковых минифигурок в наборе
+            const currentFigQty = S.minifigColl[figNum]?.qty || 0;
+            const newFigQty = currentFigQty - (figQty * deleteQty);
+            
+            // Обновляем количество минифигурок в коллекции
+            if (newFigQty > 0) {
+                S.minifigColl[figNum] = { qty: newFigQty };
+            } else {
+                delete S.minifigColl[figNum];
+            }
+            
+            // Удаляем детали минифигурки с учетом количества наборов и количества минифигурок
+            // Формула: количество_деталей_минифигурки * количество_одинаковых_минифигурок_в_наборе * количество_удаляемых_наборов
+            try {
+                const minifigParts = await fetchMinifigParts(figNum);
+                if (minifigParts && minifigParts.length > 0) {
+                    console.log(`Removing parts for minifig ${figNum}: ${minifigParts.length} parts found`);
+                    minifigParts.forEach(part => {
+                        const partNum = part.part.part_num;
+                        const colorId = String(part.color.id);
+                        const partQty = part.quantity * figQty * deleteQty; // Умножаем на количество минифигурок в наборе и количество удаляемых наборов
+                        
+                        if (S.coll[partNum] && S.coll[partNum][colorId]) {
+                            const currentPartQty = S.coll[partNum][colorId] || 0;
+                            const newPartQty = currentPartQty - partQty;
+                            
+                            if (newPartQty > 0) {
+                                S.coll[partNum][colorId] = newPartQty;
+                            } else {
+                                delete S.coll[partNum][colorId];
+                                if (Object.keys(S.coll[partNum]).length === 0) {
+                                    delete S.coll[partNum];
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    console.log(`No parts found for minifig ${figNum} during removal`);
+                }
+            } catch (error) {
+                console.error(`Error fetching parts for minifig ${figNum} during removal:`, error);
+            }
+        }
+        
+        console.log(`Finished removing ${deleteQty} sets from collection`);
+    } catch (error) {
+        console.error(`Error removing parts and minifigs for set ${setNum}:`, error);
     }
 }
 async function handleUpdateMinifigCollection(e, t, o = !0) {
@@ -23218,7 +24277,20 @@ document.addEventListener("click", async e => {
     }
     
     const d = t.closest('[data-action="delete-from-collection"]');
-    if (d?.dataset.partId && d.dataset.colorId) return await handleUpdateCollection(d.dataset.partId, d.dataset.colorId, 0);
+    if (d?.dataset.partId && d.dataset.colorId) {
+        const partId = d.dataset.partId;
+        const colorId = d.dataset.colorId;
+        const currentQty = S.coll[partId]?.[colorId] || 0;
+        
+        if (currentQty === 1) {
+            // Если в коллекции 1 деталь - удаляем сразу
+            return await handleUpdateCollection(partId, colorId, 0);
+        } else if (currentQty > 1) {
+            // Если больше 1 детали - показываем модалку выбора
+            showPartDeleteModal(partId, colorId, currentQty);
+            return;
+        }
+    }
     const delFolderBtn = t.closest('[data-action="delete-folder-from-collection"]');
     if (delFolderBtn) {
         const pid = delFolderBtn.getAttribute('data-part-id');
@@ -23249,7 +24321,16 @@ document.addEventListener("click", async e => {
         const delFigBtn = t.closest('[data-action="delete-minifig-from-collection"]');
         if (delFigBtn) {
             const num = delFigBtn.dataset.figNum;
-            if (num) handleUpdateMinifigCollection(num, 0, false);
+            if (num) {
+                const currentQty = S.minifigColl[num]?.qty || 0;
+                if (currentQty === 1) {
+                    // Если в коллекции 1 минифигурка - удаляем сразу
+                    handleUpdateMinifigCollection(num, 0, false);
+                } else if (currentQty > 1) {
+                    // Если больше 1 минифигурки - показываем модалку выбора
+                    showMinifigDeleteModal(num, currentQty);
+                }
+            }
             return;
         }
         const selFigBtn = t.closest('[data-action="toggle-select"]');
@@ -23269,7 +24350,16 @@ document.addEventListener("click", async e => {
         const delSetBtn = t.closest('[data-action="delete-set-from-collection"]');
         if (delSetBtn) {
             const num = delSetBtn.dataset.setNum;
-            if (num) handleUpdateSetCollection(num, 0);
+            if (num) {
+                const currentQty = S.setColl[num]?.qty || 0;
+                if (currentQty === 1) {
+                    // Если в коллекции 1 набор - удаляем сразу
+                    handleUpdateSetCollection(num, 0).catch(console.error);
+                } else if (currentQty > 1) {
+                    // Если больше 1 набора - показываем модалку выбора
+                    showSetDeleteModal(num, currentQty);
+                }
+            }
             return;
         }
         const selSetBtn = t.closest('[data-action="toggle-select"]');
@@ -23467,7 +24557,7 @@ document.addEventListener("click", async e => {
         for (const key of keys) {
             if (key.startsWith('sets:')) {
                 const id = key.split(':')[1];
-                handleUpdateSetCollection(id, 0);
+                handleUpdateSetCollection(id, 0).catch(console.error);
             } else if (key.startsWith('minifigs:')) {
                 const id = key.split(':')[1];
                 await handleUpdateMinifigCollection(id, 0, false);
@@ -23494,8 +24584,7 @@ document.addEventListener("click", async e => {
             if (key.startsWith('sets:')) {
                 const id = key.split(':')[1];
                 // Добавляем набор и весь его инвентарь
-                handleUpdateSetCollection(id, (S.setColl[id]?.qty || 0) + 1);
-                handleBulkUpdatePartsFromSet(id, 'add');
+                handleUpdateSetCollection(id, (S.setColl[id]?.qty || 0) + 1).catch(console.error);
             } else if (key.startsWith('minifigs:')) {
                 const id = key.split(':')[1];
                 S.minifigColl[id] = { qty: (S.minifigColl[id]?.qty || 0) + 1 };
@@ -24542,12 +25631,40 @@ document.addEventListener("click", async e => {
                 S.minifigModal.qty++, renderMinifigModal(!1);
                 break;
             case "update-minifig-collection":
-                S.selFigNum && await handleUpdateMinifigCollection(S.selFigNum, S.minifigModal.qty);
+                if (S.selFigNum) {
+                    const currentQty = S.minifigColl[S.selFigNum]?.qty || 0;
+                    const targetQty = S.minifigModal.qty;
+                    
+                    if (currentQty === 0) {
+                        // Если минифигурки нет в коллекции
+                        if (targetQty <= 1) {
+                            // Добавляем 1 минифигурку
+                            await handleUpdateMinifigCollection(S.selFigNum, 1);
+                            S.minifigModal.qty = 1;
+                        } else {
+                            // Добавляем указанное количество минифигурок
+                            await handleUpdateMinifigCollection(S.selFigNum, targetQty);
+                        }
+                    } else {
+                        // Обновляем до точного значения из счетчика
+                        await handleUpdateMinifigCollection(S.selFigNum, targetQty);
+                    }
+                    updateMinifigModalView();
+                }
                 break;
             case "delete-from-minifig-collection-modal":
                 if (S.selFigNum) {
-                    await handleUpdateMinifigCollection(S.selFigNum, 0);
-                    S.minifigModal.qty = 0;
+                    const currentQty = S.minifigColl[S.selFigNum]?.qty || 0;
+                    const deleteQty = S.minifigModal.qty;
+                    
+                    if (currentQty === 1) {
+                        // Если в коллекции 1 минифигурка - удаляем сразу
+                        await handleUpdateMinifigCollection(S.selFigNum, 0);
+                        S.minifigModal.qty = 0;
+                    } else if (currentQty > 1) {
+                        // Если больше 1 минифигурки - показываем модалку выбора
+                        showMinifigDeleteModal(S.selFigNum, currentQty);
+                    }
                 }
                 break;
             case "toggle-minifig-modal-view":
@@ -24574,8 +25691,8 @@ document.addEventListener("click", async e => {
                         renderMinifigModal(false);
                     }
                 } else {
-                    // Простое переключение — перерисовываем всю модалку как у наборов
-                    renderMinifigModal(false);
+                    // Простое переключение — обновляем только содержимое
+                    updateMinifigModalView();
                 }
                 break;
             case "add-minifig-parts-modal":
@@ -24590,7 +25707,7 @@ document.addEventListener("click", async e => {
                 if (S.selFigNum) {
                     try {
                         await fetchMinifigDetails(S.selFigNum);
-                        renderMinifigModal(false);
+                        updateMinifigModalView();
                     } catch (error) {
                         console.error('Failed to refresh minifig image:', error);
                     }
@@ -24698,10 +25815,60 @@ document.addEventListener("click", async e => {
                 S.setModal.qty++, updateSetModalControlsState();
                 break;
             case "update-set-collection":
-                S.selSetNum && handleUpdateSetCollection(S.selSetNum, S.setModal.qty);
+                if (S.selSetNum) {
+                    const currentQty = S.setColl[S.selSetNum]?.qty || 0;
+                    const targetQty = S.setModal.qty;
+                    
+                    if (currentQty === 0) {
+                        // Если набора нет в коллекции
+                        if (targetQty <= 1) {
+                            // Добавляем 1 набор
+                            handleUpdateSetCollection(S.selSetNum, 1).catch(console.error);
+                            S.setModal.qty = 1;
+                        } else {
+                            // Добавляем указанное количество наборов
+                            handleUpdateSetCollection(S.selSetNum, targetQty).catch(console.error);
+                        }
+                    } else {
+                        // Обновляем до точного значения из счетчика
+                        handleUpdateSetCollection(S.selSetNum, targetQty).catch(console.error);
+                    }
+                    updateSetModalControlsState();
+                }
                 break;
             case "delete-from-set-collection-modal":
-                S.selSetNum && (handleUpdateSetCollection(S.selSetNum, 0), S.setModal.qty = 0);
+                if (S.selSetNum) {
+                    const currentQty = S.setColl[S.selSetNum]?.qty || 0;
+                    const deleteQty = S.setModal.qty; // Количество для удаления из счетчика
+                    const targetQty = Math.max(0, currentQty - deleteQty); // Удаляем выбранное количество
+                    
+                    // Устанавливаем новое количество наборов
+                    if (targetQty > 0) {
+                        S.setColl[S.selSetNum] = { qty: targetQty };
+                    } else {
+                        delete S.setColl[S.selSetNum];
+                    }
+                    
+                    // Удаляем детали и минифигурки пропорционально количеству удаляемых наборов
+                    await removeSetPartsAndMinifigsFromCollection(S.selSetNum, deleteQty);
+                    
+                    // Обновляем состояние
+                    S.collectionLastUpdate = Date.now();
+                    saveState();
+                    forceSaveState();
+                    S.gridStale = true;
+                    
+                    // Обновляем UI
+                    if (S.view === 'collection') {
+                        updateUI();
+                    } else {
+                        renderSidebar();
+                    }
+                    
+                    // Обновляем модалку
+                    S.setModal.qty = targetQty;
+                    updateSetModalControlsState();
+                }
                 break;
             case "bulk-add-parts":
                 S.selSetNum && handleBulkUpdatePartsFromSet(S.selSetNum, "add");
@@ -24858,10 +26025,41 @@ document.addEventListener("click", async e => {
                     S.partModal.qty++, updateModalControlsState();
                     break;
                 case "update-collection":
-                    S.selPartId && S.partModal.selColorId && await handleUpdateCollection(S.selPartId, S.partModal.selColorId, S.partModal.qty);
+                    if (S.selPartId && S.partModal.selColorId) {
+                        const currentQty = S.coll[S.selPartId]?.[S.partModal.selColorId] || 0;
+                        const targetQty = S.partModal.qty;
+                        
+                        if (currentQty === 0) {
+                            // Если детали нет в коллекции
+                            if (targetQty <= 1) {
+                                // Добавляем 1 деталь
+                                await handleUpdateCollection(S.selPartId, S.partModal.selColorId, 1);
+                                S.partModal.qty = 1;
+                            } else {
+                                // Добавляем указанное количество деталей
+                                await handleUpdateCollection(S.selPartId, S.partModal.selColorId, targetQty);
+                            }
+                        } else {
+                            // Обновляем до точного значения из счетчика
+                            await handleUpdateCollection(S.selPartId, S.partModal.selColorId, targetQty);
+                        }
+                        updateModalControlsState();
+                    }
                     break;
                 case "delete-from-collection-modal":
-                    S.selPartId && S.partModal.selColorId && (await handleUpdateCollection(S.selPartId, S.partModal.selColorId, 0), S.partModal.qty = 0);
+                    if (S.selPartId && S.partModal.selColorId) {
+                        const currentQty = S.coll[S.selPartId]?.[S.partModal.selColorId] || 0;
+                        const deleteQty = S.partModal.qty;
+                        
+                        if (currentQty === 1) {
+                            // Если в коллекции 1 деталь - удаляем сразу
+                            await handleUpdateCollection(S.selPartId, S.partModal.selColorId, 0);
+                            S.partModal.qty = 0;
+                        } else if (currentQty > 1) {
+                            // Если больше 1 детали - показываем модалку выбора
+                            showPartDeleteModal(S.selPartId, S.partModal.selColorId, currentQty);
+                        }
+                    }
                     break;
                 case "go-to-category":
                     o && (closeModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "parts", S.selCatId = parseInt(o, 10), S.selFigNum = null, S.showRelatedSets = false, loadPartsForCategory(S.selCatId));
