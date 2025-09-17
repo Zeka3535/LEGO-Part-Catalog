@@ -15883,6 +15883,11 @@ function renderMainContent() {
                 i = S.catGroups;
                 n = Object.values(i).flat();
                 l = "Все детали";
+                console.log('🔧 Using all parts from catGroups:', {
+                    catGroupsKeys: Object.keys(S.catGroups),
+                    totalParts: n.length,
+                    firstFew: n.slice(0, 3).map(p => ({id: p.id, name: p.name}))
+                });
             }
             
             // Фильтры для каталога «Все детали»
@@ -15917,7 +15922,10 @@ function renderMainContent() {
             console.log('📊 Parts final result:', {
                 iKeys: Object.keys(i),
                 rLength: r.length,
-                tLength: t?.length || 0
+                tLength: t?.length || 0,
+                toDisplay: S.toDisplay,
+                hasMoreItems: S.hasMoreItems,
+                firstFewParts: t?.slice(0, 3).map(p => ({id: p.id, name: p.name})) || []
             });
             // Применяем сортировку к карточкам после выбора лучшей вариации
             if (S.sortBy) {
@@ -16108,14 +16116,24 @@ function renderMainContent() {
             ` : '';
 
             // Каталог (sets/minifigs) рендерим как раньше, а для деталей в коллекции включаем группировку по имени
+            console.log('🔍 renderMainContent debug:', {
+                view: S.view,
+                subView: S.subView,
+                tType: typeof t,
+                tLength: t?.length,
+                tIsArray: Array.isArray(t),
+                toDisplay: S.toDisplay
+            });
+            
             if (S.view === 'catalog' || S.subView !== 'parts') {
                 // Старое поведение сетки
                 // Рассчитываем лимит отображаемых элементов
-                console.log('📊 Setting hasMoreItems for catalog view:', {
+                console.log('📊 Setting hasMoreItems for non-parts view:', {
                     tLength: t?.length || 0,
                     toDisplay: S.toDisplay,
                     t: t,
-                    subView: S.subView
+                    subView: S.subView,
+                    view: S.view
                 });
                 
                 // Защита от null/undefined значений
@@ -16129,6 +16147,18 @@ function renderMainContent() {
                     S.totalItems = t.length;
                     const shown = t.slice(0, S.toDisplay);
                     S.loadedItems = shown.length;
+                    
+                    // Дополнительная отладочная информация для деталей
+                    if (S.subView === 'parts') {
+                        console.log('🔧 Parts pagination debug:', {
+                            view: S.view,
+                            totalParts: t.length,
+                            toDisplay: S.toDisplay,
+                            hasMoreItems: S.hasMoreItems,
+                            shownCount: shown.length,
+                            remaining: t.length - shown.length
+                        });
+                    }
                 }
                 
                 console.log('📊 Catalog view stats:', {
@@ -16558,36 +16588,77 @@ function setupScrollListener() {
     console.log('✅ Scroll listener attribute set');
     
     let scrollTimeout;
+    let lastLoadTime = 0;
+    let lastScrollTop = 0;
+    const minLoadInterval = 500; // Минимум 500ms между загрузками
+    const fastScrollThreshold = 100; // Быстрая прокрутка если больше 100px за раз
     
     mainEl.addEventListener('scroll', () => {
         clearTimeout(scrollTimeout);
         
         scrollTimeout = setTimeout(() => {
-            // Автоматическая загрузка работает только для каталога
-            if (S.view !== 'catalog') {
+            // Автоматическая загрузка работает для каталога и коллекции
+            if (S.view !== 'catalog' && S.view !== 'collection') {
+                console.log('📜 Scroll detected but not in catalog or collection view:', S.view);
                 return;
+            }
+            
+            // Отладочная информация для деталей в каталоге и коллекции
+            if (S.subView === 'parts') {
+                console.log('📜 Scroll detected in parts view:', {
+                    view: S.view,
+                    toDisplay: S.toDisplay,
+                    hasMoreItems: S.hasMoreItems,
+                    loading: S.loading
+                });
             }
             
             const scrollTop = mainEl.scrollTop;
             const scrollHeight = mainEl.scrollHeight;
             const clientHeight = mainEl.clientHeight;
             
-            // Проверяем, достигли ли мы конца страницы
-            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 100; // 100px от конца
+            // Проверяем, приближаемся ли мы к концу страницы (предзагрузка)
+            const isNearBottom = scrollTop + clientHeight >= scrollHeight - 300; // 300px от конца для предзагрузки
             
-            if (isAtBottom && !S.loading && S.hasMoreItems) {
+            // Проверяем быструю прокрутку
+            const scrollDelta = Math.abs(scrollTop - lastScrollTop);
+            const isFastScroll = scrollDelta > fastScrollThreshold;
+            lastScrollTop = scrollTop;
+            
+            if ((isNearBottom || isFastScroll) && !S.loading && S.hasMoreItems) {
+                const now = Date.now();
+                if (now - lastLoadTime < minLoadInterval) {
+                    console.log('⏱️ Too soon to load more items, skipping');
+                    return;
+                }
+                
+                lastLoadTime = now;
                 console.log('📜 Auto-loading more items on scroll...', {
                     current: S.toDisplay,
                     increment: S.increment,
                     hasMore: S.hasMoreItems,
                     scrollTop,
                     scrollHeight,
-                    clientHeight
+                    clientHeight,
+                    subView: S.subView,
+                    totalItems: S.totalItems,
+                    loadedItems: S.loadedItems,
+                    willShow: S.toDisplay + (S.increment * 2),
+                    isNearBottom,
+                    isFastScroll,
+                    scrollDelta
                 });
                 
                 // Проверяем, не превышаем ли мы общее количество элементов
                 if (S.totalItems && S.toDisplay >= S.totalItems) {
                     console.log('⚠️ Already showing all items, skipping auto-load');
+                    S.hasMoreItems = false;
+                    return;
+                }
+                
+                // Дополнительная проверка для деталей
+                if (S.subView === 'parts' && S.totalItems && S.toDisplay >= S.totalItems) {
+                    console.log('⚠️ Parts: Already showing all items, skipping auto-load');
                     S.hasMoreItems = false;
                     return;
                 }
@@ -16599,15 +16670,29 @@ function setupScrollListener() {
                     return;
                 }
                 
-                S.toDisplay += S.increment;
+                // Увеличиваем количество загружаемых карточек для более плавной прокрутки
+                const loadAmount = S.increment * 2; // Загружаем в 2 раза больше
+                S.toDisplay += loadAmount;
                 S.gridStale = true;
                 console.log('🔄 Calling updateUI from scroll listener, new toDisplay:', S.toDisplay);
+                console.log('🔄 Parts pagination after increment:', {
+                    toDisplay: S.toDisplay,
+                    totalItems: S.totalItems,
+                    hasMoreItems: S.hasMoreItems,
+                    subView: S.subView
+                });
                 updateUI();
             }
         }, 100); // Задержка 100ms для оптимизации
     }, { passive: true });
     
     console.log('✅ Scroll listener added successfully');
+    console.log('🔧 Scroll listener setup complete for:', {
+        view: S.view,
+        subView: S.subView,
+        toDisplay: S.toDisplay,
+        hasMoreItems: S.hasMoreItems
+    });
 }
 
 function renderSetCollectionControls() {
@@ -25836,11 +25921,22 @@ async function initializeApp() {
         console.log('S.hasMoreItems:', S.hasMoreItems);
         console.log('S.increment:', S.increment);
         console.log('S.loadedItems:', S.loadedItems);
+        console.log('S.view:', S.view);
+        console.log('S.subView:', S.subView);
         console.log('mainEl.scrollHeight:', mainEl?.scrollHeight);
         console.log('mainEl.clientHeight:', mainEl?.clientHeight);
         console.log('mainEl.scrollTop:', mainEl?.scrollTop);
         console.log('Scroll listener attribute:', mainEl?.getAttribute('data-scroll-listener'));
         console.log('=== END SCROLL DEBUG ===');
+    };
+    
+    // Команда для принудительной загрузки всех деталей
+    window.loadAllParts = function() {
+        console.log('🔧 Forcing load of all parts...');
+        S.toDisplay = S.totalItems || 10000;
+        S.hasMoreItems = false;
+        updateUI();
+        console.log('✅ All parts should now be loaded');
     };
     
     // Функция для автоматической смены подсказок на экране загрузки
