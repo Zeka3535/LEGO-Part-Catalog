@@ -6336,6 +6336,14 @@ function getApiKey() {
     return key;
 }
 
+// Функция для сброса к первому API ключу при успешном запросе
+function resetApiKeyOnSuccess() {
+    if (currentApiKeyIndex !== 0) {
+        console.log('🔄 Сбрасываем индекс API ключа на первый');
+        currentApiKeyIndex = 0;
+    }
+}
+
 // Функция для детекции блокировки API
 function isApiBlocked(response, error) {
     if (error) {
@@ -6344,8 +6352,10 @@ function isApiBlocked(response, error) {
             error.message.includes('CORS') || 
             error.message.includes('NetworkError') ||
             error.message.includes('Failed to fetch') ||
-            error.message.includes('blocked by CORS policy')) {
-            console.log('🔍 Обнаружена блокировка по CORS:', error.message);
+            error.message.includes('blocked by CORS policy') ||
+            error.message.includes('ERR_BLOCKED_BY_CLIENT') ||
+            error.message.includes('ERR_NETWORK_CHANGED')) {
+            console.log('🔍 Обнаружена блокировка по CORS/сети:', error.message);
             return true;
         }
         return false;
@@ -6355,6 +6365,25 @@ function isApiBlocked(response, error) {
         // HTTP статусы, указывающие на блокировку
         const blockedStatuses = [429, 403, 503, 0]; // Rate limit, Forbidden, Service Unavailable, CORS block
         const isBlocked = blockedStatuses.includes(response.status);
+        
+        // Дополнительная проверка по заголовкам ответа
+        if (!isBlocked && response.headers) {
+            const retryAfter = response.headers.get('Retry-After');
+            const xRateLimitRemaining = response.headers.get('X-RateLimit-Remaining');
+            
+            // Если есть Retry-After заголовок, это блокировка
+            if (retryAfter && parseInt(retryAfter) > 0) {
+                console.log(`🔍 Обнаружена блокировка по Retry-After: ${retryAfter} секунд`);
+                return true;
+            }
+            
+            // Если лимит запросов исчерпан
+            if (xRateLimitRemaining === '0') {
+                console.log('🔍 Обнаружена блокировка: исчерпан лимит запросов');
+                return true;
+            }
+        }
+        
         if (isBlocked) {
             console.log(`🔍 Обнаружена блокировка по HTTP статусу: ${response.status}`);
         }
@@ -6381,6 +6410,44 @@ function shouldUseProxy() {
     }
     
     return shouldUse;
+}
+
+// Функция для проверки доступности прямых запросов
+async function testDirectConnection() {
+    const testUrl = `${REBRICKABLE_API_URL}/colors/?page=1&page_size=1`;
+    const testOptions = {
+        method: 'GET',
+        headers: {
+            'Authorization': `key ${getApiKey()}`,
+            'Accept': 'application/json'
+        }
+    };
+    
+    try {
+        console.log('🔍 Тестируем прямое подключение к API...');
+        const response = await fetch(testUrl, testOptions);
+        
+        if (response.ok) {
+            console.log('✅ Прямое подключение восстановлено');
+            lastBlockedTime = 0; // Сбрасываем время блокировки
+            BLOCKED_IP_CACHE.clear(); // Очищаем кэш заблокированных IP
+            return true;
+        } else if (isApiBlocked(response)) {
+            console.log('❌ Прямое подключение все еще заблокировано');
+            return false;
+        } else {
+            console.log(`⚠️ Прямое подключение вернуло статус ${response.status}`);
+            return false;
+        }
+    } catch (error) {
+        if (isApiBlocked(null, error)) {
+            console.log('❌ Прямое подключение заблокировано (CORS/сеть)');
+            return false;
+        } else {
+            console.log('⚠️ Ошибка при тестировании прямого подключения:', error.message);
+            return false;
+        }
+    }
 }
 
 // Функции для работы с прокси
@@ -6491,6 +6558,16 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         });
     }
     
+    // Периодически проверяем восстановление прямого подключения (каждые 2 минуты)
+    if (lastBlockedTime > 0 && now - lastBlockedTime > 120000 && now - lastBlockedTime < 300000) {
+        console.log('🔄 Проверяем восстановление прямого подключения...');
+        const directAvailable = await testDirectConnection();
+        if (directAvailable) {
+            console.log('✅ Переключаемся обратно на прямые запросы');
+            return await fetch(url, options);
+        }
+    }
+    
     // Если превышено количество попыток, используем только прямой запрос
     if (retryCount >= PROXY_CONFIG.maxRetries) {
         console.log('Превышено количество попыток, используем прямой запрос:', url);
@@ -6510,6 +6587,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
             // Если запрос успешен, возвращаем результат
             if (directResponse.ok) {
                 console.log('✓ Прямой запрос успешен');
+                resetApiKeyOnSuccess(); // Сбрасываем API ключ на первый при успехе
                 // updateApiStatus('working', 'Прямое подключение', 'green', false);
                 return directResponse;
             }
@@ -28864,10 +28942,10 @@ function animateCloseButtonClick(button) {
         // Останавливаем смену подсказок при активности пользователя
         stopTipRotation();
         
-        // Запускаем таймер на 90 секунд
+        // Запускаем таймер на 120 секунд
         inactivityTimer = setTimeout(() => {
             showRandomTip();
-        }, 90000);
+        }, 120000);
     }
 
     // Функция для инициализации системы неактивности
