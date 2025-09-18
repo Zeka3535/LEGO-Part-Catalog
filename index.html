@@ -6263,6 +6263,12 @@ async function testProxyAvailability(proxyUrl, timeout = 5000) {
 
 // Функция проверки всех прокси серверов
 async function checkAllProxies(showDetails = false) {
+    // Если прокси отключены в настройках, не проверяем их
+    if (!S.proxyEnabled) {
+        console.log('🚫 Прокси отключены в настройках, пропускаем проверку');
+        return false;
+    }
+    
     console.log('🔍 Проверяем доступность прокси серверов...');
     // updateApiStatus('checking', 'Проверка прокси...', 'blue', showDetails);
     
@@ -6396,7 +6402,7 @@ function isApiBlocked(response, error) {
 // Функция для проверки, нужно ли использовать прокси
 function shouldUseProxy() {
     // Если прокси отключены в настройках, не используем их
-    if (S.proxyDisabled) {
+    if (!S.proxyEnabled) {
         console.log('Прокси отключены в настройках');
         return false;
     }
@@ -6559,6 +6565,12 @@ function buildProxyUrl(originalUrl, proxyUrl) {
 }
 
 async function fetchWithProxy(url, options = {}, retryCount = 0) {
+    // Если прокси отключены в настройках, не используем их
+    if (!S.proxyEnabled) {
+        console.log('🚫 Прокси отключены в настройках, используем прямой запрос');
+        return await fetch(url, options);
+    }
+    
     // Проверяем, нужно ли обновить список рабочих прокси
     const now = Date.now();
     if (now - PROXY_CONFIG.lastProxyTest > PROXY_CONFIG.proxyTestInterval) {
@@ -9901,7 +9913,7 @@ let S = {
     collectionSummaryExpanded: (localStorage.getItem('collectionSummaryExpanded') === 'true'), // По умолчанию скрыта
     foldersEnabled: (localStorage.getItem('foldersEnabled') !== 'false'), // По умолчанию включено
     wishlistEnabled: (localStorage.getItem('wishlistEnabled') !== 'false'), // По умолчанию включено
-    proxyDisabled: (localStorage.getItem('proxyDisabled') !== 'false'), // По умолчанию прокси отключены
+    proxyEnabled: (localStorage.getItem('proxyEnabled') === 'true'), // По умолчанию прокси отключены
     wishlists: {}, // Списки желаний
     currentWishlist: null, // Текущий выбранный список
     wishlistModal: { open: false, wishlistId: null, wishlist: null }, // Модальное окно просмотра списка
@@ -18093,10 +18105,10 @@ function renderSettingsModal() {
                         <h3 class="text-md font-semibold text-white mb-2">Настройки подключения</h3>
                         <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Globe('w-4 h-4 text-orange-400')} Отключить прокси</span>
-                                <button data-action="toggle-proxy-disabled" class="toggle-switch ${S.proxyDisabled? 'on' : ''}" aria-pressed="${S.proxyDisabled}"><span class="knob"></span></button>
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Globe('w-4 h-4 text-orange-400')} Включить прокси</span>
+                                <button data-action="toggle-proxy-enabled" class="toggle-switch ${S.proxyEnabled? 'on' : ''}" aria-pressed="${S.proxyEnabled}"><span class="knob"></span></button>
                             </div>
-                            <p class="text-xs text-gray-400">Если включено, прокси серверы не будут использоваться для обхода блокировок API. Рекомендуется отключить, если прокси работают нестабильно.</p>
+                            <p class="text-xs text-gray-400">Если включено, прокси серверы будут использоваться для обхода блокировок API. Рекомендуется включить, если прямые запросы к API блокируются.</p>
                         </div>
                     </div>
 
@@ -24942,18 +24954,18 @@ document.addEventListener("click", async e => {
                 updateSettingsModalStatus(S.preventAccidentalExit ? "Подтверждение\nперезагрузки включено" : "Подтверждение\nперезагрузки отключено", "success");
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
                 return;
-            case "toggle-proxy-disabled":
-                S.proxyDisabled = !S.proxyDisabled;
-                try { localStorage.setItem('proxyDisabled', String(S.proxyDisabled)); } catch {}
+            case "toggle-proxy-enabled":
+                S.proxyEnabled = !S.proxyEnabled;
+                try { localStorage.setItem('proxyEnabled', String(S.proxyEnabled)); } catch {}
                 // Обновляем только тумблер без полной перерисовки
                 (function(){
-                    const btn = settingsModalEl.querySelector('[data-action="toggle-proxy-disabled"]');
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-proxy-enabled"]');
                     if (btn) {
-                        if (S.proxyDisabled) btn.classList.add('on'); else btn.classList.remove('on');
-                        btn.setAttribute('aria-pressed', String(S.proxyDisabled));
+                        if (S.proxyEnabled) btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.proxyEnabled));
                     }
                 })();
-                updateSettingsModalStatus(S.proxyDisabled ? "Прокси отключены" : "Прокси включены", "success");
+                updateSettingsModalStatus(S.proxyEnabled ? "Прокси включены" : "Прокси отключены", "success");
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
                 return;
 
@@ -25671,14 +25683,15 @@ async function initializeApp() {
         window.history.replaceState({}, document.title, cleanUrl);
     }
     
-    // Проверяем доступность прокси серверов при запуске
+    // Проверяем доступность прокси серверов при запуске (только если прокси включены)
     console.log('🚀 Инициализация приложения...');
     
-    
-    const proxyCheckPromise = checkAllProxies(false).catch(error => {
-        console.warn('⚠️ Ошибка при проверке прокси:', error);
-        return false;
-    });
+    const proxyCheckPromise = !S.proxyEnabled ? 
+        Promise.resolve(false) : 
+        checkAllProxies(false).catch(error => {
+            console.warn('⚠️ Ошибка при проверке прокси:', error);
+            return false;
+        });
     
     // Проверяем сохраненное состояние облачного хранилища при запуске (БЕЗ автоматического переподключения)
     setTimeout(() => {
@@ -29284,6 +29297,11 @@ function animateCloseButtonClick(button) {
     };
     
     window.checkProxies = async () => {
+        if (!S.proxyEnabled) {
+            console.log('🚫 Прокси отключены в настройках, проверка не выполняется');
+            return false;
+        }
+        
         console.log('🔍 Запускаем проверку всех прокси серверов...');
         const hasWorkingProxies = await checkAllProxies(false);
         if (hasWorkingProxies) {
