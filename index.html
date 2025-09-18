@@ -6363,7 +6363,7 @@ function isApiBlocked(response, error) {
     
     if (response) {
         // HTTP статусы, указывающие на блокировку
-        const blockedStatuses = [429, 403, 503, 0]; // Rate limit, Forbidden, Service Unavailable, CORS block
+        const blockedStatuses = [401, 429, 403, 503, 0]; // Unauthorized, Rate limit, Forbidden, Service Unavailable, CORS block
         const isBlocked = blockedStatuses.includes(response.status);
         
         // Дополнительная проверка по заголовкам ответа
@@ -6395,6 +6395,12 @@ function isApiBlocked(response, error) {
 
 // Функция для проверки, нужно ли использовать прокси
 function shouldUseProxy() {
+    // Если прокси отключены в настройках, не используем их
+    if (S.proxyDisabled) {
+        console.log('Прокси отключены в настройках');
+        return false;
+    }
+    
     // Принудительное включение прокси
     if (forceProxy) {
         console.log('Принудительное использование прокси включено');
@@ -6433,7 +6439,11 @@ async function testDirectConnection() {
             BLOCKED_IP_CACHE.clear(); // Очищаем кэш заблокированных IP
             return true;
         } else if (isApiBlocked(response)) {
-            console.log('❌ Прямое подключение все еще заблокировано');
+            if (response.status === 401) {
+                console.log('❌ Прямое подключение заблокировано (401 - ошибка авторизации)');
+            } else {
+                console.log('❌ Прямое подключение все еще заблокировано');
+            }
             return false;
         } else {
             console.log(`⚠️ Прямое подключение вернуло статус ${response.status}`);
@@ -6594,7 +6604,11 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
             
             // Проверяем, заблокирован ли API
             if (isApiBlocked(directResponse)) {
-                console.warn(`Прямой запрос заблокирован (${directResponse.status}), переключаемся на прокси`);
+                if (directResponse.status === 401) {
+                    console.warn(`🚫 Ошибка авторизации (401) - возможно временная блокировка API ключа, переключаемся на прокси`);
+                } else {
+                    console.warn(`Прямой запрос заблокирован (${directResponse.status}), переключаемся на прокси`);
+                }
                 lastBlockedTime = Date.now();
                 BLOCKED_IP_CACHE.add(url);
                 // Переходим к прокси
@@ -6727,6 +6741,7 @@ const I_Slope = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 const I_Cloud = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path></svg>`;
 const I_CloudUpload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="16 16 12 12 8 16"></polyline><line x1="12" y1="12" x2="12" y2="21"></line></svg>`;
 const I_CloudDownload = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path><polyline points="8 12 12 16 16 12"></polyline><line x1="12" y1="16" x2="12" y2="7"></line></svg>`;
+const I_Globe = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
 const I_Link = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>`;
 const I_Unlink = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.84 12.25l1.72-1.71h-.02a5.004 5.004 0 0 0-.12-7.07 5.006 5.006 0 0 0-6.95 0l-1.72 1.71"></path><path d="M5.17 11.75l-1.71 1.71a5.004 5.004 0 0 0 .12 7.07 5.006 5.006 0 0 0 6.95 0l1.71-1.71"></path><line x1="8" y1="2" x2="8" y2="5"></line><line x1="2" y1="8" x2="5" y2="8"></line><line x1="16" y1="19" x2="16" y2="22"></line><line x1="19" y1="16" x2="22" y2="16"></line></svg>`;
 const I_Scanner = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"></path><path d="M17 3h2a2 2 0 0 1 2 2v2"></path><path d="M21 17v2a2 2 0 0 1-2 2h-2"></path><path d="M7 21H5a2 2 0 0 1-2-2v-2"></path><rect x="8" y="8" width="8" height="8" rx="1"></rect><path d="M12 12v4"></path><path d="M12 8v4"></path></svg>`;
@@ -9848,8 +9863,8 @@ let S = {
         status: '',
         statusType: 'info'
     },
-    toDisplay: 48,
-    increment: 48,
+    toDisplay: 100,
+    increment: 100,
     coll: {},
     setColl: {},
     minifigColl: {},
@@ -9886,6 +9901,7 @@ let S = {
     collectionSummaryExpanded: (localStorage.getItem('collectionSummaryExpanded') === 'true'), // По умолчанию скрыта
     foldersEnabled: (localStorage.getItem('foldersEnabled') !== 'false'), // По умолчанию включено
     wishlistEnabled: (localStorage.getItem('wishlistEnabled') !== 'false'), // По умолчанию включено
+    proxyDisabled: (localStorage.getItem('proxyDisabled') !== 'false'), // По умолчанию прокси отключены
     wishlists: {}, // Списки желаний
     currentWishlist: null, // Текущий выбранный список
     wishlistModal: { open: false, wishlistId: null, wishlist: null }, // Модальное окно просмотра списка
@@ -16746,7 +16762,7 @@ function setupScrollListener() {
                 }
                 
                 // Увеличиваем количество загружаемых карточек для более плавной прокрутки
-                const loadAmount = S.increment * 2; // Загружаем в 2 раза больше
+                const loadAmount = S.increment; // Загружаем по 100 карточек
                 S.toDisplay += loadAmount;
                 S.gridStale = true;
                 
@@ -18071,6 +18087,16 @@ function renderSettingsModal() {
                                 <button data-action="toggle-prevent-exit" class="toggle-switch ${S.preventAccidentalExit? 'on' : ''}" aria-pressed="${S.preventAccidentalExit}"><span class="knob"></span></button>
                             </div>
                             <p class="text-xs text-gray-400">Рекомендуется для мобильных устройств: предотвратит потерю незаписанных изменений при случайном обновлении страницы.</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-md font-semibold text-white mb-2">Настройки подключения</h3>
+                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Globe('w-4 h-4 text-orange-400')} Отключить прокси</span>
+                                <button data-action="toggle-proxy-disabled" class="toggle-switch ${S.proxyDisabled? 'on' : ''}" aria-pressed="${S.proxyDisabled}"><span class="knob"></span></button>
+                            </div>
+                            <p class="text-xs text-gray-400">Если включено, прокси серверы не будут использоваться для обхода блокировок API. Рекомендуется отключить, если прокси работают нестабильно.</p>
                         </div>
                     </div>
 
@@ -23409,7 +23435,7 @@ document.addEventListener("click", async e => {
         }
         S.q = "";
         S.err = null;
-        S.increment = "minifigs" === e ? 36 : 48;
+        S.increment = "minifigs" === e ? 100 : 100;
         S.toDisplay = S.increment;
         S.gridStale = !0;
         S.filters = { colorIds: [], inCollectionOnly: !1 };
@@ -24914,6 +24940,20 @@ document.addEventListener("click", async e => {
                     }
                 })();
                 updateSettingsModalStatus(S.preventAccidentalExit ? "Подтверждение\nперезагрузки включено" : "Подтверждение\nперезагрузки отключено", "success");
+                setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
+                return;
+            case "toggle-proxy-disabled":
+                S.proxyDisabled = !S.proxyDisabled;
+                try { localStorage.setItem('proxyDisabled', String(S.proxyDisabled)); } catch {}
+                // Обновляем только тумблер без полной перерисовки
+                (function(){
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-proxy-disabled"]');
+                    if (btn) {
+                        if (S.proxyDisabled) btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.proxyDisabled));
+                    }
+                })();
+                updateSettingsModalStatus(S.proxyDisabled ? "Прокси отключены" : "Прокси включены", "success");
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
                 return;
 
@@ -29233,7 +29273,11 @@ function animateCloseButtonClick(button) {
         const testUrl = `${REBRICKABLE_API_URL}/colors/?page=1&page_size=1`;
         try {
             const response = await fetchWithProxy(testUrl);
-            console.log('✅ Прокси работает:', response.status);
+            if (response.status === 401) {
+                console.log('🚫 Прокси работает, но API возвращает 401 (ошибка авторизации)');
+            } else {
+                console.log('✅ Прокси работает:', response.status);
+            }
         } catch (error) {
             console.error('❌ Прокси не работает:', error.message);
         }
@@ -29364,7 +29408,11 @@ function animateCloseButtonClick(button) {
                 if (response.ok) {
                     console.log('✅ API доступен, прокси не нужен');
                 } else {
-                    console.log(`⚠️ API недоступен (${response.status}), включаем прокси`);
+                    if (response.status === 401) {
+                        console.log(`🚫 Ошибка авторизации (401) - возможно временная блокировка API ключа, включаем прокси`);
+                    } else {
+                        console.log(`⚠️ API недоступен (${response.status}), включаем прокси`);
+                    }
                     forceProxy = true;
                     lastBlockedTime = Date.now();
                 }
