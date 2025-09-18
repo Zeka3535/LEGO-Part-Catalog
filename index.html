@@ -4174,7 +4174,7 @@ window.openSearchTypeSelectionModal = function() {
     if (!modalEl) {
         modalEl = document.createElement('div');
         modalEl.id = 'search-type-selection-modal';
-        modalEl.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4';
+        modalEl.className = 'fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4';
         document.body.appendChild(modalEl);
     }
     
@@ -4370,7 +4370,7 @@ window.openBoxSearchModal = function() {
     if (!modalEl) {
         modalEl = document.createElement('div');
         modalEl.id = 'box-search-modal';
-        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm';
         document.body.appendChild(modalEl);
     }
     
@@ -4453,7 +4453,7 @@ window.openUniversalSearchModal = function(searchData = '') {
     if (!modalEl) {
         modalEl = document.createElement('div');
         modalEl.id = 'universal-search-modal';
-        modalEl.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden p-4';
+        modalEl.className = 'fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4';
         document.body.appendChild(modalEl);
     }
     
@@ -5346,7 +5346,7 @@ window.searchInSetsCatalogModal = function(searchTerm) {
     if (!modalEl) {
         modalEl = document.createElement('div');
         modalEl.id = 'sets-search-modal';
-        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm';
         document.body.appendChild(modalEl);
     }
     
@@ -5443,7 +5443,7 @@ window.searchInMinifigsCatalogModal = function(searchTerm) {
     if (!modalEl) {
         modalEl = document.createElement('div');
         modalEl.id = 'minifigs-search-modal';
-        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm';
         document.body.appendChild(modalEl);
     }
     
@@ -5536,7 +5536,7 @@ window.openPartSearchModal = function(partNumber) {
     if (!modalEl) {
         modalEl = document.createElement('div');
         modalEl.id = 'part-search-modal';
-        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50';
+        modalEl.className = 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm';
         document.body.appendChild(modalEl);
     }
     
