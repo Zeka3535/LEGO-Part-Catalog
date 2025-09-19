@@ -4108,7 +4108,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -17021,10 +17021,11 @@ function renderSetCollectionControls() {
                     <div class="text-xs text-gray-400 text-center leading-relaxed px-2 sm:px-4">
                         <div class="flex items-center justify-center gap-2 mb-2 sm:hidden">
                             <button id="toggle-set-info" data-action="toggle-set-info" class="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="M12 16v-4"></path>
-                                    <path d="M12 8h.01"></path>
+                                <!-- Иконка информации (SVG) -->
+                                <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                                    <circle cx="12" cy="12" r="9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 8h.01" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M11 12h1v4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                 </svg>
                                 <span class="text-xs">Информация</span>
                             </button>
