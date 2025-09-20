@@ -17596,6 +17596,11 @@ function renderModal() {
                             <div class="space-y-1 text-sm text-gray-400">
                                 <p><span class="font-semibold text-gray-300">Название:</span> ${e.name}</p>
                                 <p>ID: ${e.id}</p>
+                                ${(() => {
+                                    // Год первого появления детали — минимум по годам связанных наборов
+                                    const y = getFirstAppearanceYearForPart(e.id);
+                                    return y ? `<p><span class=\"font-semibold text-gray-300\">Год появления:</span> ${y}</p>` : '';
+                                })()}
                                 ${t?`
                                     <div class="flex items-center">
                                         <span class="mr-1">Категория:</span>
@@ -18901,7 +18906,7 @@ function getRelatedSetsForPart(partId) {
     Object.keys(inventoryParts).forEach(inventoryId => {
         const items = inventoryParts[inventoryId];
         if (!Array.isArray(items)) return;
-        const hasPart = items.some(item => item.part_num === partId && item.is_spare !== 't');
+        const hasPart = items.some(item => item.part_num === partId);
         if (hasPart) {
             if (window.INVENTORY_DATA.sets && window.INVENTORY_DATA.sets[inventoryId]) {
                 const sets = window.INVENTORY_DATA.sets[inventoryId];
@@ -18917,6 +18922,26 @@ function getRelatedSetsForPart(partId) {
         index === self.findIndex(s => s.set_num === set.set_num)
     ).sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
     return uniqueSets;
+}
+
+// Функция для получения года первого появления минифигурки по самым старым связанным наборам
+function getFirstAppearanceYearForMinifig(figNum) {
+    try {
+        const sets = getRelatedSetsForMinifig(figNum) || [];
+        const years = sets.map(s => parseInt(s.year) || 0).filter(y => y > 0);
+        if (years.length === 0) return null;
+        return Math.min(...years);
+    } catch (_) { return null; }
+}
+
+// Функция для получения года первого появления детали по самым старым связанным наборам
+function getFirstAppearanceYearForPart(partId) {
+    try {
+        const sets = getRelatedSetsForPart(partId) || [];
+        const years = sets.map(s => parseInt(s.year) || 0).filter(y => y > 0);
+        if (years.length === 0) return null;
+        return Math.min(...years);
+    } catch (_) { return null; }
 }
 
 // Функция для настройки скролл-прогресса в модальном окне связанных наборов
@@ -19110,6 +19135,11 @@ function renderMinifigModalDetailsView() {
                         <div class="space-y-1 text-sm text-gray-400">
                             <p><span class="font-semibold text-gray-300">Название:</span> ${e.name}</p>
                             <p>ID: ${e.set_num}</p>
+                            ${(() => {
+                                // Год первого появления минифигурки — минимум по годам связанных наборов
+                                const y = getFirstAppearanceYearForMinifig(S.selFigNum);
+                                return y ? `<p><span class=\"font-semibold text-gray-300\">Год появления:</span> ${y}</p>` : '';
+                            })()}
                             <p>Кол-во деталей: ${e.num_parts}</p>
                             ${(() => {
                                 const relatedSets = getRelatedSetsForMinifig(S.selFigNum);
