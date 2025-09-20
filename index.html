@@ -14772,16 +14772,20 @@ function renderSidebar() {
                 const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
                 // Используем общее количество всех наборов в каталоге, независимо от выбранной темы
                 const totalSetsInCatalog = S.totalSetsInCatalog || 0;
+                const relatedBadge = (S.view === "catalog" && S.subView === "sets" && S.showRelatedSets && (S.selFigNum || S.selRelatedPartId)) ? `
+                    <span class=\"absolute top-1 right-1 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold\">${S.selFigNum ? I_Minifig('w-3 h-3') : I_Brick('w-3 h-3')}</span>
+                ` : '';
                 const countBadge = totalSetsInCatalog > 0 ? `
-                    <span class="ml-2 bg-gray-600 text-white text-xs font-bold rounded-full px-2 py-1 min-w-[20px] text-center">
+                    <span class=\"ml-2 bg-gray-600 text-white text-xs font-bold rounded-full px-2 py-1 min-w-[20px] text-center\">
                         ${totalSetsInCatalog}
                     </span>
                 ` : '';
                 t = `
                   <li>
-                    <button data-action="show-all-items-sets" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}">
-                      <span class="break-words leading-tight flex-1 self-center">Все наборы</span>
-                      <div class="flex-shrink-0 ml-2 self-center">
+                    <button data-action=\"show-all-items-sets\" class=\"relative w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}\">
+                      ${relatedBadge}
+                      <span class=\"break-words leading-tight flex-1 self-center\">Все наборы</span>
+                      <div class=\"flex-shrink-0 ml-2 self-center\">
                         ${countBadge}
                       </div>
                     </button>
@@ -15182,7 +15186,7 @@ function renderSidebar() {
                 ${I_Set("w-5 h-5 text-green-400")}
                 <span class="mt-1">Наборы</span>
                 ${s("sets",o,l)}
-                ${S.view === "catalog" && S.selFigNum && S.showRelatedSets ? `<div class="absolute top-1 right-1 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold">${I_Minifig("w-3 h-3")}</div>` : ''}
+                ${S.view === "catalog" && S.subView === "sets" && S.showRelatedSets && (S.selFigNum || S.selRelatedPartId) ? `<div class="absolute top-1 right-1 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold">${S.selFigNum ? I_Minifig("w-3 h-3") : I_Brick("w-3 h-3")}</div>` : ''}
             </button>
             <button data-sub-view="minifigs" class="${r("minifigs")}" title="Показать минифигурки" data-long-press="minifigs">
                 ${I_Minifig("w-5 h-5 text-purple-400")}
@@ -15351,10 +15355,10 @@ function renderHeader() {
                     <button id="sidebar-toggle" class="sidebar-toggle-btn lg:hidden" title="Открыть/закрыть боковую панель навигации">
                         ${I_Menu("w-4 h-4")}
                     </button>
-                                          <h1 class="text-xl font-bold text-white hidden sm:block main-title">
+                         <h1 class="text-xl font-bold text-white hidden sm:block main-title">
                          <span class="bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent font-extrabold tracking-tight">LEGO® Catalog</span>
-                          ${S.view === "catalog" && S.subView === "sets" && S.selFigNum && S.showRelatedSets ? 
-                              `<span class="text-sm font-normal text-blue-400 ml-2">• Связанные наборы</span>` : ''}
+                          ${S.view === "catalog" && S.subView === "sets" && S.showRelatedSets && (S.selFigNum || S.selRelatedPartId) ? 
+                              `<span class=\"text-sm font-normal text-blue-400 ml-2\">• Связанные наборы</span>` : ''}
                       </h1>
                 </div>
                 <div class="flex items-center space-x-2 w-full max-w-sm">
@@ -16203,6 +16207,25 @@ function renderMainContent() {
                     l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов, или воспользуйтесь поиском";
                     console.log('No related sets found, using default sets');
                 }
+            } else if (S.selRelatedPartId && S.showRelatedSets && !S.q) {
+                // Показываем связанные наборы для выбранной детали
+                const relatedSets = getRelatedSetsForPart(S.selRelatedPartId);
+                if (relatedSets && relatedSets.length > 0) {
+                    // Сортируем по году (новые первыми)
+                    relatedSets.sort((a, b) => {
+                        const yearA = parseInt(a.year) || 0;
+                        const yearB = parseInt(b.year) || 0;
+                        return yearB - yearA;
+                    });
+                    t = relatedSets;
+                    o = e => renderSetCard(e, S.gridStale);
+                    const partName = PART_MAP[S.selRelatedPartId]?.name || S.selRelatedPartId;
+                    l = `Связанные наборы для детали "${partName}" (${relatedSets.length})`;
+                } else {
+                    t = S.q ? S.searchSetRes : S.setRes;
+                    o = e => renderSetCard(e, S.gridStale);
+                    l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов, или воспользуйтесь поиском";
+                }
             } else {
                 // Обычное отображение наборов
                 t = S.q ? S.searchSetRes : S.setRes;
@@ -16304,6 +16327,37 @@ function renderMainContent() {
                 </div>
             ` : '';
 
+            // Плашка для связанных наборов детали
+            const headerHtmlPart = (S.subView === "sets" && S.selRelatedPartId && S.showRelatedSets && !S.q) ? `
+                <div class="px-4 pt-4 pb-2">
+                    <div class="flex items-center justify-between bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                        <div class="flex items-center gap-3">
+                            <span class="text-blue-400">${I_Brick("w-5 h-5")}</span>
+                            <div>
+                                <h2 class="text-lg font-semibold text-white">Связанные наборы</h2>
+                                <p class="text-sm text-gray-400">Для детали "${(PART_MAP[S.selRelatedPartId]?.name || S.selRelatedPartId)}"</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <div class="w-16 h-16 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-shadow relative group"
+                                 data-action="open-part-preview"
+                                 data-part-id="${S.selRelatedPartId}"
+                                 title="Открыть детали детали">
+                                <img src="${PART_MAP[S.selRelatedPartId]?.rebrickable_img_url || ''}"
+                                     alt="${PART_MAP[S.selRelatedPartId]?.name || S.selRelatedPartId}"
+                                     class="w-full h-full object-contain"
+                                     onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0zMiAxNkMyMy4xNjM0IDE2IDE2IDIzLjE2MzQgMTYgMzJDMTYgNDAuODM2NiAyMy4xNjM0IDQ4IDMyIDQ4QzQwLjgzNjYgNDggNDggNDAuODM2NiA0OCAzMkM0OCAyMy4xNjM0IDQwLjgzNjYgMTYgMzIgMTZaIiBmaWxsPSIjNkI3MjgwIi8+CjxwYXRoIGQ9Ik0yNCAyOEgyNEMyMi44OTU1IDI4IDIyIDI4Ljg5NTQgMjIgMzBWMzRIMjZWMzBDMjYgMjguODk1NCAyNS4xMDQ2IDI4IDI0IDI4WiIgZmlsbD0iIzZCNzI4MCIvPgo8cGF0aCBkPSJNMzIgMjhIMzJDMzAuODk1NCAyOCAzMCAyOC44OTU0IDMwIDMwVjM0SDM0VjMwQzM0IDI4Ljg5NTQgMzMuMTA0NiAyOCAzMiAyOFoiIGZpbGw9IiM2QjcyODAiLz4KPHBhdGggZD0iTTI0IDM2SDQwQzQxLjEwNDYgMzYgNDIgMzYuODk1NCA0MiAzOFY0MEg0MlY0MkM0MiA0My4xMDQ2IDQxLjEwNDYgNDQgNDAgNDRIMjRDMjIuODk1NCA0NCAyMiA0My4xMDQ2IDIyIDQyVjQwSDIyVjM4QzIyIDM2Ljg5NTQgMjIuODk1NCAzNiAyNCAzNloiIGZpbGw9IiM2QjcyODAiLz4KPC9zdmc+'">
+                                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                    <svg class="w-6 h-6 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ` : '';
+
             // Каталог (sets/minifigs) рендерим как раньше, а для деталей в коллекции включаем группировку по имени
             console.log('🔍 renderMainContent debug:', {
                 view: S.view,
@@ -16365,7 +16419,8 @@ function renderMainContent() {
                 }
                 
                 const shown = t ? t.slice(0, S.toDisplay) : [];
-                e = `${headerHtml}<div class="grid ${a} gap-4 p-4">${shown.map((e,t)=>{const l=o(e,true,t);return l.replace('class=\"part-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"part-card `).replace('class=\"set-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"set-card `).replace('class=\"minifig-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"minifig-card `)}).join("")}</div>`;
+                const header = headerHtml || headerHtmlPart;
+                e = `${header}<div class="grid ${a} gap-4 p-4">${shown.map((e,t)=>{const l=o(e,true,t);return l.replace('class=\"part-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"part-card `).replace('class=\"set-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"set-card `).replace('class=\"minifig-card ',`style=\"${S.getAnimationDelay(t)}\" class=\"minifig-card `)}).join("")}</div>`;
             } else {
                 // Новое поведение: группировка карточек деталей по одинаковому названию
                 const groups = groupCollectionPartsByName(t);
@@ -17536,7 +17591,7 @@ function renderModal() {
                 
                 <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
                     <div>
-                        <div class="modal-section-spacing">
+                         <div class="modal-section-spacing">
                             <h3 class="text-md font-semibold text-gray-300 modal-section-title">Деталь</h3>
                             <div class="space-y-1 text-sm text-gray-400">
                                 <p><span class="font-semibold text-gray-300">Название:</span> ${e.name}</p>
@@ -17549,16 +17604,30 @@ function renderModal() {
                                         </button>
                                     </div>
                                 `:""}
+                                ${(() => {
+                                    // Кнопка "Связанные наборы" — как в модалке минифигурки
+                                    try {
+                                        const related = getRelatedSetsForPart(e.id);
+                                        if (!related || related.length === 0) return '';
+                                        return `
+                                            <div class=\"mt-2\">
+                                                <button data-action=\"show-related-sets-for-part\" class=\"flex items-center gap-2 px-2 py-1 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25\">
+                                                    ${I_Set("w-3 h-3")}
+                                                    ${related.length === 1 ? 'Связанный набор: 1' : `Связанных наборов: ${related.length}`}
+                                                </button>
+                                            </div>`;
+                                    } catch (err) { return ''; }
+                                })()}
                             </div>
                             ${a?`<div class="mt-4">${a}</div>`:""}
                         </div>
                         
-                        <div class="modal-section-spacing">
+                         <div class="modal-section-spacing">
                           <h3 class="text-md font-semibold text-gray-300 modal-section-title">Цвета</h3>
                            <div id="color-selector-container" class="min-h-[120px] sm:min-h-[120px] lg:min-h-[160px]">${renderColorSelector()}</div>
-                        </div>
-                        
-                        <div id="modal-controls-container" class="modal-section-spacing">${renderModalControls()}</div>
+                         </div>
+                         
+                         <div id="modal-controls-container" class="modal-section-spacing">${renderModalControls()}</div>
                     </div>
                 </div>
             </div>
@@ -18777,7 +18846,7 @@ function getRelatedSetsForMinifig(figNum) {
 }
 
 // Функция для отображения модального окна связанных наборов
-function showRelatedSetsModal(relatedSets, minifigName) {
+function showRelatedSetsModal(relatedSets, entityName, entityLabel = "минифигуркой") {
     if (!relatedSets || relatedSets.length === 0) return;
     
     // Скрываем указатель при открытии модального окна связанных наборов (всегда, так как это основное взаимодействие)
@@ -18807,7 +18876,7 @@ function showRelatedSetsModal(relatedSets, minifigName) {
         <div class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-2xl flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter relative">
             <div id="related-sets-scroll-progress"><div class="bar"></div></div>
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl font-bold text-white">Наборы с минифигуркой "${minifigName}"</h2>
+                <h2 class="text-xl font-bold text-white">Наборы с ${entityLabel} "${entityName}"</h2>
                 <button id="related-sets-modal-close" class="modal-close-btn" title="Закрыть модальное окно связанных наборов">${I_X("w-4 h-4")}</button>
             </div>
             <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-3">
@@ -18818,6 +18887,36 @@ function showRelatedSetsModal(relatedSets, minifigName) {
     
     // Настраиваем скролл-прогресс для модального окна связанных наборов
     setupRelatedSetsScrollProgress();
+}
+
+// Функция для получения связанных наборов детали
+function getRelatedSetsForPart(partId) {
+    // Возвращаем пустой массив, если нет данных инвентаря
+    if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.parts) {
+        return [];
+    }
+    const relatedSets = [];
+    const inventoryParts = window.INVENTORY_DATA.parts;
+    // Проходим по всем инвентарям, где есть эта деталь (без учета запчастей)
+    Object.keys(inventoryParts).forEach(inventoryId => {
+        const items = inventoryParts[inventoryId];
+        if (!Array.isArray(items)) return;
+        const hasPart = items.some(item => item.part_num === partId && item.is_spare !== 't');
+        if (hasPart) {
+            if (window.INVENTORY_DATA.sets && window.INVENTORY_DATA.sets[inventoryId]) {
+                const sets = window.INVENTORY_DATA.sets[inventoryId];
+                sets.forEach(set => {
+                    const full = SET_MAP[set.set_num];
+                    if (full) relatedSets.push(full);
+                });
+            }
+        }
+    });
+    // Убираем дубликаты и сортируем по году (новые первыми)
+    const uniqueSets = relatedSets.filter((set, index, self) =>
+        index === self.findIndex(s => s.set_num === set.set_num)
+    ).sort((a, b) => (parseInt(b.year) || 0) - (parseInt(a.year) || 0));
+    return uniqueSets;
 }
 
 // Функция для настройки скролл-прогресса в модальном окне связанных наборов
@@ -23271,6 +23370,23 @@ document.addEventListener("click", async e => {
         return;
     }
     
+    // Открытие модалки детали из превью в заголовке связанных наборов
+    const partPreviewEl = t.closest('[data-action="open-part-preview"]');
+    if (partPreviewEl && (!clickedAction || clickedAction === 'open-part-preview')) {
+        const partId = partPreviewEl.getAttribute('data-part-id');
+        if (partId) {
+            const part = PART_MAP[partId] || PART_MAP[String(partId)];
+            if (part) {
+                const groupId = getGroupId(part.part_num || partId);
+                openModalForPart(part.id || part.part_num || partId, groupId, [part]);
+                setTimeout(() => {
+                    modalManager.bringToFront('modal-container');
+                }, 100);
+            }
+        }
+        return;
+    }
+    
     // Обработка кнопки закрытия image viewer (всегда работает)
     if (t.closest("#image-viewer-close")) {
         animateCloseButtonClick(t.closest("#image-viewer-close"));
@@ -25595,6 +25711,26 @@ document.addEventListener("click", async e => {
                     break;
                 case "retry-fetch-colors":
                     S.selPartId && fetchPartColors(S.selPartId)
+                    break;
+                case "show-related-sets-for-part":
+                    if (S.selPartId) {
+                        try {
+                            const part = PART_MAP[S.selPartId];
+                            const related = getRelatedSetsForPart(part.id);
+                            if (related && related.length > 0) {
+                                // Переключаемся на каталог/наборы и включаем режим связанных наборов
+                                closeModal();
+                                S.view = "catalog";
+                                S.subView = "sets";
+                                S.selFigNum = null;
+                                S.selRelatedPartId = part.id;
+                                S.showRelatedSets = true;
+                                // Сохраняем список в кэше состояния для рендера
+                                S._relatedSetsCache = { type: 'part', id: part.id, name: part.name || part.id, items: related };
+                                updateUI();
+                            }
+                        } catch (err) {}
+                    }
             }
         }
         const o = t.closest("button[data-color-id]");
