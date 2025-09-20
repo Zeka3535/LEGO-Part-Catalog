@@ -2475,6 +2475,118 @@
         box-shadow: none !important; /* убираем тень при скрытии, чтобы не выпирала */
     }
     
+    /* Компактные стили модальных окон на малых экранах (без перестройки UI) */
+    @media (max-width: 480px), (max-height: 700px) {
+        /* Компактные размеры самого контейнера модалки */
+        #modal-content,
+        #set-modal-content,
+        #minifig-modal-content {
+            width: calc(100% - 1rem) !important;
+            max-height: calc(100vh - 1rem) !important;
+            height: auto !important;
+            border-radius: 0.5rem;
+        }
+
+        /* Компактная шапка модалки */
+        #modal-content > div:first-child,
+        #set-modal-content > div:first-child,
+        #minifig-modal-content > div:first-child {
+            padding: 0.5rem !important;
+            gap: 0.5rem !important;
+        }
+        #modal-content h2,
+        #set-modal-content h2,
+        #minifig-modal-content h2 {
+            font-size: 0.95rem !important;
+            line-height: 1.2 !important;
+        }
+
+        /* Кнопка закрытия чуть меньше */
+        .modal-close-btn {
+            width: 28px;
+            height: 28px;
+        }
+        .modal-close-btn svg {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Контент модалки детали: уменьшаем картинку и паддинги */
+        #modal-content #modal-image-container {
+            width: 9rem;
+            height: 9rem;
+        }
+        #modal-scroll-area > div:first-child {
+            padding: 0.5rem !important;
+        }
+        #modal-scroll-area > div:last-child {
+            padding: 0.75rem !important;
+        }
+
+        /* Универсально уменьшаем отступы и промежутки внутри модалок */
+        #set-modal-content .p-4,
+        #minifig-modal-content .p-4,
+        #modal-content .p-4 {
+            padding: 0.75rem !important;
+        }
+        #set-modal-content .gap-4,
+        #minifig-modal-content .gap-4,
+        #modal-content .gap-4 {
+            gap: 0.5rem !important;
+        }
+        #set-modal-content .space-y-6,
+        #minifig-modal-content .space-y-6,
+        #modal-content .space-y-6 {
+            row-gap: 0.75rem !important;
+        }
+        .modal-section-spacing {
+            margin-bottom: 0.75rem;
+        }
+        .modal-section-title {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Палитра цветов – компактный вид */
+        #color-selector-container {
+            min-height: 96px !important;
+        }
+        .color-palette-inner button.w-8.h-8 {
+            width: 1.75rem !important;
+            height: 1.75rem !important;
+        }
+
+        /* Элементы списков инвентаря/минифигурок – компактные превью и текст */
+        #set-modal-content .w-12.h-12,
+        #minifig-modal-content .w-12.h-12 {
+            width: 2.5rem !important;
+            height: 2.5rem !important;
+        }
+        #set-modal-content .w-5.h-5,
+        #minifig-modal-content .w-5.h-5 {
+            width: 1rem !important;
+            height: 1rem !important;
+        }
+        #set-modal-content .text-lg,
+        #minifig-modal-content .text-lg {
+            font-size: 0.95rem !important;
+        }
+        #set-modal-content .text-sm,
+        #minifig-modal-content .text-sm,
+        #modal-content .text-sm {
+            font-size: 0.8rem !important;
+        }
+        #modal-content .text-md {
+            font-size: 0.9rem !important;
+        }
+
+        /* Индикаторы прокрутки – чуть уже на мобильных */
+        #set-scroll-progress,
+        #minifig-scroll-progress {
+            right: 1px;
+            width: 4px;
+        }
+    }
+    
     /* Плавный переход размытия фона теперь управляется через transition выше */
     
     /* Image viewer также использует плавный переход размытия через transition выше */
