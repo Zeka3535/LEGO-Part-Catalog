@@ -4108,7 +4108,7 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -13900,7 +13900,7 @@ async function fetchSetInventory(e, t = 1) {
     
     if (S.setModal.loading = !0, t === 1 && (S.setModal.inv = []), updateSetModalView(), !S.selSetNum) return;
     try {
-        const o = `/sets/${e}/parts/?page=${t}&page_size=50`,
+        const o = `/sets/${e}/parts/?page=${t}&page_size=50&inc_spares=1`,
             l = await fetchWithProxy(`${REBRICKABLE_API_URL}${o}`, {
                 headers: {
                     Authorization: `key ${getApiKey()}`
@@ -13926,7 +13926,7 @@ async function fetchSetInventory(e, t = 1) {
                     is_spare: e.is_spare,
                     element_id: e.element_id
                 }
-            }).filter((e) => !e.is_spare);
+            });
         S.setModal.inv = [...S.setModal.inv, ...i], S.setModal.invPage = t, S.setModal.hasNextInv = !!a.next
         // Принудительно сохраняем состояние после загрузки инвентаря набора для немедленного сохранения данных инвентаря
         forceSaveState();
@@ -13945,7 +13945,7 @@ async function fetchAllSetInventory(e) {
     let t = [];
     let o = 1;
     for (;;) {
-        const l = `/sets/${e}/parts/?page=${o}&page_size=500`,
+        const l = `/sets/${e}/parts/?page=${o}&page_size=500&inc_spares=1`,
             a = await fetchWithProxy(`${REBRICKABLE_API_URL}${l}`, {
                 headers: {
                     Authorization: `key ${getApiKey()}`
@@ -13975,7 +13975,7 @@ async function fetchAllSetInventory(e) {
                     is_spare: e.is_spare,
                     element_id: e.element_id,
                 }
-            }).filter((e) => !e.is_spare);
+            });
         if (n.length > 0) {
             t = t.concat(n);
         }
@@ -17259,6 +17259,23 @@ function updateSetModalView() {
         scrollArea && obs.observe(scrollArea, { childList: true, subtree: true });
         window.addEventListener('resize', () => { update(); }, { passive: true });
     })();
+
+    // Автопроверка наличия запасных деталей: если инвентарь уже загружен ранее без запасных (старый кэш), перезагружаем полностью
+    try {
+        if (S.setModal && S.setModal.view === 'inventory' && !S.setModal._checkedSparesOnce) {
+            S.setModal._checkedSparesOnce = true;
+            setTimeout(() => {
+                try {
+                    const inv = Array.isArray(S.setModal.inv) ? S.setModal.inv : [];
+                    const hasSpare = inv.some(item => item && item.is_spare === true);
+                    if (!hasSpare && S.selSetNum) {
+                        // Перезагружаем весь инвентарь, чтобы подтянуть запасные
+                        loadAllSetInventoryIntoModal(S.selSetNum);
+                    }
+                } catch (_) {}
+            }, 0);
+        }
+    } catch (_) {}
 }
 
 // Прогресс прокрутки в модалке минифигурки
@@ -17491,7 +17508,10 @@ function renderSetInventory() {
                     </div>
                 `
     }).join(""));
-    const r = e.map(e => `
+        // Сначала обычные, затем запасные
+        const regularSetInv = e.filter(p => !p.is_spare);
+        const sparesSetInv = e.filter(p => p.is_spare);
+        const renderSetInvRow = (e) => `
             <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm cursor-pointer hover:bg-gray-700/70"
                  data-action="open-part-from-inventory"
                  data-part-id="${e.part.part_num}"
@@ -17509,7 +17529,15 @@ function renderSetInventory() {
                     <span class="text-gray-300 w-8 text-right">${e.quantity}x</span>
                 </div>
             </div>
-        `).join("");
+        `;
+        const r = `
+            <div class="space-y-2">${regularSetInv.map(renderSetInvRow).join("")}</div>
+            ${sparesSetInv.length ? `
+            <div class="pt-2">
+                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-1">${I_Info("w-3 h-3 text-yellow-400")} Запасные</div>
+                <div class="space-y-2">${sparesSetInv.map(renderSetInvRow).join("")}</div>
+            </div>` : ''}
+        `;
     let s = "";
     return t ? s = '<div class="flex justify-center p-4 flex-shrink-0"><div class="loader !w-8 !h-8"></div></div>' : s = "", `
             <div class="space-y-6">
@@ -19183,7 +19211,10 @@ function renderMinifigModalInventoryView() {
         if (e.length === 0) {
             r = `<p class="text-gray-400 text-center p-4">Инвентарь для этой минифигурки не найден.</p>`;
         } else {
-            const t = e.map(e => `
+            // Сначала обычные, затем запасные
+            const regular = e.filter(p => !p.is_spare);
+            const spares = e.filter(p => p.is_spare);
+            const renderRow = (e, isSpare=false) => `
                 <div class="flex items-center bg-gray-700/50 p-2 rounded-md gap-3 text-sm cursor-pointer hover:bg-gray-700/70"
                      data-action="open-part-from-inventory"
                      data-part-id="${e.part.part_num}"
@@ -19200,8 +19231,14 @@ function renderMinifigModalInventoryView() {
                         <span class="w-5 h-5 rounded-full border border-gray-500 ${e.color.isTransparent?"checkerboard":""}" style="background-color: ${e.color.hex};" title="${e.color.name}"></span>
                         <span class="text-gray-300 w-8 text-right">${e.quantity}x</span>
                     </div>
-                </div>`).join("");
-            r = `<div class="space-y-2">${t}</div>`;
+                </div>`;
+            const regularHtml = regular.map(p => renderRow(p)).join("");
+            const sparesHtml = spares.length ? `
+                <div class="pt-2">
+                    <div class="text-xs text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-1">${I_Alert("w-3 h-3 text-yellow-400")} Запасные</div>
+                    <div class="space-y-2">${spares.map(p => renderRow(p, true)).join("")}</div>
+                </div>` : '';
+            r = `<div class="space-y-2">${regularHtml}${sparesHtml}</div>`;
         }
     }
     return `
@@ -27505,7 +27542,7 @@ async function loadInventoriesFromCSV() {
                 
                 const [inventory_id, part_num, color_id, quantity, is_spare, img_url] = fields;
                 
-                if (inventory_id && part_num && color_id && quantity && is_spare !== 't') {
+                if (inventory_id && part_num && color_id && quantity) {
                     if (!inventoryPartsMap[inventory_id]) {
                         inventoryPartsMap[inventory_id] = [];
                     }
@@ -27513,6 +27550,7 @@ async function loadInventoriesFromCSV() {
                         part_num,
                         color_id: parseInt(color_id),
                         quantity: parseInt(quantity),
+                        is_spare: (String(is_spare).trim().toLowerCase() === 't'),
                         img_url: img_url || null
                     });
                     
@@ -29155,7 +29193,7 @@ async function fetchMissingCollectionMinifigDetails() {
         for (let i = 0; i < allFigNums.length; i += batchSize) {
             const batch = allFigNums.slice(i, i + batchSize);
             try {
-                const results = await Promise.all(batch.map(figNum => fetchMinifigDetailsWithRetry(figNum)));
+            const results = await Promise.all(batch.map(figNum => fetchMinifigDetailsWithRetry(figNum)));
                 // Save state after each batch to avoid data loss
                 saveState();
                 
