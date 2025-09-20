@@ -60,6 +60,11 @@
   </script>
 
       <style>
+    /* Блокируем системное «растягивание» и pull-to-refresh */
+    html, body {
+        overscroll-behavior-y: contain;
+        overscroll-behavior-x: none;
+    }
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         /* Защита от случайного масштабирования */
@@ -67,6 +72,12 @@
         font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Класс для прокручиваемых контейнеров (отключает протекание жестов) */
+    .scrollable {
+        overscroll-behavior: contain;
+        touch-action: pan-y;
     }
     
     /* Дополнительная защита от масштабирования на мобильных устройствах */
@@ -6817,7 +6828,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v28';
+const CACHE_NAME = 'lego-catalog-cache-v30';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -18548,7 +18559,7 @@ function renderSettingsModal() {
                                 <button data-action="clear-app-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
                                     Очистить кэш
                                 </button>
-                                <button data-action="refresh-csv-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/25">
+                                <button data-action="refresh-csv-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white shadow-lg hover:shadow-gray-500/25">
                                     Обновить кэш CSV
                                 </button>
                             </div>
@@ -26208,18 +26219,18 @@ async function preloadImages() {
 }
 
 async function initializeApp() {
-    // Простая блокировка навигации браузера
-    console.log('🚫 Блокируем навигацию браузера для одностраничного приложения');
-    
-    // Блокируем кнопку "назад" через popstate
-    window.addEventListener('popstate', (event) => {
-        console.log('🚫 Попытка навигации назад заблокирована');
-        // Возвращаемся на текущую страницу
-        window.history.pushState(null, '', window.location.href);
-    });
-    
-    // Блокируем кнопку "вперед" через pushState
-    window.history.pushState(null, '', window.location.href);
+    // Защита от случайного выхода: сначала закрываем открытые окна/панели, а не выходим
+    try {
+        window.history.pushState({lock:true}, '', window.location.href);
+        window.addEventListener('popstate', (event) => {
+            // Закрываем палитру цветов, если открыта
+            try { if (colorsModalEl && !colorsModalEl.classList.contains('modal-hidden')) { modalManager.closeModal('colors-modal-container'); } } catch {}
+            // Закрываем последнее модальное окно, если есть
+            try { if (modalManager && modalManager.getOpenModalsCount() > 0) { modalManager.closeLastModal(); } } catch {}
+            // Возвращаем фиктивное состояние, чтобы остаться в приложении
+            window.history.pushState({lock:true}, '', window.location.href);
+        });
+    } catch {}
     
     // Проверяем, не является ли это OAuth callback, чтобы предотвратить циклические перезагрузки
     const urlParams = new URLSearchParams(window.location.search);
