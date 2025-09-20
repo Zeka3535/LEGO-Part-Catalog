@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lego-catalog-cache-v27';
+const CACHE_NAME = 'lego-catalog-cache-v28';
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
@@ -14,7 +14,7 @@ const PRECACHE_ASSETS = [
     './ogimage.png'
 ];
 
-// Add CSV data files to precache for offline functionality
+// CSV-файлы не добавляем в precache: кэшируем по первому запросу (SWR)
 const CSV_ASSETS = [
     './Data/colors.csv',
     './Data/parts.csv',
@@ -30,7 +30,7 @@ const CSV_ASSETS = [
     './Data/themes.csv'
 ];
 
-// Add minifig images to precache for better performance
+// Изображения минифигов кэшируем по запросу, не в precache
 const MINIFIG_IMAGES = [];
 for (let i = 1; i <= 28; i++) {
     MINIFIG_IMAGES.push(`./Minifig_png/fig-${i}.png`);
@@ -40,30 +40,7 @@ self.addEventListener('install', event => {
     event.waitUntil((async () => {
         try {
             const cache = await caches.open(CACHE_NAME);
-            const allAssets = [...PRECACHE_ASSETS, ...CSV_ASSETS, ...MINIFIG_IMAGES];
-            // Try to discover split files via parts_info.txt
-            const dynamicSplitFiles = await (async () => {
-                try {
-                    const infoUrl = './Data/inventory_parts_split/parts_info.txt';
-                    const resp = await fetch(infoUrl, { cache: 'no-cache' });
-                    if (!resp.ok) throw new Error('no parts_info');
-                    const text = await resp.text();
-                    const names = Array.from(text.matchAll(/inventory_parts_part_\d{3}\.csv/g)).map(m => m[0]);
-                    return names.map(n => `./Data/inventory_parts_split/${n}`);
-                } catch {
-                    // fallback: probe sequentially until a miss
-                    const found = [];
-                    for (let i = 1; i <= 50; i++) {
-                        const name = `./Data/inventory_parts_split/inventory_parts_part_${String(i).padStart(3, '0')}.csv`;
-                        try {
-                            const head = await fetch(name, { method: 'HEAD' });
-                            if (head.ok) found.push(name); else break;
-                        } catch { break; }
-                    }
-                    return found;
-                }
-            })();
-            const assets = [...allAssets, ...dynamicSplitFiles];
+            const assets = [...PRECACHE_ASSETS];
             await Promise.allSettled(assets.map(url => cache.add(url).catch(() => null)));
         } finally {
             await self.skipWaiting();
@@ -96,10 +73,7 @@ function cacheFirst(request) {
             if (networkResponse.ok || networkResponse.type === 'opaque') {
                 const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, responseToCache).catch(error => {
-                        // Ignore cache put errors (e.g., if entry already exists)
-                        console.warn('Cache put failed:', error);
-                    });
+                    cache.put(request, responseToCache).catch(() => {});
                 });
             }
             return networkResponse;
@@ -113,10 +87,7 @@ function networkFirst(request) {
         if (networkResponse.ok) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then(cache => {
-                cache.put(request, responseToCache).catch(error => {
-                    // Ignore cache put errors (e.g., if entry already exists)
-                    console.warn('Cache put failed:', error);
-                });
+                cache.put(request, responseToCache).catch(() => {});
             });
         }
         return networkResponse;
@@ -145,10 +116,7 @@ function staleWhileRevalidate(request) {
             if (networkResponse.ok) {
                 const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, responseToCache).catch(error => {
-                        // Ignore cache put errors (e.g., if entry already exists)
-                        console.warn('Cache put failed:', error);
-                    });
+                    cache.put(request, responseToCache).catch(() => {});
                 });
             }
             return networkResponse;
@@ -177,7 +145,7 @@ self.addEventListener('fetch', event => {
         url.hostname === 'rebrickable.com') {
         // API requests: network first with fallback to cache
         event.respondWith(networkFirst(event.request));
-    } else if (url.pathname.includes('/Data/') && url.pathname.endsWith('.csv')) {
+    } else if ((url.pathname.includes('/Data/') || url.pathname.includes('/dist/Downloads/') || url.pathname.includes('/Downloads/')) && url.pathname.endsWith('.csv')) {
         // CSV data files: stale-while-revalidate for better performance
         event.respondWith(staleWhileRevalidate(event.request));
     } else if (url.pathname.includes('/Minifig_png/')) {
@@ -242,9 +210,8 @@ async function refreshMinifigCache() {
             }).catch(() => null)
         );
         await Promise.allSettled(minifigPromises);
-        console.log('Minifig cache refreshed successfully');
     } catch (error) {
-        console.error('Error refreshing minifig cache:', error);
+        // игнорируем ошибки обновления кэша минифигурок
     }
 }
 
@@ -255,5 +222,29 @@ self.addEventListener('message', event => {
     } else if (event.data && event.data.type === 'REFRESH_MINIFIG_CACHE') {
         // Force refresh minifig images cache
         refreshMinifigCache();
+    } else if (event.data && event.data.type === 'REFRESH_CSV_CACHE') {
+        // Принудительное обновление CSV в кэше
+        refreshCsvCache();
     }
 });
+
+// Принудительное обновление CSV-файлов в кэше
+async function refreshCsvCache() {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const keys = await cache.keys();
+        const csvKeys = keys.filter(k => /\.csv($|\?)/i.test(new URL(k.url).pathname));
+        await Promise.allSettled(csvKeys.map(async (request) => {
+            try {
+                const res = await fetch(request, { cache: 'no-store' });
+                if (res && res.ok) {
+                    await cache.put(request, res.clone());
+                }
+            } catch (e) {
+                // игнорируем ошибки отдельных файлов
+            }
+        }));
+    } catch (e) {
+        // игнорируем любые ошибки обновления CSV
+    }
+}
