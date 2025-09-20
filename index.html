@@ -6817,7 +6817,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v27';
+const CACHE_NAME = 'lego-catalog-cache-v28';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -15565,6 +15565,7 @@ function renderHeader() {
 
                 </div>
             </div>
+            
             ${selBar}
         `;
     
@@ -15572,6 +15573,8 @@ function renderHeader() {
     setTimeout(() => {
         setupSearchButtonsVisibility();
     }, 0);
+    // Обновляем индикатор онлайн/оффлайн
+    // Индикатор сети перенесён в настройки
 }
 function renderSetCard(e, t, o = 0) {
     if (!e) return "";
@@ -18537,9 +18540,16 @@ function renderSettingsModal() {
                         <h3 class="text-md font-semibold text-white mb-2">Управление кэшем</h3>
                         <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Управление кэшем приложения для улучшения производительности и освобождения места</p>
+                            <div id="network-status-row" class="flex items-center justify-between gap-3 mb-2">
+                                <span class="text-xs text-gray-300">Режим работы</span>
+                                <span id="settings-offline-indicator" class="text-xs font-semibold px-2 py-1 rounded ${navigator.onLine ? 'bg-green-900/40 text-green-300' : 'bg-yellow-900/40 text-yellow-300'}">${navigator.onLine ? 'Онлайн' : 'Оффлайн режим активен'}</span>
+                            </div>
                             <div class="flex gap-3">
                                 <button data-action="clear-app-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
                                     Очистить кэш
+                                </button>
+                                <button data-action="refresh-csv-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-blue-500/25">
+                                    Обновить кэш CSV
                                 </button>
                             </div>
                             <div id="cache-usage" class="text-xs text-gray-400"></div>
@@ -19098,6 +19108,25 @@ function showRelatedSetsModal(relatedSets, entityName, entityLabel = "миниф
             </div>
         </div>
     `;
+
+    // Обновляем индикатор сети в настройках и подписываемся на события
+    try {
+        const ind = document.getElementById('settings-offline-indicator');
+        if (ind) {
+            const updateNetInSettings = () => {
+                if (navigator.onLine) {
+                    ind.textContent = 'Онлайн';
+                    ind.className = 'text-xs font-semibold px-2 py-1 rounded bg-green-900/40 text-green-300';
+                } else {
+                    ind.textContent = 'Оффлайн режим активен';
+                    ind.className = 'text-xs font-semibold px-2 py-1 rounded bg-yellow-900/40 text-yellow-300';
+                }
+            };
+            updateNetInSettings();
+            window.addEventListener('online', updateNetInSettings, { once: true });
+            window.addEventListener('offline', updateNetInSettings, { once: true });
+        }
+    } catch {}
     
     // Настраиваем скролл-прогресс для модального окна связанных наборов
     setupRelatedSetsScrollProgress();
@@ -25545,6 +25574,19 @@ document.addEventListener("click", async e => {
                                             updateSettingsModalStatus(`Ошибка очистки\nкэша: ${error.message}`, "error");
                 }
                 break;
+            case "refresh-csv-cache":
+                updateSettingsModalStatus("Обновление CSV кэша", "info");
+                try {
+                    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({ type: 'REFRESH_CSV_CACHE' });
+                        updateSettingsModalStatus("CSV кэш обновляется...", "info");
+                    } else {
+                        updateSettingsModalStatus("Сервис-воркер не активен", "error");
+                    }
+                } catch (error) {
+                    updateSettingsModalStatus(`Ошибка обновления CSV: ${error.message}`, "error");
+                }
+                break;
             case "clear-camera-settings":
                 updateSettingsModalStatus("Очистка настроек\nкамеры", "info");
                 try {
@@ -27667,9 +27709,9 @@ async function discoverInventoryPartFiles() {
 }
 
 // Функция для загрузки инвентарей из CSV
-async function loadInventoriesFromCSV() {
+    async function loadInventoriesFromCSV() {
     try {
-        // Загружаем inventory_parts из динамически обнаруженных файлов
+        // Загружаем inventory_parts: при наличии воркера парсим потоково
         const inventoryPartsLines = [];
         const partFiles = await discoverInventoryPartFiles();
         const maxParts = partFiles.length || 1;
@@ -27680,15 +27722,62 @@ async function loadInventoriesFromCSV() {
             initCsvProgressPlan();
         } catch {}
         let loadedParts = 0;
+        const useWorker = !!window.Worker;
+        let worker = null;
+        if (useWorker) {
+            try {
+                // Создаём воркер на лету (без внешних файлов)
+                const workerSrc = `self.onmessage=function(e){var u=e.data.url;var l=e.data.label;function p(t){try{self.postMessage({type:'progress',label:l,bytes:t});}catch(e){}};fetch(u).then(function(r){var reader=r.body&&r.body.getReader?r.body.getReader():null;if(!reader){return r.text().then(function(txt){self.postMessage({type:'batch',rows:txt.split('\\n')});self.postMessage({type:'done'});});}var dec=new TextDecoder();var buf='';function pump(){reader.read().then(function(res){var done=res.done;var value=res.value;if(done){if(buf){self.postMessage({type:'batch',rows:buf.split('\\n')});}self.postMessage({type:'done'});return;}p(value.length);buf+=dec.decode(value,{stream:true});var lastNL=buf.lastIndexOf('\\n');if(lastNL!==-1){var chunk=buf.slice(0,lastNL);buf=buf.slice(lastNL+1);self.postMessage({type:'batch',rows:chunk.split('\\n')});}pump();});}pump();});};`;
+                const blob = new Blob([workerSrc], { type: 'application/javascript' });
+                const url = URL.createObjectURL(blob);
+                worker = new Worker(url);
+            } catch (e) {
+                worker = null;
+            }
+        }
         for (let idx = 0; idx < partFiles.length; idx++) {
             const url = partFiles[idx];
             const label = url.substring(url.lastIndexOf('/') + 1);
             try {
-                const csvText = await fetchTextWithProgress(url, 'Загрузка инвентарей деталей...', label);
-                const lines = csvText.split('\n');
-                const linesToAdd = idx === 0 ? lines.slice(1) : lines.slice(1);
-                for (let i = 0; i < linesToAdd.length; i++) {
-                    inventoryPartsLines.push(linesToAdd[i]);
+                if (worker) {
+                    await new Promise((resolve) => {
+                        let isFirstBatch = true;
+                        const onMsg = (e) => {
+                            if (e.data.type === 'batch') {
+                                const rows = e.data.rows;
+                                const linesToAdd = isFirstBatch && idx === 0 ? rows.slice(1) : rows; // пропустить заголовок
+                                for (let i = 0; i < linesToAdd.length; i++) {
+                                    if (linesToAdd[i]) inventoryPartsLines.push(linesToAdd[i]);
+                                }
+                                isFirstBatch = false;
+                            } else if (e.data.type === 'progress') {
+                                const details = `Загружается: ${label} • Файл: ~${formatMb(e.data.bytes)} MB`;
+                                updateLoadingStatus('Загрузка инвентарей деталей...', calcPlannedProgress(label, null), details);
+                            } else if (e.data.type === 'done') {
+                                worker.removeEventListener('message', onMsg);
+                                resolve();
+                            }
+                        };
+                        worker.addEventListener('message', onMsg);
+                        // Преобразуем относительный путь в абсолютный URL для воркера (blob: контекст)
+                        const absUrl = (function(){
+                            try { return new URL(url, window.location.href).href; } catch (e) { return url; }
+                        })();
+                        // Обработка ошибок воркера — фоллбек на обычную загрузку
+                        const onErr = () => {
+                            try { worker.removeEventListener('message', onMsg); } catch (e) {}
+                            resolve();
+                        };
+                        worker.addEventListener('error', onErr, { once: true });
+                        worker.postMessage({ url: absUrl, label });
+                    });
+                } else {
+                    const csvText = await fetchTextWithProgress(url, 'Загрузка инвентарей деталей...', label);
+                    const lines = csvText.split('\n');
+                    const linesToAdd = idx === 0 ? lines.slice(1) : lines.slice(1);
+                    for (let i = 0; i < linesToAdd.length; i++) {
+                        inventoryPartsLines.push(linesToAdd[i]);
+                    }
                 }
                 loadedParts++;
                 if (S.settingsOpen) {
