@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lego-catalog-cache-v29';
+const CACHE_NAME = 'lego-catalog-cache-v30';
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
@@ -131,18 +131,34 @@ function staleWhileRevalidate(request) {
 
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
+    const urlString = event.request.url;
     
     // Skip non-GET requests
     if (event.request.method !== 'GET') {
         return;
     }
     
+    // Helpers to detect Rebrickable API calls even when proxied
+    const isRebrickableApi = url.hostname === 'rebrickable.com' || urlString.includes('rebrickable.com/api/');
+    const isColorsEndpoint = isRebrickableApi && urlString.includes('/api/v3/lego/colors');
+    const isInventoryEndpoint = isRebrickableApi && (
+        (urlString.includes('/api/v3/lego/sets/') && urlString.includes('/parts')) ||
+        (urlString.includes('/api/v3/lego/minifigs/') && urlString.includes('/parts'))
+    );
+
+    // Prefer SWR for relatively static API endpoints (colors, inventories)
+    if (isColorsEndpoint || isInventoryEndpoint) {
+        event.respondWith(staleWhileRevalidate(event.request));
+        return;
+    }
+
     // Handle different types of requests
     if (url.pathname.includes('/api/') || 
         url.pathname.includes('/sets/') || 
         url.pathname.includes('/parts/') || 
         url.pathname.includes('/minifigs/') ||
-        url.hostname === 'rebrickable.com') {
+        url.hostname === 'rebrickable.com' ||
+        isRebrickableApi) {
         // API requests: network first with fallback to cache
         event.respondWith(networkFirst(event.request));
     } else if ((url.pathname.includes('/Data/') || url.pathname.includes('/dist/Downloads/') || url.pathname.includes('/Downloads/')) && url.pathname.endsWith('.csv')) {
@@ -225,6 +241,9 @@ self.addEventListener('message', event => {
     } else if (event.data && event.data.type === 'REFRESH_CSV_CACHE') {
         // Принудительное обновление CSV в кэше
         refreshCsvCache();
+    } else if (event.data && event.data.type === 'REFRESH_API_CACHE') {
+        // Принудительное обновление кэша API (цвета и инвентари)
+        refreshApiCache();
     }
 });
 
@@ -246,5 +265,36 @@ async function refreshCsvCache() {
         }));
     } catch (e) {
         // игнорируем любые ошибки обновления CSV
+    }
+}
+
+// Принудительное обновление кэша API (цвета и инвентари)
+async function refreshApiCache() {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const keys = await cache.keys();
+        const apiKeys = keys.filter(k => {
+            const u = k.url;
+            // Обновляем только Rebrickable API, включая проксированные запросы
+            const isRebrickableApi = u.includes('rebrickable.com/api/');
+            const isColors = isRebrickableApi && u.includes('/api/v3/lego/colors');
+            const isInventory = isRebrickableApi && (
+                (u.includes('/api/v3/lego/sets/') && u.includes('/parts')) ||
+                (u.includes('/api/v3/lego/minifigs/') && u.includes('/parts'))
+            );
+            return isColors || isInventory;
+        });
+        await Promise.allSettled(apiKeys.map(async (request) => {
+            try {
+                const res = await fetch(request, { cache: 'no-store' });
+                if (res && res.ok) {
+                    await cache.put(request, res.clone());
+                }
+            } catch (_) {
+                // игнорируем ошибки отдельных запросов API
+            }
+        }));
+    } catch (_) {
+        // игнорируем любые ошибки обновления API-кэша
     }
 }
