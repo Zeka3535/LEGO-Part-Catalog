@@ -4180,6 +4180,17 @@ body.tab-switching button[data-view] {
         }
     }
     
+    /* Глобальный сброс hover-состояний на малых устройствах после нажатия */
+    @media (max-width: 768px), (hover: none), (pointer: coarse) {
+        /* Когда на <body> висит класс no-hover — принудительно убираем визуальные эффекты :hover */
+        body.no-hover :hover,
+        body.no-hover .group:hover,
+        body.no-hover .group:hover * {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+    }
+
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
@@ -4240,6 +4251,32 @@ body.tab-switching button[data-view] {
   </div>
 
   <script type="module">
+// Сброс hover/актив эффектов без морганий на мобильных
+(function() {
+    const isSmallOrTouch = () => (
+        window.matchMedia('(max-width: 768px)').matches ||
+        ('ontouchstart' in window) ||
+        (navigator.maxTouchPoints || 0) > 0
+    );
+
+    if (!isSmallOrTouch()) return;
+
+    let clearTimer = null;
+    const addNoHover = () => {
+        document.body.classList.add('no-hover');
+        clearTimeout(clearTimer);
+        clearTimer = setTimeout(() => {
+            document.body.classList.remove('no-hover');
+        }, 100);
+    };
+
+    window.addEventListener('touchstart', addNoHover, { passive: true });
+    window.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'touch' || e.pointerType === 'pen') addNoHover();
+    }, { passive: true });
+    window.addEventListener('click', addNoHover, { passive: true });
+})();
+
 const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
@@ -12509,7 +12546,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
                     </div>
                     <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                         ${themeData.length > 0 ? themeData.map((item, index) => `
-                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" data-pie-key="${item.name}-${index}" style="--item-color: ${item.color};">
+                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" data-pie-key="${item.name}-${index}" style="--item-color: ${item.color};" ${item.themeId ? `data-action="go-to-theme" data-theme-id="${item.themeId}"` : ''}>
                                 <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                                     <div class="w-4 h-4 rounded-full flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow duration-200" style="background-color: ${item.color}"></div>
                                     <span class="text-gray-200 text-sm sm:text-base truncate group-hover:text-white transition-colors duration-200">${item.name}</span>
@@ -12537,7 +12574,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
                     </div>
                     <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                         ${categoryData.map((item, index) => `
-                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" data-pie-key="${item.name}-${index}" style="--item-color: ${item.color};">
+                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" data-pie-key="${item.name}-${index}" style="--item-color: ${item.color};" ${item.categoryId ? `data-action="filter-by-category" data-category-id="${item.categoryId}" data-category-name="${item.name}"` : ''}>
                                 <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                                     <div class="w-4 h-4 rounded-full flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow duration-200" style="background-color: ${item.color}"></div>
                                     <span class="text-gray-200 text-sm sm:text-base truncate group-hover:text-white transition-colors duration-200">${item.name}</span>
@@ -12564,7 +12601,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
                     </div>
                     <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                         ${setSizeData.map((item, index) => `
-                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" data-pie-key="${item.name}-${index}" style="--item-color: ${item.color};">
+                            <div class="flex items-center justify-between p-2 sm:p-3 bg-gray-700/20 rounded-lg hover:bg-gray-700/40 transition-all duration-200 shadow-lg cursor-pointer group" data-pie-key="${item.name}-${index}" style="--item-color: ${item.color};" ${`data-action=\"open-set-size-filter\" data-min=\"${item.min ?? ''}\" data-max=\"${item.max ?? ''}\"`}>
                                 <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                                     <div class="w-4 h-4 rounded-full flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow duration-200" style="background-color: ${item.color}"></div>
                                     <span class="text-gray-200 text-sm sm:text-base truncate group-hover:text-white transition-colors duration-200">${item.name}</span>
@@ -12635,12 +12672,19 @@ function prepareThemeData(analytics) {
     return Object.entries(themeStats)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 15) // Увеличиваем количество тем до 15
-        .map(([name, count], index) => ({
-            name: name.length > 20 ? name.substring(0, 20) + '...' : name,
-            count,
-            percentage: total > 0 ? (count / total) * 100 : 0,
-            color: adjustColorForDarkBg(colors[index % colors.length])
-        }));
+        .map(([origName, count], index) => {
+            // Ищем themeId по полному названию темы
+            const foundId = Object.keys(THEME_MAP).find(id => THEME_MAP[id]?.name === origName);
+            const themeId = foundId ? parseInt(foundId, 10) : null;
+            const displayName = origName.length > 20 ? origName.substring(0, 20) + '...' : origName;
+            return {
+                name: displayName,
+                count,
+                percentage: total > 0 ? (count / total) * 100 : 0,
+                color: adjustColorForDarkBg(colors[index % colors.length]),
+                themeId
+            };
+        });
 }
 
 function prepareColorData(analytics) {
@@ -12674,12 +12718,18 @@ function prepareCategoryData(analytics) {
     return Object.entries(categoryStats)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 12)
-        .map(([name, count], index) => ({
-            name: name.length > 25 ? name.substring(0, 25) + '...' : name,
-            count,
-            percentage: total > 0 ? (count / total) * 100 : 0,
-            color: adjustColorForDarkBg(colors[index % colors.length])
-        }));
+        .map(([origName, count], index) => {
+            // Ищем categoryId по полному названию категории
+            const categoryId = flatCategories.find(cat => cat.name === origName)?.id || null;
+            const displayName = origName.length > 25 ? origName.substring(0, 25) + '...' : origName;
+            return {
+                name: displayName,
+                count,
+                percentage: total > 0 ? (count / total) * 100 : 0,
+                color: adjustColorForDarkBg(colors[index % colors.length]),
+                categoryId
+            };
+        });
 }
 
 function prepareRarityData(analytics) {
@@ -12735,6 +12785,15 @@ function prepareSetSizeData(analytics) {
     const total = Object.values(setSizes).reduce((sum, count) => sum + count, 0);
     const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3'];
     
+    const ranges = {
+        'Micro (1-50 деталей)': { min: 1, max: 50 },
+        'Small (51-200 деталей)': { min: 51, max: 200 },
+        'Medium (201-500 деталей)': { min: 201, max: 500 },
+        'Large (501-1000 деталей)': { min: 501, max: 1000 },
+        'X-Large (1001-2000 деталей)': { min: 1001, max: 2000 },
+        'XX-Large (2000+ деталей)': { min: 2001, max: null }
+    };
+    
     return Object.entries(setSizes)
         .filter(([,count]) => count > 0)
         .sort(([,a], [,b]) => b - a)
@@ -12742,7 +12801,9 @@ function prepareSetSizeData(analytics) {
             name,
             count,
             percentage: total > 0 ? (count / total) * 100 : 0,
-            color: adjustColorForDarkBg(colors[index % colors.length])
+            color: adjustColorForDarkBg(colors[index % colors.length]),
+            min: ranges[name]?.min ?? null,
+            max: ranges[name]?.max ?? null
         }));
 }
 
@@ -12887,7 +12948,7 @@ function renderPieChart(data) {
     // Базовое кольцо (один раз) и сегменты в виде окружностей со смещением dashoffset
     const baseRing = `<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="none" stroke="#64748b" stroke-width="${strokeWidth}" class="pie-base-ring" />`;
     const rings = segments.map((s, index) => `
-        <g class="pie-sector-group" data-move-x="${s.moveX}" data-move-y="${s.moveY}" data-sector-index="${index}" data-key="${s.key}">
+        <g class="pie-sector-group" data-move-x="${s.moveX}" data-move-y="${s.moveY}" data-sector-index="${index}" data-key="${s.key}" ${items[index] ? `data-action=\"open-set-size-filter\" data-min=\"${(data[index]?.min ?? '')}\" data-max=\"${(data[index]?.max ?? '')}\"` : ''}>
             <circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="none" stroke="${s.color}" stroke-width="${strokeWidth}" stroke-linecap="butt"
                 stroke-dasharray="${s.segLength} ${Math.max(0, circumference - s.segLength)}" stroke-dashoffset="${(s.offset + baseStartOffset) % circumference}" class="pie-segment" title="${s.name}: ${Math.round(s.fraction*1000)/10}%">
             </circle>
