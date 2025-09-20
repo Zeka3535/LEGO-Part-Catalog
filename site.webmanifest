@@ -1,21 +1,30 @@
 {
+  "id": "lego-catalog",
   "name": "Каталог деталей и наборов LEGO",
   "short_name": "LEGO Каталог",
   "description": "Современное веб-приложение для каталогизации вашей личной коллекции LEGO. Включает детали, наборы и минифигурки в едином удобном интерфейсе.",
-  "start_url": "./index.html",
+  "lang": "ru",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "orientation": "any",
   "background_color": "#1a202c",
   "theme_color": "#1a202c",
+  "categories": ["productivity", "education", "utilities"],
   "icons": [
     {
       "src": "android-chrome-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "android-chrome-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "apple-touch-icon.png",
@@ -32,5 +41,15 @@
       "sizes": "16x16",
       "type": "image/png"
     }
-  ]
+  ],
+  "shortcuts": [
+    { "name": "Детали", "short_name": "Детали", "url": "./#parts" },
+    { "name": "Наборы", "short_name": "Наборы", "url": "./#sets" },
+    { "name": "Минифигурки", "short_name": "Минифиг", "url": "./#minifigs" },
+    { "name": "Загрузки", "short_name": "Загрузки", "url": "./#downloads" }
+  ],
+  "screenshots": [
+    { "src": "ogimage.png", "type": "image/png", "sizes": "1200x630", "form_factor": "wide" }
+  ],
+  "prefer_related_applications": false
 }
