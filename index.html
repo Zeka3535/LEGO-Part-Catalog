@@ -370,10 +370,10 @@
 
 /* Палитра цветов в модальном окне детали */
 .color-palette-container {
-    max-height: 12rem; /* 48 * 0.25 = 12rem (192px) */
+    max-height: 13rem; /* увеличено для зазора снизу, было 12rem (192px) */
     overflow-y: auto;
-    /* Добавляем отступ снизу для видимости скругленных углов */
-    padding-bottom: 0.5rem;
+    /* Добавляем отступ снизу для видимости скругленных углов и зазора от кружков */
+    padding-bottom: 0.75rem; /* было 0.5rem */
     /* Обеспечиваем видимость скругленных углов */
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
@@ -383,6 +383,8 @@
 .color-palette-wrapper {
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
+    /* Клип содержимого, чтобы кружки не выходили за край при прокрутке */
+    overflow: hidden;
 }
 
 /* Скругление нижних углов контейнера с прокруткой */
@@ -401,12 +403,14 @@
 .color-palette-gradient {
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
+    /* Градиент всегда поверх элементов палитры */
+    z-index: 20;
 }
 
-/* Ограничение палитры цветов на мобильных устройствах до 3 рядов */
+/* Ограничение палитры цветов на мобильных устройствах до 3 рядов (с небольшим зазором снизу) */
 @media (max-width: 768px) {
     .color-palette-container {
-        max-height: 7.5rem; /* 3 ряда * (32px иконка + 12px gap) + 12px padding = 120px = 7.5rem */
+        max-height: 8rem; /* было 7.5rem; добавлен зазор снизу */
     }
 }
 
@@ -1081,6 +1085,10 @@
     /* Анимации для кнопок закрытия */
     .modal-close-btn:not(.lg\:hidden) {
         animation: buttonAppear 0.4s ease-out;
+    }
+    /* В модалке минифигурки отключаем повторный запуск анимации при обновлениях */
+    #minifig-modal-content .modal-close-btn:not(.animate-once) {
+        animation: none !important;
     }
     
   
@@ -1960,7 +1968,6 @@
     .color-palette-inner button:hover,
     .color-palette-inner span:hover {
         transform: scale(1.1);
-        z-index: 10;
     }
     
     /* Кнопки удаления в карточках */
@@ -17739,7 +17746,7 @@ function renderModal() {
                                 ${(() => {
                                     // Год первого появления детали — минимум по годам связанных наборов
                                     const y = getFirstAppearanceYearForPart(e.id);
-                                    return y ? `<p><span class=\"font-semibold text-gray-300\">Год появления:</span> ${y}</p>` : '';
+                                    return y ? `<p>Год: ${y}</p>` : '';
                                 })()}
                                 ${t?`
                                     <div class="flex items-center">
@@ -18926,7 +18933,7 @@ function renderMinifigModal(e = !1) {
                  <div class="flex items-center gap-2 flex-shrink-0">
                     ${renderMinifigModalToggleButton()}
                     <button data-action="share-minifig" class="text-gray-300 hover:text-white transition-colors" title="Поделиться минифигуркой через изображение и CSV файл">${I_Share("w-6 h-6")}</button>
-                    <button id="minifig-modal-close" class="modal-close-btn" title="Закрыть модальное окно минифигурки">${I_X("w-4 h-4")}</button>
+                    <button id="minifig-modal-close" class="modal-close-btn ${e?"animate-once":""}" title="Закрыть модальное окно минифигурки">${I_X("w-4 h-4")}</button>
                  </div>
             </div>
             <div id="minifig-scroll-progress"><div class="bar"></div></div>
@@ -19278,7 +19285,7 @@ function renderMinifigModalDetailsView() {
                             ${(() => {
                                 // Год первого появления минифигурки — минимум по годам связанных наборов
                                 const y = getFirstAppearanceYearForMinifig(S.selFigNum);
-                                return y ? `<p><span class=\"font-semibold text-gray-300\">Год появления:</span> ${y}</p>` : '';
+                                return y ? `<p>Год: ${y}</p>` : '';
                             })()}
                             <p>Кол-во деталей: ${e.num_parts}</p>
                             ${(() => {
