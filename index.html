@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Каталог деталей и наборов LEGO</title>
+  <title>LEGO Catalog</title>
 
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -13,7 +13,7 @@
   <meta name="msapplication-TileColor" content="#1a202c">
   <meta name="theme-color" content="#1a202c">
 
-  <meta property="og:title" content="Каталог деталей и наборов LEGO">
+  <meta property="og:title" content="LEGO Catalog">
   <meta property="og:description" content="Современное веб-приложение для каталогизации вашей личной коллекции LEGO. Включает детали, наборы и минифигурки в едином удобном интерфейсе.">
   <meta property="og:image" content="ogimage.png">
   <meta property="og:type" content="website">
@@ -1649,20 +1649,11 @@
     
     /* Анимации кнопок в боковом меню */
     #sidebar-container button {
-        transition: transform 0.15s ease-out, background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
-        will-change: transform;
-        /* Предотвращаем подёргивание при быстрых переключениях */
+        transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
-        transform: translateZ(0);
-        -webkit-transform: translateZ(0);
     }
-    #sidebar-container button:hover {
-        transform: translateY(-1px);
-    }
-    #sidebar-container button:active {
-        transform: translateY(0) scale(0.98);
-    }
+    /* hover/active без подъёма/скейла — цвет меняется через transition-colors */
     
     /* Предотвращаем подёргивание кнопок навигации */
     button[data-view] {
@@ -1694,6 +1685,42 @@
     }
     #sidebar-backdrop {
         transition: opacity 0.2s ease-in-out;
+    }
+    
+    /* Кнопочный вид элементов списков в боковом меню для лучшей читаемости */
+    #sidebar-container nav ul li > button {
+        background-color: rgba(55, 65, 81, 0.20); /* bg-gray-700/20 */
+        border: 1px solid rgba(75, 85, 99, 0.50); /* border-gray-700/50 */
+        box-shadow: 0 1px 1px rgba(0,0,0,0.20);
+        border-radius: 0.5rem; /* rounded-md */
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        line-height: 1.2;
+    }
+    #sidebar-container nav ul li > button > span,
+    #sidebar-container nav ul li > button > span.truncate { align-self: center; display: inline-flex; align-items: center; }
+    #sidebar-container nav ul li > button > div { align-items: center; }
+    #sidebar-container nav ul li > button:hover {
+        background-color: rgba(55, 65, 81, 0.40); /* bg-gray-700/40 */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.25);
+    }
+    /* Лёгкая зебра для монотонных списков (только для верхнего уровня) */
+    #sidebar-container nav > ul > li:nth-child(odd) > button {
+        background-color: rgba(55, 65, 81, 0.16); /* немного светлее */
+    }
+    /* Кебаб-меню: плавное появление/закрытие без подпрыгиваний элементов */
+    .overflow-menu {
+        transform-origin: top right;
+        transition: opacity 0.14s ease, transform 0.14s ease;
+        opacity: 0;
+        transform: scale(0.96);
+        pointer-events: none;
+    }
+    .overflow-menu.visible {
+        opacity: 1;
+        transform: scale(1);
+        pointer-events: auto;
     }
     
     /* Полноэкранный просмотр изображений */
@@ -4195,7 +4222,7 @@ body.tab-switching button[data-view] {
 </head>
 <body class="bg-gray-900 text-gray-200">
   <div id="scroll-progress"><div class="bar"></div></div>
-  <aside id="sidebar-container" class="w-80 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 lg:translate-x-0 -translate-x-full"></aside>
+  <aside id="sidebar-container" role="complementary" aria-label="Боковая панель навигации" class="w-80 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 lg:translate-x-0 -translate-x-full"></aside>
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden lg:hidden"></div>
   <div class="lg:ml-80 flex flex-col h-screen">
     <header id="header-container" class="bg-gray-800 sticky top-0 z-20 p-4 border-b border-gray-700"></header>
@@ -6865,7 +6892,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v30';
+const CACHE_NAME = 'lego-catalog-cache-v31';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -6899,6 +6926,7 @@ const I_Plus = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" view
 const I_Minus = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
 const I_X = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 const I_Menu = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>`;
+const I_Kebab = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>`;
 const I_Up = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>`;
 const I_Play = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
 const I_Square = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>`;
@@ -10206,7 +10234,20 @@ let S = {
     wishlists: {}, // Списки желаний
     currentWishlist: null, // Текущий выбранный список
     wishlistModal: { open: false, wishlistId: null, wishlist: null }, // Модальное окно просмотра списка
-    expandedWishlists: [] // Развернутые папки списков желаний
+    expandedWishlists: [], // Развернутые папки списков желаний
+    // Поиск и режимы боковой панели
+    sidebarFilter: '',
+    sidebarCompact: (function(){
+        try { return localStorage.getItem('sidebarCompact') === 'true'; } catch { return false; }
+    })(),
+    sidebarRecent: [],
+    sidebarMode: 'all',
+    sidebarFavCollapsed: (function(){
+        try { const v = localStorage.getItem('sidebarFavCollapsed'); return v === null ? true : v === 'true'; } catch { return true; }
+    })(),
+    sidebarFavsVisible: (function(){
+        try { const v = localStorage.getItem('sidebarFavsVisible'); return v === 'true'; } catch { return false; }
+    })()
 };
 let tempFilters = {
     filters: { colorIds: [], inCollectionOnly: false },
@@ -10328,6 +10369,7 @@ function saveState() {
     localStorage.setItem('legoMinifigCollection', JSON.stringify(S.minifigColl));
     localStorage.setItem('favoriteCategoryIds', JSON.stringify(Array.from(S.favCatIds)));
     localStorage.setItem('favoriteThemeIds', JSON.stringify(Array.from(S.favThemeIds)));
+    try { localStorage.setItem('sidebarCompact', String(!!S.sidebarCompact)); } catch {}
     localStorage.setItem('wishlists', JSON.stringify(S.wishlists));
     localStorage.setItem('currentWishlist', S.currentWishlist);
         
@@ -14971,7 +15013,7 @@ function getMinifigCount() {
             document.body.classList.add('sidebar-open-large');
         } else {
             // На малых экранах логика остается прежней
-            e ? S.sidebarOpen ? (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.remove("hidden"), document.body.style.overflow = "hidden") : (sidebarEl.classList.add("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "") : (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "")
+            e ? S.sidebarOpen ? (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.remove("hidden"), document.body.style.overflow = "hidden", sidebarEl.setAttribute('role','dialog'), sidebarEl.setAttribute('aria-modal','true')) : (sidebarEl.classList.add("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "", sidebarEl.removeAttribute('role'), sidebarEl.removeAttribute('aria-modal')) : (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "")
             
             // Убираем класс sidebar-open-large для малых экранов
             document.body.classList.remove('sidebar-open-large');
@@ -14988,7 +15030,8 @@ function renderSidebar() {
     const a = Object.values(S.minifigColl).reduce((e, t) => e + t.qty, 0);
     const i = Object.keys(S.minifigColl).length;
     const n = (e) => `flex items-center w-full p-3 text-base font-semibold rounded-lg transition-all duration-200 ease-in-out ${S.view===e?"bg-blue-600 text-white":"text-gray-400 hover:bg-gray-700 hover:text-white"}`;
-    const r = (e) => `relative flex-1 py-2 px-1 rounded-lg text-sm font-semibold transition-colors duration-200 flex flex-col items-center justify-center gap-1 ${S.subView===e?"bg-blue-600 text-white":"text-gray-300 hover:bg-gray-700 hover:text-white"}`;
+    const r = (e) => `relative flex-1 py-2 px-1 ${S.sidebarCompact?'h-10':'h-16'} rounded-lg text-xs font-semibold transition-colors duration-200 flex flex-col items-center justify-center gap-1 ${S.subView===e?"bg-blue-600 text-white":"text-gray-300 hover:bg-gray-700 hover:text-white"}`;
+    const m = (e) => `relative flex-1 py-2 px-1 ${S.sidebarCompact?'h-10':'h-16'} rounded-lg text-xs font-semibold transition-colors duration-200 flex flex-col items-center justify-center gap-1 ${S.view===e?"bg-blue-600 text-white":"text-gray-300 hover:bg-gray-700 hover:text-white"}`;
     const s = (e, t, o) => {
         if (o === 0 || "collection" !== S.view) return "";
         const l = t;
@@ -14997,7 +15040,8 @@ function renderSidebar() {
         return `<span class="${a}">${String(l)}</span>`
     };
     let c = "",
-        d = "";
+        d = "",
+        topBtnHtml = "";
     if ("sets" === S.subView) {
         d = "Темы";
         let e = S.themeTree;
@@ -15008,7 +15052,7 @@ function renderSidebar() {
                 const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
                 t = `
                   <li>
-                    <button data-action="show-all-collection-items" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}">
+                    <button data-action="show-all-collection-items" class="w-full text-left flex items-center justify-between p-2 h-9 rounded-md transition-colors duration-150 ${btnClass}">
                       <span class="break-words leading-tight flex-1 self-center">Все наборы</span>
                     </button>
                   </li>
@@ -15035,7 +15079,7 @@ function renderSidebar() {
                 ` : '';
                 t = `
                   <li>
-                    <button data-action=\"show-all-items-sets\" class=\"relative w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}\">
+                    <button data-action=\"show-all-items-sets\" class=\"relative w-full text-left flex items-center justify-between p-2 h-9 rounded-md transition-colors duration-150 ${btnClass}\">
                       ${relatedBadge}
                       <span class=\"break-words leading-tight flex-1 self-center\">Все наборы</span>
                       <div class=\"flex-shrink-0 ml-2 self-center\">
@@ -15062,14 +15106,11 @@ function renderSidebar() {
         }
         const o = (e) => {
             if (!Array.isArray(e)) return [];
-            e.forEach(e => {
-                e && Array.isArray(e.children) && o(e.children)
+            e.forEach(node => {
+                node && Array.isArray(node.children) && o(node.children)
             });
-            return e.sort((e, t) => {
-                const o = S.favThemeIds.has(e.id),
-                    l = S.favThemeIds.has(t.id);
-                return o && !l ? -1 : !o && l ? 1 : e.name.localeCompare(t.name, 'en')
-            }), e
+            // Алфавитная сортировка тем (без подъёма избранных — отдельный блок сверху)
+            return e.sort((a, b) => String(a?.name || '').localeCompare(String(b?.name || ''), 'en'))
         };
         o(e);
         const l = (e, t = 0) => {
@@ -15089,9 +15130,9 @@ function renderSidebar() {
                 ` : '';
                 return `
                     <li class="space-y-1">
-                        <button data-theme-id="${e.id}" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${a} group" style="padding-left: ${.5+1.5*t}rem;">
+                        <button data-theme-id="${e.id}" aria-expanded="${o?"true":"false"}" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${a} group" style="padding-left: ${.5+1.5*t}rem;">
                             <div class="flex flex-1 min-w-0">
-                                <span data-action="toggle-favorite-theme" data-theme-id="${e.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-10 mr-2 ${r} flex-shrink-0 self-center" aria-label="Добавить в избранное">
+                                <span data-action="toggle-favorite-theme" data-theme-id="${e.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-0 mr-2 ${r} flex-shrink-0 self-center" aria-label="Добавить в избранное">
                                     ${I_Heart("w-4 h-4",n)}
                                 </span>
                                 <span class="break-words leading-tight">${e.name}</span>
@@ -15106,11 +15147,12 @@ function renderSidebar() {
                 `
             }).join("")
         };
+        topBtnHtml = t;
         if (S.sidebarLoading) {
             // Во время загрузки показываем содержимое с индикатором загрузки сверху
-            c = '<div class="flex items-center justify-center p-3 mb-3 bg-gray-700/50 rounded-lg"><div class="loader !w-5 !h-5 mr-2"></div><span class="text-sm text-gray-300">Загрузка данных...</span></div>' + (t + l(e));
+            c = '<div class="flex items-center justify-center p-3 mb-3 bg-gray-700/50 rounded-lg"><div class="loader !w-5 !h-5 mr-2"></div><span class="text-sm text-gray-300">Загрузка данных...</span></div>' + l(e);
         } else {
-            c = t + l(e);
+            c = l(e);
         }
         } else if ("minifigs" === S.subView) {
                 d = "Минифигурки";
@@ -15225,31 +15267,27 @@ function renderSidebar() {
                 const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
                 t = `
                   <li>
-                    <button data-action="show-all-collection-items" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}">
+                    <button data-action="show-all-collection-items" class="w-full text-left flex items-center justify-between p-2 h-9 rounded-md transition-colors duration-150 ${btnClass}">
                       <span class="break-words leading-tight flex-1 self-center">Все детали</span>
                     </button>
                   </li>
                 `;
                     } else {
-            // Каталог: кнопка активна только когда действительно открыт и сформирован полный список деталей
+            // Каталог: кнопка активна при входе во вкладку детали без выбранной категории
             const isActive = (
               S.view === "catalog" &&
               S.subView === "parts" &&
-              S.selCatId === null &&
-              (S.q ?? "") === "" &&
-              S.searchGroups && Object.keys(S.searchGroups || {}).length > 0
+              S.selCatId === null
             );
             const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
             // Используем общее количество всех деталей в каталоге, независимо от выбранной категории/темы
             const totalPartsInCatalog = S.totalPartsInCatalog || 0;
             const countBadge = totalPartsInCatalog > 0 ? `
-                <span class="ml-2 bg-gray-600 text-white text-xs font-bold rounded-full px-2 py-1 min-w-[20px] text-center">
-                    ${totalPartsInCatalog}
-                </span>
+                <span class="ml-2 bg-gray-600 text-white text-xs font-bold rounded-full px-2 py-1 min-w-[20px] text-center">${totalPartsInCatalog}</span>
             ` : '';
                 t = `
                   <li>
-                    <button data-action="show-all-items-parts" class="w-full text-left flex items-start justify-between p-2 rounded-md transition-colors duration-150 ${btnClass}">
+                    <button data-action="show-all-items-parts" class="w-full text-left flex items-center justify-between p-2 h-9 rounded-md transition-colors duration-150 ${btnClass}">
                       <span class="break-words leading-tight flex-1 self-center">Все детали</span>
                       <div class="flex-shrink-0 ml-2 self-center">
                         ${countBadge}
@@ -15270,14 +15308,9 @@ function renderSidebar() {
             if ("collection" === S.view && Object.keys(S.coll).length > 0 && 0 === e.length) {
                 c += '<li class="text-gray-400 text-sm p-2">Нет деталей в категориях</li>';
             } else {
-                e.forEach(e => {
-                    Array.isArray(e.children) && e.children.sort((e, t) => {
-                        const o = S.favCatIds.has(e.id),
-                            l = S.favCatIds.has(t.id);
-                        return o && !l ? -1 : !o && l ? 1 : e.name.localeCompare(t.name, 'en')
-                    })
-                });
-                c += t + e.map(e => {
+                // Сохраняем естественный порядок категорий (не поднимаем избранные)
+                topBtnHtml = t;
+                c += e.map(e => {
                     const t = S.expCats.has(e.name),
                         o = e.children.map(e => {
                             const t = ("catalog" === S.view && S.selCatId === e.id || "collection" === S.view && S.selCollCatId === e.id) ? "bg-blue-600/80 text-white" : "text-gray-400 hover:bg-gray-700/50 hover:text-gray-200",
@@ -15286,7 +15319,7 @@ function renderSidebar() {
                             return `
                               <li>
                                   <button data-category-id="${e.id}" class="w-full text-left flex items-center p-2 pl-11 rounded-md transition-colors duration-150 ${t} group">
-                                    <span data-action="toggle-favorite-category" data-category-id="${e.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-10 mr-2 -ml-2 ${l}" aria-label="Добавить в избранное">
+                                    <span data-action="toggle-favorite-category" data-category-id="${e.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-0 mr-2 -ml-2 ${l}" aria-label="Добавить в избранное">
                                         ${I_Heart("w-4 h-4",o)}
                                     </span>
                                     <span class="truncate flex-grow">${e.name}</span>
@@ -15317,7 +15350,7 @@ function renderSidebar() {
                     ` : '';
                     return `
                           <li class="space-y-1">
-                              <button data-parent-category="${e.name}" class="w-full text-left flex items-center justify-between p-2 rounded-md hover:bg-gray-700 transition-colors duration-150">
+                              <button data-parent-category="${e.name}" aria-expanded="${t?"true":"false"}" class="w-full text-left flex items-center justify-between p-2 rounded-md hover:bg-gray-700 transition-colors duration-150">
                                   <div class="flex items-center truncate flex-1">
                                     ${l}
                                     <span class="font-semibold text-gray-200 truncate">${e.name}</span>
@@ -15338,13 +15371,8 @@ function renderSidebar() {
             if ("collection" === S.view && Object.keys(S.coll).length > 0 && 0 === e.length) {
                 c = '<li class="text-gray-400 text-sm p-2">Нет деталей в категориях</li>';
             } else {
-                e.forEach(e => {
-            Array.isArray(e.children) && e.children.sort((e, t) => {
-                const o = S.favCatIds.has(e.id),
-                    l = S.favCatIds.has(t.id);
-                return o && !l ? -1 : !o && l ? 1 : e.name.localeCompare(t.name, 'en')
-            })
-        }), c = t + e.map(e => {
+                // Сохраняем естественный порядок категорий (не поднимаем избранные)
+        topBtnHtml = t, c = e.map(e => {
             const t = S.expCats.has(e.name),
                 o = e.children.map(e => {
                     const t = ("catalog" === S.view && S.selCatId === e.id || "collection" === S.view && S.selCollCatId === e.id) ? "bg-blue-600/80 text-white" : "text-gray-400 hover:bg-gray-700/50 hover:text-gray-200",
@@ -15360,7 +15388,7 @@ function renderSidebar() {
                       <li>
                           <button data-category-id="${e.id}" class="w-full text-left flex items-start justify-between p-2 pl-11 rounded-md transition-colors duration-150 ${t} group">
                             <div class="flex flex-1 min-w-0">
-                                <span data-action="toggle-favorite-category" data-category-id="${e.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-10 mr-2 -ml-2 ${l} flex-shrink-0 self-center" aria-label="Добавить в избранное">
+                                <span data-action="toggle-favorite-category" data-category-id="${e.id}" class="p-1 rounded-full hover:bg-gray-600 hover:text-red-400 transition-opacity z-0 mr-2 -ml-2 ${l} flex-shrink-0 self-center" aria-label="Добавить в избранное">
                                     ${I_Heart("w-4 h-4",o)}
                                 </span>
                                 <span class="break-words leading-tight">${e.name}</span>
@@ -15405,6 +15433,19 @@ function renderSidebar() {
             }
         }
     }
+    const sidebarFilterTerm = (S.sidebarFilter || '').trim().toLowerCase();
+    let filteredListHtml = c;
+    if (sidebarFilterTerm) {
+        try {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = `<ul>${c}</ul>`;
+            tmp.querySelectorAll('li').forEach(li => {
+                const txt = (li.textContent || '').toLowerCase();
+                if (!txt.includes(sidebarFilterTerm)) li.remove();
+            });
+            filteredListHtml = tmp.innerHTML;
+        } catch {}
+    }
     sidebarEl.innerHTML = `
         <div class="flex items-center justify-between mb-4 flex-shrink-0">
           <h1 class="text-xl font-bold text-white">Меню</h1>
@@ -15422,40 +15463,160 @@ function renderSidebar() {
         </div>
         ` : ''}
 
-        <div class="space-y-2 mb-4 flex-shrink-0">
-            <button data-view="catalog" class="${n("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">${I_Cat("w-5 h-5 mr-3 text-blue-400")}<span>Каталог</span></button>
-            <button data-view="collection" class="${n("collection")}" title="Переключиться на просмотр вашей личной коллекции">${I_Coll("w-5 h-5 mr-3 text-green-400")}<span>Коллекция</span></button>
-            <button data-view="tools" class="${n("tools")}" title="Инструменты для анализа и работы с коллекцией">${I_Toolbox("w-5 h-5 mr-3 text-indigo-400")}<span>Инструменты</span></button>
+        <div class="mb-3 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1 ${S.sidebarCompact? 'text-[11px]' : 'text-[12px]'}">
+            <button data-view="catalog" class="${m("catalog")}" title="Переключиться на просмотр каталога деталей, наборов и минифигурок">
+                ${I_Cat("w-5 h-5 text-blue-400")}
+                <span class="mt-1 ${S.sidebarCompact? 'hidden' : ''}">Каталог</span>
+            </button>
+            <button data-view="collection" class="${m("collection")}" title="Переключиться на просмотр вашей личной коллекции">
+                ${I_Coll("w-5 h-5 text-teal-400")}
+                <span class="mt-1 ${S.sidebarCompact? 'hidden' : ''}">Коллекция</span>
+            </button>
+            <button data-view="tools" class="${m("tools")}" title="Инструменты для анализа и работы с коллекцией">
+                ${I_Toolbox("w-5 h-5 text-indigo-400")}
+                <span class="mt-1 ${S.sidebarCompact? 'hidden' : ''}">Инструменты</span>
+            </button>
         </div>
 
         ${S.view !== "tools" ? `
-        <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1">
+        <div class="mb-4 p-1 bg-gray-900/50 rounded-xl grid grid-cols-3 gap-1 ${S.sidebarCompact? 'text-[11px]' : 'text-[12px]'}">
             <button data-sub-view="parts" class="${r("parts")}" title="Показать детали" data-long-press="parts">
                 ${I_Brick("w-5 h-5 text-blue-400")}
-                <span class="mt-1">Детали</span>
+                <span class="mt-1 ${S.sidebarCompact? 'hidden' : ''}">Детали</span>
                 ${s("parts",e,t)}
             </button>
             <button data-sub-view="sets" class="${r("sets")} relative" title="Показать наборы" data-long-press="sets">
                 ${I_Set("w-5 h-5 text-green-400")}
-                <span class="mt-1">Наборы</span>
+                <span class="mt-1 ${S.sidebarCompact? 'hidden' : ''}">Наборы</span>
                 ${s("sets",o,l)}
                 ${S.view === "catalog" && S.subView === "sets" && S.showRelatedSets && (S.selFigNum || S.selRelatedPartId) ? `<div class="absolute top-1 right-1 w-5 h-5 bg-blue-200 text-blue-800 rounded-full flex items-center justify-center text-xs font-bold">${S.selFigNum ? I_Minifig("w-3 h-3") : I_Brick("w-3 h-3")}</div>` : ''}
             </button>
             <button data-sub-view="minifigs" class="${r("minifigs")}" title="Показать минифигурки" data-long-press="minifigs">
                 ${I_Minifig("w-5 h-5 text-purple-400")}
-                <span class="mt-1">Фигурки</span>
+                <span class="mt-1 ${S.sidebarCompact? 'hidden' : ''}">Минифигурки</span>
                 ${s("minifigs",a,i)}
             </button>
+        </div>
+        <div class="mb-3 flex items-center gap-0">
+            <div class="flex items-center gap-2"></div>
+            ${S.subView !== 'minifigs' ? `
+            <div class="relative flex-1">
+                <input id="sidebar-search" type="text" placeholder="Фильтр меню..." value="${S.sidebarFilter||''}" class="w-full h-10 bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="Фильтр пунктов боковой панели" />
+                <div id="sidebar-search-icon" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 ${S.sidebarFilter? 'hidden' : ''}" title="Поиск">${I_Search('w-5 h-5')}</div>
+                <button id="sidebar-search-clear" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.sidebarFilter? '' : 'hidden'}" title="Очистить">${I_X('w-5 h-5')}</button>
+            </div>
+            ` : ''}
         </div>
         ` : ''}
         
 
         
         ${S.view !== "tools" ? `
-        <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar">
-          <h2 class="text-lg font-semibold text-white mb-3">${d}</h2>
+        <div id="sidebar-scroll-container" class="flex-grow overflow-y-auto no-scrollbar ${S.sidebarCompact? 'text-sm' : ''}">
+          <div class="sticky top-0 z-10 bg-gray-800/95 backdrop-blur border-b border-gray-700 pb-2 mb-2">
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold text-white">${d}</h2>
+            ${S.subView !== 'minifigs' ? `
+              <div class=\"flex items-center gap-1\">
+                <button id=\"sidebar-toggle-all\" class=\"px-2 py-1 text-xs rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600\" title=\"${(S.subView==='sets' ? (S.expThemes?.size>0) : (S.subView==='parts' ? (S.expCats?.size>0) : false)) ? 'Свернуть все' : 'Развернуть все'}\">${I_Chev(`w-4 h-4 ${(S.subView==='sets' ? (S.expThemes?.size>0) : (S.subView==='parts' ? (S.expCats?.size>0) : false)) ? 'rotate-180' : ''}`)}</button>
+                <button id=\"sidebar-favs-toggle\" class=\"px-2 py-1 text-xs rounded-md ${S.sidebarFavsVisible?'bg-gray-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}\" title=\"${S.sidebarFavsVisible ? 'Скрыть избранное' : 'Показать избранное'}\">${S.sidebarFavsVisible ? I_Heart('w-4 h-4 text-red-400', true) : I_Heart('w-4 h-4', false)}</button>
+              </div>
+              ` : ''}
+            </div>
+            ${S.subView !== 'minifigs' ? `<ul class="mt-2">${topBtnHtml}</ul>` : ''}
+          </div>
           <nav>
-            <ul id="category-list" class="space-y-1">${c}</ul>
+            ${(() => {
+                const mode = 'all';
+                const makePinned = () => {
+                    try {
+                        if (S.subView === 'sets') {
+                            const ids = Array.from(S.favThemeIds || []);
+                            if (!ids.length) return '';
+                            const items = ids.map(id => {
+                                const th = THEME_MAP[id];
+                                if (!th || !th.name) return '';
+                                return `
+                                  <li>
+                                    <button data-theme-id="${id}" class="w-full text-left flex items-center justify-between p-2 rounded-md transition-colors duration-150 text-gray-300 hover:bg-gray-700/50 hover:text-white">
+                                      <span class="truncate">${th.name}</span>
+                                      ${I_Heart('w-4 h-4 text-red-400 ml-2', true)}
+                                    </button>
+                                  </li>
+                                `;
+                            }).join('');
+                            return items;
+                        } else if (S.subView === 'parts') {
+                            const ids = Array.from(S.favCatIds || []);
+                            if (!ids.length) return '';
+                            const items = ids.map(id => {
+                                const cat = (typeof flatCategories !== 'undefined') ? flatCategories.find(c => c.id === id) : null;
+                                const name = cat?.name || `Категория #${id}`;
+                                return `
+                                  <li>
+                                    <button data-category-id="${id}" class="w-full text-left flex items-center justify-between p-2 rounded-md transition-colors duration-150 text-gray-300 hover:bg-gray-700/50 hover:text-white">
+                                      <span class="truncate">${name}</span>
+                                      ${I_Heart('w-4 h-4 text-red-400 ml-2', true)}
+                                    </button>
+                                  </li>
+                                `;
+                            }).join('');
+                            return items;
+                        }
+                    } catch {}
+                    return '';
+                };
+                const makeRecent = () => {
+                    try {
+                        const arr = Array.isArray(S.sidebarRecent) ? S.sidebarRecent : [];
+                        if (!arr.length) return '';
+                        return arr.map(it => {
+                            if (it.type === 'theme') {
+                                const th = THEME_MAP[it.id];
+                                if (!th) return '';
+                                return `
+                                  <li>
+                                    <button data-theme-id="${it.id}" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 text-gray-300 hover:bg-gray-700/50 hover:text-white">
+                                      ${I_Set('w-4 h-4 text-green-400 mr-2')}
+                                      <span class="truncate">${th.name}</span>
+                                    </button>
+                                  </li>
+                                `;
+                            } else if (it.type === 'category') {
+                                const cat = (typeof flatCategories !== 'undefined') ? flatCategories.find(c => c.id === it.id) : null;
+                                const name = cat?.name || `Категория #${it.id}`;
+                                return `
+                                  <li>
+                                    <button data-category-id="${it.id}" class="w-full text-left flex items-center p-2 rounded-md transition-colors duration-150 text-gray-300 hover:bg-gray-700/50 hover:text-white">
+                                      ${I_Brick('w-4 h-4 text-blue-400 mr-2')}
+                                      <span class="truncate">${name}</span>
+                                    </button>
+                                  </li>
+                                `;
+                            }
+                            return '';
+                        }).join('');
+                    } catch {}
+                    return '';
+                };
+                if (S.subView === 'minifigs') {
+                    // Для минифигурок скрываем спец. режимы и просто показываем список
+                    return `<ul id=\"category-list\" class=\"space-y-1\">${filteredListHtml}</ul>`;
+                }
+                // Режим показа только избранного больше не используется
+                if (mode === 'favs') return `<ul id=\"category-list\" class=\"space-y-1\">${filteredListHtml}</ul>`;
+                const fav = S.sidebarFavsVisible ? makePinned() : '';
+                return `
+                  ${S.sidebarFavsVisible && fav ? `
+                    <div class=\"flex items-center justify-between px-2 mb-1\">
+                      <div class=\"text-xs uppercase tracking-wide text-gray-400\">Избранное</div>
+                    </div>
+                    <ul id=\"sidebar-fav-list\" class=\"space-y-1\">${fav}</ul>
+                    <div class=\"border-t border-gray-700 my-2\"></div>
+                  ` : ''}
+                  <ul id=\"category-list\" class=\"space-y-1\">${filteredListHtml}</ul>
+                `;
+            })()}
           </nav>
         </div>
         ` : ''}
@@ -15472,14 +15633,14 @@ function renderSidebar() {
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4 space-y-4">
             ${"collection"===S.view?`
             <div class="bg-gray-800/50 border border-gray-700 rounded-lg overflow-hidden">
-                <button id="collection-summary-toggle" class="w-full flex items-center justify-between text-left p-3 group hover:bg-gray-700/30 transition-all duration-200" title="${S.collectionSummaryExpanded ? 'Свернуть сводку коллекции' : 'Развернуть сводку коллекции'}">
+                <button id="collection-summary-toggle" class="w-full flex items-center justify-between text-left p-3 group ${S.collectionSummaryExpanded ? '' : 'hover:bg-gray-700/30'} transition-all duration-200" title="${S.collectionSummaryExpanded ? 'Свернуть сводку коллекции' : 'Развернуть сводку коллекции'}" style="${S.collectionSummaryExpanded ? 'box-shadow:none !important; outline:none !important;' : ''}">
                     <div class="flex items-center">
-                        <div class="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-600/30 transition-colors">
+                        <div class="w-8 h-8 bg-blue-600/20 rounded-lg flex items-center justify-center mr-3 ${S.collectionSummaryExpanded ? '' : 'group-hover:bg-blue-600/30'} transition-colors">
                             <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                             </svg>
                         </div>
-                        <h3 class="text-sm font-semibold text-gray-300 group-hover:text-white transition-colors">
+                        <h3 class="text-sm font-semibold text-gray-300 ${S.collectionSummaryExpanded ? '' : 'group-hover:text-white'} transition-colors">
                             Сводка коллекции
                         </h3>
                     </div>
@@ -15551,7 +15712,8 @@ function renderSidebar() {
             </div>
             `:""}
             ${S.view !== "tools" ? `
-            <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
+            
+            <button id="settings-button" class="w-full mt-3 flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
                 ${I_Settings("w-5 h-5 mr-2 text-gray-300")} Настройки
             </button>
             ` : ''}
@@ -15574,6 +15736,73 @@ function renderSidebar() {
     // Настраиваем обработчики долгого нажатия для кнопок бокового меню
     setupLongPressHandlers();
     
+    // Быстрый поиск и переключатели (без полной перерисовки, чтобы не терять фокус)
+    const filterSidebarList = (term) => {
+        const list = document.getElementById('category-list');
+        if (!list) return;
+        const items = list.querySelectorAll('li');
+        const q = (term || '').toLowerCase();
+        items.forEach(li => {
+            const txt = (li.textContent || '').toLowerCase();
+            if (!q) {
+                li.classList.remove('hidden');
+            } else {
+                if (txt.includes(q)) li.classList.remove('hidden'); else li.classList.add('hidden');
+            }
+        });
+        const clearBtn = document.getElementById('sidebar-search-clear');
+        const iconBtn = document.getElementById('sidebar-search-icon');
+        if (clearBtn && iconBtn) {
+            if (q) { clearBtn.classList.remove('hidden'); iconBtn.classList.add('hidden'); }
+            else { clearBtn.classList.add('hidden'); iconBtn.classList.remove('hidden'); }
+        }
+    };
+    const sidebarSearch = document.getElementById('sidebar-search');
+    if (sidebarSearch) sidebarSearch.addEventListener('input', (e) => {
+        S.sidebarFilter = e.target.value || '';
+        filterSidebarList(S.sidebarFilter);
+    });
+    if (sidebarSearch) sidebarSearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            S.sidebarFilter = '';
+            const el = document.getElementById('sidebar-search');
+            if (el) { el.value = ''; el.blur(); }
+            filterSidebarList('');
+            renderSidebar();
+        }
+    });
+    const sidebarSearchClear = document.getElementById('sidebar-search-clear');
+    if (sidebarSearchClear) sidebarSearchClear.addEventListener('click', () => {
+        S.sidebarFilter = '';
+        const el = document.getElementById('sidebar-search');
+        if (el) el.value = '';
+        filterSidebarList('');
+        renderSidebar();
+    });
+    const sidebarSearchIcon = document.getElementById('sidebar-search-icon');
+    if (sidebarSearchIcon) sidebarSearchIcon.addEventListener('click', () => { const el = document.getElementById('sidebar-search'); el && el.focus(); });
+
+    // Кнопка сворачивания избранного убрана
+    const toggleAll = document.getElementById('sidebar-toggle-all');
+    if (toggleAll) toggleAll.addEventListener('click', () => {
+        const isOpen = (S.subView==='sets') ? (S.expThemes && S.expThemes.size > 0) : (S.subView==='parts' ? (S.expCats && S.expCats.size > 0) : false);
+        if (S.subView === 'sets') {
+            if (isOpen) { S.expThemes = new Set(); }
+            else { const all = new Set(); try { (S.themeTree||[]).forEach(node => { if (node && node.children && node.children.length) all.add(node.id); }); } catch {} S.expThemes = all; }
+        } else if (S.subView === 'parts') {
+            if (isOpen) { S.expCats = new Set(); }
+            else { const all = new Set(); try { (S.catTree||[]).forEach(node => { if (node && node.name) all.add(node.name); }); } catch {} S.expCats = all; }
+        }
+        renderSidebar();
+    });
+    // Тумблер избранного
+    const favsToggle = document.getElementById('sidebar-favs-toggle');
+    if (favsToggle) favsToggle.addEventListener('click', () => {
+        S.sidebarFavsVisible = !S.sidebarFavsVisible;
+        try { localStorage.setItem('sidebarFavsVisible', String(S.sidebarFavsVisible)); } catch {}
+        renderSidebar();
+    });
+
     return sidebarEl.innerHTML;
 }
 
@@ -18525,7 +18754,7 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     ` : ''}
-                     <div>
+                    <div>
                         <h3 class="text-md font-semibold text-white mb-2">Импорт и экспорт CSV</h3>
                         <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <p class="text-xs text-gray-400">Импорт и экспорт вашей коллекции в формате CSV. Импорт объединит данные с вашей текущей коллекцией</p>
@@ -18544,30 +18773,33 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-md font-semibold text-white mb-2">Мультивыбор</h3>
+                        <h3 class="text-md font-semibold text-white mb-2">Интерфейс</h3>
                         <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Menu('w-4 h-4 text-blue-400')} Компактный режим бокового меню</span>
+                                <button data-action="toggle-sidebar-compact" class="toggle-switch ${S.sidebarCompact? 'on' : ''}" aria-pressed="${S.sidebarCompact}"><span class="knob"></span></button>
+                            </div>
+                            <div class="border-t border-gray-700/50 my-1"></div>
+                            <div class="text-xs text-gray-400">Мультивыбор</div>
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-sm text-gray-300 flex items-center gap-2">${I_Cat('w-4 h-4 text-blue-400')} Каталог</span>
                                 <button data-action="toggle-catalog-multiselect" class="toggle-switch ${S.catalogMultiSelectEnabled? 'on' : ''}" aria-pressed="${S.catalogMultiSelectEnabled}"><span class="knob"></span></button>
                             </div>
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Coll('w-4 h-4 text-green-400')} Коллекция</span>
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Coll('w-4 h-4 text-teal-400')} Коллекция</span>
                                 <button data-action="toggle-collection-multiselect" class="toggle-switch ${S.collectionMultiSelectEnabled? 'on' : ''}" aria-pressed="${S.collectionMultiSelectEnabled}"><span class="knob"></span></button>
                             </div>
                             <div class="flex items-center justify-between gap-2 hidden">
                                 <span class="text-sm text-gray-300 flex items-center gap-2">${I_Star('w-4 h-4 text-yellow-400')} Списки желаний</span>
                                 <button data-action="toggle-wishlist" class="toggle-switch ${S.wishlistEnabled? 'on' : ''}" aria-pressed="${S.wishlistEnabled}"><span class="knob"></span></button>
                             </div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-md font-semibold text-white mb-2">Отображение коллекции</h3>
-                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
+                            <div class="border-t border-gray-700/50 my-1"></div>
+                            <div class="text-xs text-gray-400">Отображение коллекции</div>
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-sm text-gray-300 flex items-center gap-2">${I_Folder('w-4 h-4 text-green-400')} Группировка в папки</span>
                                 <button data-action="toggle-folders" class="toggle-switch ${S.foldersEnabled? 'on' : ''}" aria-pressed="${S.foldersEnabled}"><span class="knob"></span></button>
                             </div>
-                            <p class="text-xs text-gray-400">Если включено, детали с более чем 3-мя цветами будут сгруппированы в папки. Если выключено, все детали будут показаны отдельными карточками.</p>
+                            <p class="text-xs text-gray-400">Если включено, детали с более чем 3‑мя цветами будут сгруппированы в папки. Если выключено, все детали будут показаны отдельными карточками.</p>
                         </div>
                     </div>
                     <div>
@@ -18581,6 +18813,65 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     <div>
+                        <h3 class="text-md font-semibold text-white mb-2">Обслуживание и данные</h3>
+                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
+                            <div class="text-xs text-gray-400">Очистка коллекции</div>
+                            <div class="bg-red-900/20 border border-red-600/30 rounded-lg p-3 space-y-3">
+                               ${"all" !== e ? `<button data-action=\"delete-all-data\" class=\"w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white mb-3 shadow-lg hover:shadow-red-500/25\">
+                                   ${I_Trash("w-5 h-5 mr-2")} Удалить всё
+                               </button>` : ""}
+                               ${"all"===e ? `
+                                   <div class=\"p-3\">
+                                       <p class=\"text-yellow-300 text-sm text-center mb-2\">Вы уверены? Это действие необратимо и удалит ВСЕ данные в коллекции</p>
+                                       <div class=\"flex gap-2\">
+                                           <button data-action=\"cancel-delete\" class=\"w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white\">Отмена</button>
+                                           <button data-action=\"confirm-delete-all\" class=\"w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25\">Подтвердить удаление ВСЕГО</button>
+                                       </div>
+                                   </div>
+                               ` : `${n}${r}${s}`}
+                            </div>
+                            <div class="border-t border-gray-700/50 my-1"></div>
+                            <div class="text-xs text-gray-400">Управление кэшем</div>
+                            <div class="space-y-3">
+                                <p class="text-xs text-gray-400">Управление кэшем приложения для улучшения производительности и освобождения места</p>
+                                <div id="network-status-row" class="flex items-center justify-between gap-3 mb-2">
+                                    <span class="text-xs text-gray-300">Режим работы</span>
+                                    <span id="settings-offline-indicator" class="text-xs font-semibold px-2 py-1 rounded ${navigator.onLine ? 'bg-green-900/40 text-green-300' : 'bg-yellow-900/40 text-yellow-300'}">${navigator.onLine ? 'Онлайн' : 'Оффлайн режим активен'}</span>
+                                </div>
+                                <div class="flex gap-3">
+                                    <button data-action="clear-app-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
+                                        Очистить кэш
+                                    </button>
+                                    <button data-action="refresh-csv-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white shadow-lg hover:shadow-gray-500/25">
+                                        Обновить кэш CSV
+                                    </button>
+                                </div>
+                                <div id="cache-usage" class="text-xs text-gray-400"></div>
+                            </div>
+                            <div class="border-t border-gray-700/50 my-1"></div>
+                            <div class="text-xs text-gray-400">Настройки камеры</div>
+                            <div class="space-y-3">
+                                <p class="text-xs text-gray-400">Управление сохраненными настройками камеры для DataMatrix сканера и AI поиска</p>
+                                <div class="flex gap-3">
+                                    <button data-action="clear-camera-settings" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
+                                        ${I_Camera("w-5 h-5 mr-2")} Очистить настройки камеры
+                                    </button>
+                                </div>
+                                <div id="camera-settings-status" class="text-xs text-gray-400"></div>
+                            </div>
+                            <div class="border-t border-gray-700/50 my-1"></div>
+                            <div class="text-xs text-gray-400">Полная очистка данных</div>
+                            <div class="bg-red-900/20 border border-red-600/30 rounded-lg p-3 space-y-3">
+                                <p class="text-xs text-red-300">ОПАСНО: Удаляет ВСЕ данные сохранённые в приложении</p>
+                                <div class="flex gap-3">
+                                    <button data-action="clear-all-data" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
+                                        ${I_Trash("w-5 h-5 mr-2")} Удалить все данные
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
                         <h3 class="text-md font-semibold text-white mb-2">Настройки подключения</h3>
                         <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
                             <div class="flex items-center justify-between gap-2">
@@ -18588,66 +18879,6 @@ function renderSettingsModal() {
                                 <button data-action="toggle-proxy-enabled" class="toggle-switch ${S.proxyEnabled? 'on' : ''}" aria-pressed="${S.proxyEnabled}"><span class="knob"></span></button>
                             </div>
                             <p class="text-xs text-gray-400">Если включено, прокси серверы будут использоваться для обхода блокировок API. Рекомендуется включить, если прямые запросы к API блокируются.</p>
-                        </div>
-                    </div>
-
-                     <div>
-                        <h3 class="text-md font-semibold text-white mb-2">Очистка коллекции</h3>
-                        <div class="bg-red-900/20 border border-red-600/30 rounded-lg p-3 space-y-3">
-                           ${"all" !== e ? `<button data-action="delete-all-data" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white mb-3 shadow-lg hover:shadow-red-500/25">
-                               ${I_Trash("w-5 h-5 mr-2")} Удалить всё
-                           </button>` : ""}
-                           ${"all"===e ? `
-                               <div class="p-3">
-                                   <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо и удалит ВСЕ данные в коллекции</p>
-                                   <div class="flex gap-2">
-                                       <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
-                                       <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление ВСЕГО</button>
-                                   </div>
-                               </div>
-                           ` : `${n}${r}${s}`}
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-md font-semibold text-white mb-2">Управление кэшем</h3>
-                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
-                            <p class="text-xs text-gray-400">Управление кэшем приложения для улучшения производительности и освобождения места</p>
-                            <div id="network-status-row" class="flex items-center justify-between gap-3 mb-2">
-                                <span class="text-xs text-gray-300">Режим работы</span>
-                                <span id="settings-offline-indicator" class="text-xs font-semibold px-2 py-1 rounded ${navigator.onLine ? 'bg-green-900/40 text-green-300' : 'bg-yellow-900/40 text-yellow-300'}">${navigator.onLine ? 'Онлайн' : 'Оффлайн режим активен'}</span>
-                            </div>
-                            <div class="flex gap-3">
-                                <button data-action="clear-app-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
-                                    Очистить кэш
-                                </button>
-                                <button data-action="refresh-csv-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white shadow-lg hover:shadow-gray-500/25">
-                                    Обновить кэш CSV
-                                </button>
-                            </div>
-                            <div id="cache-usage" class="text-xs text-gray-400"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-md font-semibold text-white mb-2">Настройки камеры</h3>
-                        <div class="bg-gray-800/60 border border-gray-700/50 rounded-lg p-3 space-y-3">
-                            <p class="text-xs text-gray-400">Управление сохраненными настройками камеры для DataMatrix сканера и AI поиска</p>
-                            <div class="flex gap-3">
-                                <button data-action="clear-camera-settings" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
-                                    ${I_Camera("w-5 h-5 mr-2")} Очистить настройки камеры
-                                </button>
-                            </div>
-                            <div id="camera-settings-status" class="text-xs text-gray-400"></div>
-                        </div>
-                    </div>
-                    <div>
-                        <h3 class="text-md font-semibold text-white mb-2">Полная очистка данных</h3>
-                        <div class="bg-red-900/20 border border-red-600/30 rounded-lg p-3 space-y-3">
-                            <p class="text-xs text-red-300">ОПАСНО: Удаляет ВСЕ данные сохранённые в приложении</p>
-                            <div class="flex gap-3">
-                                <button data-action="clear-all-data" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
-                                    ${I_Trash("w-5 h-5 mr-2")} Удалить все данные
-                                </button>
-                            </div>
                         </div>
                     </div>
                     <div>
@@ -24322,9 +24553,17 @@ document.addEventListener("click", async e => {
         const e = parseInt(r.dataset.themeId, 10),
             t = THEME_MAP[e],
             o = t && Array.isArray(t.children) && t.children.length > 0;
+        // Записываем в "Недавние"
+        try {
+            const rec = { type: 'theme', id: e };
+            const arr = Array.isArray(S.sidebarRecent) ? S.sidebarRecent : [];
+            const newArr = [rec, ...arr.filter(x => !(x.type==='theme' && x.id===e))].slice(0, 10);
+            S.sidebarRecent = newArr; saveState();
+        } catch {}
         if (o) {
             S.expThemes.has(e) ? S.expThemes.delete(e) : S.expThemes.add(e)
         }
+        // Переход остаётся в текущем режиме (каталог/коллекция)
         if ("collection" === S.view) {
             // Отключаем анимации при навигации по коллекции тем для улучшения производительности
             document.body.classList.add('collection-view');
@@ -24363,12 +24602,19 @@ document.addEventListener("click", async e => {
     const c = t.closest("[data-category-id]");
     if (c?.dataset.categoryId) {
         const e = parseInt(c.dataset.categoryId, 10);
+        // Записываем в "Недавние"
+        try {
+            const rec = { type: 'category', id: e };
+            const arr = Array.isArray(S.sidebarRecent) ? S.sidebarRecent : [];
+            const newArr = [rec, ...arr.filter(x => !(x.type==='category' && x.id===e))].slice(0, 10);
+            S.sidebarRecent = newArr; saveState();
+        } catch {}
         // Отключаем анимации при навигации по категориям для улучшения производительности
         document.body.classList.add('category-navigation');
         setTimeout(() => {
             document.body.classList.remove('category-navigation');
         }, 800);
-        
+        // Переход остаётся в текущем режиме (каталог/коллекция)
         return S.q = "", S.selFigNum = null, S.showRelatedSets = false, "collection" === S.view ? (() => {
             // Отключаем анимации при навигании по коллекции категорий для улучшения производительности
             document.body.classList.add('collection-view');
@@ -25553,6 +25799,21 @@ document.addEventListener("click", async e => {
                 })();
                 updateSettingsModalStatus(S.proxyEnabled ? "Прокси включены" : "Прокси отключены", "success");
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
+                return;
+            case "toggle-sidebar-compact":
+                S.sidebarCompact = !S.sidebarCompact;
+                try { localStorage.setItem('sidebarCompact', String(!!S.sidebarCompact)); } catch {}
+                (function(){
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-sidebar-compact"]');
+                    if (btn) {
+                        if (S.sidebarCompact) btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.sidebarCompact));
+                    }
+                })();
+                updateSettingsModalStatus(S.sidebarCompact ? "Компактный режим включен" : "Компактный режим отключен", "success");
+                // Перерисовываем сайдбар для применения компактного режима
+                renderSidebar();
+                setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 1500);
                 return;
 
             case "delete-all-parts":
@@ -28585,8 +28846,7 @@ function calculateSearchScore(item, searchTerm) {
         score += Math.min(item.num_sets / 10, 10); // Максимум 10 баллов за популярность
     }
     
-    // Бонус за недавние элементы (если есть год)
-    if (item.year && item.year > 2020) score += 3;
+    // Признак недавних элементов отключён
     
     return score;
 }
