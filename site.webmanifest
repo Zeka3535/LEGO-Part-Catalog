@@ -1,7 +1,7 @@
 {
   "id": "lego-catalog",
-  "name": "Каталог деталей и наборов LEGO",
-  "short_name": "LEGO Каталог",
+  "name": "LEGO Catalog",
+  "short_name": "LEGO Catalog",
   "description": "Современное веб-приложение для каталогизации вашей личной коллекции LEGO. Включает детали, наборы и минифигурки в едином удобном интерфейсе.",
   "lang": "ru",
   "dir": "ltr",
