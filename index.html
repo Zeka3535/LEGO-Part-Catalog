@@ -1705,6 +1705,40 @@
         background-color: rgba(55, 65, 81, 0.40); /* bg-gray-700/40 */
         box-shadow: 0 2px 4px rgba(0,0,0,0.25);
     }
+    /* Левая полоса для активных пунктов ТОЛЬКО в списках под верхними кнопками */
+    #sidebar-scroll-container button { position: relative; overflow: hidden; transition: box-shadow .38s cubic-bezier(0.22, 1, 0.36, 1); }
+    /* Отключаем прежние псевдоэлементы и переходим на inset-тень */
+    #sidebar-scroll-container button::before,
+    #sidebar-scroll-container button::after { content: none !important; }
+
+    /* Активный пункт: тонкая яркая грань и мягкое внутреннее свечение слева */
+    #sidebar-scroll-container button[class*="bg-blue-600"] {
+        box-shadow:
+            inset 2px 0 0 rgba(147,197,253,0.78),          /* тоньше и слегка прозрачная грань */
+            inset 14px 0 24px -14px rgba(59,130,246,0.28); /* мягкое левое свечение */
+        animation: sidebarActiveIn .38s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes sidebarActiveIn {
+        0% {
+            box-shadow:
+                inset 2px 0 0 rgba(147,197,253,0),
+                inset 14px 0 24px -14px rgba(59,130,246,0);
+        }
+        100% {
+            box-shadow:
+                inset 2px 0 0 rgba(147,197,253,0.78),
+                inset 14px 0 24px -14px rgba(59,130,246,0.28);
+        }
+    }
+    /* Отключаем свечение для кнопок "Все" */
+    #sidebar-scroll-container button[data-action="show-all-collection-items"],
+    #sidebar-scroll-container button[data-action="show-all-items-sets"],
+    #sidebar-scroll-container button[data-action="show-all-items-parts"] {
+        box-shadow: none !important;
+    }
+    /* Отключаем свечение для кнопок избранного */
+    #sidebar-scroll-container #sidebar-fav-list button { box-shadow: none !important; }
     /* Лёгкая зебра для монотонных списков (только для верхнего уровня) */
     #sidebar-container nav > ul > li:nth-child(odd) > button {
         background-color: rgba(55, 65, 81, 0.16); /* немного светлее */
@@ -3641,6 +3675,34 @@ body.tab-switching button[data-view] {
         transform: translateY(0);
         opacity: 1;
     }
+    /* Карточка подсказки на экране загрузки */
+    .tip-card {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: linear-gradient(135deg, rgba(17,24,39,0.35), rgba(31,41,55,0.35));
+        border: 1px solid rgba(59,130,246,0.25);
+        border-radius: 0.75rem;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.04);
+        color: #93c5fd; /* text-blue-300 */
+        backdrop-filter: blur(4px);
+    }
+    .tip-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: 9999px;
+        background: radial-gradient(circle at 40% 35%, rgba(59,130,246,0.35), rgba(30,64,175,0.15));
+        box-shadow: inset 0 0 0 1px rgba(59,130,246,0.35), 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    .tip-line {
+        font-size: 0.8rem;
+        line-height: 1.2rem;
+        color: #bfdbfe; /* text-blue-200 */
+    }
     
     .tip-text.fade-out {
         transform: translateY(-20px);
@@ -3691,9 +3753,7 @@ body.tab-switching button[data-view] {
         }
     }
     
-    .tip-text.pulse {
-        animation: tipPulse 2s ease-in-out infinite;
-    }
+    .tip-text.pulse { animation: none !important; }
 
     /* Стили для системы неактивности */
     .inactivity-overlay {
@@ -4238,7 +4298,7 @@ body.tab-switching button[data-view] {
           </div>
           <div id="loading-details" class="text-sm text-gray-500"></div>
           <div class="tip-container max-w-md mx-auto mt-4">
-            <div id="loading-tip" class="tip-text text-xs text-blue-400"></div>
+            <div id="loading-tip" class="tip-text text-xs text-white"></div>
           </div>
         </div>
       </div>
@@ -15049,7 +15109,7 @@ function renderSidebar() {
         if ("collection" === S.view || "catalog" === S.view) {
             if ("collection" === S.view) {
                 const isActive = (S.selCollThemeId === null);
-                const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
+                const btnClass = isActive ? "bg-blue-600 text-white ring-1 ring-blue-400/30" : "text-gray-300 hover:bg-gray-700 hover:text-white";
                 t = `
                   <li>
                     <button data-action="show-all-collection-items" class="w-full text-left flex items-center justify-between p-2 h-9 rounded-md transition-colors duration-150 ${btnClass}">
@@ -15066,7 +15126,7 @@ function renderSidebar() {
                   (S.q ?? "") === "" &&
                   Array.isArray(S.setRes) && S.setRes.length > 0
                 );
-                const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
+                const btnClass = isActive ? "bg-blue-600 text-white ring-1 ring-blue-400/30" : "text-gray-300 hover:bg-gray-700 hover:text-white";
                 // Используем общее количество всех наборов в каталоге, независимо от выбранной темы
                 const totalSetsInCatalog = S.totalSetsInCatalog || 0;
                 const relatedBadge = (S.view === "catalog" && S.subView === "sets" && S.showRelatedSets && (S.selFigNum || S.selRelatedPartId)) ? `
@@ -15237,7 +15297,7 @@ function renderSidebar() {
                 if (tool.hidden) return '';
                 
                 const isActive = S.toolSubView === tool.id;
-                const btnClass = isActive ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white";
+                const btnClass = isActive ? "bg-blue-600 text-white ring-1 ring-blue-400/30" : "text-gray-300 hover:bg-gray-700 hover:text-white";
                 
                 return `
                     <li>
@@ -26757,7 +26817,7 @@ async function initializeApp() {
         
         // Ждем завершения анимации исчезновения
         setTimeout(() => {
-            // Меняем текст
+            // Возвращаем простой белый текст с эмодзи
             element.textContent = newTip;
             
             // Убираем класс исчезновения и добавляем класс появления
@@ -26769,13 +26829,7 @@ async function initializeApp() {
                 // Показываем новую подсказку
                 element.classList.add('show');
                 
-                // Добавляем пульсацию для привлечения внимания
-                element.classList.add('pulse');
-                
-                // Убираем пульсацию через 2 секунды
-                setTimeout(() => {
-                    element.classList.remove('pulse');
-                }, 2000);
+                // Пульсацию не используем
                 
                 // Убираем классы анимации
                 setTimeout(() => {
@@ -27405,41 +27459,41 @@ document.addEventListener("DOMContentLoaded", () => {
 async function loadDataFromCSV() {
     try {
         // Фаза 1: Критические данные для навигации по боковой панели (загружаем первыми)
-        updateLoadingStatus("Загрузка критических данных...", 10, "Подготовка к загрузке");
+        updateLoadingStatus("Загрузка критических данных...", null, "Подготовка к загрузке");
         
         // Загружаем категории ПЕРВЫМИ (самые важные для навигации)
-        updateLoadingStatus("Загрузка категорий деталей...", 20, "Категории необходимы для навигации");
+        updateLoadingStatus("Загрузка категорий деталей...", null, "Категории необходимы для навигации");
         await loadCategoriesFromCSV();
         
         // Загружаем темы (для навигации по наборам)
-        updateLoadingStatus("Загрузка тем наборов...", 30, "Темы необходимы для навигации по наборам");
+        updateLoadingStatus("Загрузка тем наборов...", null, "Темы необходимы для навигации по наборам");
         await loadThemesFromCSV();
         
         // Загружаем цвета (необходимы для отображения деталей)
-        updateLoadingStatus("Загрузка цветов...", 40, "Цвета необходимы для отображения деталей");
+        updateLoadingStatus("Загрузка цветов...", null, "Цвета необходимы для отображения деталей");
         await loadColorsFromCSV();
         
         // Фаза 2: Основные данные каталога (загружаем последовательно по приоритету для стабильности)
         // Последовательная загрузка обеспечивает стабильность и предсказуемость процесса
-        updateLoadingStatus("Загрузка деталей...", 50, "Детали - основа каталога");
+        updateLoadingStatus("Загрузка деталей...", null, "Детали - основа каталога");
         await loadPartsFromCSV();
         
-        updateLoadingStatus("Загрузка наборов...", 60, "Наборы LEGO");
+        updateLoadingStatus("Загрузка наборов...", null, "Наборы LEGO");
         await loadSetsFromCSV();
         
-        updateLoadingStatus("Загрузка минифигурок...", 65, "Минифигурки");
+        updateLoadingStatus("Загрузка минифигурок...", null, "Минифигурки");
         await loadMinifigsFromCSV();
         
-        updateLoadingStatus("Загрузка таблицы минифигурок...", 67, "Таблица соответствий кодов минифигурок");
+        updateLoadingStatus("Загрузка таблицы минифигурок...", null, "Таблица соответствий кодов минифигурок");
         await loadFigTable();
         
-        updateLoadingStatus("Загрузка дополнительных данных...", 70, "Загрузка элементов и инвентарей");
+        updateLoadingStatus("Загрузка дополнительных данных...", null, "Загрузка элементов и инвентарей");
         
         // Фаза 3: Дополнительные данные (загружаем последними, так как зависят от основных данных)
         await loadElementsFromCSV();
         await loadInventoriesFromCSV();
         
-        updateLoadingStatus("Завершение загрузки...", 90, "Сохранение состояния и обновление интерфейса");
+        updateLoadingStatus("Завершение загрузки...", null, "Сохранение состояния и обновление интерфейса");
         
         // Сохраняем состояние после загрузки CSV
         saveState();
@@ -28552,6 +28606,41 @@ async function fetchTextWithProgress(url, statusText, label) {
     }
 }
 
+// Плавная анимация прогресса загрузки с монотонным увеличением
+(function(){
+    if (!window._loadingProgressState) {
+        window._loadingProgressState = { current: 0, target: 0, rafId: null };
+    }
+    window.setLoadingProgressTarget = function(nextPercent) {
+        try {
+            const progressElement = document.getElementById('loading-progress');
+            if (!progressElement) return;
+            const clamped = Math.max(0, Math.min(100, Number(nextPercent) || 0));
+            // Монотонность: не уменьшаем цель
+            if (clamped <= window._loadingProgressState.target) return;
+            window._loadingProgressState.target = clamped;
+
+            if (!window._loadingProgressState.rafId) {
+                const step = () => {
+                    const state = window._loadingProgressState;
+                    const delta = state.target - state.current;
+                    // Плавное приближение (ease-out)
+                    state.current += delta * 0.12;
+                    if (Math.abs(delta) < 0.2) state.current = state.target;
+                    progressElement.style.width = state.current.toFixed(2) + '%';
+                    if (state.current < state.target) {
+                        state.rafId = requestAnimationFrame(step);
+                    } else {
+                        cancelAnimationFrame(state.rafId);
+                        state.rafId = null;
+                    }
+                };
+                window._loadingProgressState.rafId = requestAnimationFrame(step);
+            }
+        } catch {}
+    };
+})();
+
 // План этапов загрузки CSV с весами для корректного индикатора прогресса
 function initCsvProgressPlan() {
     try {
@@ -28635,7 +28724,12 @@ function updateLoadingStatus(status, progress = null, details = null) {
     }
     
     if (progressElement && progress !== null) {
-        progressElement.style.width = `${progress}%`;
+        // Переходим на плавную установку цели прогресса
+        if (window.setLoadingProgressTarget) {
+            window.setLoadingProgressTarget(progress);
+        } else {
+            progressElement.style.width = `${progress}%`;
+        }
     }
     
     if (detailsElement && details !== null) {
@@ -28660,6 +28754,10 @@ function updateLoadingStatus(status, progress = null, details = null) {
 function hideLoadingIndicator() {
     const loadingContainer = document.getElementById('loading-container');
     if (loadingContainer) {
+        try {
+            // Дожимаем прогресс до 100% перед скрытием
+            if (window.setLoadingProgressTarget) window.setLoadingProgressTarget(100);
+        } catch {}
         // Останавливаем автоматическую смену подсказок на экране загрузки
         if (window.stopLoadingTipRotation) {
             window.stopLoadingTipRotation();
