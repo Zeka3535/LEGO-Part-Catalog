@@ -15557,16 +15557,7 @@ function renderSidebar() {
                 ${s("minifigs",a,i)}
             </button>
         </div>
-        <div class="mb-3 flex items-center gap-0">
-            <div class="flex items-center gap-2"></div>
-            ${S.subView !== 'minifigs' ? `
-            <div class="relative flex-1">
-                <input id="sidebar-search" type="text" placeholder="Фильтр меню..." value="${S.sidebarFilter||''}" class="w-full h-10 bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="Фильтр пунктов боковой панели" />
-                <div id="sidebar-search-icon" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 ${S.sidebarFilter? 'hidden' : ''}" title="Поиск">${I_Search('w-5 h-5')}</div>
-                <button id="sidebar-search-clear" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.sidebarFilter? '' : 'hidden'}" title="Очистить">${I_X('w-5 h-5')}</button>
-            </div>
-            ` : ''}
-        </div>
+        
         ` : ''}
         
 
@@ -15583,7 +15574,16 @@ function renderSidebar() {
               </div>
               ` : ''}
             </div>
-            ${S.subView !== 'minifigs' ? `<ul class="mt-2">${topBtnHtml}</ul>` : ''}
+            ${S.subView !== 'minifigs' ? `
+              <ul class="mt-2">${topBtnHtml}</ul>
+              <div class="mt-2">
+                <div class="relative">
+                    <input id="sidebar-search" type="text" placeholder="Фильтр списков..." value="${S.sidebarFilter||''}" class="w-full h-10 bg-gray-700 border border-gray-600 rounded-md pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="Фильтр пунктов боковой панели" />
+                    <div id="sidebar-search-icon" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 ${S.sidebarFilter? 'hidden' : ''}" title="Поиск">${I_Search('w-5 h-5')}</div>
+                    <button id="sidebar-search-clear" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.sidebarFilter? '' : 'hidden'}" title="Очистить">${I_X('w-5 h-5')}</button>
+                </div>
+              </div>
+            ` : ''}
           </div>
           <nav>
             ${(() => {
@@ -27421,10 +27421,10 @@ document.addEventListener("DOMContentLoaded", () => {
             // Баннер в стиле блоков настроек только для мобильных устройств
             const bar = document.createElement('div');
             bar.setAttribute('role', 'dialog');
-            bar.className = 'fixed inset-0 z-[70] pointer-events-none sm:hidden';
+            bar.className = 'fixed inset-x-0 bottom-0 z-[70] pointer-events-none sm:hidden';
             bar.innerHTML = `
-                <div class="flex justify-end p-4">
-                    <div class="pointer-events-auto w-full max-w-md bg-gray-900/80 backdrop-blur-md rounded-lg p-4 border border-gray-700 shadow-xl mb-4">
+                <div class="flex justify-center px-4 pb-4">
+                    <div class="pointer-events-auto w-full max-w-md bg-gray-900/80 backdrop-blur-md rounded-lg p-4 border border-gray-700 shadow-xl">
                         <div class="flex flex-col items-start gap-3">
                             <div class="flex-1 min-w-0">
                                 <div class="text-sm font-semibold text-gray-300 mb-1">Установите LEGO Catalog как приложение</div>
@@ -29974,6 +29974,10 @@ document.addEventListener('keydown', function(e) {
 // Инициализация modalManager
 console.log('modalManager initialized');
 
+// Флаг и таймер для вступительной подсказки навигации
+let sidebarHintIntroActive = false;
+let sidebarHintAutoTimer = null;
+
 // Функция для показа указателя sidebar-toggle
 function showSidebarHint() {
     if (!S.showSidebarHint || window.innerWidth >= 1024) return;
@@ -29981,6 +29985,7 @@ function showSidebarHint() {
     const hintEl = document.getElementById('sidebar-hint');
     if (hintEl) {
         hintEl.classList.remove('hidden');
+        sidebarHintIntroActive = true;
         
         // Добавляем пульсацию к кнопке sidebar-toggle
         const sidebarToggleBtn = document.getElementById('sidebar-toggle');
@@ -30003,17 +30008,23 @@ function showSidebarHint() {
             }, 5000);
         }
         
-        // Автоматически скрываем через 8 секунд
-        setTimeout(() => {
-            hideSidebarHint();
-        }, 8000);
+        // Автоматически скрываем через 10 секунд, если пользователь не закрыл сам
+        if (sidebarHintAutoTimer) clearTimeout(sidebarHintAutoTimer);
+        sidebarHintAutoTimer = setTimeout(() => {
+            // Снимаем режим вступительной подсказки и скрываем
+            sidebarHintIntroActive = false;
+            hideSidebarHint(true);
+        }, 10000);
     }
 }
 
 // Функция для скрытия указателя sidebar-toggle
-function hideSidebarHint() {
+function hideSidebarHint(force = false) {
     const hintEl = document.getElementById('sidebar-hint');
     if (hintEl) {
+        // Во время первой демонстрации подсказки скрываем только по кнопке или по автотаймеру
+        if (sidebarHintIntroActive && !force) return;
+        if (sidebarHintAutoTimer) { clearTimeout(sidebarHintAutoTimer); sidebarHintAutoTimer = null; }
         hintEl.classList.add('hidden');
         // Сохраняем в localStorage, что указатель больше не показывать
         S.showSidebarHint = false;
@@ -30063,10 +30074,12 @@ function animateCloseButtonClick(button) {
                     hintCloseBtn.style.transform = 'scale(1) rotate(0deg)';
                 }, 150);
             }
-            hideSidebarHint();
+            // Снимаем режим вступительной подсказки и скрываем
+            sidebarHintIntroActive = false;
+            hideSidebarHint(true);
         } else if (!e.target.closest('#sidebar-hint') && !e.target.closest('.modal-content') && !e.target.closest('[id$="-modal-container"]')) {
             // Скрываем указатель при клике в любом месте страницы (кроме самого указателя и модальных окон)
-            hideSidebarHint();
+            hideSidebarHint(false);
         }
     });
     
@@ -30077,7 +30090,7 @@ function animateCloseButtonClick(button) {
         if (activeModal) return;
         
         if (window.innerWidth >= 1024) {
-            hideSidebarHint();
+            hideSidebarHint(false);
         }
     });
     
@@ -30092,7 +30105,7 @@ function animateCloseButtonClick(button) {
             clearTimeout(scrollTimeout);
         }
         scrollTimeout = setTimeout(() => {
-            hideSidebarHint();
+            hideSidebarHint(false);
         }, 1000);
     });
     
@@ -30103,7 +30116,7 @@ function animateCloseButtonClick(button) {
         if (activeModal && activeModal.contains(e.target)) return;
         
         if (e.target.id === 'search-input') {
-            hideSidebarHint();
+            hideSidebarHint(false);
         }
     });
 
