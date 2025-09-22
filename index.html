@@ -15570,7 +15570,9 @@ function renderSidebar() {
             ${S.subView !== 'minifigs' ? `
               <div class=\"flex items-center gap-1\">
                 <button id=\"sidebar-toggle-all\" class=\"px-2 py-1 text-xs rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600\" title=\"${(S.subView==='sets' ? (S.expThemes?.size>0) : (S.subView==='parts' ? (S.expCats?.size>0) : false)) ? 'Свернуть все' : 'Развернуть все'}\">${I_Chev(`w-4 h-4 ${(S.subView==='sets' ? (S.expThemes?.size>0) : (S.subView==='parts' ? (S.expCats?.size>0) : false)) ? 'rotate-180' : ''}`)}</button>
-                <button id=\"sidebar-favs-toggle\" class=\"px-2 py-1 text-xs rounded-md ${S.sidebarFavsVisible?'bg-gray-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}\" title=\"${S.sidebarFavsVisible ? 'Скрыть избранное' : 'Показать избранное'}\">${S.sidebarFavsVisible ? I_Heart('w-4 h-4 text-red-400', true) : I_Heart('w-4 h-4', false)}</button>
+                ${((S.subView==='sets' ? ((S.favThemeIds&&S.favThemeIds.size>0)) : (S.subView==='parts' ? ((S.favCatIds&&S.favCatIds.size>0)) : false))
+                  ? `<button id="sidebar-favs-toggle" class="px-2 py-1 text-xs rounded-md ${S.sidebarFavsVisible?'bg-gray-600 text-white':'bg-gray-700 text-gray-300 hover:bg-gray-600'}" title="${S.sidebarFavsVisible ? 'Скрыть избранное' : 'Показать избранное'}">${S.sidebarFavsVisible ? I_Heart('w-4 h-4 text-red-400', true) : I_Heart('w-4 h-4', false)}</button>`
+                  : ``)}
               </div>
               ` : ''}
             </div>
