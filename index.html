@@ -2687,6 +2687,28 @@
     animation-fill-mode: forwards;
 }
 
+/* Кнопки галереи: полное отключение анимаций/смещений при нажатии */
+.set-gallery-btn {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transform: translateY(-50%) !important;
+}
+.set-gallery-btn:active, .set-gallery-btn:focus:active, .set-gallery-btn:focus {
+    transform: translateY(-50%) !important;
+    transition: none !important;
+}
+/* Отключение любых наследованных transforms на нажатие */
+.set-gallery-btn *, .set-gallery-btn svg { pointer-events: none; }
+
+/* Малые устройства: скрываем кнопки перелистывания (оставляем свайпы и точки) */
+@media (max-width: 640px) {
+    .set-gallery-btn,
+    #set-modal-content [data-action="set-gallery-prev"],
+    #set-modal-content [data-action="set-gallery-next"] {
+        display: none !important;
+    }
+}
+
 /* Анимация для первой загрузки страницы - МИНИМАЛЬНАЯ */
 @keyframes pageLoad {
     from {
@@ -15025,15 +15047,20 @@ function applySetGalleryImageToDom() {
 async function tryAdvanceSetGalleryNext() {
     if (!S.setModal || !S.selSetNum) return;
     const st = S.setModal;
-    const hasNextBuffered = (st.galleryIndex || 0) + 1 < (st.gallery?.length || 0);
-    if (hasNextBuffered) {
-        st.galleryIndex += 1;
-        applySetGalleryImageToDom();
-        return;
-    }
-    // Если буфера нет — просто ждём завершения фонового сканирования и обновления галереи
-            // Дополнительно пробуем обновить точки, если за это время что-то подгрузилось
-            updateSetGalleryDots();
+    const total = st.gallery?.length || 0;
+    if (total <= 1) return;
+    st.galleryIndex = ((st.galleryIndex || 0) + 1) % total;
+    applySetGalleryImageToDom();
+}
+
+function tryAdvanceSetGalleryPrev() {
+    if (!S.setModal || !S.selSetNum) return;
+    const st = S.setModal;
+    const total = st.gallery?.length || 0;
+    if (total <= 1) return;
+    const idx = (st.galleryIndex || 0);
+    st.galleryIndex = (idx - 1 + total) % total;
+    applySetGalleryImageToDom();
 }
 
 function updateSetGalleryButtonsState() {
@@ -15042,8 +15069,10 @@ function updateSetGalleryButtonsState() {
         const st = S.setModal;
         const prevBtn = document.querySelector('#set-modal-content [data-action="set-gallery-prev"]');
         const nextBtn = document.querySelector('#set-modal-content [data-action="set-gallery-next"]');
-        const canPrev = (st.galleryIndex || 0) > 0; // слева всегда только базовое изображение
-        const canNext = (st.galleryIndex || 0) < (st.gallery?.length || 0) - 1;
+        const total = st.gallery?.length || 0;
+        const hasExtras = total > 1; // wrap: обе кнопки активны, если больше одного кадра
+        const canPrev = hasExtras;
+        const canNext = hasExtras;
         const dis = (btn, enabled) => {
             if (!btn) return;
             if (enabled) {
@@ -15052,19 +15081,20 @@ function updateSetGalleryButtonsState() {
                 btn.classList.add('opacity-50', 'pointer-events-none');
             }
         };
-        // Скрытие кнопок, если дополнительных изображений нет вообще (не показываем до окончания сканирования)
-        const hasExtras = (st.gallery?.length || 0) > 1; // сразу показываем, как только появился 1+ кадр
+        // Скрытие кнопок, если дополнительных изображений нет вообще
         if (prevBtn) {
+            // На малых экранах стрелки скрыты медиа-правилом; не переоткрываем их
+            const isSmall = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
             if (hasExtras) {
                 if (prevBtn.style.display === 'none') {
-                    prevBtn.style.display = '';
+                    if (!isSmall) prevBtn.style.display = '';
                     if (!prevBtn._shownOnce) {
                         prevBtn.style.opacity = '0';
                         prevBtn.style.transform = 'translateY(-50%) scale(0.98)';
                         requestAnimationFrame(() => {
-                            prevBtn.style.transition = 'opacity 160ms ease, transform 160ms ease';
+                            prevBtn.style.transition = 'opacity 160ms ease';
                             prevBtn.style.opacity = '1';
-                            prevBtn.style.transform = 'translateY(-50%) scale(1)';
+                            prevBtn.style.transform = 'translateY(-50%)';
                         });
                         prevBtn._shownOnce = true;
                     }
@@ -15077,16 +15107,17 @@ function updateSetGalleryButtonsState() {
             }
         }
         if (nextBtn) {
+            const isSmall = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
             if (hasExtras) {
                 if (nextBtn.style.display === 'none') {
-                    nextBtn.style.display = '';
+                    if (!isSmall) nextBtn.style.display = '';
                     if (!nextBtn._shownOnce) {
                         nextBtn.style.opacity = '0';
                         nextBtn.style.transform = 'translateY(-50%) scale(0.98)';
                         requestAnimationFrame(() => {
-                            nextBtn.style.transition = 'opacity 160ms ease, transform 160ms ease';
+                            nextBtn.style.transition = 'opacity 160ms ease';
                             nextBtn.style.opacity = '1';
-                            nextBtn.style.transform = 'translateY(-50%) scale(1)';
+                            nextBtn.style.transform = 'translateY(-50%)';
                         });
                         nextBtn._shownOnce = true;
                     }
@@ -17984,8 +18015,8 @@ function renderSetModalDetailsView() {
         <div class="flex flex-col lg:flex-row">
             <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
                  <div class="relative">
-                    <button data-action="set-gallery-prev" class="absolute left-[-3rem] top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg transition-colors inline-flex z-20 select-none" title="Предыдущее изображение" style="display: none;">
-                        ${I_ChevronLeft("w-5 h-5")}
+                    <button data-action="set-gallery-prev" class="set-gallery-btn absolute left-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Предыдущее изображение" style="display: none;">
+                        ${I_ChevronLeft("w-6 h-6 sm:w-5 sm:h-5")}
                     </button>
                     <div data-action="view-image-fullscreen" data-image-url="${e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
                     <img ${getSetImageAttrs(e.set_num, e.set_img_url)} alt="${e.name}" class="max-w-full max-h-full object-contain">
@@ -17996,8 +18027,8 @@ function renderSetModalDetailsView() {
                     <div class="flex items-center justify-center mt-2">
                         <div id="set-gallery-dots" class="flex items-center justify-center gap-1.5" style="opacity: 0; transform: translateY(6px); height: 12px;"></div>
                     </div>
-                    <button data-action="set-gallery-next" class="absolute right-[-3rem] top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg transition-colors inline-flex z-20 select-none" title="Следующее изображение" style="display: none;">
-                        ${I_ChevronRight("w-5 h-5")}
+                    <button data-action="set-gallery-next" class="set-gallery-btn absolute right-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Следующее изображение" style="display: none;">
+                        ${I_ChevronRight("w-6 h-6 sm:w-5 sm:h-5")}
                     </button>
                  </div>
             </div>
@@ -18054,6 +18085,9 @@ function updateSetModalView() {
             else setTimeout(() => { applySetGalleryImageToDom(); }, 0);
         }
         // Кнопки будут показаны только после окончания сканирования
+
+        // Настраиваем свайпы для изображения набора (тач)
+        setTimeout(() => { setupSetImageSwipe(); }, 0);
     } else {
         e.innerHTML = renderSetModalInventoryView();
     }
@@ -18121,6 +18155,162 @@ function updateSetModalView() {
             }, 0);
         }
     } catch (_) {}
+}
+
+function setupSetImageSwipe() {
+    try {
+        const content = document.getElementById('set-modal-content');
+        if (!content) return;
+        const container = content.querySelector('[data-action="view-image-fullscreen"]');
+        if (!container) return;
+        if (container._swipeBound) return;
+        container._swipeBound = true;
+
+        let startX = 0, startY = 0, startT = 0, swiping = false;
+        const THRESH_X = 48; // пикселей
+        const THRESH_Y = 40;
+        const THRESH_MS = 600;
+
+        const onTouchStart = (ev) => {
+            const t = ev.touches && ev.touches[0];
+            if (!t) return;
+            startX = t.clientX; startY = t.clientY; startT = Date.now();
+            swiping = true;
+        };
+        const onTouchMove = (ev) => {
+            if (!swiping) return;
+            // Не блокируем прокрутку, если вертикальное движение существенное
+            const t = ev.touches && ev.touches[0];
+            if (!t) return;
+            const dx = t.clientX - startX;
+            const dy = Math.abs(t.clientY - startY);
+            if (Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
+                // Предотвращаем открытие fullscreen по тапу
+                ev.preventDefault();
+            }
+        };
+        const onTouchEnd = (ev) => {
+            if (!swiping) return;
+            swiping = false;
+            const t = ev.changedTouches && ev.changedTouches[0];
+            if (!t) return;
+            const dt = Date.now() - startT;
+            const dx = t.clientX - startX;
+            const dy = Math.abs(t.clientY - startY);
+            if (dt <= THRESH_MS && Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
+                // Свайп распознан — не даём всплыть клику на fullscreen
+                ev.preventDefault(); ev.stopPropagation();
+                if (dx < 0) {
+                    // влево -> следующий кадр с анимацией
+                    performSwipeTransition('next');
+                } else {
+                    // вправо -> предыдущий кадр с анимацией
+                    performSwipeTransition('prev');
+                }
+            }
+        };
+        container.addEventListener('touchstart', onTouchStart, { passive: true });
+        container.addEventListener('touchmove', onTouchMove, { passive: false });
+        container.addEventListener('touchend', onTouchEnd, { passive: false });
+    } catch (_) { /* no-op */ }
+}
+
+function performSwipeTransition(direction) {
+    try {
+        if (!S.setModal || !S.selSetNum) return;
+        const st = S.setModal;
+        const total = st.gallery?.length || 0;
+        if (total <= 1) return;
+        const content = document.getElementById('set-modal-content');
+        if (!content) return;
+        const container = content.querySelector('[data-action="view-image-fullscreen"]');
+        const img = container?.querySelector('img');
+        if (!container || !img) return;
+        if (container._animating) return;
+        container._animating = true;
+
+        const curIdx = Math.max(0, Math.min(st.galleryIndex || 0, total - 1));
+        const nextIdx = direction === 'next' ? (curIdx + 1) % total : (curIdx - 1 + total) % total;
+        const nextUrl = st.gallery[nextIdx];
+
+        const ghost = new Image();
+        ghost.src = nextUrl;
+        ghost.alt = img.alt || '';
+        ghost.style.position = 'absolute';
+        ghost.style.inset = '0';
+        ghost.style.width = '100%';
+        ghost.style.height = '100%';
+        ghost.style.objectFit = 'contain';
+        ghost.style.objectPosition = 'center';
+        ghost.style.transform = direction === 'next' ? 'translateX(100%) translateZ(0)' : 'translateX(-100%) translateZ(0)';
+        ghost.style.transition = 'transform 220ms ease';
+        ghost.style.willChange = 'transform';
+        ghost.style.backfaceVisibility = 'hidden';
+        ghost.draggable = false;
+
+        const curStart = 'translateX(0) translateZ(0)';
+        const curEnd = direction === 'next' ? 'translateX(-100%) translateZ(0)' : 'translateX(100%) translateZ(0)';
+        // Жёстко фиксируем текущий img по центру на время анимации, чтобы избежать вертикальных сдвигов
+        const prevPos = img.style.position;
+        const prevInset = img.style.inset;
+        const prevW = img.style.width;
+        const prevH = img.style.height;
+        const prevOF = img.style.objectFit;
+        const prevOP = img.style.objectPosition;
+        const prevTrans = img.style.transition;
+        const prevWB = img.style.willChange;
+        const prevBF = img.style.backfaceVisibility;
+        img.style.position = 'absolute';
+        img.style.inset = '0';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        img.style.objectPosition = 'center';
+        img.style.transition = 'transform 220ms ease';
+        img.style.willChange = 'transform';
+        img.style.backfaceVisibility = 'hidden';
+        img.style.transform = curStart;
+
+        // Дожидаемся предзагрузки ghost
+        const startAnim = () => {
+            try {
+                container.appendChild(ghost);
+                // Запуск анимации в следующий кадр
+                requestAnimationFrame(() => {
+                    try {
+                        img.style.transform = curEnd;
+                        ghost.style.transform = 'translateX(0)';
+                    } catch(_) {}
+                });
+                // Завершаем через таймер
+                setTimeout(() => {
+                    try {
+                        // Финализация: ставим новый src в основной img и чистим стили
+                        img.style.transition = '';
+                        img.style.transform = '';
+                        img.onerror = null;
+                        img.src = nextUrl;
+                        img.setAttribute('data-current-src', nextUrl);
+                        ghost.remove();
+                        // Восстанавливаем стили img
+                        img.style.position = prevPos;
+                        img.style.inset = prevInset;
+                        img.style.width = prevW;
+                        img.style.height = prevH;
+                        img.style.objectFit = prevOF;
+                        img.style.objectPosition = prevOP;
+                        img.style.willChange = prevWB;
+                        img.style.backfaceVisibility = prevBF;
+                        st.galleryIndex = nextIdx;
+                        updateSetGalleryDots();
+                        updateSetGalleryButtonsState();
+                    } catch(_) {}
+                    container._animating = false;
+                }, 240);
+            } catch(_) { container._animating = false; }
+        };
+        if (ghost.complete) startAnim(); else ghost.onload = startAnim;
+    } catch(_) { /* no-op */ }
 }
 
 // Прогресс прокрутки в модалке минифигурки
@@ -24005,9 +24195,13 @@ document.addEventListener("click", async e => {
             case "set-gallery-prev":
                 e.preventDefault();
                 e.stopPropagation();
-                if (S.setModal && (S.setModal.galleryIndex || 0) > 0) {
-                    S.setModal.galleryIndex -= 1;
-                    applySetGalleryImageToDom();
+                if (S.setModal) {
+                    const total = S.setModal.gallery?.length || 0;
+                    if (total > 1) {
+                        const idx = (S.setModal.galleryIndex || 0);
+                        S.setModal.galleryIndex = (idx - 1 + total) % total;
+                        applySetGalleryImageToDom();
+                    }
                 }
                 return;
             case "set-gallery-next":
