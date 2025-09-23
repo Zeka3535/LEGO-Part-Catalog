@@ -2704,7 +2704,10 @@
 @media (max-width: 640px) {
     .set-gallery-btn,
     #set-modal-content [data-action="set-gallery-prev"],
-    #set-modal-content [data-action="set-gallery-next"] {
+    #set-modal-content [data-action="set-gallery-next"],
+    /* Кнопки галереи минифигурок скрываем на малых экранах */
+    #minifig-modal-content [data-action="minifig-gallery-prev"],
+    #minifig-modal-content [data-action="minifig-gallery-next"] {
         display: none !important;
     }
 }
@@ -14924,6 +14927,278 @@ function parseNumericSetImage(url, setNum) {
     } catch (_) { return null; }
 }
 
+// Галерея изображений минифигурки: парсинг, прелоад и сканирование
+function parseNumericMinifigImage(url, figNum) {
+    try {
+        const u = String(url || '').trim();
+        if (!u) return null;
+        // Ищем шаблон (с учетом вариаций, расширений и query):
+        // - /media/thumbs/sets/fig-XXXXX/123456.jpg
+        // - /media/thumbs/minifigs/fig-XXXXX/123456.jpg
+        // - /media/sets/fig-XXXXX/123456.jpg
+        // - /media/minifigs/fig-XXXXX/123456.jpg
+        // а также варианты с параметрами (?..) и расширениями (.webp/.png)
+        const escFig = String(figNum || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`/media/(?:thumbs/(?:sets|minifigs)|sets|minifigs)/${escFig}/(\\d+)(?:\\.[a-zA-Z]+)?(?:\\?.*)?$`);
+        const m = u.match(re);
+        if (!m) return null;
+        const num = parseInt(m[1], 10);
+        const base = u.slice(0, u.lastIndexOf('/') + 1);
+        if (!Number.isFinite(num)) return null;
+        return { base, num };
+    } catch (_) { return null; }
+}
+
+async function scanMinifigImages(figNum) {
+    if (!S.selFigNum || S.selFigNum !== figNum) return;
+    const st = S.minifigModal || {};
+    if (!st.galleryBase || !st.galleryCenter) {
+        S.minifigModal && (S.minifigModal.galleryScanDone = true);
+        return;
+    }
+    const base = st.galleryBase;
+    const center = st.galleryCenter;
+    const maxOffset = 20;
+    const tasks = [];
+    const numbers = [];
+    const foundNumbers = [];
+    for (let i = 1; i <= maxOffset; i++) {
+        numbers.push(center + i);
+        numbers.push(center - i);
+    }
+    const urls = numbers.map(n => `${base}${n}.jpg`);
+    for (let i = 0; i < urls.length; i++) {
+        const n = numbers[i];
+        const u = urls[i];
+        tasks.push(
+            preloadImage(u).then(ok => {
+                if (ok) {
+                    foundNumbers.push(n);
+                    foundNumbers.sort((a,b)=>a-b);
+                    const newGallery = [ `${base}${center}.jpg`, ...foundNumbers.map(nn => `${base}${nn}.jpg`) ];
+                    if (S.selFigNum === figNum && S.minifigModal) {
+                        S.minifigModal.gallery = newGallery;
+                        updateMinifigGalleryButtonsState();
+                        updateMinifigGalleryDots();
+                    }
+                }
+                return ok;
+            })
+        );
+    }
+    let results = [];
+    try {
+        const settled = await Promise.allSettled(tasks);
+        for (let i = 0; i < settled.length; i++) {
+            const ok = (settled[i].status === 'fulfilled') && settled[i].value === true;
+            if (ok) results.push(numbers[i]);
+        }
+    } catch (_) { }
+    try {
+        const higher = Array.from(new Set([ ...foundNumbers, ...results.filter(n => n > center) ])).sort((a,b)=>a-b);
+        const finalGallery = [ `${base}${center}.jpg`, ...higher.map(n => `${base}${n}.jpg`) ];
+        st.gallery = finalGallery;
+        st.galleryIndex = 0;
+    } finally {
+        st.galleryScanDone = true;
+    }
+}
+
+function applyMinifigGalleryImageToDom() {
+    try {
+        if (!S.selFigNum || !S.minifigModal) return;
+        const baseUrl = (MINIFIG_MAP[S.selFigNum]?.minifig_img_url || MINIFIG_MAP[S.selFigNum]?.set_img_url || '').trim();
+        const useGallery = Array.isArray(S.minifigModal.gallery) && S.minifigModal.gallery.length > 0;
+        const curUrl = useGallery ? S.minifigModal.gallery[Math.max(0, Math.min(S.minifigModal.galleryIndex || 0, S.minifigModal.gallery.length - 1))] : baseUrl;
+        const content = document.getElementById('minifig-modal-content');
+        if (!content) return;
+        const container = content.querySelector('[data-action="view-image-fullscreen"]');
+        const img = container?.querySelector('img');
+        if (img && curUrl) {
+            const prev = img.getAttribute('data-current-src') || '';
+            if (prev !== curUrl) {
+                const pre = new Image();
+                img.style.willChange = 'auto';
+                img.style.transform = 'none';
+                img.style.opacity = '1';
+                pre.onload = () => { try { img.onerror = null; img.src = curUrl; img.setAttribute('data-current-src', curUrl); } catch(_){} };
+                pre.onerror = () => { try { img.src = curUrl; img.setAttribute('data-current-src', curUrl); } catch(_){} };
+                pre.src = curUrl;
+            }
+        }
+        if (container) container.setAttribute('data-image-url', curUrl || '');
+        updateMinifigGalleryButtonsState();
+        updateMinifigGalleryDots();
+    } catch (_) {}
+}
+
+async function tryAdvanceMinifigGalleryNext() {
+    if (!S.minifigModal || !S.selFigNum) return;
+    const st = S.minifigModal;
+    const total = st.gallery?.length || 0;
+    if (total <= 1) return;
+    st.galleryIndex = ((st.galleryIndex || 0) + 1) % total;
+    applyMinifigGalleryImageToDom();
+}
+
+function tryAdvanceMinifigGalleryPrev() {
+    if (!S.minifigModal || !S.selFigNum) return;
+    const st = S.minifigModal;
+    const total = st.gallery?.length || 0;
+    if (total <= 1) return;
+    const idx = (st.galleryIndex || 0);
+    st.galleryIndex = (idx - 1 + total) % total;
+    applyMinifigGalleryImageToDom();
+}
+
+function updateMinifigGalleryButtonsState() {
+    try {
+        if (!S.minifigModal) return;
+        const st = S.minifigModal;
+        const prevBtn = document.querySelector('#minifig-modal-content [data-action="minifig-gallery-prev"]');
+        const nextBtn = document.querySelector('#minifig-modal-content [data-action="minifig-gallery-next"]');
+        const total = st.gallery?.length || 0;
+        const hasExtras = total > 1;
+        const dis = (btn, enabled) => {
+            if (!btn) return;
+            if (enabled) btn.classList.remove('opacity-50', 'pointer-events-none');
+            else btn.classList.add('opacity-50', 'pointer-events-none');
+        };
+        if (prevBtn) {
+            const isSmall = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+            if (hasExtras) {
+                if (prevBtn.style.display === 'none') {
+                    if (!isSmall) prevBtn.style.display = '';
+                    if (!prevBtn._shownOnce) {
+                        prevBtn.style.opacity = '0';
+                        prevBtn.style.transform = 'translateY(-50%) scale(0.98)';
+                        requestAnimationFrame(() => {
+                            prevBtn.style.transition = 'opacity 160ms ease';
+                            prevBtn.style.opacity = '1';
+                            prevBtn.style.transform = 'translateY(-50%)';
+                        });
+                        prevBtn._shownOnce = true;
+                    }
+                }
+            } else {
+                prevBtn._shownOnce = false;
+                prevBtn.style.display = 'none';
+            }
+        }
+        if (nextBtn) {
+            const isSmall = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+            if (hasExtras) {
+                if (nextBtn.style.display === 'none') {
+                    if (!isSmall) nextBtn.style.display = '';
+                    if (!nextBtn._shownOnce) {
+                        nextBtn.style.opacity = '0';
+                        nextBtn.style.transform = 'translateY(-50%) scale(0.98)';
+                        requestAnimationFrame(() => {
+                            nextBtn.style.transition = 'opacity 160ms ease';
+                            nextBtn.style.opacity = '1';
+                            nextBtn.style.transform = 'translateY(-50%)';
+                        });
+                        nextBtn._shownOnce = true;
+                    }
+                }
+            } else {
+                nextBtn._shownOnce = false;
+                nextBtn.style.display = 'none';
+            }
+        }
+        dis(prevBtn, hasExtras);
+        dis(nextBtn, hasExtras);
+    } catch (_) {}
+}
+
+function updateMinifigGalleryDots() {
+    try {
+        if (!S.minifigModal) return;
+        const dotsWrap = document.getElementById('minifig-gallery-dots');
+        if (!dotsWrap) return;
+        const total = Math.max(1, S.minifigModal.gallery?.length || 0);
+        const idx = Math.max(0, Math.min(S.minifigModal.galleryIndex || 0, total - 1));
+        const hasExtras = total > 1;
+        if (!hasExtras) { dotsWrap.innerHTML = ''; dotsWrap.style.opacity = '0'; return; }
+        const dots = new Array(total).fill(0).map((_,i) => `
+            <span class="inline-block w-1.5 h-1.5 rounded-full ${i===idx?'bg-blue-500':'bg-gray-500'} transition-all duration-200" style="transform: ${i===idx?'scale(1.25)':'scale(1)'};"></span>
+        `).join('');
+        if (!dotsWrap._visibleOnce) {
+            dotsWrap.style.transition = 'opacity 200ms ease, transform 200ms ease';
+            dotsWrap.style.opacity = '1';
+            dotsWrap.style.transform = 'translateY(0)';
+            dotsWrap._visibleOnce = true;
+        }
+        dotsWrap.innerHTML = dots;
+    } catch (_) {}
+}
+
+function initMinifigImageGallery(figNum) {
+    try {
+        if (!S.minifigModal) return;
+        const mf = MINIFIG_MAP[figNum];
+        const url = (mf?.minifig_img_url || mf?.set_img_url || '').trim();
+        S.minifigModal.gallery = url ? [url] : [];
+        S.minifigModal.galleryIndex = 0;
+        // Всегда получаем числовую ссылку через API и запускаем сканирование, аналогично модалке набора
+        S.minifigModal.galleryScanDone = false;
+        (async () => {
+            try {
+                const resp = await fetchWithProxy(`${REBRICKABLE_API_URL}/minifigs/${figNum}/`, { headers: { Authorization: `key ${getApiKey()}` }});
+                if (!resp.ok) { S.minifigModal.galleryScanDone = true; return; }
+                const data = await resp.json();
+                // Строго используем set_img_url из API
+                const apiUrl = (data?.set_img_url || '').trim();
+                const p = parseNumericMinifigImage(apiUrl, figNum);
+                if (p && S.selFigNum === figNum && S.minifigModal) {
+                    S.minifigModal.galleryBase = p.base;
+                    S.minifigModal.galleryCenter = p.num;
+                    S.minifigModal.galleryScanDone = false;
+                    S.minifigModal.galleryScanPromise = scanMinifigImages(figNum);
+                } else {
+                    S.minifigModal.galleryScanDone = true;
+                }
+            } catch (_) { S.minifigModal.galleryScanDone = true; }
+        })();
+        setTimeout(applyMinifigGalleryImageToDom, 0);
+    } catch (_) {}
+}
+
+// Функция подбора базового числового изображения по шаблону thumbs/sets/{fig}/NNNN.jpg
+async function findMinifigNumericCenter(base) {
+    try {
+        const candidates = [
+            300000, 275000, 250000, 225000, 200000, 190000, 180000, 175000, 170000,
+            166000, 165000, 164000, 163000, 162000, 161000, 160800, 160700, 160600,
+            160500, 160480, 160460, 160450, 160444, 160442
+        ];
+        // Проверяем быстрыми пробами в параллели небольшими батчами
+        for (let i = 0; i < candidates.length; i += 6) {
+            const batch = candidates.slice(i, i + 6);
+            const tasks = batch.map(n => preloadImage(`${base}${n}.jpg`).then(ok => ok ? n : 0));
+            const results = await Promise.allSettled(tasks);
+            const success = results
+                .map((r, idx) => (r.status === 'fulfilled' ? r.value : 0) ? batch[idx] : 0)
+                .filter(Boolean)
+                .sort((a,b)=>a-b);
+            if (success.length) {
+                const num = success[0];
+                return { base, num };
+            }
+        }
+        // Если ни один кандидат не сработал — пробуем локальный поиск вниз от 160500 до 159500 с ограничением
+        let start = 160500;
+        const limit = 1000;
+        for (let off = 0; off < limit; off++) {
+            const n = start - off;
+            const ok = await preloadImage(`${base}${n}.jpg`);
+            if (ok) return { base, num: n };
+        }
+        return null;
+    } catch (_) {
+        return null;
+    }
+}
 function preloadImage(url, timeoutMs = 8000) {
     return new Promise(resolve => {
         try {
@@ -18215,6 +18490,150 @@ function setupSetImageSwipe() {
     } catch (_) { /* no-op */ }
 }
 
+function setupMinifigImageSwipe() {
+    try {
+        const content = document.getElementById('minifig-modal-content');
+        if (!content) return;
+        const container = content.querySelector('[data-action="view-image-fullscreen"]');
+        if (!container) return;
+        if (container._swipeBound) return;
+        container._swipeBound = true;
+
+        let startX = 0, startY = 0, startT = 0, swiping = false;
+        const THRESH_X = 48;
+        const THRESH_Y = 40;
+        const THRESH_MS = 600;
+
+        const onTouchStart = (ev) => {
+            const t = ev.touches && ev.touches[0];
+            if (!t) return;
+            startX = t.clientX; startY = t.clientY; startT = Date.now();
+            swiping = true;
+        };
+        const onTouchMove = (ev) => {
+            if (!swiping) return;
+            const t = ev.touches && ev.touches[0];
+            if (!t) return;
+            const dx = t.clientX - startX;
+            const dy = Math.abs(t.clientY - startY);
+            if (Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
+                ev.preventDefault();
+            }
+        };
+        const onTouchEnd = (ev) => {
+            if (!swiping) return;
+            swiping = false;
+            const t = ev.changedTouches && ev.changedTouches[0];
+            if (!t) return;
+            const dt = Date.now() - startT;
+            const dx = t.clientX - startX;
+            const dy = Math.abs(t.clientY - startY);
+            if (dt <= THRESH_MS && Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
+                ev.preventDefault(); ev.stopPropagation();
+                if (dx < 0) {
+                    performMinifigSwipeTransition('next');
+                } else {
+                    performMinifigSwipeTransition('prev');
+                }
+            }
+        };
+        container.addEventListener('touchstart', onTouchStart, { passive: true });
+        container.addEventListener('touchmove', onTouchMove, { passive: false });
+        container.addEventListener('touchend', onTouchEnd, { passive: false });
+    } catch (_) {}
+}
+
+function performMinifigSwipeTransition(direction) {
+    try {
+        if (!S.minifigModal || !S.selFigNum) return;
+        const st = S.minifigModal;
+        const total = st.gallery?.length || 0;
+        if (total <= 1) return;
+        const content = document.getElementById('minifig-modal-content');
+        if (!content) return;
+        const container = content.querySelector('[data-action="view-image-fullscreen"]');
+        const img = container?.querySelector('img');
+        if (!container || !img) return;
+        if (container._animating) return;
+        container._animating = true;
+
+        const curIdx = Math.max(0, Math.min(st.galleryIndex || 0, total - 1));
+        const nextIdx = direction === 'next' ? (curIdx + 1) % total : (curIdx - 1 + total) % total;
+        const nextUrl = st.gallery[nextIdx];
+
+        const ghost = new Image();
+        ghost.src = nextUrl;
+        ghost.alt = img.alt || '';
+        ghost.style.position = 'absolute';
+        ghost.style.inset = '0';
+        ghost.style.width = '100%';
+        ghost.style.height = '100%';
+        ghost.style.objectFit = 'contain';
+        ghost.style.objectPosition = 'center';
+        ghost.style.transform = direction === 'next' ? 'translateX(100%) translateZ(0)' : 'translateX(-100%) translateZ(0)';
+        ghost.style.transition = 'transform 220ms ease';
+        ghost.style.willChange = 'transform';
+        ghost.style.backfaceVisibility = 'hidden';
+        ghost.draggable = false;
+
+        const curStart = 'translateX(0) translateZ(0)';
+        const curEnd = direction === 'next' ? 'translateX(-100%) translateZ(0)' : 'translateX(100%) translateZ(0)';
+        const prevPos = img.style.position;
+        const prevInset = img.style.inset;
+        const prevW = img.style.width;
+        const prevH = img.style.height;
+        const prevOF = img.style.objectFit;
+        const prevOP = img.style.objectPosition;
+        const prevTrans = img.style.transition;
+        const prevWB = img.style.willChange;
+        const prevBF = img.style.backfaceVisibility;
+        img.style.position = 'absolute';
+        img.style.inset = '0';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        img.style.objectPosition = 'center';
+        img.style.transition = 'transform 220ms ease';
+        img.style.willChange = 'transform';
+        img.style.backfaceVisibility = 'hidden';
+        img.style.transform = curStart;
+
+        const startAnim = () => {
+            try {
+                container.appendChild(ghost);
+                requestAnimationFrame(() => {
+                    try {
+                        img.style.transform = curEnd;
+                        ghost.style.transform = 'translateX(0)';
+                    } catch(_) {}
+                });
+                setTimeout(() => {
+                    try {
+                        img.style.transition = '';
+                        img.style.transform = '';
+                        img.onerror = null;
+                        img.src = nextUrl;
+                        img.setAttribute('data-current-src', nextUrl);
+                        ghost.remove();
+                        img.style.position = prevPos;
+                        img.style.inset = prevInset;
+                        img.style.width = prevW;
+                        img.style.height = prevH;
+                        img.style.objectFit = prevOF;
+                        img.style.objectPosition = prevOP;
+                        img.style.transition = prevTrans;
+                        img.style.willChange = prevWB;
+                        img.style.backfaceVisibility = prevBF;
+                        st.galleryIndex = nextIdx;
+                        updateMinifigGalleryDots();
+                    } catch(_) {}
+                    finally { container._animating = false; }
+                }, 230);
+            } catch(_) { container._animating = false; }
+        };
+        if (ghost.complete) startAnim(); else ghost.onload = startAnim;
+    } catch (_) {}
+}
 function performSwipeTransition(direction) {
     try {
         if (!S.setModal || !S.selSetNum) return;
@@ -19871,7 +20290,18 @@ function renderMinifigModal(e = !1) {
 function updateMinifigModalView() {
     if (!S.selFigNum) return;
     const e = document.getElementById("minifig-modal-view-container");
-    e && ("details" === S.minifigModal.view ? e.innerHTML = renderMinifigModalDetailsView() : e.innerHTML = renderMinifigModalInventoryView())
+    if (!e) return;
+    if ("details" === S.minifigModal.view) {
+        e.innerHTML = renderMinifigModalDetailsView();
+        if (S.selFigNum) {
+            const hasGallery = Array.isArray(S.minifigModal.gallery) && S.minifigModal.gallery.length > 0;
+            if (!hasGallery) initMinifigImageGallery(S.selFigNum);
+            else setTimeout(() => { applyMinifigGalleryImageToDom(); }, 0);
+        }
+        setTimeout(() => { setupMinifigImageSwipe(); }, 0);
+    } else {
+        e.innerHTML = renderMinifigModalInventoryView();
+    }
 }
 
 function renderMinifigModalToggleButton() {
@@ -20205,11 +20635,22 @@ function renderMinifigModalDetailsView() {
     return `
         <div class="flex flex-col lg:flex-row">
             <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
-                 <div data-action="view-image-fullscreen" data-image-url="${e.minifig_img_url||e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:w-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
-                    <img ${getPartImageUrl(e.minifig_img_url || e.set_img_url)} alt="${e.name}" class="max-w-full max-h-full object-contain">
-                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                       ${I_Search("w-10 h-10 text-white")}
+                 <div class="relative">
+                    <button data-action="minifig-gallery-prev" class="set-gallery-btn absolute left-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Предыдущее изображение" style="display: none;">
+                        ${I_ChevronLeft("w-6 h-6 sm:w-5 sm:h-5")}
+                    </button>
+                    <div data-action="view-image-fullscreen" data-image-url="${e.minifig_img_url||e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:w-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
+                        <img ${getPartImageUrl(e.minifig_img_url || e.set_img_url)} alt="${e.name}" class="max-w-full max-h-full object-contain">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                           ${I_Search("w-10 h-10 text-white")}
+                        </div>
                     </div>
+                    <div class="flex items-center justify-center mt-2">
+                        <div id="minifig-gallery-dots" class="flex items-center justify-center gap-1.5" style="opacity: 0; transform: translateY(6px); height: 12px;"></div>
+                    </div>
+                    <button data-action="minifig-gallery-next" class="set-gallery-btn absolute right-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Следующее изображение" style="display: none;">
+                        ${I_ChevronRight("w-6 h-6 sm:w-5 sm:h-5")}
+                    </button>
                  </div>
                  ${(!e.minifig_img_url && !e.set_img_url) ? `
                  <div class="mt-3 text-center">
@@ -24208,6 +24649,23 @@ document.addEventListener("click", async e => {
                 e.preventDefault();
                 e.stopPropagation();
                 tryAdvanceSetGalleryNext();
+                return;
+            case "minifig-gallery-prev":
+                e.preventDefault();
+                e.stopPropagation();
+                if (S.minifigModal) {
+                    const total = S.minifigModal.gallery?.length || 0;
+                    if (total > 1) {
+                        const idx = (S.minifigModal.galleryIndex || 0);
+                        S.minifigModal.galleryIndex = (idx - 1 + total) % total;
+                        applyMinifigGalleryImageToDom();
+                    }
+                }
+                return;
+            case "minifig-gallery-next":
+                e.preventDefault();
+                e.stopPropagation();
+                tryAdvanceMinifigGalleryNext();
                 return;
         }
     }
