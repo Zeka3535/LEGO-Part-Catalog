@@ -2707,7 +2707,10 @@
     #set-modal-content [data-action="set-gallery-next"],
     /* Кнопки галереи минифигурок скрываем на малых экранах */
     #minifig-modal-content [data-action="minifig-gallery-prev"],
-    #minifig-modal-content [data-action="minifig-gallery-next"] {
+    #minifig-modal-content [data-action="minifig-gallery-next"],
+    /* Кнопки переключения вариаций детали скрываем на малых экранах */
+    #modal-content [data-action="part-variant-prev"],
+    #modal-content [data-action="part-variant-next"] {
         display: none !important;
     }
 }
@@ -14949,6 +14952,243 @@ function parseNumericMinifigImage(url, figNum) {
     } catch (_) { return null; }
 }
 
+// Переключение вариаций детали: UI и логика, аналогично галереям
+function updatePartVariantButtonsState() {
+    try {
+        const variants = Array.isArray(S.partModal?.variants) ? S.partModal.variants : [];
+        const total = variants.length;
+        const prevBtn = document.querySelector('#modal-content [data-action="part-variant-prev"]');
+        const nextBtn = document.querySelector('#modal-content [data-action="part-variant-next"]');
+        const hasMany = total > 1;
+        const dis = (btn, enabled) => {
+            if (!btn) return;
+            if (enabled) btn.classList.remove('opacity-50', 'pointer-events-none');
+            else btn.classList.add('opacity-50', 'pointer-events-none');
+        };
+        if (prevBtn) {
+            const isSmall = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+            if (hasMany) {
+                if (prevBtn.style.display === 'none') {
+                    if (!isSmall) prevBtn.style.display = '';
+                    if (!prevBtn._shownOnce) {
+                        prevBtn.style.opacity = '0';
+                        prevBtn.style.transform = 'translateY(-50%) scale(0.98)';
+                        requestAnimationFrame(() => {
+                            prevBtn.style.transition = 'opacity 160ms ease';
+                            prevBtn.style.opacity = '1';
+                            prevBtn.style.transform = 'translateY(-50%)';
+                        });
+                        prevBtn._shownOnce = true;
+                    }
+                }
+            } else {
+                // Если только одна вариация — скрываем
+                prevBtn._shownOnce = false;
+                prevBtn.style.display = 'none';
+            }
+        }
+        if (nextBtn) {
+            const isSmall = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
+            if (hasMany) {
+                if (nextBtn.style.display === 'none') {
+                    if (!isSmall) nextBtn.style.display = '';
+                    if (!nextBtn._shownOnce) {
+                        nextBtn.style.opacity = '0';
+                        nextBtn.style.transform = 'translateY(-50%) scale(0.98)';
+                        requestAnimationFrame(() => {
+                            nextBtn.style.transition = 'opacity 160ms ease';
+                            nextBtn.style.opacity = '1';
+                            nextBtn.style.transform = 'translateY(-50%)';
+                        });
+                        nextBtn._shownOnce = true;
+                    }
+                }
+            } else {
+                // Если только одна вариация — скрываем
+                nextBtn._shownOnce = false;
+                nextBtn.style.display = 'none';
+            }
+        }
+        // Кнопки должны быть активными на первой вариации, если вариаций > 1
+        dis(prevBtn, hasMany);
+        dis(nextBtn, hasMany);
+    } catch (_) {}
+}
+
+function updatePartVariantDots() {
+    try {
+        const dotsWrap = document.getElementById('part-variant-dots');
+        if (!dotsWrap) return;
+        const variants = Array.isArray(S.partModal?.variants) ? S.partModal.variants : [];
+        const total = Math.max(1, variants.length);
+        const idx = Math.max(0, variants.findIndex(v => v?.id === S.selPartId));
+        const hasMany = total > 1;
+        if (!hasMany) { dotsWrap.innerHTML = ''; dotsWrap.style.opacity = '0'; dotsWrap.style.height = '12px'; return; }
+        const perRow = 16;
+        const rows = [];
+        for (let i = 0; i < total; i += perRow) rows.push(i);
+        const rowsHtml = rows.map(start => {
+            const end = Math.min(total, start + perRow);
+            const rowDots = [];
+            for (let i = start; i < end; i++) {
+                rowDots.push(`<span class="inline-block w-1.5 h-1.5 rounded-full ${i===idx?'bg-blue-500':'bg-gray-500'} transition-all duration-200" style="transform: ${i===idx?'scale(1.25)':'scale(1)'};"></span>`);
+            }
+            return `<div class="flex items-center justify-center gap-1.5">${rowDots.join('')}</div>`;
+        }).join('');
+        const rowsCount = Math.max(1, rows.length);
+        const rowHeight = 16; // px, запас по высоте для точки и межстрочного отступа
+        dotsWrap.style.display = 'flex';
+        dotsWrap.style.flexDirection = 'column';
+        dotsWrap.style.alignItems = 'center';
+        dotsWrap.style.justifyContent = 'center';
+        dotsWrap.style.rowGap = '4px';
+        dotsWrap.style.textAlign = 'center';
+        dotsWrap.style.height = `${rowsCount * rowHeight}px`;
+        // Центрирование изображения относительно блока с точками
+        try {
+            const content = document.getElementById('modal-content');
+            const container = content?.querySelector('#modal-image-container');
+            const imgWrap = container?.closest('.lg\\:w-1\\/2.p-4.sm\\:p-6.bg-gray-900\\/30');
+            if (imgWrap) {
+                imgWrap.style.display = 'flex';
+                imgWrap.style.flexDirection = 'column';
+                imgWrap.style.alignItems = 'center';
+                imgWrap.style.justifyContent = 'center';
+                imgWrap.style.gap = '8px';
+            }
+        } catch(_) {}
+        if (!dotsWrap._visibleOnce) {
+            dotsWrap.style.transition = 'opacity 200ms ease, transform 200ms ease';
+            dotsWrap.style.opacity = '1';
+            dotsWrap.style.transform = 'translateY(0)';
+            dotsWrap._visibleOnce = true;
+        }
+        dotsWrap.innerHTML = rowsHtml;
+    } catch (_) {}
+}
+
+function applyPartVariantImageToDom() {
+    try {
+        const content = document.getElementById('modal-content');
+        if (!content) return;
+        const container = content.querySelector('#modal-image-container');
+        const img = container?.querySelector('img');
+        const curPart = PART_MAP[S.selPartId];
+        const curUrl = (S.partModal?.imgUrl || curPart?.rebrickable_img_url || '').trim();
+        if (img && curUrl) {
+            const prev = img.getAttribute('data-current-src') || '';
+            if (prev !== curUrl) {
+                const pre = new Image();
+                pre.onload = () => { try { img.src = curUrl; img.setAttribute('data-current-src', curUrl); } catch(_){} };
+                pre.onerror = () => { try { img.src = curUrl; img.setAttribute('data-current-src', curUrl); } catch(_){} };
+                pre.src = curUrl;
+            }
+        }
+        if (container) container.setAttribute('data-image-url', curUrl || '');
+        // Обновляем текстовые поля и связанные элементы без полного рендера
+        try {
+            const p = PART_MAP[S.selPartId];
+            const nameEl = document.getElementById('part-name');
+            const idEl = document.getElementById('part-id');
+            const catBtn = document.getElementById('part-category-name');
+            if (nameEl && p?.name) nameEl.textContent = p.name;
+            if (idEl && p?.id) idEl.textContent = p.id;
+            if (catBtn && p?.categoryId) {
+                catBtn.dataset.categoryId = String(p.categoryId);
+                const catName = flatCategories.find(c=>c.id===p.categoryId)?.name;
+                if (catName) catBtn.textContent = catName;
+            }
+            const relWrap = document.getElementById('related-sets-for-part');
+            if (relWrap) {
+                let html = '';
+                try {
+                    const related = getRelatedSetsForPart(p.id);
+                    if (related && related.length > 0) {
+                        html = `<div class="mt-2">
+                            <button data-action="show-related-sets-for-part" class="flex items-center gap-2 px-2 py-1 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
+                                ${I_Set("w-3 h-3")}
+                                ${related.length === 1 ? 'Связанный набор: 1' : `Связанных наборов: ${related.length}`}
+                            </button>
+                        </div>`;
+                    }
+                } catch(_) {}
+                relWrap.innerHTML = html;
+            }
+            // Обновляем заголовок и кнопку выбора вариации
+            const headerName = content.querySelector('#modal-content h2');
+            if (headerName && p?.name) headerName.textContent = p.name;
+            const varText = document.getElementById('variation-select-text');
+            if (varText) {
+                const currentVar = (S.partModal?.variants || []).find(v => v?.id === S.selPartId);
+                if (currentVar?.name) varText.textContent = currentVar.name;
+            }
+        } catch(_) {}
+        updatePartVariantButtonsState();
+        updatePartVariantDots();
+    } catch (_) {}
+}
+
+function tryAdvancePartVariantNext() {
+    try {
+        const variants = Array.isArray(S.partModal?.variants) ? S.partModal.variants : [];
+        const total = variants.length;
+        if (total <= 1) return;
+        const idx = Math.max(0, variants.findIndex(v => v?.id === S.selPartId));
+        const nextIdx = (idx + 1) % total;
+        const nextVar = variants[nextIdx];
+        if (nextVar && nextVar.id && nextVar.id !== S.selPartId) {
+            S.selPartId = nextVar.id;
+            const newPart = PART_MAP[S.selPartId];
+            if (newPart) {
+                S.partModal.imgUrl = newPart.rebrickable_img_url || null;
+                S.partModal.selColorId = null;
+                S.partModal.qty = 0;
+                updateModalPartially({ image: true, controls: true });
+                if (newPart.availableColorIds?.length) {
+                    S.partModal.selColorId = sortColorIds(newPart.availableColorIds, newPart.id)[0];
+                    S.partModal.qty = S.coll[newPart.id]?.[S.partModal.selColorId] || 0;
+                    updateModalPartially({ colors: true, controls: true });
+                    fetchPartColorSpecifics(newPart.id, S.partModal.selColorId);
+                } else {
+                    fetchPartColors(newPart.id);
+                }
+                // Без полного рендера: обновляем DOM и тексты, чтобы избежать мерцания
+                setTimeout(() => { applyPartVariantImageToDom(); }, 0);
+            }
+        }
+    } catch (_) {}
+}
+
+function tryAdvancePartVariantPrev() {
+    try {
+        const variants = Array.isArray(S.partModal?.variants) ? S.partModal.variants : [];
+        const total = variants.length;
+        if (total <= 1) return;
+        const idx = Math.max(0, variants.findIndex(v => v?.id === S.selPartId));
+        const prevIdx = (idx - 1 + total) % total;
+        const prevVar = variants[prevIdx];
+        if (prevVar && prevVar.id && prevVar.id !== S.selPartId) {
+            S.selPartId = prevVar.id;
+            const newPart = PART_MAP[S.selPartId];
+            if (newPart) {
+                S.partModal.imgUrl = newPart.rebrickable_img_url || null;
+                S.partModal.selColorId = null;
+                S.partModal.qty = 0;
+                updateModalPartially({ image: true, controls: true });
+                if (newPart.availableColorIds?.length) {
+                    S.partModal.selColorId = sortColorIds(newPart.availableColorIds, newPart.id)[0];
+                    S.partModal.qty = S.coll[newPart.id]?.[S.partModal.selColorId] || 0;
+                    updateModalPartially({ colors: true, controls: true });
+                    fetchPartColorSpecifics(newPart.id, S.partModal.selColorId);
+                } else {
+                    fetchPartColors(newPart.id);
+                }
+                // Без полного рендера: обновляем DOM и тексты, чтобы избежать мерцания
+                setTimeout(() => { applyPartVariantImageToDom(); }, 0);
+            }
+        }
+    } catch (_) {}
+}
 async function scanMinifigImages(figNum) {
     if (!S.selFigNum || S.selFigNum !== figNum) return;
     const st = S.minifigModal || {};
@@ -15119,17 +15359,45 @@ function updateMinifigGalleryDots() {
         const total = Math.max(1, S.minifigModal.gallery?.length || 0);
         const idx = Math.max(0, Math.min(S.minifigModal.galleryIndex || 0, total - 1));
         const hasExtras = total > 1;
-        if (!hasExtras) { dotsWrap.innerHTML = ''; dotsWrap.style.opacity = '0'; return; }
-        const dots = new Array(total).fill(0).map((_,i) => `
-            <span class="inline-block w-1.5 h-1.5 rounded-full ${i===idx?'bg-blue-500':'bg-gray-500'} transition-all duration-200" style="transform: ${i===idx?'scale(1.25)':'scale(1)'};"></span>
-        `).join('');
+        if (!hasExtras) { dotsWrap.innerHTML = ''; dotsWrap.style.opacity = '0'; dotsWrap.style.height = '12px'; return; }
+        const perRow = 16;
+        const rows = [];
+        for (let i = 0; i < total; i += perRow) rows.push(i);
+        const rowsHtml = rows.map(start => {
+            const end = Math.min(total, start + perRow);
+            const rowDots = [];
+            for (let i = start; i < end; i++) {
+                rowDots.push(`<span class="inline-block w-1.5 h-1.5 rounded-full ${i===idx?'bg-blue-500':'bg-gray-500'} transition-all duration-200" style="transform: ${i===idx?'scale(1.25)':'scale(1)'};"></span>`);
+            }
+            return `<div class="flex items-center justify-center gap-1.5">${rowDots.join('')}</div>`;
+        }).join('');
+        const rowsCount = Math.max(1, rows.length);
+        const rowHeight = 16;
+        dotsWrap.style.display = 'flex';
+        dotsWrap.style.flexDirection = 'column';
+        dotsWrap.style.alignItems = 'center';
+        dotsWrap.style.justifyContent = 'center';
+        dotsWrap.style.rowGap = '4px';
+        dotsWrap.style.textAlign = 'center';
+        dotsWrap.style.height = `${rowsCount * rowHeight}px`;
+        try {
+            const content = document.getElementById('minifig-modal-content');
+            const imgWrap = content?.querySelector('.lg\\:w-1\\/2.p-4.sm\\:p-6.bg-gray-900\\/30');
+            if (imgWrap) {
+                imgWrap.style.display = 'flex';
+                imgWrap.style.flexDirection = 'column';
+                imgWrap.style.alignItems = 'center';
+                imgWrap.style.justifyContent = 'center';
+                imgWrap.style.gap = '8px';
+            }
+        } catch(_) {}
         if (!dotsWrap._visibleOnce) {
             dotsWrap.style.transition = 'opacity 200ms ease, transform 200ms ease';
             dotsWrap.style.opacity = '1';
             dotsWrap.style.transform = 'translateY(0)';
             dotsWrap._visibleOnce = true;
         }
-        dotsWrap.innerHTML = dots;
+        dotsWrap.innerHTML = rowsHtml;
     } catch (_) {}
 }
 
@@ -15417,10 +15685,38 @@ function updateSetGalleryDots() {
         const total = Math.max(1, S.setModal.gallery?.length || 0);
         const idx = Math.max(0, Math.min(S.setModal.galleryIndex || 0, total - 1));
         const hasExtras = total > 1;
-        if (!hasExtras) { dotsWrap.innerHTML = ''; /* сохраняем высоту */ dotsWrap.style.opacity = '0'; return; }
-        const dots = new Array(total).fill(0).map((_,i) => `
-            <span class="inline-block w-1.5 h-1.5 rounded-full ${i===idx?'bg-blue-500':'bg-gray-500'} transition-all duration-200" style="transform: ${i===idx?'scale(1.25)':'scale(1)'};"></span>
-        `).join('');
+        if (!hasExtras) { dotsWrap.innerHTML = ''; dotsWrap.style.opacity = '0'; dotsWrap.style.height = '12px'; return; }
+        const perRow = 16;
+        const rows = [];
+        for (let i = 0; i < total; i += perRow) rows.push(i);
+        const rowsHtml = rows.map(start => {
+            const end = Math.min(total, start + perRow);
+            const rowDots = [];
+            for (let i = start; i < end; i++) {
+                rowDots.push(`<span class="inline-block w-1.5 h-1.5 rounded-full ${i===idx?'bg-blue-500':'bg-gray-500'} transition-all duration-200" style="transform: ${i===idx?'scale(1.25)':'scale(1)'};"></span>`);
+            }
+            return `<div class="flex items-center justify-center gap-1.5">${rowDots.join('')}</div>`;
+        }).join('');
+        const rowsCount = Math.max(1, rows.length);
+        const rowHeight = 16;
+        dotsWrap.style.display = 'flex';
+        dotsWrap.style.flexDirection = 'column';
+        dotsWrap.style.alignItems = 'center';
+        dotsWrap.style.justifyContent = 'center';
+        dotsWrap.style.rowGap = '4px';
+        dotsWrap.style.textAlign = 'center';
+        dotsWrap.style.height = `${rowsCount * rowHeight}px`;
+        try {
+            const content = document.getElementById('modal-content');
+            const imgWrap = content?.querySelector('.lg\\:w-1\\/2.p-4.sm\\:p-6.bg-gray-900\\/30');
+            if (imgWrap) {
+                imgWrap.style.display = 'flex';
+                imgWrap.style.flexDirection = 'column';
+                imgWrap.style.alignItems = 'center';
+                imgWrap.style.justifyContent = 'center';
+                imgWrap.style.gap = '8px';
+            }
+        } catch(_) {}
         // Плавное появление контейнера с точками
         if (!dotsWrap._visibleOnce) {
             dotsWrap.style.transition = 'opacity 200ms ease, transform 200ms ease';
@@ -15428,7 +15724,7 @@ function updateSetGalleryDots() {
             dotsWrap.style.transform = 'translateY(0)';
             dotsWrap._visibleOnce = true;
         }
-        dotsWrap.innerHTML = dots;
+        dotsWrap.innerHTML = rowsHtml;
     } catch (_) { /* no-op */ }
 }
 
@@ -18288,18 +18584,18 @@ function renderSetModalDetailsView() {
     const t = THEME_MAP[e.theme_id];
     return `
         <div class="flex flex-col lg:flex-row">
-            <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
+            <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-col gap-2 flex-1 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
                  <div class="relative">
                     <button data-action="set-gallery-prev" class="set-gallery-btn absolute left-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Предыдущее изображение" style="display: none;">
                         ${I_ChevronLeft("w-6 h-6 sm:w-5 sm:h-5")}
                     </button>
-                    <div data-action="view-image-fullscreen" data-image-url="${e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
+                    <div data-action="view-image-fullscreen" data-image-url="${e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group mx-auto">
                     <img ${getSetImageAttrs(e.set_num, e.set_img_url)} alt="${e.name}" class="max-w-full max-h-full object-contain">
                     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         ${I_Search("w-10 h-10 text-white")}
                     </div>
                     </div>
-                    <div class="flex items-center justify-center mt-2">
+                        <div class="flex items-center justify-center mt-2 w-full">
                         <div id="set-gallery-dots" class="flex items-center justify-center gap-1.5" style="opacity: 0; transform: translateY(6px); height: 12px;"></div>
                     </div>
                     <button data-action="set-gallery-next" class="set-gallery-btn absolute right-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Следующее изображение" style="display: none;">
@@ -19048,9 +19344,20 @@ function renderModal() {
                         </div>
                     </div>
                 </div>
-            `), document.body.classList.add("overflow-hidden"), partModalEl.classList.remove("modal-hidden"), partModalEl.style.zIndex = '60', requestAnimationFrame(() => {
-        partModalEl.classList.add("visible")
-    }), partModalEl.innerHTML = `
+            `);
+    // Открываем окно только один раз; при повторных рендерах не проигрываем анимацию
+    (function(){
+        try {
+            const isOpen = partModalEl.classList.contains('visible');
+            if (!isOpen) {
+                document.body.classList.add('overflow-hidden');
+                partModalEl.classList.remove('modal-hidden');
+                partModalEl.style.zIndex = '60';
+                requestAnimationFrame(() => partModalEl.classList.add('visible'));
+            }
+        } catch(_) {}
+    })();
+    partModalEl.innerHTML = `
         <div id="modal-content" class="bg-gray-800 rounded-lg shadow-xl w-[calc(100%-2rem)] max-w-lg lg:max-w-4xl flex flex-col max-h-[calc(100vh-2rem)] modal-content-enter">
             
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
@@ -19062,12 +19369,23 @@ function renderModal() {
             </div>
             
             <div id="modal-scroll-area" class="flex-grow flex flex-col lg:flex-row overflow-y-auto no-scrollbar">
-                <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
-                     <div id="modal-image-container" data-action="view-image-fullscreen" data-image-url="${l||""}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
-                        <img ${getPartImageUrl(l)} alt="${e.name}" class="max-w-full max-h-full object-contain">
-                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                           ${I_Search("w-10 h-10 text-white")}
+                <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-col gap-2 flex-1 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
+                     <div class="relative">
+                        <button data-action="part-variant-prev" class="set-gallery-btn absolute left-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Предыдущая вариация" style="display: none;">
+                            ${I_ChevronLeft("w-6 h-6 sm:w-5 sm:h-5")}
+                        </button>
+                        <div id="modal-image-container" data-action="view-image-fullscreen" data-image-url="${l||""}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group mx-auto">
+                            <img ${getPartImageUrl(l)} alt="${e.name}" class="max-w-full max-h-full object-contain">
+                            <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                               ${I_Search("w-10 h-10 text-white")}
+                            </div>
                         </div>
+                        <div class="flex items-center justify-center mt-2 w-full">
+                            <div id="part-variant-dots" class="flex items-center justify-center gap-1.5" style="opacity: 0; transform: translateY(6px); height: 12px;"></div>
+                        </div>
+                        <button data-action="part-variant-next" class="set-gallery-btn absolute right-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Следующая вариация" style="display: none;">
+                            ${I_ChevronRight("w-6 h-6 sm:w-5 sm:h-5")}
+                        </button>
                      </div>
                 </div>
                 
@@ -19076,8 +19394,8 @@ function renderModal() {
                          <div class="modal-section-spacing">
                             <h3 class="text-md font-semibold text-gray-300 modal-section-title">Деталь</h3>
                             <div class="space-y-1 text-sm text-gray-400">
-                                <p><span class="font-semibold text-gray-300">Название:</span> ${e.name}</p>
-                                <p>ID: ${e.id}</p>
+                                <p><span class="font-semibold text-gray-300">Название:</span> <span id="part-name">${e.name}</span></p>
+                                <p>ID: <span id="part-id">${e.id}</span></p>
                                 ${(() => {
                                     // Год первого появления детали — минимум по годам связанных наборов
                                     const y = getFirstAppearanceYearForPart(e.id);
@@ -19086,25 +19404,12 @@ function renderModal() {
                                 ${t?`
                                     <div class="flex items-center">
                                         <span class="mr-1">Категория:</span>
-                                        <button data-action="go-to-category" data-category-id="${e.categoryId}" class="text-blue-400 hover:text-blue-300 hover:underline text-left truncate">
+                                        <button id="part-category-name" data-action="go-to-category" data-category-id="${e.categoryId}" class="text-blue-400 hover:text-blue-300 hover:underline text-left truncate">
                                             ${t}
                                         </button>
                                     </div>
                                 `:""}
-                                ${(() => {
-                                    // Кнопка "Связанные наборы" — как в модалке минифигурки
-                                    try {
-                                        const related = getRelatedSetsForPart(e.id);
-                                        if (!related || related.length === 0) return '';
-                                        return `
-                                            <div class=\"mt-2\">
-                                                <button data-action=\"show-related-sets-for-part\" class=\"flex items-center gap-2 px-2 py-1 text-xs font-semibold rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25\">
-                                                    ${I_Set("w-3 h-3")}
-                                                    ${related.length === 1 ? 'Связанный набор: 1' : `Связанных наборов: ${related.length}`}
-                                                </button>
-                                            </div>`;
-                                    } catch (err) { return ''; }
-                                })()}
+                                <div id="related-sets-for-part"></div>
                             </div>
                             ${a?`<div class="mt-4">${a}</div>`:""}
                         </div>
@@ -19119,9 +19424,15 @@ function renderModal() {
                 </div>
             </div>
         </div>
-        `, updateModalPartially({
+        `;
+    // Если окно уже открыто, убираем класс входной анимации у контента
+    setTimeout(() => { try { if (partModalEl.classList.contains('visible')) { const c = document.getElementById('modal-content'); c && c.classList.remove('modal-content-enter'); } } catch(_) {} }, 0);
+    updateModalPartially({
         image: !0
     });
+    setTimeout(() => { try { setupPartImageSwipe(); } catch(_) {} }, 0);
+    // После первого рендера показываем/инициализируем кнопки и точки вариаций
+    setTimeout(() => { try { applyPartVariantImageToDom(); } catch(_) {} }, 0);
     
     // Добавляем слушатель событий для селектора пользовательских вариаций
     const variationSelectButton = document.getElementById("variation-select-button");
@@ -19211,6 +19522,7 @@ function renderModal() {
                         updateModalPartially({
                             image: true
                         });
+        setTimeout(() => { applyPartVariantImageToDom(); }, 0);
                         
                         // Обновляем заголовок модального окна для отображения имени выбранной вариации
                         const modalTitle = document.querySelector('#modal-content h2');
@@ -19230,6 +19542,7 @@ function renderModal() {
                         } else {
                             fetchPartColors(newPart.id);
                         }
+                        setTimeout(() => { applyPartVariantImageToDom(); }, 0);
                     }
                 }
             }
@@ -20242,6 +20555,49 @@ function updateModalPartially(e) {
         e && (e.innerHTML = renderModalControls())
     }
 }
+
+// Свайпы в модалке детали (переключение вариаций)
+function setupPartImageSwipe() {
+    try {
+        const content = document.getElementById('modal-content');
+        if (!content) return;
+        const container = content.querySelector('#modal-image-container');
+        if (!container) return;
+        if (container._swipeBound) return;
+        container._swipeBound = true;
+        let startX = 0, startY = 0, startT = 0, swiping = false;
+        const THRESH_X = 48, THRESH_Y = 40, THRESH_MS = 600;
+        const onTouchStart = (ev) => {
+            const t = ev.touches && ev.touches[0];
+            if (!t) return;
+            startX = t.clientX; startY = t.clientY; startT = Date.now();
+            swiping = true;
+        };
+        const onTouchMove = (ev) => {
+            if (!swiping) return;
+            const t = ev.touches && ev.touches[0];
+            if (!t) return;
+            const dx = t.clientX - startX;
+            const dy = Math.abs(t.clientY - startY);
+            if (Math.abs(dx) > THRESH_X && dy < THRESH_Y) ev.preventDefault();
+        };
+        const onTouchEnd = (ev) => {
+            if (!swiping) return; swiping = false;
+            const t = ev.changedTouches && ev.changedTouches[0];
+            if (!t) return;
+            const dt = Date.now() - startT;
+            const dx = t.clientX - startX;
+            const dy = Math.abs(t.clientY - startY);
+            if (dt <= THRESH_MS && Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
+                ev.preventDefault(); ev.stopPropagation();
+                if (dx < 0) tryAdvancePartVariantNext(); else tryAdvancePartVariantPrev();
+            }
+        };
+        container.addEventListener('touchstart', onTouchStart, { passive: true });
+        container.addEventListener('touchmove', onTouchMove, { passive: false });
+        container.addEventListener('touchend', onTouchEnd, { passive: false });
+    } catch (_) {}
+}
 function updateModalControlsState() {
     if (!S.selPartId || !S.partModal.selColorId) return;
     const e = S.coll[S.selPartId]?.[S.partModal.selColorId] || 0,
@@ -20634,18 +20990,18 @@ function renderMinifigModalDetailsView() {
         </div>`;
     return `
         <div class="flex flex-col lg:flex-row">
-            <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
+            <div class="lg:w-1/2 p-4 sm:p-6 bg-gray-900/30 flex items-center justify-center flex-col gap-2 flex-1 lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-gray-700">
                  <div class="relative">
                     <button data-action="minifig-gallery-prev" class="set-gallery-btn absolute left-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Предыдущее изображение" style="display: none;">
                         ${I_ChevronLeft("w-6 h-6 sm:w-5 sm:h-5")}
                     </button>
-                    <div data-action="view-image-fullscreen" data-image-url="${e.minifig_img_url||e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:w-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group">
+                    <div data-action="view-image-fullscreen" data-image-url="${e.minifig_img_url||e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:w-64 bg-white rounded-lg flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group mx-auto">
                         <img ${getPartImageUrl(e.minifig_img_url || e.set_img_url)} alt="${e.name}" class="max-w-full max-h-full object-contain">
                         <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                            ${I_Search("w-10 h-10 text-white")}
                         </div>
                     </div>
-                    <div class="flex items-center justify-center mt-2">
+                    <div class="flex items-center justify-center mt-2 w-full">
                         <div id="minifig-gallery-dots" class="flex items-center justify-center gap-1.5" style="opacity: 0; transform: translateY(6px); height: 12px;"></div>
                     </div>
                     <button data-action="minifig-gallery-next" class="set-gallery-btn absolute right-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Следующее изображение" style="display: none;">
@@ -24649,6 +25005,16 @@ document.addEventListener("click", async e => {
                 e.preventDefault();
                 e.stopPropagation();
                 tryAdvanceSetGalleryNext();
+                return;
+            case "part-variant-prev":
+                e.preventDefault();
+                e.stopPropagation();
+                tryAdvancePartVariantPrev();
+                return;
+            case "part-variant-next":
+                e.preventDefault();
+                e.stopPropagation();
+                tryAdvancePartVariantNext();
                 return;
             case "minifig-gallery-prev":
                 e.preventDefault();
