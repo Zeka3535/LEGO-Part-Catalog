@@ -15036,7 +15036,7 @@ function updatePartVariantDots() {
             return `<div class="flex items-center justify-center gap-1.5">${rowDots.join('')}</div>`;
         }).join('');
         const rowsCount = Math.max(1, rows.length);
-        const rowHeight = 12; // px, запас по высоте для точки и межстрочного отступа
+        const rowHeight = 16; // px, запас по высоте для точки и межстрочного отступа
         dotsWrap.style.display = 'flex';
         dotsWrap.style.flexDirection = 'column';
         dotsWrap.style.alignItems = 'center';
@@ -18736,8 +18736,6 @@ function setupSetImageSwipe() {
         if (!container) return;
         if (container._swipeBound) return;
         container._swipeBound = true;
-        // Разрешаем вертикальную прокрутку, но берём под контроль горизонтальные жесты
-        try { container.style.touchAction = 'pan-y'; } catch(_) {}
 
         let startX = 0, startY = 0, startT = 0, swiping = false;
         const THRESH_X = 48; // пикселей
@@ -18758,8 +18756,8 @@ function setupSetImageSwipe() {
             const dx = t.clientX - startX;
             const dy = Math.abs(t.clientY - startY);
             if (Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
-                // Предотвращаем скролл только если событие отменяемо
-                if (ev.cancelable) ev.preventDefault();
+                // Предотвращаем открытие fullscreen по тапу
+                ev.preventDefault();
             }
         };
         const onTouchEnd = (ev) => {
@@ -18772,8 +18770,7 @@ function setupSetImageSwipe() {
             const dy = Math.abs(t.clientY - startY);
             if (dt <= THRESH_MS && Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
                 // Свайп распознан — не даём всплыть клику на fullscreen
-                if (ev.cancelable) ev.preventDefault();
-                ev.stopPropagation();
+                ev.preventDefault(); ev.stopPropagation();
                 if (dx < 0) {
                     // влево -> следующий кадр с анимацией
                     performSwipeTransition('next');
@@ -18797,7 +18794,6 @@ function setupMinifigImageSwipe() {
         if (!container) return;
         if (container._swipeBound) return;
         container._swipeBound = true;
-        try { container.style.touchAction = 'pan-y'; } catch(_) {}
 
         let startX = 0, startY = 0, startT = 0, swiping = false;
         const THRESH_X = 48;
@@ -18817,7 +18813,7 @@ function setupMinifigImageSwipe() {
             const dx = t.clientX - startX;
             const dy = Math.abs(t.clientY - startY);
             if (Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
-                if (ev.cancelable) ev.preventDefault();
+                ev.preventDefault();
             }
         };
         const onTouchEnd = (ev) => {
@@ -18829,8 +18825,7 @@ function setupMinifigImageSwipe() {
             const dx = t.clientX - startX;
             const dy = Math.abs(t.clientY - startY);
             if (dt <= THRESH_MS && Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
-                if (ev.cancelable) ev.preventDefault();
-                ev.stopPropagation();
+                ev.preventDefault(); ev.stopPropagation();
                 if (dx < 0) {
                     performMinifigSwipeTransition('next');
                 } else {
@@ -20584,9 +20579,7 @@ function setupPartImageSwipe() {
             if (!t) return;
             const dx = t.clientX - startX;
             const dy = Math.abs(t.clientY - startY);
-            if (Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
-                if (ev.cancelable) ev.preventDefault();
-            }
+            if (Math.abs(dx) > THRESH_X && dy < THRESH_Y) ev.preventDefault();
         };
         const onTouchEnd = (ev) => {
             if (!swiping) return; swiping = false;
@@ -20596,129 +20589,13 @@ function setupPartImageSwipe() {
             const dx = t.clientX - startX;
             const dy = Math.abs(t.clientY - startY);
             if (dt <= THRESH_MS && Math.abs(dx) > THRESH_X && dy < THRESH_Y) {
-                if (ev.cancelable) ev.preventDefault();
-                ev.stopPropagation();
-                if (dx < 0) performPartSwipeTransition('next'); else performPartSwipeTransition('prev');
+                ev.preventDefault(); ev.stopPropagation();
+                if (dx < 0) tryAdvancePartVariantNext(); else tryAdvancePartVariantPrev();
             }
         };
         container.addEventListener('touchstart', onTouchStart, { passive: true });
         container.addEventListener('touchmove', onTouchMove, { passive: false });
         container.addEventListener('touchend', onTouchEnd, { passive: false });
-    } catch (_) {}
-}
-
-function performPartSwipeTransition(direction) {
-    try {
-        const variants = Array.isArray(S.partModal?.variants) ? S.partModal.variants : [];
-        const total = variants.length;
-        if (total <= 1) return;
-        const content = document.getElementById('modal-content');
-        if (!content) return;
-        const container = content.querySelector('#modal-image-container');
-        const img = container?.querySelector('img');
-        if (!container || !img) return;
-        if (container._animating) return;
-        container._animating = true;
-
-        const curIdx = Math.max(0, variants.findIndex(v => v?.id === S.selPartId));
-        const nextIdx = direction === 'next' ? (curIdx + 1) % total : (curIdx - 1 + total) % total;
-        const nextVar = variants[nextIdx];
-        if (!nextVar) { container._animating = false; return; }
-
-        const nextPart = PART_MAP[nextVar.id];
-        let nextUrl = (nextPart?.rebrickable_img_url || '').trim();
-        if (!nextUrl) {
-            // Используем стандартную SVG-заглушку, чтобы свайп и анимация не блокировались
-            nextUrl = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
-        }
-
-        const ghost = new Image();
-        ghost.src = nextUrl;
-        ghost.alt = img.alt || '';
-        ghost.style.position = 'absolute';
-        ghost.style.inset = '0';
-        ghost.style.width = '100%';
-        ghost.style.height = '100%';
-        ghost.style.objectFit = 'contain';
-        ghost.style.objectPosition = 'center';
-        ghost.style.transform = direction === 'next' ? 'translateX(100%) translateZ(0)' : 'translateX(-100%) translateZ(0)';
-        ghost.style.transition = 'transform 220ms ease';
-        ghost.style.willChange = 'transform';
-        ghost.style.backfaceVisibility = 'hidden';
-        ghost.draggable = false;
-
-        const curStart = 'translateX(0) translateZ(0)';
-        const curEnd = direction === 'next' ? 'translateX(-100%) translateZ(0)' : 'translateX(100%) translateZ(0)';
-        const prevPos = img.style.position;
-        const prevInset = img.style.inset;
-        const prevW = img.style.width;
-        const prevH = img.style.height;
-        const prevOF = img.style.objectFit;
-        const prevOP = img.style.objectPosition;
-        const prevTrans = img.style.transition;
-        const prevWB = img.style.willChange;
-        const prevBF = img.style.backfaceVisibility;
-        img.style.position = 'absolute';
-        img.style.inset = '0';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'contain';
-        img.style.objectPosition = 'center';
-        img.style.transition = 'transform 220ms ease';
-        img.style.willChange = 'transform';
-        img.style.backfaceVisibility = 'hidden';
-        img.style.transform = curStart;
-
-        const startAnim = () => {
-            try {
-                container.appendChild(ghost);
-                requestAnimationFrame(() => {
-                    try {
-                        img.style.transform = curEnd;
-                        ghost.style.transform = 'translateX(0)';
-                    } catch(_) {}
-                });
-                setTimeout(() => {
-                    try {
-                        img.style.transition = '';
-                        img.style.transform = '';
-                        img.onerror = null;
-                        img.src = nextUrl;
-                        img.setAttribute('data-current-src', nextUrl);
-                        ghost.remove();
-                        img.style.position = prevPos;
-                        img.style.inset = prevInset;
-                        img.style.width = prevW;
-                        img.style.height = prevH;
-                        img.style.objectFit = prevOF;
-                        img.style.objectPosition = prevOP;
-                        img.style.transition = prevTrans;
-                        img.style.willChange = prevWB;
-                        img.style.backfaceVisibility = prevBF;
-                        // Обновляем выбранную вариацию и сопутствующие данные
-                        S.selPartId = nextVar.id;
-                        const newPart = PART_MAP[S.selPartId];
-                        if (newPart) {
-                            S.partModal.imgUrl = newPart.rebrickable_img_url || null;
-                            S.partModal.selColorId = null;
-                            S.partModal.qty = 0;
-                            updateModalPartially({ image: true, controls: true });
-                            if (newPart.availableColorIds?.length) {
-                                S.partModal.selColorId = sortColorIds(newPart.availableColorIds, newPart.id)[0];
-                                S.partModal.qty = S.coll[newPart.id]?.[S.partModal.selColorId] || 0;
-                                updateModalPartially({ colors: true, controls: true });
-                                fetchPartColorSpecifics(newPart.id, S.partModal.selColorId);
-                            } else {
-                                fetchPartColors(newPart.id);
-                            }
-                            setTimeout(() => { applyPartVariantImageToDom(); }, 0);
-                        }
-                    } catch(_) {}
-                    finally { container._animating = false; }
-                }, 230);
-            } catch(_) { container._animating = false; }
-        };
-        if (ghost.complete) startAnim(); else ghost.onload = startAnim;
     } catch (_) {}
 }
 function updateModalControlsState() {
