@@ -3697,16 +3697,16 @@ body.tab-switching button[data-view] {
     }
     
     /* Фиксируем высоту контейнера деталей для предотвращения моргания */
-    #loading-details {
-        min-height: 3rem; /* Фиксированная высота для деталей */
+    /* #loading-details {
+        min-height: 3rem; 
         display: flex;
         align-items: center;
         justify-content: center;
         text-align: center;
-        white-space: pre-line; /* Поддержка переносов строк */
-        line-height: 1.4; /* Фиксированная высота строки */
-        padding: 0.5rem 0; /* Отступы для стабильности */
-    }
+        white-space: pre-line; 
+        line-height: 1.4; 
+        padding: 0.5rem 0; 
+    } */
     
     /* Фиксируем высоту статуса */
     #loading-status {
@@ -4402,14 +4402,14 @@ body.tab-switching button[data-view] {
       <div id="loading-container" class="flex flex-col items-center justify-center h-full p-8">
         <div class="text-center">
           <div class="loader mx-auto mb-4"></div>
-          <h2 class="text-2xl font-bold text-gray-200 mb-2">Загрузка каталога LEGO</h2>
+          <h2 class="text-2xl font-bold text-gray-200 mb-2">Загрузка каталога</h2>
           <p id="loading-status" class="text-gray-400 mb-4">Подготовка к загрузке...</p>
           <div class="loading-progress-container">
             <div class="w-64 bg-gray-700 rounded-full h-2 mb-4 mx-auto">
               <div id="loading-progress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
             </div>
           </div>
-          <div id="loading-details" class="text-sm text-gray-500"></div>
+          <!-- <div id="loading-details" class="text-sm text-gray-500"></div> -->
           <div class="tip-container max-w-md mx-auto mt-4">
             <div id="loading-tip" class="tip-text text-xs text-white"></div>
           </div>
@@ -30422,9 +30422,9 @@ function updateLoadingStatus(status, progress = null, details = null) {
             }
         }
         
-        if (detailsElement && details !== null && detailsElement.textContent !== details) {
-            detailsElement.textContent = details;
-        }
+        // if (detailsElement && details !== null && detailsElement.textContent !== details) {
+        //     detailsElement.textContent = details;
+        // }
         
         // Показываем первую подсказку при первом вызове с анимацией
         if (loadingTipElement && !loadingTipElement.textContent && window.getRandomLoadingTip && window.animateTipChange) {
