@@ -2727,6 +2727,22 @@
     }
 }
 
+/* Анимация для полосы загрузки */
+@keyframes progressShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+#loading-progress {
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8, #3b82f6) !important;
+    background-size: 200% 100% !important;
+    animation: progressShimmer 2s ease-in-out infinite !important;
+}
+
 .page-loading .part-card.animate-in,
 .page-loading .set-card.animate-in,
 .page-loading .minifig-card.animate-in {
@@ -3674,6 +3690,73 @@ body.tab-switching button[data-view] {
     /* Loading indicator styles */
     #loading-container {
         transition: opacity 0.5s ease-out;
+        min-height: 400px; /* Фиксированная минимальная высота */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    
+    /* Фиксируем высоту контейнера деталей для предотвращения моргания */
+    #loading-details {
+        min-height: 3rem; /* Фиксированная высота для деталей */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        white-space: pre-line; /* Поддержка переносов строк */
+        line-height: 1.4; /* Фиксированная высота строки */
+        padding: 0.5rem 0; /* Отступы для стабильности */
+    }
+    
+    /* Фиксируем высоту статуса */
+    #loading-status {
+        min-height: 1.5rem; /* Фиксированная высота для статуса */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Фиксируем высоту подсказок */
+    .tip-container {
+        min-height: 2rem; /* Фиксированная высота для подсказок */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Фиксируем высоту контейнера прогресса */
+    .loading-progress-container {
+        min-height: 2rem; /* Фиксированная высота для полосы прогресса */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 1rem 0;
+    }
+    
+    /* Предотвращаем смещение элементов при изменении текста */
+    .loading-content > * {
+        transition: none; /* Отключаем анимации для стабильности */
+    }
+    
+    /* Дополнительная стабилизация для предотвращения моргания */
+    #loading-container .text-center > * {
+        transition: none !important;
+        will-change: auto;
+    }
+    
+    /* Фиксируем высоту заголовка */
+    h2 {
+        margin: 0 0 0.5rem 0;
+        min-height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Фиксируем позицию лоадера */
+    .loader {
+        position: relative;
+        margin: 0 auto 1rem auto;
     }
     
     #loading-container.hidden {
@@ -4321,8 +4404,10 @@ body.tab-switching button[data-view] {
           <div class="loader mx-auto mb-4"></div>
           <h2 class="text-2xl font-bold text-gray-200 mb-2">Загрузка каталога LEGO</h2>
           <p id="loading-status" class="text-gray-400 mb-4">Подготовка к загрузке...</p>
-          <div class="w-64 bg-gray-700 rounded-full h-2 mb-4 mx-auto">
-            <div id="loading-progress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+          <div class="loading-progress-container">
+            <div class="w-64 bg-gray-700 rounded-full h-2 mb-4 mx-auto">
+              <div id="loading-progress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
+            </div>
           </div>
           <div id="loading-details" class="text-sm text-gray-500"></div>
           <div class="tip-container max-w-md mx-auto mt-4">
@@ -6980,7 +7065,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v31';
+const CACHE_NAME = 'lego-catalog-cache-v32';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -15023,7 +15108,19 @@ function updatePartVariantDots() {
         const total = Math.max(1, variants.length);
         const idx = Math.max(0, variants.findIndex(v => v?.id === S.selPartId));
         const hasMany = total > 1;
-        if (!hasMany) { dotsWrap.innerHTML = ''; dotsWrap.style.opacity = '0'; dotsWrap.style.height = '12px'; return; }
+        const parentContainer = dotsWrap.parentElement;
+        if (!hasMany) { 
+            dotsWrap.innerHTML = ''; 
+            dotsWrap.style.opacity = '0'; 
+            dotsWrap.style.height = '12px';
+            if (parentContainer) {
+                parentContainer.style.display = 'none';
+            }
+            return; 
+        }
+        if (parentContainer) {
+            parentContainer.style.display = 'flex';
+        }
         const perRow = 16;
         const rows = [];
         for (let i = 0; i < total; i += perRow) rows.push(i);
@@ -18457,22 +18554,7 @@ function renderSetCollectionControls() {
                         <button data-action="update-set-collection" 
                             class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 rounded-lg hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-xs sm:text-sm md:text-sm lg:text-base min-h-[36px] sm:min-h-[40px]">
                             ${t>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
-                            <span class="hidden sm:inline">${(() => {
-                                const getSetWord = (count) => {
-                                    if (count === 1) return "набор";
-                                    if (count >= 2 && count <= 4) return "набора";
-                                    return "наборов";
-                                };
-                                if (t > 0) {
-                                    return `Обновить до ${e} ${getSetWord(e)}`;
-                                } else {
-                                    if (e > 1) {
-                                        return `Добавить ${e} ${getSetWord(e)} в коллекцию`;
-                                    } else {
-                                        return "Добавить набор в коллекцию";
-                                    }
-                                }
-                            })()}</span>
+                            <span class="hidden sm:inline">${t>0 ? "Обновить" : (e > 1 ? "Добавить "+e : "Добавить")}</span>
                             <span class="sm:hidden">${t>0 ? "Обновить" : (e > 1 ? "Добавить "+e : "Добавить")}</span>
                         </button>
                     </div>
@@ -18483,18 +18565,7 @@ function renderSetCollectionControls() {
                             <button data-action="delete-from-set-collection-modal" 
                                 class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-lg py-1.5 sm:py-2 md:py-1.5 lg:py-2 px-2 sm:px-3 md:px-3 lg:px-4 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[32px] sm:min-h-[36px] w-full sm:w-auto">
                                 ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
-                                <span class="hidden sm:inline">${(() => {
-                                    const getSetWord = (count) => {
-                                        if (count === 1) return "набор";
-                                        if (count >= 2 && count <= 4) return "набора";
-                                        return "наборов";
-                                    };
-                                    if (e > 1) {
-                                        return `Удалить ${e} ${getSetWord(e)} из коллекции`;
-                                    } else {
-                                        return "Удалить набор из коллекции";
-                                    }
-                                })()}</span>
+                                <span class="hidden sm:inline">${e > 1 ? "Удалить "+e : "Удалить"}</span>
                                 <span class="sm:hidden">${e > 1 ? "Удалить "+e : "Удалить"}</span>
                             </button>
                         </div>
@@ -19380,7 +19451,7 @@ function renderModal() {
                                ${I_Search("w-10 h-10 text-white")}
                             </div>
                         </div>
-                        <div class="flex items-center justify-center mt-2 w-full">
+                        <div class="flex items-center justify-center mt-2 w-full" style="display: none;">
                             <div id="part-variant-dots" class="flex items-center justify-center gap-1.5" style="opacity: 0; transform: translateY(6px); height: 12px;"></div>
                         </div>
                         <button data-action="part-variant-next" class="set-gallery-btn absolute right-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Следующая вариация" style="display: none;">
@@ -19668,23 +19739,7 @@ function renderModalControls() {
                             class="flex items-center justify-center gap-2 sm:gap-3 ${o ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed'} text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-4 sm:px-5 md:px-5 lg:px-6 rounded-lg transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px]"
                             ${!o ? 'disabled' : ''}>
                             ${l>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
-                            <span class="hidden sm:inline">${(() => {
-                                if (!o) return "Выберите цвет";
-                                const getPartWord = (count) => {
-                                    if (count === 1) return "деталь";
-                                    if (count >= 2 && count <= 4) return "детали";
-                                    return "деталей";
-                                };
-                                if (l > 0) {
-                                    return `Обновить до ${t} ${getPartWord(t)}`;
-                                } else {
-                                    if (t > 1) {
-                                        return `Добавить ${t} ${getPartWord(t)} в коллекцию`;
-                                    } else {
-                                        return "Добавить деталь в коллекцию";
-                                    }
-                                }
-                            })()}</span>
+                            <span class="hidden sm:inline">${!o ? "Выберите цвет" : (l>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить"))}</span>
                             <span class="sm:hidden">${!o ? "Выберите цвет" : (l>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить"))}</span>
                         </button>
                     </div>
@@ -19695,18 +19750,7 @@ function renderModalControls() {
                             <button data-action="delete-from-collection-modal" 
                                 class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[40px] sm:min-h-[44px] w-full sm:w-auto">
                                 ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
-                                <span class="hidden sm:inline">${(() => {
-                                    const getPartWord = (count) => {
-                                        if (count === 1) return "деталь";
-                                        if (count >= 2 && count <= 4) return "детали";
-                                        return "деталей";
-                                    };
-                                    if (t > 1) {
-                                        return `Удалить ${t} ${getPartWord(t)} из коллекции`;
-                                    } else {
-                                        return "Удалить деталь из коллекции";
-                                    }
-                                })()}</span>
+                                <span class="hidden sm:inline">${t > 1 ? "Удалить "+t : "Удалить"}</span>
                                 <span class="sm:hidden">${t > 1 ? "Удалить "+t : "Удалить"}</span>
                             </button>
                         </div>
@@ -19728,17 +19772,7 @@ function renderModalControls() {
                                     })()} из коллекции.` :
                                     "Обновление установит точное количество деталей в коллекции. Удаление уберет деталь из коллекции."
                                 ) : 
-                                (t > 1 ? 
-                                    `Добавление ${t} ${(() => {
-                                        const getPartWord = (count) => {
-                                            if (count === 1) return "деталь";
-                                            if (count >= 2 && count <= 4) return "детали";
-                                            return "деталей";
-                                        };
-                                        return getPartWord(t);
-                                    })()} автоматически добавит их в коллекцию` :
-                                    "Добавление детали автоматически добавит её в коллекцию"
-                                )
+                                ""
                             )
                         }
                     </div>
@@ -20916,22 +20950,7 @@ function renderMinifigModalDetailsView() {
                     <button data-action="update-minifig-collection" 
                         class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-4 sm:px-5 md:px-5 lg:px-6 rounded-lg hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px]">
                         ${o>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
-                        <span class="hidden sm:inline">${(() => {
-                            const getMinifigWord = (count) => {
-                                if (count === 1) return "минифигурку";
-                                if (count >= 2 && count <= 4) return "минифигурки";
-                                return "минифигурок";
-                            };
-                            if (o > 0) {
-                                return `Обновить до ${t} ${getMinifigWord(t)}`;
-                            } else {
-                                if (t > 1) {
-                                    return `Добавить ${t} ${getMinifigWord(t)} в коллекцию`;
-                                } else {
-                                    return "Добавить минифигурку в коллекцию";
-                                }
-                            }
-                        })()}</span>
+                        <span class="hidden sm:inline">${o>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить")}</span>
                         <span class="sm:hidden">${o>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить")}</span>
                     </button>
                 </div>
@@ -20942,18 +20961,7 @@ function renderMinifigModalDetailsView() {
                         <button data-action="delete-from-minifig-collection-modal" 
                             class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-lg py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[40px] sm:min-h-[44px] w-full sm:w-auto">
                             ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
-                            <span class="hidden sm:inline">${(() => {
-                                const getMinifigWord = (count) => {
-                                    if (count === 1) return "минифигурку";
-                                    if (count >= 2 && count <= 4) return "минифигурки";
-                                    return "минифигурок";
-                                };
-                                if (t > 1) {
-                                    return `Удалить ${t} ${getMinifigWord(t)} из коллекции`;
-                                } else {
-                                    return "Удалить минифигурку из коллекции";
-                                }
-                            })()}</span>
+                            <span class="hidden sm:inline">${t > 1 ? "Удалить "+t : "Удалить"}</span>
                             <span class="sm:hidden">${t > 1 ? "Удалить "+t : "Удалить"}</span>
                         </button>
                     </div>
@@ -20963,15 +20971,15 @@ function renderMinifigModalDetailsView() {
                 <div class="text-xs text-gray-400 text-center leading-relaxed px-2 sm:px-4">
                     ${o>0 ? 
                         (t > 1 ? 
-                            `Обновление установит точное количество минифигурок в коллекции. Удаление уберет ${t} ${(() => {
+                            `Обновление установит точное количество минифигурок и её деталей в коллекции. Удаление уберет ${t} ${(() => {
                                 const getMinifigWord = (count) => {
                                     if (count === 1) return "минифигурку";
                                     if (count >= 2 && count <= 4) return "минифигурки";
                                     return "минифигурок";
                                 };
                                 return getMinifigWord(t);
-                            })()} из коллекции.` :
-                            "Обновление установит точное количество минифигурок в коллекции. Удаление уберет минифигурку из коллекции."
+                            })()} и детали из коллекции` :
+                            "Обновление установит точное количество минифигурок и её деталей в коллекции. Удаление уберет минифигурку и её детали из коллекции"
                         ) : 
                         (t > 1 ? 
                             `Добавление ${t} ${(() => {
@@ -20981,8 +20989,8 @@ function renderMinifigModalDetailsView() {
                                     return "минифигурок";
                                 };
                                 return getMinifigWord(t);
-                            })()} автоматически добавит их в коллекцию` :
-                            "Добавление минифигурки автоматически добавит её в коллекцию"
+                            })()} автоматически добавит их в месте с деталями в коллекцию` :
+                            "Добавление минифигурки автоматически добавит её в месте с деталями в коллекцию"
                         )
                     }
                 </div>
@@ -28388,6 +28396,11 @@ async function initializeApp() {
     // Немедленно показываем индикатор загрузки
     updateLoadingStatus("Инициализация приложения...", 5, "Загрузка состояния и подготовка данных");
     
+    // Сбрасываем прогресс при инициализации
+    if (window.resetProgress) {
+        window.resetProgress();
+    }
+    
     // Запускаем автоматическую смену подсказок на экране загрузки
     setTimeout(() => {
         if (window.startLoadingTipRotation) {
@@ -28412,8 +28425,24 @@ async function initializeApp() {
     try {
         console.log('Starting data loading from CSV...');
         
+        // Запускаем мониторинг прогресса для предотвращения зависания
+        const progressMonitor = setInterval(() => {
+            if (window._loadingProgressState && window._loadingProgressState.current < 99) {
+                const timeSinceStart = Date.now() - (window._csvLoadStartTime || Date.now());
+                if (timeSinceStart > 30000) { // 30 секунд
+                    console.log('⚠️ Long loading detected, forcing progress advance');
+                    if (window.forceProgressAdvance) {
+                        window.forceProgressAdvance();
+                    }
+                }
+            }
+        }, 5000);
+        
         // Всегда сначала загружаем данные из CSV файлов (быстро, офлайн)
         await loadDataFromCSV();
+        
+        // Останавливаем мониторинг после завершения загрузки
+        clearInterval(progressMonitor);
         
         console.log('CSV data loading completed');
         console.log('PART_MAP size after CSV loading:', Object.keys(PART_MAP).length);
@@ -28791,6 +28820,9 @@ document.addEventListener("DOMContentLoaded", () => {
 // Теперь файлы загружаются по очереди, начиная с самых важных для работы приложения
 async function loadDataFromCSV() {
     try {
+        // Устанавливаем глобальное время начала загрузки
+        window._csvLoadStartTime = Date.now();
+        
         // Фаза 1: Критические данные для навигации по боковой панели (загружаем первыми)
         updateLoadingStatus("Загрузка критических данных...", null, "Подготовка к загрузке");
         
@@ -28824,6 +28856,9 @@ async function loadDataFromCSV() {
         
         // Фаза 3: Дополнительные данные (загружаем последними, так как зависят от основных данных)
         await loadElementsFromCSV();
+        
+        // Загружаем инвентари с дополнительным прогрессом для файлов-частей
+        updateLoadingStatus("Загрузка инвентарей...", null, "Загружаем инвентари деталей...");
         await loadInventoriesFromCSV();
         
         updateLoadingStatus("Завершение загрузки...", null, "Сохранение состояния и обновление интерфейса");
@@ -29458,6 +29493,11 @@ async function discoverInventoryPartFiles() {
         for (let idx = 0; idx < partFiles.length; idx++) {
             const url = partFiles[idx];
             const label = url.substring(url.lastIndexOf('/') + 1);
+            
+            // Показываем прогресс перед загрузкой каждого файла-части
+            const preProgress = calcPlannedProgress(label, 0);
+            updateLoadingStatus('Загрузка инвентарей деталей...', preProgress, `Начинаем загрузку инвентарей деталей...`);
+            
             try {
                 if (worker) {
                     await new Promise((resolve) => {
@@ -29471,8 +29511,12 @@ async function discoverInventoryPartFiles() {
                                 }
                                 isFirstBatch = false;
                             } else if (e.data.type === 'progress') {
-                                const details = `Загружается: ${label} • Файл: ~${formatMb(e.data.bytes)} MB`;
-                                updateLoadingStatus('Загрузка инвентарей деталей...', calcPlannedProgress(label, null), details);
+                                const totalExpected = window.CSV_MB_PROGRESS.totalExpected || 0;
+                                const totalLoaded = window.CSV_MB_PROGRESS.totalBytes;
+                                const remaining = totalExpected > 0 ? Math.max(0, totalExpected - totalLoaded) : 0;
+                                const details = `Загружается: инвентари деталей\nЗагружено: ${formatMb(totalLoaded)} MB • Всего: ${formatMb(totalExpected)} MB • Осталось: ${formatMb(remaining)} MB`;
+                                const progressPercent = calcPlannedProgress(label, null);
+                                updateLoadingStatus('Загрузка инвентарей деталей...', progressPercent, details);
                             } else if (e.data.type === 'done') {
                                 worker.removeEventListener('message', onMsg);
                                 resolve();
@@ -29500,6 +29544,16 @@ async function discoverInventoryPartFiles() {
                     }
                 }
                 loadedParts++;
+                
+                // Обновляем прогресс между файлами-частями
+                const progressPercent = calcPlannedProgress(label, 1);
+                updateLoadingStatus('Загрузка инвентарей деталей...', progressPercent, `Загружаем инвентари деталей...`);
+                
+                // Добавляем небольшую задержку для визуального эффекта
+                if (idx < partFiles.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                }
+                
                 if (S.settingsOpen) {
                     updateSettingsModalStatus(`Загрузка инвентарей\nчасть ${idx + 1}/${maxParts}`, "info");
                 }
@@ -29529,6 +29583,15 @@ async function discoverInventoryPartFiles() {
             if (line.trim()) {
                 const fields = parseCsvLine(line);
                 processedLines++;
+                
+                // Обновляем прогресс каждые 500 строк для более плавного движения
+                if (processedLines % 500 === 0) {
+                    const progressPercent = calcPlannedProgress('inventory_parts_part_001.csv', 1) + (processedLines / lines.length) * 2;
+                    const remaining = lines.length - processedLines;
+                    const totalExpected = window.CSV_MB_PROGRESS.totalExpected || 0;
+                    const totalLoaded = window.CSV_MB_PROGRESS.totalBytes;
+                    updateLoadingStatus('Обработка инвентарей...', progressPercent, `Обрабатываем данные инвентаря...\nЗагружено: ${formatMb(totalLoaded)} MB • Всего: ${formatMb(totalExpected)} MB • Обработано: ${processedLines} строк`);
+                }
                 
                 const [inventory_id, part_num, color_id, quantity, is_spare, img_url] = fields;
                 
@@ -29608,13 +29671,24 @@ async function discoverInventoryPartFiles() {
             }
         });
         
-        // Загружаем inventory_sets
+        // Загружаем inventory_sets с дополнительным прогрессом
+        updateLoadingStatus('Загрузка инвентаря наборов...', null, 'Загружаем инвентари наборов...');
         const setCsvText = await fetchTextWithProgress('./Data/inventory_sets.csv', 'Загрузка инвентаря наборов...', 'inventory_sets.csv');
         const setLines = setCsvText.split('\n').slice(1);
         
+        let setProcessedLines = 0;
         setLines.forEach(line => {
             if (line.trim()) {
                 const fields = parseCsvLine(line);
+                setProcessedLines++;
+                
+                // Обновляем прогресс каждые 100 строк для наборов
+                if (setProcessedLines % 100 === 0) {
+                    const progressPercent = calcPlannedProgress('inventory_sets.csv', 1) + (setProcessedLines / setLines.length) * 1;
+                    const totalExpected = window.CSV_MB_PROGRESS.totalExpected || 0;
+                    const totalLoaded = window.CSV_MB_PROGRESS.totalBytes;
+                    updateLoadingStatus('Обработка инвентарей наборов...', progressPercent, `Обрабатываем данные наборов...\nЗагружено: ${formatMb(totalLoaded)} MB • Всего: ${formatMb(totalExpected)} MB • Обработано: ${setProcessedLines} строк`);
+                }
                 const [inventory_id, set_num, quantity] = fields;
                 if (inventory_id && set_num && quantity) {
                     if (!inventorySetsMap[inventory_id]) {
@@ -29644,13 +29718,24 @@ async function discoverInventoryPartFiles() {
             }
         });
         
-        // Загружаем inventory_minifigs
+        // Загружаем inventory_minifigs с дополнительным прогрессом
+        updateLoadingStatus('Загрузка инвентаря минифигурок...', null, 'Загружаем инвентари минифигурок...');
         const minifigCsvText = await fetchTextWithProgress('./Data/inventory_minifigs.csv', 'Загрузка инвентаря минифигурок...', 'inventory_minifigs.csv');
         const minifigLines = minifigCsvText.split('\n').slice(1);
         
+        let minifigProcessedLines = 0;
         minifigLines.forEach(line => {
             if (line.trim()) {
                 const fields = parseCsvLine(line);
+                minifigProcessedLines++;
+                
+                // Обновляем прогресс каждые 100 строк для минифигурок
+                if (minifigProcessedLines % 100 === 0) {
+                    const progressPercent = calcPlannedProgress('inventory_minifigs.csv', 1) + (minifigProcessedLines / minifigLines.length) * 1;
+                    const totalExpected = window.CSV_MB_PROGRESS.totalExpected || 0;
+                    const totalLoaded = window.CSV_MB_PROGRESS.totalBytes;
+                    updateLoadingStatus('Обработка инвентарей минифигурок...', progressPercent, `Обрабатываем данные минифигурок...\nЗагружено: ${formatMb(totalLoaded)} MB • Всего: ${formatMb(totalExpected)} MB • Обработано: ${minifigProcessedLines} строк`);
+                }
                 const [inventory_id, fig_num, quantity] = fields;
                 if (inventory_id && fig_num && quantity) {
                     if (!inventoryMinifigsMap[inventory_id]) {
@@ -29896,71 +29981,286 @@ async function fetchTextWithProgress(url, statusText, label) {
         const reader = resp && resp.body && resp.body.getReader ? resp.body.getReader() : null;
         const contentLengthHeader = resp && resp.headers ? resp.headers.get('content-length') : null;
         const totalForFile = contentLengthHeader ? parseInt(contentLengthHeader, 10) : 0;
+        
+        // Обновляем общий ожидаемый размер
+        if (window.updateTotalExpectedSize && totalForFile > 0) {
+            window.updateTotalExpectedSize(totalForFile);
+        }
+        
         if (!window.CSV_MB_PROGRESS) window.CSV_MB_PROGRESS = { totalBytes: 0, totalExpected: 0 };
         if (!window.CSV_PROGRESS_PLAN) initCsvProgressPlan();
         if (!window.CSV_PROGRESS_STATE) window.CSV_PROGRESS_STATE = { completed: new Set() };
+        
+        // Инициализируем прогресс для этого файла
+        const fileStartTime = Date.now();
+        window._fileStartTime = fileStartTime; // Глобальная переменная для calcPlannedProgress
+        let lastProgressUpdate = 0;
+        
         if (!reader) {
+            // Fallback для случаев без поддержки потокового чтения
             const text = await resp.text();
-            // Обновим общий прогресс хотя бы по размеру текста (приближенно)
             try {
-                const approxBytes = text.length; // приблизительно (UTF-16 -> меньшее число)
+                const approxBytes = text.length;
                 window.CSV_MB_PROGRESS.totalBytes += approxBytes;
-                // Плановая шкала прогресса по этапам/файлам
                 const progressPercent = calcPlannedProgress(label, 1);
-                const details = `Загружается: ${label} • Файл: ${formatMb(approxBytes)} MB • Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} MB`;
+                const totalExpected = window.CSV_MB_PROGRESS.totalExpected || 0;
+                const totalLoaded = window.CSV_MB_PROGRESS.totalBytes;
+                const remaining = totalExpected > 0 ? Math.max(0, totalExpected - totalLoaded) : 0;
+                const details = `${statusText}\nЗагружено: ${formatMb(totalLoaded)} MB • Всего: ${formatMb(totalExpected)} MB • Осталось: ${formatMb(remaining)} MB`;
                 updateLoadingStatus(statusText, progressPercent, details);
                 window.CSV_PROGRESS_STATE.completed.add(label);
             } catch {}
             return text;
         }
+        
         const decoder = new TextDecoder();
         let received = 0;
         let text = '';
+        let chunkCount = 0;
+        
+        // Устанавливаем начальный прогресс
+        const initialProgress = calcPlannedProgress(label, 0);
+        updateLoadingStatus(statusText, initialProgress, `Начинаем загрузку...`);
+        
         for (;;) {
             const { done, value } = await reader.read();
             if (done) break;
+            
             received += value.length;
             window.CSV_MB_PROGRESS.totalBytes += value.length;
             text += decoder.decode(value, { stream: true });
-            const current = `Файл: ${formatMb(received)} MB`;
-            // Плановая шкала прогресса по этапам/файлам
-            const fileFraction = totalForFile > 0 ? Math.max(0, Math.min(1, received / totalForFile)) : null;
-            const progressPercent = calcPlannedProgress(label, fileFraction);
-            const details = `Загружается: ${label} • ${current} • Всего: ${formatMb(window.CSV_MB_PROGRESS.totalBytes)} MB`;
-            updateLoadingStatus(statusText, progressPercent, details);
+            chunkCount++;
+            
+            const now = Date.now();
+            const timeSinceLastUpdate = now - lastProgressUpdate;
+            
+            // Для файлов-частей обновляем прогресс чаще для плавности
+            const updateFrequency = label.includes('inventory_parts_part_') ? 50 : 100;
+            const chunkFrequency = label.includes('inventory_parts_part_') ? 5 : 10;
+            
+            // Обновляем прогресс чаще для файлов-частей
+            if (timeSinceLastUpdate >= updateFrequency || chunkCount % chunkFrequency === 0) {
+                const fileFraction = totalForFile > 0 ? Math.max(0, Math.min(1, received / totalForFile)) : null;
+                const progressPercent = calcPlannedProgress(label, fileFraction);
+                
+                // Для файлов-частей добавляем более заметную прогрессию
+                let timeVariation = 0;
+                if (label.includes('inventory_parts_part_')) {
+                    // Более активная анимация для файлов-частей
+                    timeVariation = Math.sin(now / 500) * 0.3 + Math.sin(now / 200) * 0.1;
+                } else {
+                    timeVariation = Math.sin(now / 1000) * 0.1;
+                }
+                
+                const finalProgress = Math.min(99, progressPercent + timeVariation);
+                
+                const totalExpected = window.CSV_MB_PROGRESS.totalExpected || 0;
+                const totalLoaded = window.CSV_MB_PROGRESS.totalBytes;
+                const remaining = totalExpected > 0 ? Math.max(0, totalExpected - totalLoaded) : 0;
+                const details = `${statusText}\nЗагружено: ${formatMb(totalLoaded)} MB • Всего: ${formatMb(totalExpected)} MB • Осталось: ${formatMb(remaining)} MB`;
+                
+                updateLoadingStatus(statusText, finalProgress, details);
+                lastProgressUpdate = now;
+            }
+            
+            // Для файлов-частей делаем более частые паузы для UI
+            const pauseFrequency = label.includes('inventory_parts_part_') ? 25 : 50;
+            if (chunkCount % pauseFrequency === 0) {
+                await new Promise(resolve => setTimeout(resolve, 1));
+            }
         }
+        
         text += decoder.decode();
-        try { window.CSV_PROGRESS_STATE.completed.add(label); } catch {}
+        
+        // Финальное обновление прогресса
+        try { 
+            window.CSV_PROGRESS_STATE.completed.add(label);
+            const finalProgress = calcPlannedProgress(label, 1);
+            updateLoadingStatus(statusText, finalProgress, `Завершено`);
+            
+            // Для файлов-частей добавляем дополнительную анимацию завершения
+            if (label.includes('inventory_parts_part_')) {
+                // Показываем прогресс между файлами-частями
+                setTimeout(() => {
+                    const nextProgress = calcPlannedProgress(label, 1) + 0.5;
+                    updateLoadingStatus(statusText, nextProgress, `Продолжаем загрузку инвентарей...`);
+                }, 100);
+            }
+        } catch {}
+        
         return text;
     } catch (e) {
+        console.warn(`Error in fetchTextWithProgress for ${label}:`, e);
         // В случае любых проблем просто читаем как текст
-        const resp = await fetch(url);
-        return await resp.text();
+        try {
+            const resp = await fetch(url);
+            return await resp.text();
+        } catch (fallbackError) {
+            console.error(`Fallback fetch also failed for ${label}:`, fallbackError);
+            throw fallbackError;
+        }
     }
 }
 
-// Плавная анимация прогресса загрузки с монотонным увеличением
+// Улучшенная система прогресса загрузки с постоянным движением
 (function(){
     if (!window._loadingProgressState) {
-        window._loadingProgressState = { current: 0, target: 0, rafId: null };
+        window._loadingProgressState = { 
+            current: 0, 
+            target: 0, 
+            rafId: null,
+            lastUpdate: Date.now(),
+            isStuck: false,
+            stuckTimeout: null,
+            minProgress: 0,
+            maxProgress: 100
+        };
     }
+    
+    // Функция для установки целевого прогресса
     window.setLoadingProgressTarget = function(nextPercent) {
         try {
             const progressElement = document.getElementById('loading-progress');
             if (!progressElement) return;
+            
             const clamped = Math.max(0, Math.min(100, Number(nextPercent) || 0));
+            const state = window._loadingProgressState;
+            
+            // Обновляем время последнего обновления
+            state.lastUpdate = Date.now();
+            
+            // Если прогресс не изменился значительно, не обновляем цель
+            if (Math.abs(clamped - state.target) < 0.5) return;
+            
             // Монотонность: не уменьшаем цель
-            if (clamped <= window._loadingProgressState.target) return;
-            window._loadingProgressState.target = clamped;
+            if (clamped <= state.target) return;
+            
+            state.target = clamped;
+            state.isStuck = false;
+            
+            // Очищаем предыдущий таймаут зависания
+            if (state.stuckTimeout) {
+                clearTimeout(state.stuckTimeout);
+                state.stuckTimeout = null;
+            }
 
-            if (!window._loadingProgressState.rafId) {
+            if (!state.rafId) {
                 const step = () => {
-                    const state = window._loadingProgressState;
+                    const now = Date.now();
+                    const timeSinceUpdate = now - state.lastUpdate;
+                    
+                    // Проверяем, не завис ли прогресс
+                    if (timeSinceUpdate > 5000 && state.current < state.target - 1) {
+                        if (!state.isStuck) {
+                            console.log('⚠️ Progress appears stuck, enabling fallback animation');
+                            state.isStuck = true;
+                        }
+                    }
+                    
                     const delta = state.target - state.current;
-                    // Плавное приближение (ease-out)
-                    state.current += delta * 0.12;
-                    if (Math.abs(delta) < 0.2) state.current = state.target;
+                    
+                    // Если прогресс завис, используем более агрессивную анимацию
+                    if (state.isStuck) {
+                        state.current += Math.max(0.1, delta * 0.3);
+                    } else {
+                        // Плавное приближение (ease-out)
+                        state.current += delta * 0.15;
+                    }
+                    
+                    // Если очень близко к цели, устанавливаем точно
+                    if (Math.abs(delta) < 0.1) {
+                        state.current = state.target;
+                    }
+                    
+                    // Ограничиваем прогресс
+                    state.current = Math.max(state.minProgress, Math.min(state.maxProgress, state.current));
+                    
                     progressElement.style.width = state.current.toFixed(2) + '%';
+                    
+                    if (state.current < state.target) {
+                        state.rafId = requestAnimationFrame(step);
+                    } else {
+                        cancelAnimationFrame(state.rafId);
+                        state.rafId = null;
+                        state.isStuck = false;
+                    }
+                };
+                state.rafId = requestAnimationFrame(step);
+            }
+            
+            // Устанавливаем таймаут для обнаружения зависания
+            state.stuckTimeout = setTimeout(() => {
+                if (state.current < state.target - 1) {
+                    console.log('⚠️ Progress timeout detected, forcing update');
+                    state.isStuck = true;
+                    if (!state.rafId) {
+                        state.rafId = requestAnimationFrame(step);
+                    }
+                }
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Error in setLoadingProgressTarget:', error);
+        }
+    };
+    
+    // Функция для принудительного обновления прогресса
+    window.forceProgressUpdate = function() {
+        const state = window._loadingProgressState;
+        if (state.rafId) {
+            cancelAnimationFrame(state.rafId);
+            state.rafId = null;
+        }
+        state.isStuck = false;
+        state.lastUpdate = Date.now();
+        
+        const progressElement = document.getElementById('loading-progress');
+        if (progressElement) {
+            progressElement.style.width = state.current.toFixed(2) + '%';
+        }
+    };
+    
+    // Функция для сброса прогресса
+    window.resetProgress = function() {
+        const state = window._loadingProgressState;
+        if (state.rafId) {
+            cancelAnimationFrame(state.rafId);
+            state.rafId = null;
+        }
+        if (state.stuckTimeout) {
+            clearTimeout(state.stuckTimeout);
+            state.stuckTimeout = null;
+        }
+        state.current = 0;
+        state.target = 0;
+        state.isStuck = false;
+        state.lastUpdate = Date.now();
+        
+        const progressElement = document.getElementById('loading-progress');
+        if (progressElement) {
+            progressElement.style.width = '0%';
+        }
+    };
+    
+    // Функция для принудительного продвижения прогресса при зависании
+    window.forceProgressAdvance = function() {
+        const state = window._loadingProgressState;
+        if (state.current < 95) {
+            state.target = Math.min(95, state.current + 5);
+            state.isStuck = false;
+            state.lastUpdate = Date.now();
+            
+            if (!state.rafId) {
+                const step = () => {
+                    const delta = state.target - state.current;
+                    state.current += delta * 0.2;
+                    if (Math.abs(delta) < 0.1) state.current = state.target;
+                    
+                    const progressElement = document.getElementById('loading-progress');
+                    if (progressElement) {
+                        progressElement.style.width = state.current.toFixed(2) + '%';
+                    }
+                    
                     if (state.current < state.target) {
                         state.rafId = requestAnimationFrame(step);
                     } else {
@@ -29968,9 +30268,9 @@ async function fetchTextWithProgress(url, statusText, label) {
                         state.rafId = null;
                     }
                 };
-                window._loadingProgressState.rafId = requestAnimationFrame(step);
+                state.rafId = requestAnimationFrame(step);
             }
-        } catch {}
+        }
     };
 })();
 
@@ -29994,6 +30294,18 @@ function initCsvProgressPlan() {
         // Нормализуем к 100
         plan.forEach(p => p.norm = (p.weight / totalWeight) * 100);
         window.CSV_PROGRESS_PLAN = plan;
+        
+        // Инициализируем общий ожидаемый размер (примерно 50-100 MB для всех CSV файлов)
+        if (!window.CSV_MB_PROGRESS.totalExpected) {
+            window.CSV_MB_PROGRESS.totalExpected = 80000000; // 80 MB примерный размер всех CSV файлов
+        }
+        
+        // Функция для обновления общего ожидаемого размера
+        window.updateTotalExpectedSize = function(contentLength) {
+            if (contentLength && contentLength > 0) {
+                window.CSV_MB_PROGRESS.totalExpected = Math.max(window.CSV_MB_PROGRESS.totalExpected, contentLength);
+            }
+        };
         if (!window.CSV_PROGRESS_STATE) window.CSV_PROGRESS_STATE = { completed: new Set() };
     } catch {}
 }
@@ -30010,21 +30322,46 @@ function matchPlanEntry(label) {
 function calcPlannedProgress(label, fileFraction) {
     if (!window.CSV_PROGRESS_PLAN) initCsvProgressPlan();
     if (!window.CSV_PROGRESS_STATE) window.CSV_PROGRESS_STATE = { completed: new Set() };
+    
     // Суммируем полные веса завершенных этапов до текущего
     let progress = 0;
+    let foundCurrent = false;
+    
     for (const entry of window.CSV_PROGRESS_PLAN) {
         const isCurrent = (entry.type === 'single' && label === entry.match) || (entry.type === 'group' && label.startsWith(entry.prefix));
+        
         if (isCurrent) {
+            foundCurrent = true;
             // Добавляем долю текущего этапа
             if (entry.type === 'single') {
-                const frac = (fileFraction != null) ? fileFraction : 0.2; // без длины — даём небольшой прирост
-                progress += entry.norm * Math.max(0, Math.min(1, frac));
+                let frac;
+                if (fileFraction != null) {
+                    // Используем реальный прогресс файла
+                    frac = Math.max(0, Math.min(1, fileFraction));
+                } else {
+                    // Если нет информации о размере, используем временную прогрессию
+                    const timeElapsed = Date.now() - (window._fileStartTime || Date.now());
+                    frac = Math.min(0.8, timeElapsed / 10000); // Максимум 80% за 10 секунд
+                }
+                progress += entry.norm * frac;
             } else {
                 // Группа файлов с равномерным распределением
                 const completedInGroup = Array.from(window.CSV_PROGRESS_STATE.completed || []).filter(l => l.startsWith(entry.prefix)).length;
-                const frac = (fileFraction != null) ? fileFraction : 0.05; // без длины — очень маленький шаг
+                let frac;
+                if (fileFraction != null) {
+                    frac = Math.max(0, Math.min(1, fileFraction));
+                } else {
+                    // Для группы файлов используем более консервативную прогрессию
+                    const timeElapsed = Date.now() - (window._fileStartTime || Date.now());
+                    // Для файлов-частей используем более агрессивную прогрессию
+                    if (label.includes('inventory_parts_part_')) {
+                        frac = Math.min(0.8, timeElapsed / 8000); // Максимум 80% за 8 секунд
+                    } else {
+                        frac = Math.min(0.6, timeElapsed / 15000); // Максимум 60% за 15 секунд
+                    }
+                }
                 const perFile = entry.norm / (entry.count || 1);
-                progress += perFile * (completedInGroup + Math.max(0, Math.min(1, frac)));
+                progress += perFile * (completedInGroup + frac);
             }
             break;
         } else {
@@ -30041,8 +30378,26 @@ function calcPlannedProgress(label, fileFraction) {
             }
         }
     }
+    
+    // Если текущий файл не найден в плане, добавляем базовый прогресс
+    if (!foundCurrent) {
+        const baseProgress = Math.min(5, (Date.now() - (window._fileStartTime || Date.now())) / 1000);
+        progress += baseProgress;
+    }
+    
+    // Добавляем небольшую случайную вариацию для имитации активности
+    let timeVariation = Math.sin(Date.now() / 2000) * 0.5;
+    
+    // Для файлов-частей добавляем дополнительную анимацию
+    if (label.includes('inventory_parts_part_')) {
+        timeVariation += Math.sin(Date.now() / 1000) * 0.3;
+        timeVariation += Math.sin(Date.now() / 500) * 0.2;
+    }
+    
+    progress += timeVariation;
+    
     // Никогда не возвращаем 100 до финального шага скрытия индикатора
-    return Math.min(99, Math.floor(progress));
+    return Math.min(99, Math.max(0, Math.floor(progress)));
 }
 
 // Функции для управления индикатором загрузки
@@ -30052,37 +30407,40 @@ function updateLoadingStatus(status, progress = null, details = null) {
     const detailsElement = document.getElementById('loading-details');
     const loadingTipElement = document.getElementById('loading-tip');
     
-    if (statusElement) {
-        statusElement.textContent = status;
-    }
-    
-    if (progressElement && progress !== null) {
-        // Переходим на плавную установку цели прогресса
-        if (window.setLoadingProgressTarget) {
-            window.setLoadingProgressTarget(progress);
-        } else {
-            progressElement.style.width = `${progress}%`;
+    // Используем requestAnimationFrame для минимизации перерисовки
+    requestAnimationFrame(() => {
+        if (statusElement && statusElement.textContent !== status) {
+            statusElement.textContent = status;
         }
-    }
-    
-    if (detailsElement && details !== null) {
-        detailsElement.textContent = details;
-    }
-    
-    // Показываем первую подсказку при первом вызове с анимацией
-    if (loadingTipElement && !loadingTipElement.textContent && window.getRandomLoadingTip && window.animateTipChange) {
-        const firstTip = window.getRandomLoadingTip();
-        // Для первой подсказки используем только анимацию появления
-        loadingTipElement.textContent = firstTip;
-        loadingTipElement.classList.add('fade-in', 'show');
-        setTimeout(() => {
-            loadingTipElement.classList.remove('fade-in', 'show');
-        }, 600);
-        // Добавляем первую подсказку в историю
-        if (window.addTipToHistory) {
-            window.addTipToHistory(firstTip, 'loading');
+        
+        if (progressElement && progress !== null) {
+            // Переходим на плавную установку цели прогресса
+            if (window.setLoadingProgressTarget) {
+                window.setLoadingProgressTarget(progress);
+            } else {
+                progressElement.style.width = `${progress}%`;
+            }
         }
-    }
+        
+        if (detailsElement && details !== null && detailsElement.textContent !== details) {
+            detailsElement.textContent = details;
+        }
+        
+        // Показываем первую подсказку при первом вызове с анимацией
+        if (loadingTipElement && !loadingTipElement.textContent && window.getRandomLoadingTip && window.animateTipChange) {
+            const firstTip = window.getRandomLoadingTip();
+            // Для первой подсказки используем только анимацию появления
+            loadingTipElement.textContent = firstTip;
+            loadingTipElement.classList.add('fade-in', 'show');
+            setTimeout(() => {
+                loadingTipElement.classList.remove('fade-in', 'show');
+            }, 600);
+            // Добавляем первую подсказку в историю
+            if (window.addTipToHistory) {
+                window.addTipToHistory(firstTip, 'loading');
+            }
+        }
+    });
 }
 function hideLoadingIndicator() {
     const loadingContainer = document.getElementById('loading-container');
