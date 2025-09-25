@@ -18,21 +18,9 @@
   <meta property="og:image" content="ogimage.png">
   <meta property="og:type" content="website">
 
-  <!-- DNS prefetch для ускорения подключения к внешним ресурсам -->
-  <link rel="dns-prefetch" href="//fonts.googleapis.com">
-  <link rel="dns-prefetch" href="//fonts.gstatic.com">
-  <link rel="dns-prefetch" href="//cdn.tailwindcss.com">
-  <link rel="dns-prefetch" href="//unpkg.com">
-  
-  <!-- Preconnect для критических ресурсов -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  
-  <!-- Preload критических скриптов -->
-  <link rel="preload" href="https://cdn.tailwindcss.com" as="script">
-  <link rel="preload" href="https://unpkg.com/remotestoragejs/release/remotestorage.js" as="script">
-  
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- remoteStorage.js library -->
   <script src="https://unpkg.com/remotestoragejs/release/remotestorage.js"></script>
@@ -4441,7 +4429,7 @@ body.tab-switching button[data-view] {
   <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center viewer-hidden">
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
       <div class="image-wrapper bg-white rounded-lg shadow-2xl overflow-hidden">
-        <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out" loading="lazy">
+        <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out">
       </div>
     </div>
     <button id="image-viewer-close" class="modal-close-btn absolute top-4 right-4 z-[101]">
@@ -7567,13 +7555,6 @@ function clearCollectionCache() {
     // Очищаем только кэш коллекции, не трогая настройки подключения
     localStorage.removeItem(REMOTESTORAGE_KEYS.CACHED_DATA);
     console.log('🗑️ Collection cache cleared');
-}
-
-function clearDataCache() {
-    // Очищаем кэш загруженных данных
-    localStorage.removeItem('lego_data_v1');
-    localStorage.removeItem('lego_data_timestamp');
-    console.log('🗑️ Data cache cleared - данные будут загружены заново при следующем запуске');
 }
 
 function getCacheInfo() {
@@ -14902,7 +14883,7 @@ function getPartImageUrl(e) {
     const t = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
     
     if (!e || typeof e !== 'string' || e.trim() === '') {
-        return `src="${t}" loading="lazy"`;
+        return `src="${t}"`;
     }
     
     // Принимаем различные типы URL изображений
@@ -14911,12 +14892,12 @@ function getPartImageUrl(e) {
     // Принимаем HTTP URL, data URL и относительные пути
     if (trimmedUrl.startsWith('http') || trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('./') || trimmedUrl.startsWith('/')) {
         // Простая заглушка при ошибке загрузки
-        return `src="${trimmedUrl}" loading="lazy" onerror="this.onerror=null; this.src='${t}';"`
+        return `src="${trimmedUrl}" onerror="this.onerror=null; this.src='${t}';"`
     }
     
     // Для других случаев пытаемся использовать URL как есть, но выводим предупреждение
     console.warn('Potentially invalid image URL detected:', trimmedUrl);
-    return `src="${trimmedUrl}" loading="lazy" onerror="this.onerror=null; this.src='${t}';"`
+    return `src="${trimmedUrl}" onerror="this.onerror=null; this.src='${t}';"`
 }
 
 // Специальные атрибуты изображения для детали с простой заглушкой при ошибке
@@ -14926,9 +14907,9 @@ function getPartImageAttrs(partId, url) {
     
     if (u && (u.startsWith('http') || u.startsWith('./') || u.startsWith('/'))) {
         // Простая заглушка при ошибке загрузки
-        return `src="${u}" loading="lazy" onerror="this.onerror=null; this.src='${fallback}';"`;
+        return `src="${u}" onerror="this.onerror=null; this.src='${fallback}';"`;
     }
-    return `src="${fallback}" loading="lazy"`;
+    return `src="${fallback}"`;
 }
 
 // Специальные атрибуты изображения для набора с обработкой ошибки загрузки
@@ -14936,9 +14917,9 @@ function getSetImageAttrs(setNum, url) {
     const fallback = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
     const u = (url || '').trim();
     if (u && (u.startsWith('http') || u.startsWith('./') || u.startsWith('/'))) {
-        return `src="${u}" loading="lazy" onerror="window.onSetImgError && window.onSetImgError('${setNum}', this)"`;
+        return `src="${u}" onerror="window.onSetImgError && window.onSetImgError('${setNum}', this)"`;
     }
-    return `src="${fallback}" loading="lazy"`;
+    return `src="${fallback}"`;
 }
 // Глобальный обработчик ошибки загрузки изображения набора
 window.onSetImgError = async (setNum, imgEl) => {
@@ -16229,7 +16210,7 @@ function renderSidebar() {
                         <li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог</li>
                         <li class="flex justify-center p-2">
                             <div class="p-2 sm:p-3 md:p-4 lg:p-5">
-                                <img src="${getRandomMinifigImage()}" alt="Случайная минифигурка" class="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain" loading="lazy" onerror="this.style.display='none'">
+                                <img src="${getRandomMinifigImage()}" alt="Случайная минифигурка" class="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain" onerror="this.style.display='none'">
                             </div>
                         </li>
                     `;
@@ -16238,7 +16219,7 @@ function renderSidebar() {
                         <li class="text-gray-400 text-sm p-2">Используйте поиск или просмотрите каталог</li>
                         <li class="flex justify-center p-2">
                             <div class="p-2 sm:p-3 md:p-4 lg:p-5">
-                                <img src="${getRandomMinifigImage()}" alt="Случайная минифигурка" class="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain" loading="lazy" onerror="this.style.display='none'">
+                                <img src="${getRandomMinifigImage()}" alt="Случайная минифигурка" class="w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 lg:w-96 lg:h-96 object-contain" onerror="this.style.display='none'">
                             </div>
                         </li>
                     `;
@@ -20178,7 +20159,7 @@ function renderSettingsModal() {
                                         Очистить кэш
                                     </button>
                                     <button data-action="refresh-csv-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-md transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white shadow-lg hover:shadow-gray-500/25">
-                                        Обновить данные
+                                        Обновить кэш CSV
                                     </button>
                                 </div>
                                 <div id="cache-usage" class="text-xs text-gray-400"></div>
@@ -27328,29 +27309,16 @@ document.addEventListener("click", async e => {
                 }
                 break;
             case "refresh-csv-cache":
-                updateSettingsModalStatus("Обновление кэша данных", "info");
+                updateSettingsModalStatus("Обновление CSV кэша", "info");
                 try {
-                    // Очищаем кэш загруженных данных
-                    clearDataCache();
-                    
                     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
                         navigator.serviceWorker.controller.postMessage({ type: 'REFRESH_CSV_CACHE' });
-                        updateSettingsModalStatus("Кэш обновляется...\nСтраница будет перезагружена", "info");
-                        
-                        // Перезагружаем страницу через 1.5 секунды
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
+                        updateSettingsModalStatus("CSV кэш обновляется...", "info");
                     } else {
-                        updateSettingsModalStatus("Кэш данных очищен!\nСтраница будет перезагружена", "success");
-                        
-                        // Перезагружаем страницу через 1.5 секунды
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
+                        updateSettingsModalStatus("Сервис-воркер не активен", "error");
                     }
                 } catch (error) {
-                    updateSettingsModalStatus(`Ошибка обновления кэша: ${error.message}`, "error");
+                    updateSettingsModalStatus(`Ошибка обновления CSV: ${error.message}`, "error");
                 }
                 break;
             case "clear-camera-settings":
@@ -28745,8 +28713,6 @@ document.addEventListener("DOMContentLoaded", () => {
                                 console.error('Failed to reset API stats:', statsError);
                             }
                             
-                            // Очищаем кэш загруженных данных
-                            clearDataCache();
                             
                             console.log('App cache cleared successfully');
                             return true;
@@ -28857,51 +28823,6 @@ async function loadDataFromCSV() {
         // Устанавливаем глобальное время начала загрузки
         window._csvLoadStartTime = Date.now();
         
-        // Проверяем кэш данных
-        const cacheKey = 'lego_data_v1';
-        const cacheTimestamp = 'lego_data_timestamp';
-        const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 часа в миллисекундах
-        
-        const cachedData = localStorage.getItem(cacheKey);
-        const cachedTime = localStorage.getItem(cacheTimestamp);
-        const now = Date.now();
-        
-        // Если кэш существует и не устарел, используем его
-        if (cachedData && cachedTime && (now - parseInt(cachedTime)) < CACHE_DURATION) {
-            console.log('📦 Загружаем данные из кэша...');
-            updateLoadingStatus("Загрузка из кэша...", null, "Используем сохраненные данные");
-            
-            try {
-                const parsedData = JSON.parse(cachedData);
-                // Восстанавливаем данные из кэша
-                COLOR_MAP = parsedData.COLOR_MAP || {};
-                PART_MAP = parsedData.PART_MAP || {};
-                SET_MAP = parsedData.SET_MAP || {};
-                MINIFIG_MAP = parsedData.MINIFIG_MAP || {};
-                THEME_MAP = parsedData.THEME_MAP || {};
-                flatCategories = parsedData.flatCategories || [];
-                
-                console.log('✅ Данные успешно загружены из кэша');
-                console.log('- Parts:', Object.keys(PART_MAP).length);
-                console.log('- Sets:', Object.keys(SET_MAP).length);
-                console.log('- Minifigs:', Object.keys(MINIFIG_MAP).length);
-                console.log('- Colors:', Object.keys(COLOR_MAP).length);
-                console.log('- Categories:', flatCategories.length);
-                console.log('- Themes:', Object.keys(THEME_MAP).length);
-                
-                // Сохраняем состояние и завершаем
-                saveState();
-                return;
-            } catch (e) {
-                console.warn('⚠️ Ошибка при загрузке из кэша, загружаем заново:', e);
-                // Очищаем поврежденный кэш
-                localStorage.removeItem(cacheKey);
-                localStorage.removeItem(cacheTimestamp);
-            }
-        }
-        
-        console.log('🔄 Загружаем данные из CSV файлов...');
-        
         // Фаза 1: Критические данные для навигации по боковой панели (загружаем первыми)
         updateLoadingStatus("Загрузка критических данных...", null, "Подготовка к загрузке");
         
@@ -28917,57 +28838,33 @@ async function loadDataFromCSV() {
         updateLoadingStatus("Загрузка цветов...", null, "Цвета необходимы для отображения деталей");
         await loadColorsFromCSV();
         
-        // Фаза 2: Основные данные каталога (загружаем параллельно для ускорения)
-        updateLoadingStatus("Загрузка основных данных...", null, "Параллельная загрузка деталей, наборов и минифигурок");
+        // Фаза 2: Основные данные каталога (загружаем последовательно по приоритету для стабильности)
+        // Последовательная загрузка обеспечивает стабильность и предсказуемость процесса
+        updateLoadingStatus("Загрузка деталей...", null, "Детали - основа каталога");
+        await loadPartsFromCSV();
         
-        // Параллельная загрузка основных данных каталога
-        await Promise.all([
-            loadPartsFromCSV(),
-            loadSetsFromCSV(),
-            loadMinifigsFromCSV(),
-            loadFigTable()
-        ]);
+        updateLoadingStatus("Загрузка наборов...", null, "Наборы LEGO");
+        await loadSetsFromCSV();
         
-        updateLoadingStatus("Загрузка дополнительных данных...", null, "Параллельная загрузка элементов и инвентарей");
+        updateLoadingStatus("Загрузка минифигурок...", null, "Минифигурки");
+        await loadMinifigsFromCSV();
         
-        // Фаза 3: Дополнительные данные (загружаем параллельно)
-        await Promise.all([
-            loadElementsFromCSV(),
-            loadInventoriesFromCSV()
-        ]);
+        updateLoadingStatus("Загрузка таблицы минифигурок...", null, "Таблица соответствий кодов минифигурок");
+        await loadFigTable();
+        
+        updateLoadingStatus("Загрузка дополнительных данных...", null, "Загрузка элементов и инвентарей");
+        
+        // Фаза 3: Дополнительные данные (загружаем последними, так как зависят от основных данных)
+        await loadElementsFromCSV();
+        
+        // Загружаем инвентари с дополнительным прогрессом для файлов-частей
+        updateLoadingStatus("Загрузка инвентарей...", null, "Загружаем инвентари деталей...");
+        await loadInventoriesFromCSV();
         
         updateLoadingStatus("Завершение загрузки...", null, "Сохранение состояния и обновление интерфейса");
         
         // Сохраняем состояние после загрузки CSV
         saveState();
-        
-        // Сохраняем данные в кэш для ускорения следующих загрузок
-        try {
-            const dataToCache = {
-                COLOR_MAP,
-                PART_MAP,
-                SET_MAP,
-                MINIFIG_MAP,
-                THEME_MAP,
-                flatCategories
-            };
-            
-            localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
-            localStorage.setItem(cacheTimestamp, now.toString());
-            console.log('💾 Данные сохранены в кэш для ускорения следующих загрузок');
-        } catch (e) {
-            console.warn('⚠️ Не удалось сохранить данные в кэш (возможно, превышен лимит localStorage):', e);
-            // Очищаем старый кэш и пробуем снова
-            try {
-                localStorage.removeItem(cacheKey);
-                localStorage.removeItem(cacheTimestamp);
-                localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
-                localStorage.setItem(cacheTimestamp, now.toString());
-                console.log('💾 Данные сохранены в кэш после очистки');
-            } catch (e2) {
-                console.warn('⚠️ Не удалось сохранить в кэш даже после очистки:', e2);
-            }
-        }
         
         // Отладка: выводим статистику загруженных данных
         console.log('CSV Data loaded successfully:');
@@ -31515,17 +31412,17 @@ function getColorImageUrl(partNum, colorId, fallbackUrl = null) {
     if (!part || !part.colorImages) {
         // If no color images cached, trigger fetch
         fetchColorDetailsForPart(partNum).catch(console.error);
-        return `src="${fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`}" loading="lazy"`;
+        return fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
     }
     
     const colorImageUrl = part.colorImages[colorId];
     if (!colorImageUrl) {
         // If specific color image not found, trigger fetch
         fetchColorDetailsForPart(partNum).catch(console.error);
-        return `src="${fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`}" loading="lazy"`;
+        return fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
     }
     
-    return `src="${colorImageUrl}" loading="lazy" onerror="this.onerror=null; this.src='${fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`}'; handleColorImageLoadError(this, '${partNum}', '${colorId}', '${colorImageUrl}');"`
+    return `src="${colorImageUrl}" onerror="this.onerror=null; this.src='${fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`}'; handleColorImageLoadError(this, '${partNum}', '${colorId}', '${colorImageUrl}');"`
 }
 // Function to handle color image load errors and fetch from API
 async function handleColorImageLoadError(imgElement, partNum, colorId, originalUrl) {
