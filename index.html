@@ -12235,7 +12235,7 @@ function analyzeCollection() {
                     setNum,
                     setName: set.name,
                     year: set.year,
-                    numParts: set.num_parts || 0,
+                    numParts: set.num_parts || 0, // Количество деталей в одном экземпляре набора
                     quantity: setData.qty,
                     theme: THEME_MAP[set.theme_id]?.name || 'Неизвестная тема',
                     setImgUrl: set.set_img_url
@@ -13072,7 +13072,7 @@ function renderSetsAnalytics(analytics, subViewTabs) {
             </div>
             <div class="text-right flex-shrink-0 ml-2">
                 <div class="text-white font-bold text-sm sm:text-base xl:text-lg">${set.numParts}</div>
-                <div class="text-xs xl:text-sm text-gray-400">деталей</div>
+                <div class="text-xs xl:text-sm text-gray-400">${set.quantity > 1 ? `деталей (${set.quantity} шт.)` : 'деталей'}</div>
             </div>
         </div>
     `).join('');
@@ -18868,9 +18868,8 @@ function renderMainContent() {
         } else {
             // Обрабатываем разные подкатегории инструментов
             if (S.toolSubView === 'analytics') {
-            // Запускаем анализ коллекции только если он еще не был выполнен или коллекция изменилась
-            const needsUpdate = !S.analyticsData || S.collectionLastUpdate > S.analyticsLastUpdate;
-            if (!S.analyticsLoading && needsUpdate) {
+            // Запускаем анализ коллекции каждый раз при открытии вкладки аналитики
+            if (!S.analyticsLoading) {
                 console.log('📊 Запускаем анализ коллекции...', {
                     hasData: !!S.analyticsData,
                     collectionUpdated: S.collectionLastUpdate,
@@ -25827,6 +25826,11 @@ document.addEventListener("click", async e => {
         
         if (subview && ['parts', 'sets', 'minifigs', 'dashboard'].includes(subview)) {
             S.analyticsSubView = subview;
+            // Принудительно обновляем аналитику при переключении подкатегорий
+            if (S.view === 'tools' && S.toolSubView === 'analytics') {
+                console.log('📊 Обновляем аналитику при переключении подкатегории:', subview);
+                analyzeCollection();
+            }
             updateUI();
         }
         return;
@@ -29620,6 +29624,12 @@ async function loadDataFromCSV() {
         // Обновляем UI
         S.gridStale = true;
         updateUI();
+        
+        // Запускаем анализ коллекции после загрузки данных
+        if (S.view === 'tools' && S.toolSubView === 'analytics') {
+            console.log('📊 Запускаем анализ коллекции после загрузки CSV данных...');
+            analyzeCollection();
+        }
         
         // Скрываем индикатор загрузки
         updateLoadingStatus("Загрузка завершена!", 100, "Каталог готов к использованию");
