@@ -422,8 +422,8 @@
 
 /* Стили для градиента прокрутки */
 .color-palette-gradient {
-    border-bottom-left-radius: 0.5rem;
-    border-bottom-right-radius: 0.5rem;
+    border-bottom-left-radius: 18px;
+    border-bottom-right-radius: 18px;
     /* Градиент всегда поверх элементов палитры */
     z-index: 20;
 }
@@ -2789,6 +2789,32 @@
         word-break: break-word !important;
         hyphens: auto !important;
     }
+    
+    /* Компактный заголовок для модального окна поиска деталей */
+    #part-search-title {
+        font-size: 1rem !important;
+        line-height: 1.25 !important;
+    }
+    
+    /* Защита кнопки закрытия от сжатия */
+    #close-part-search-modal {
+        flex-shrink: 0 !important;
+        min-width: 2rem !important;
+        min-height: 2rem !important;
+        width: 2rem !important;
+        height: 2rem !important;
+    }
+}
+
+/* Общая защита кнопок закрытия модальных окон от сжатия */
+.modal-close-btn {
+    flex-shrink: 0 !important;
+    min-width: 2rem !important;
+    min-height: 2rem !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 #loading-progress {
@@ -3619,127 +3645,209 @@ body.tab-switching button[data-view] {
 }
 
 /* Hover эффекты для карточек уже определены в базовых стилях выше */
-  
-    /* Стили для кастомного выпадающего списка вариаций */
+
+/* Стили для кастомного выпадающего списка вариаций */
+#variation-select-button {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background-color: #374151 !important;
+    border: 1px solid #4B5563 !important;
+    border-radius: 18px !important;
+    color: white !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+    transition: all 0.2s ease !important;
+    min-width: 0 !important;
+    flex-shrink: 1 !important;
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+#variation-select-button:hover {
+    border-color: #6B7280 !important;
+    background-color: #4B5563 !important;
+}
+
+#variation-select-button:focus {
+    outline: none !important;
+    border-color: #6B7280 !important;
+    box-shadow: none !important;
+}
+
+#variation-select-button.open {
+    border-color: #6B7280 !important;
+    background-color: #4B5563 !important;
+}
+
+#variation-select-button.open svg {
+    transform: rotate(180deg) !important;
+}
+
+#variation-dropdown {
+    position: absolute !important;
+    z-index: 99999 !important;
+    background-color: #374151 !important;
+    border: 1px solid #4B5563 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+    max-height: 240px !important;
+    overflow-y: auto !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-top: 4px !important;
+    /* Отключаем системный скролл */
+    overscroll-behavior: contain !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #6B7280 #374151 !important;
+    /* Отступы для скроллбара */
+    padding: 8px 6px 8px 0 !important;
+}
+
+/* Кастомный скроллбар для выпадающего списка - принудительное применение */
+#variation-dropdown::-webkit-scrollbar {
+    width: 4px !important;
+    height: 4px !important;
+    background: transparent !important;
+}
+
+#variation-dropdown::-webkit-scrollbar-track {
+    background: transparent !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#variation-dropdown::-webkit-scrollbar-thumb {
+    background: #6B7280 !important;
+    border-radius: 2px !important;
+    min-height: 20px !important;
+    border: none !important;
+    margin: 8px 0 !important;
+}
+
+#variation-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #9CA3AF !important;
+}
+
+#variation-dropdown::-webkit-scrollbar-corner {
+    background: transparent !important;
+}
+
+/* Дополнительные стили для принудительного применения */
+div#variation-dropdown::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+div#variation-dropdown::-webkit-scrollbar-thumb {
+    background: #6B7280 !important;
+    border-radius: 2px !important;
+    margin: 8px 0 !important;
+}
+
+/* Дополнительные стили для принудительного применения скроллбара */
+#variation-dropdown {
+    scrollbar-width: thin !important;
+    scrollbar-color: #6B7280 transparent !important;
+}
+
+
+.variation-option {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    box-sizing: border-box;
+    padding: 8px 12px !important;
+    background-color: #374151 !important;
+    color: white !important;
+    cursor: pointer !important;
+    transition: background-color 0.15s ease !important;
+    border-bottom: 1px solid #4B5563 !important;
+}
+
+.variation-option:last-child {
+    border-bottom: none !important;
+}
+
+.variation-option:hover {
+    background-color: #4B5563 !important;
+}
+
+.variation-option.selected {
+    background-color: #3B82F6 !important;
+}
+
+.variation-option.selected:hover {
+    background-color: #2563EB !important;
+}
+
+/* Стили для контейнера */
+.variation-select-container {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+}
+
+/* Стили для неактивных кнопок */
+button[disabled] {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+}
+
+button[disabled]:hover {
+    background-color: inherit !important;
+    transform: none !important;
+}
+
+/* Убираем стандартную стрелку браузера */
+.variation-select-container::after {
+    display: none !important;
+}
+
+/* Для мобильных устройств */
+@media (max-width: 768px) {
     #variation-select-button {
-        max-width: 100% !important;
-        width: 100% !important;
-        box-sizing: border-box;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        background-color: #374151 !important;
-        border: 1px solid #4B5563 !important;
-        border-radius: 18px !important;
-        color: white !important;
-        font-size: 14px !important;
-        line-height: 1.5 !important;
-        transition: all 0.2s ease !important;
-        min-width: 0 !important;
-        flex-shrink: 1 !important;
-        cursor: pointer !important;
-        user-select: none !important;
+        font-size: 16px; /* Предотвращает зум на iOS */
     }
     
-    #variation-select-button:hover {
-        border-color: #6B7280 !important;
-        background-color: #4B5563 !important;
+    /* Компактный скроллбар для мобильных устройств */
+    #variation-dropdown::-webkit-scrollbar {
+        width: 3px !important;
+        height: 3px !important;
     }
     
-    #variation-select-button:focus {
-        outline: none !important;
-        border-color: #3B82F6 !important;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5) !important;
+    #variation-dropdown::-webkit-scrollbar-track {
+        background: transparent !important;
+        border-radius: 0 !important;
     }
     
-    #variation-select-button.open {
-        border-color: #3B82F6 !important;
-        background-color: #4B5563 !important;
+    #variation-dropdown::-webkit-scrollbar-thumb {
+        background: #6B7280 !important;
+        border-radius: 1.5px !important;
+        min-height: 15px !important;
+        border: none !important;
     }
     
-    #variation-select-button.open svg {
-        transform: rotate(180deg) !important;
+    #variation-dropdown::-webkit-scrollbar-thumb:hover {
+        background: #9CA3AF !important;
     }
     
     #variation-dropdown {
-        position: absolute !important;
-        z-index: 99999 !important;
-        background-color: #374151 !important;
-        border: 1px solid #4B5563 !important;
-        border-radius: 18px !important;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-        max-height: 240px !important;
-        overflow-y: auto !important;
-        transition: all 0.2s ease !important;
-        box-sizing: border-box !important;
-        min-width: 100% !important;
-        max-width: 100% !important;
-        top: 100% !important;
-        left: 0 !important;
-        right: 0 !important;
-        margin-top: 4px !important;
+        padding: 10px 4px 10px 0 !important;
     }
-    
-    .variation-option {
-        max-width: 100% !important;
-        width: 100% !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-        white-space: nowrap !important;
-        box-sizing: border-box;
-        padding: 8px 12px !important;
-        background-color: #374151 !important;
-        color: white !important;
-        cursor: pointer !important;
-        transition: background-color 0.15s ease !important;
-        border-bottom: 1px solid #4B5563 !important;
-    }
-    
-    .variation-option:last-child {
-        border-bottom: none !important;
-    }
-    
-    .variation-option:hover {
-        background-color: #4B5563 !important;
-    }
-    
-    .variation-option.selected {
-        background-color: #3B82F6 !important;
-    }
-    
-    .variation-option.selected:hover {
-        background-color: #2563EB !important;
-    }
-    /* Стили для контейнера */
-    .variation-select-container {
-        position: relative !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        overflow: visible !important;
-    }
-    
-    /* Стили для неактивных кнопок */
-    button[disabled] {
-        opacity: 0.5 !important;
-        cursor: not-allowed !important;
-        pointer-events: none !important;
-    }
-    
-    button[disabled]:hover {
-        background-color: inherit !important;
-        transform: none !important;
-    }
-    
-    /* Убираем стандартную стрелку браузера */
-    .variation-select-container::after {
-        display: none !important;
-    }
-    
-    /* Для мобильных устройств */
-    @media (max-width: 768px) {
-        #variation-select-button {
-            font-size: 16px; /* Предотвращает зум на iOS */
-        }
-    }
+}
     
     /* Loading indicator styles */
     #loading-container {
@@ -4818,11 +4926,44 @@ window.openBoxSearchModal = function() {
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
             <!-- Заголовок -->
-            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4 modal-title-multiline" title="Поиск коробки набора: ${setId}">Поиск коробки набора: ${setId.length > 30 ? setId.substring(0, 30) + '...' : setId}</h2>
-                <button id="close-box-search-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
+                <h2 class="text-lg lg:text-xl font-bold text-white truncate flex-1 min-w-0" id="box-search-title">Поиск коробки набора</h2>
+                <button id="close-box-search-modal" class="modal-close-btn flex-shrink-0 w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full" title="Закрыть">
                     ${I_X('w-4 h-4')}
                 </button>
+            </div>
+            
+            <!-- Поле ввода для редактирования поискового запроса -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700">
+                <div class="flex items-center gap-3">
+                    <label for="box-search-input" class="text-sm font-medium text-gray-300 whitespace-nowrap">ID набора:</label>
+                    <div class="flex-1 relative">
+                        <input 
+                            type="text" 
+                            id="box-search-input" 
+                            value="${setId}" 
+                            class="w-full px-4 py-2 bg-gray-700 text-white rounded-[18px] border border-gray-600 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none transition-all duration-200"
+                            placeholder="Введите ID набора для поиска..."
+                            autocomplete="off"
+                        />
+                        <button 
+                            id="clear-box-search-input" 
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-all duration-200"
+                            title="Очистить поле"
+                            style="opacity: 0; pointer-events: none;"
+                        >
+                            ${I_X('w-4 h-4')}
+                        </button>
+                    </div>
+                    <button 
+                        id="search-box-btn" 
+                        class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-[18px] transition-colors duration-200 flex items-center gap-2"
+                        title="Начать поиск"
+                    >
+                        ${I_Search('w-4 h-4')}
+                        <span class="hidden sm:inline">Поиск</span>
+                    </button>
+                </div>
             </div>
             
             <!-- Результаты поиска -->
@@ -4846,13 +4987,7 @@ window.openBoxSearchModal = function() {
     modalEl.classList.add('visible');
     
     // Настраиваем обработчики
-    const closeBtn = document.getElementById('close-box-search-modal');
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            modalEl.classList.add('hidden');
-            modalEl.classList.remove('visible');
-        });
-    }
+    setupBoxSearchModalHandlers();
     
     modalEl.addEventListener('click', (e) => {
         if (e.target === modalEl) {
@@ -4860,6 +4995,83 @@ window.openBoxSearchModal = function() {
             modalEl.classList.remove('visible');
         }
     });
+}
+
+// Настройка обработчиков модального окна поиска коробки набора
+window.setupBoxSearchModalHandlers = function() {
+    const modalEl = document.getElementById('box-search-modal');
+    const closeBtn = document.getElementById('close-box-search-modal');
+    const searchInput = document.getElementById('box-search-input');
+    const clearBtn = document.getElementById('clear-box-search-input');
+    const searchBtn = document.getElementById('search-box-btn');
+    
+    // Закрытие модального окна
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            modalEl.classList.add('hidden');
+            modalEl.classList.remove('visible');
+        });
+    }
+    
+    // Обработчик очистки поля ввода
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+                updateClearButtonVisibility();
+            }
+        });
+    }
+    
+    // Функция обновления видимости кнопки очистки
+    function updateClearButtonVisibility() {
+        if (clearBtn && searchInput) {
+            if (searchInput.value.trim()) {
+                clearBtn.style.opacity = '1';
+                clearBtn.style.pointerEvents = 'auto';
+            } else {
+                clearBtn.style.opacity = '0';
+                clearBtn.style.pointerEvents = 'none';
+            }
+        }
+    }
+    
+    // Обработчик изменения текста в поле ввода
+    if (searchInput) {
+        searchInput.addEventListener('input', updateClearButtonVisibility);
+        // Инициализируем видимость кнопки очистки
+        updateClearButtonVisibility();
+    }
+    
+    // Обработчик кнопки поиска
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            if (searchInput) {
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    openBoxSearchModal({ partNumber: searchTerm });
+                }
+            }
+        });
+    }
+    
+    // Обработчик нажатия Enter в поле ввода
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    openBoxSearchModal({ partNumber: searchTerm });
+                }
+            }
+        });
+        
+        // Автофокус на поле ввода
+        searchInput.focus();
+        searchInput.select();
+    }
 }
 
 // Единое окно поиска с переключателем типов элементов
@@ -5127,13 +5339,35 @@ function searchUniversalParts(searchTerm) {
     console.log(`Поиск деталей по ID: ${searchTerm}`);
     
     // Ищем детали только по точному или частичному совпадению ID
-    const results = Object.values(PART_MAP).filter(part => {
+    let results = Object.values(PART_MAP).filter(part => {
         if (!part || !part.id) return false;
         
         const partId = part.id.toLowerCase();
         // Точное совпадение ID или частичное совпадение
         return partId === searchTermLower || partId.includes(searchTermLower);
     });
+    
+    // Если результатов нет, пробуем поиск по числовой части ID
+    if (results.length === 0) {
+        console.log(`Точный поиск не дал результатов, пробуем поиск по числовой части: ${searchTerm}`);
+        
+        // Извлекаем числовую часть из поискового запроса
+        const numericPart = searchTerm.match(/^\d+/);
+        if (numericPart) {
+            const numericId = numericPart[0];
+            console.log(`Ищем детали, начинающиеся с цифр: ${numericId}`);
+            
+            results = Object.values(PART_MAP).filter(part => {
+                if (!part || !part.id) return false;
+                
+                const partId = part.id.toLowerCase();
+                // Ищем детали, которые начинаются с этих цифр
+                return partId.startsWith(numericId);
+            });
+            
+            console.log(`Найдено ${results.length} деталей по числовой части ${numericId}`);
+        }
+    }
     
     // Сортируем результаты: сначала точные совпадения, затем частичные
     results.sort((a, b) => {
@@ -5824,17 +6058,50 @@ window.searchInSetsCatalogModal = function(searchTerm) {
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
             <!-- Заголовок -->
-            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4 modal-title-multiline" title="Поиск наборов: ${searchTerm}">Поиск наборов: ${searchTerm.length > 30 ? searchTerm.substring(0, 30) + '...' : searchTerm}</h2>
-                <button id="close-sets-search-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
+                <h2 class="text-lg lg:text-xl font-bold text-white truncate flex-1 min-w-0" id="sets-search-title">Поиск наборов</h2>
+                <button id="close-sets-search-modal" class="modal-close-btn flex-shrink-0 w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full" title="Закрыть">
                     ${I_X('w-4 h-4')}
                 </button>
+            </div>
+            
+            <!-- Поле ввода для редактирования поискового запроса -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700">
+                <div class="flex items-center gap-3">
+                    <label for="sets-search-input" class="text-sm font-medium text-gray-300 whitespace-nowrap">Название:</label>
+                    <div class="flex-1 relative">
+                        <input 
+                            type="text" 
+                            id="sets-search-input" 
+                            value="${searchTerm}" 
+                            class="w-full px-4 py-2 bg-gray-700 text-white rounded-[18px] border border-gray-600 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 focus:outline-none transition-all duration-200"
+                            placeholder="Введите название набора для поиска..."
+                            autocomplete="off"
+                        />
+                        <button 
+                            id="clear-sets-search-input" 
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-all duration-200"
+                            title="Очистить поле"
+                            style="opacity: 0; pointer-events: none;"
+                        >
+                            ${I_X('w-4 h-4')}
+                        </button>
+                    </div>
+                    <button 
+                        id="search-sets-btn" 
+                        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-[18px] transition-colors duration-200 flex items-center gap-2"
+                        title="Начать поиск"
+                    >
+                        ${I_Search('w-4 h-4')}
+                        <span class="hidden sm:inline">Поиск</span>
+                    </button>
+                </div>
             </div>
             
             <!-- Результаты поиска -->
             <div class="flex-1 overflow-hidden relative" style="min-height: 500px;">
                 <div id="sets-search-scroll-progress"><div class="bar"></div></div>
-                <div id="sets-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 120px);">
+                <div id="sets-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 200px);">
                     ${limitedResults.length > 0 ? 
                         `<div class="sets-minifigs-grid">
                             ${limitedResults.map(set => renderSetCard(set, false, 0)).join('')}
@@ -5919,17 +6186,50 @@ window.searchInMinifigsCatalogModal = function(searchTerm) {
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
             <!-- Заголовок -->
-            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4 modal-title-multiline" title="Поиск минифигурок: ${searchTerm}">Поиск минифигурок: ${searchTerm.length > 30 ? searchTerm.substring(0, 30) + '...' : searchTerm}</h2>
-                <button id="close-minifigs-search-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
+                <h2 class="text-lg lg:text-xl font-bold text-white truncate flex-1 min-w-0" id="minifigs-search-title">Поиск минифигурок</h2>
+                <button id="close-minifigs-search-modal" class="modal-close-btn flex-shrink-0 w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full" title="Закрыть">
                     ${I_X('w-4 h-4')}
                 </button>
+            </div>
+            
+            <!-- Поле ввода для редактирования поискового запроса -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700">
+                <div class="flex items-center gap-3">
+                    <label for="minifigs-search-input" class="text-sm font-medium text-gray-300 whitespace-nowrap">Название:</label>
+                    <div class="flex-1 relative">
+                        <input 
+                            type="text" 
+                            id="minifigs-search-input" 
+                            value="${searchTerm}" 
+                            class="w-full px-4 py-2 bg-gray-700 text-white rounded-[18px] border border-gray-600 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all duration-200"
+                            placeholder="Введите название минифигурки для поиска..."
+                            autocomplete="off"
+                        />
+                        <button 
+                            id="clear-minifigs-search-input" 
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-all duration-200"
+                            title="Очистить поле"
+                            style="opacity: 0; pointer-events: none;"
+                        >
+                            ${I_X('w-4 h-4')}
+                        </button>
+                    </div>
+                    <button 
+                        id="search-minifigs-btn" 
+                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-[18px] transition-colors duration-200 flex items-center gap-2"
+                        title="Начать поиск"
+                    >
+                        ${I_Search('w-4 h-4')}
+                        <span class="hidden sm:inline">Поиск</span>
+                    </button>
+                </div>
             </div>
             
             <!-- Результаты поиска -->
             <div class="flex-1 overflow-hidden relative" style="min-height: 500px;">
                 <div id="minifigs-search-scroll-progress"><div class="bar"></div></div>
-                <div id="minifigs-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 120px);">
+                <div id="minifigs-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 200px);">
                     ${limitedResults.length > 0 ? 
                         `<div class="sets-minifigs-grid">
                             ${limitedResults.map(minifig => renderMinifigCard(minifig, false, 0)).join('')}
@@ -5967,17 +6267,50 @@ window.openPartSearchModal = function(partNumber) {
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
             <!-- Заголовок -->
-            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
-                <h2 class="text-xl lg:text-2xl font-bold text-white modal-title-multiline">Поиск деталей: ${partNumber}</h2>
-                <button id="close-part-search-modal" class="modal-close-btn" title="Закрыть">
+            <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
+                <h2 class="text-lg lg:text-xl font-bold text-white truncate flex-1 min-w-0" id="part-search-title">Поиск деталей</h2>
+                <button id="close-part-search-modal" class="modal-close-btn flex-shrink-0 w-8 h-8 min-w-[2rem] min-h-[2rem]" title="Закрыть">
                     ${I_X('w-4 h-4')}
                 </button>
+            </div>
+            
+            <!-- Поле ввода для редактирования поискового запроса -->
+            <div class="flex-shrink-0 p-4 border-b border-gray-700">
+                <div class="flex items-center gap-3">
+                    <label for="part-search-input" class="text-sm font-medium text-gray-300 whitespace-nowrap">ID детали:</label>
+                    <div class="flex-1 relative">
+                        <input 
+                            type="text" 
+                            id="part-search-input" 
+                            value="${partNumber}" 
+                            class="w-full px-4 py-2 bg-gray-700 text-white rounded-[18px] border border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-all duration-200"
+                            placeholder="Введите ID детали для поиска..."
+                            autocomplete="off"
+                        />
+                        <button 
+                            id="clear-part-search-input" 
+                            class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-all duration-200"
+                            title="Очистить поле"
+                            style="opacity: 0; pointer-events: none;"
+                        >
+                            ${I_X('w-4 h-4')}
+                        </button>
+                    </div>
+                    <button 
+                        id="search-parts-btn" 
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-[18px] transition-colors duration-200 flex items-center gap-2"
+                        title="Начать поиск"
+                    >
+                        ${I_Search('w-4 h-4')}
+                        <span class="hidden sm:inline">Поиск</span>
+                    </button>
+                </div>
             </div>
             
             <!-- Результаты поиска -->
             <div class="flex-1 overflow-hidden relative">
                 <div id="part-search-scroll-progress"><div class="bar"></div></div>
-                <div id="part-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 120px);">
+                <div id="part-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 200px);">
                     <div class="text-center text-gray-400 py-8">
                         <div class="text-4xl mb-3">${I_Search('w-12 h-12 mx-auto')}</div>
                         <p>Поиск деталей...</p>
@@ -6002,6 +6335,9 @@ window.openPartSearchModal = function(partNumber) {
 window.setupSetsSearchModalHandlers = function() {
     const modalEl = document.getElementById('sets-search-modal');
     const closeBtn = document.getElementById('close-sets-search-modal');
+    const searchInput = document.getElementById('sets-search-input');
+    const clearBtn = document.getElementById('clear-sets-search-input');
+    const searchBtn = document.getElementById('search-sets-btn');
     
     // Закрытие модального окна
     closeBtn.addEventListener('click', closeSetsSearchModal);
@@ -6010,6 +6346,66 @@ window.setupSetsSearchModalHandlers = function() {
             closeSetsSearchModal();
         }
     });
+    
+    // Обработчик очистки поля ввода
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+                updateClearButtonVisibility();
+            }
+        });
+    }
+    
+    // Функция обновления видимости кнопки очистки
+    function updateClearButtonVisibility() {
+        if (clearBtn && searchInput) {
+            if (searchInput.value.trim()) {
+                clearBtn.style.opacity = '1';
+                clearBtn.style.pointerEvents = 'auto';
+            } else {
+                clearBtn.style.opacity = '0';
+                clearBtn.style.pointerEvents = 'none';
+            }
+        }
+    }
+    
+    // Обработчик изменения текста в поле ввода
+    if (searchInput) {
+        searchInput.addEventListener('input', updateClearButtonVisibility);
+        // Инициализируем видимость кнопки очистки
+        updateClearButtonVisibility();
+    }
+    
+    // Обработчик кнопки поиска
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            if (searchInput) {
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    searchInSetsCatalogModal(searchTerm);
+                }
+            }
+        });
+    }
+    
+    // Обработчик нажатия Enter в поле ввода
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    searchInSetsCatalogModal(searchTerm);
+                }
+            }
+        });
+        
+        // Автофокус на поле ввода
+        searchInput.focus();
+        searchInput.select();
+    }
     
     // Настройка скролл-индикатора и перелистывания с задержкой
     setTimeout(() => {
@@ -6040,6 +6436,9 @@ window.setupSetsSearchModalHandlers = function() {
 window.setupMinifigsSearchModalHandlers = function() {
     const modalEl = document.getElementById('minifigs-search-modal');
     const closeBtn = document.getElementById('close-minifigs-search-modal');
+    const searchInput = document.getElementById('minifigs-search-input');
+    const clearBtn = document.getElementById('clear-minifigs-search-input');
+    const searchBtn = document.getElementById('search-minifigs-btn');
     
     // Закрытие модального окна
     closeBtn.addEventListener('click', closeMinifigsSearchModal);
@@ -6048,6 +6447,66 @@ window.setupMinifigsSearchModalHandlers = function() {
             closeMinifigsSearchModal();
         }
     });
+    
+    // Обработчик очистки поля ввода
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+                updateClearButtonVisibility();
+            }
+        });
+    }
+    
+    // Функция обновления видимости кнопки очистки
+    function updateClearButtonVisibility() {
+        if (clearBtn && searchInput) {
+            if (searchInput.value.trim()) {
+                clearBtn.style.opacity = '1';
+                clearBtn.style.pointerEvents = 'auto';
+            } else {
+                clearBtn.style.opacity = '0';
+                clearBtn.style.pointerEvents = 'none';
+            }
+        }
+    }
+    
+    // Обработчик изменения текста в поле ввода
+    if (searchInput) {
+        searchInput.addEventListener('input', updateClearButtonVisibility);
+        // Инициализируем видимость кнопки очистки
+        updateClearButtonVisibility();
+    }
+    
+    // Обработчик кнопки поиска
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            if (searchInput) {
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    searchInMinifigsCatalogModal(searchTerm);
+                }
+            }
+        });
+    }
+    
+    // Обработчик нажатия Enter в поле ввода
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    searchInMinifigsCatalogModal(searchTerm);
+                }
+            }
+        });
+        
+        // Автофокус на поле ввода
+        searchInput.focus();
+        searchInput.select();
+    }
     
     // Настройка скролл-индикатора и перелистывания с задержкой
     setTimeout(() => {
@@ -6301,6 +6760,9 @@ window.setupMinifigsSearchSwipe = function() {
 window.setupPartSearchModalHandlers = function() {
     const modalEl = document.getElementById('part-search-modal');
     const closeBtn = document.getElementById('close-part-search-modal');
+    const searchInput = document.getElementById('part-search-input');
+    const clearBtn = document.getElementById('clear-part-search-input');
+    const searchBtn = document.getElementById('search-parts-btn');
     
     // Закрытие модального окна
     closeBtn.addEventListener('click', closePartSearchModal);
@@ -6309,6 +6771,66 @@ window.setupPartSearchModalHandlers = function() {
             closePartSearchModal();
         }
     });
+    
+    // Обработчик очистки поля ввода
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.focus();
+                updateClearButtonVisibility();
+            }
+        });
+    }
+    
+    // Функция обновления видимости кнопки очистки
+    function updateClearButtonVisibility() {
+        if (clearBtn && searchInput) {
+            if (searchInput.value.trim()) {
+                clearBtn.style.opacity = '1';
+                clearBtn.style.pointerEvents = 'auto';
+            } else {
+                clearBtn.style.opacity = '0';
+                clearBtn.style.pointerEvents = 'none';
+            }
+        }
+    }
+    
+    // Обработчик изменения текста в поле ввода
+    if (searchInput) {
+        searchInput.addEventListener('input', updateClearButtonVisibility);
+        // Инициализируем видимость кнопки очистки
+        updateClearButtonVisibility();
+    }
+    
+    // Обработчик кнопки поиска
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            if (searchInput) {
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    performPartSearch(searchTerm);
+                }
+            }
+        });
+    }
+    
+    // Обработчик нажатия Enter в поле ввода
+    if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const searchTerm = searchInput.value.trim();
+                if (searchTerm) {
+                    performPartSearch(searchTerm);
+                }
+            }
+        });
+        
+        // Автофокус на поле ввода
+        searchInput.focus();
+        searchInput.select();
+    }
     
     // Настройка индикатора прокрутки
     setupPartSearchScrollProgress();
@@ -6392,7 +6914,31 @@ window.performPartSearch = function(query) {
         return;
     }
     
-    // Этап 3: Поиск по названию среди всего каталога
+    // Этап 3: Fallback поиск по числовой части ID
+    if (searchResults.length === 0) {
+        console.log(`Поиск по ID не дал результатов, пробуем поиск по числовой части: ${query}`);
+        
+        // Извлекаем числовую часть из поискового запроса
+        const numericPart = query.match(/^\d+/);
+        if (numericPart) {
+            const numericId = numericPart[0];
+            console.log(`Ищем детали, начинающиеся с цифр: ${numericId}`);
+            
+            searchResults = Object.values(PART_MAP).filter(part => {
+                if (!part || !part.name) return false;
+                return part.id && part.id.toLowerCase().startsWith(numericId);
+            });
+            
+            if (searchResults.length > 0) {
+                console.log(`Найдено ${searchResults.length} деталей по числовой части ${numericId}`);
+                searchResults.sort((a, b) => a.name.localeCompare(b.name));
+                displayPartSearchResults(searchResults, 'По числовой части ID');
+                return;
+            }
+        }
+    }
+    
+    // Этап 4: Поиск по названию среди всего каталога
     console.log(`Поиск по ID не дал результатов, ищем по названию: ${query}`);
     searchResults = Object.values(PART_MAP).filter(part => {
         if (!part || !part.name) return false;
@@ -6430,6 +6976,16 @@ window.performPartSearch = function(query) {
 window.displayPartSearchResults = function(parts, searchType = '') {
     const resultsContainer = document.getElementById('part-search-results');
     if (!resultsContainer) return;
+    
+    // Обновляем заголовок с количеством результатов
+    const titleElement = document.getElementById('part-search-title');
+    if (titleElement) {
+        const count = parts.length;
+        const countText = count === 0 ? 'Нет результатов' : 
+                         count === 1 ? '1 деталь' : 
+                         `${count} деталей`;
+        titleElement.textContent = `Поиск (${countText})`;
+    }
     
     if (parts.length === 0) {
         resultsContainer.innerHTML = `
@@ -19504,7 +20060,7 @@ function renderModal() {
                 <div>
                     <label for="variation-select-button" class="block text-sm font-medium text-gray-400 mb-2">Вариация</label>
                     <div class="relative variation-select-container">
-                        <button id="variation-select-button" class="w-full bg-gray-700 border border-gray-600 rounded-[18px] py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer pr-10 text-left flex justify-between items-center hover:bg-gray-600 transition-colors duration-200">
+                        <button id="variation-select-button" class="w-full bg-gray-700 border border-gray-600 rounded-[18px] py-2 px-3 text-white focus:outline-none focus:ring-0 cursor-pointer pr-2 text-left flex justify-between items-center hover:bg-gray-600 transition-colors duration-200">
                             <span id="variation-select-text" class="truncate flex-1">${o.find(e => e.id === S.selPartId)?.name || (o[0]?.name || '')}</span>
                             <svg class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -19722,6 +20278,38 @@ function renderModal() {
                 }
             }
         });
+        
+        // Отключаем системный скролл для выпадающего списка
+        variationDropdown.addEventListener('wheel', function(e) {
+            e.stopPropagation();
+        }, { passive: false });
+        
+        variationDropdown.addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+        }, { passive: false });
+        
+        variationDropdown.addEventListener('keydown', function(e) {
+            if ([32, 33, 34, 35, 36, 37, 38, 39, 40].includes(e.keyCode)) {
+                e.stopPropagation();
+            }
+        });
+        
+        // Принудительно применяем стили скроллбара
+        function applyScrollbarStyles() {
+            if (variationDropdown) {
+                variationDropdown.style.scrollbarWidth = 'thin';
+                variationDropdown.style.scrollbarColor = '#6B7280 transparent';
+                variationDropdown.style.padding = '8px 6px 8px 0';
+            }
+        }
+        
+        // Применяем стили при открытии выпадающего списка
+        variationSelectButton.addEventListener("click", function() {
+            setTimeout(applyScrollbarStyles, 10);
+        });
+        
+        // Применяем стили при загрузке страницы
+        applyScrollbarStyles();
         
         // Закрываем выпадающее меню при клике вне его
         document.addEventListener("click", (event) => {
@@ -30665,6 +31253,7 @@ function searchInCSVData(query, type = 'parts') {
     
     switch (type) {
         case 'parts':
+            // Сначала ищем по обычным критериям
             Object.values(PART_MAP).forEach(part => {
                 if (part.name && part.name.toLowerCase().includes(searchTerm) ||
                     part.id && part.id.toLowerCase().includes(searchTerm)) {
@@ -30675,6 +31264,30 @@ function searchInCSVData(query, type = 'parts') {
                     });
                 }
             });
+            
+            // Если результатов нет, пробуем поиск по числовой части ID
+            if (results.length === 0) {
+                console.log(`Обычный поиск деталей не дал результатов, пробуем поиск по числовой части: ${searchTerm}`);
+                
+                // Извлекаем числовую часть из поискового запроса
+                const numericPart = searchTerm.match(/^\d+/);
+                if (numericPart) {
+                    const numericId = numericPart[0];
+                    console.log(`Ищем детали, начинающиеся с цифр: ${numericId}`);
+                    
+                    Object.values(PART_MAP).forEach(part => {
+                        if (part.id && part.id.toLowerCase().startsWith(numericId)) {
+                            results.push({
+                                ...part,
+                                type: 'part',
+                                searchScore: calculateSearchScore(part, numericId) + 10 // Бонус за числовой поиск
+                            });
+                        }
+                    });
+                    
+                    console.log(`Найдено ${results.length} деталей по числовой части ${numericId}`);
+                }
+            }
             break;
             
         case 'sets':
