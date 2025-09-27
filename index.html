@@ -154,18 +154,63 @@
         display: none;
     }
     
-    /* Стили для выравнивания высоты кнопок в панели поиска */
+    /* Стили для кнопок поиска и AI камеры - делаем круглыми */
     #search-button,
-    #ai-search-button,
-    #filter-button {
+    #ai-search-button {
         height: 40px; /* Фиксированная высота кнопок */
         min-height: 40px;
-        width: 40px; /* Делаем кнопки квадратными */
+        width: 40px; /* Делаем кнопки круглыми */
         min-width: 40px;
+        border-radius: 50%; /* Делаем кнопки круглыми */
         display: flex;
         align-items: center;
         justify-content: center;
         flex-shrink: 0; /* Предотвращаем сжатие */
+        padding: 0; /* Убираем внутренние отступы */
+        background-color: #4b5563; /* bg-gray-600 */
+        border: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    #search-button:hover,
+    #ai-search-button:hover {
+        background-color: #6b7280; /* bg-gray-500 */
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    #search-button:active,
+    #ai-search-button:active {
+        transform: scale(0.95);
+    }
+    
+    /* Стили для кнопки фильтров - делаем круглой */
+    #filter-button {
+        height: 40px;
+        min-height: 40px;
+        width: 40px;
+        min-width: 40px;
+        border-radius: 50%; /* Делаем кнопку круглой */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0; /* Предотвращаем сжатие */
+        padding: 0; /* Убираем внутренние отступы */
+        background-color: #4b5563; /* bg-gray-600 */
+        border: none;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    #filter-button:hover {
+        background-color: #6b7280; /* bg-gray-500 */
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    #filter-button:active {
+        transform: scale(0.95);
     }
     
     /* Принудительное скрытие кнопок */
@@ -949,12 +994,20 @@
     /* Медиа-запрос для мобильных устройств */
     @media (max-width: 640px) {
         #search-button,
-        #ai-search-button,
+        #ai-search-button {
+            height: 40px;
+            min-height: 40px;
+            width: 40px;
+            min-width: 40px;
+            border-radius: 50%;
+        }
+        
         #filter-button {
             height: 40px;
             min-height: 40px;
             width: 40px;
             min-width: 40px;
+            border-radius: 50%;
         }
         
         #clear-search {
@@ -1056,6 +1109,13 @@
         transform: none;
     }
     
+    /* Скрываем кнопку закрытия боковой панели на больших экранах */
+    @media (min-width: 1024px) {
+        .modal-close-btn.lg\:hidden {
+            display: none !important;
+        }
+    }
+    
     /* Стили для кнопки открытия боковой панели */
     .sidebar-toggle-btn {
         position: relative;
@@ -1109,7 +1169,12 @@
     }
     /* В модалках отключаем повторный запуск анимации при обновлениях */
     #minifig-modal-content .modal-close-btn:not(.animate-once),
-    #set-modal-content .modal-close-btn:not(.animate-once) {
+    #set-modal-content .modal-close-btn {
+        animation: none !important;
+    }
+    
+    /* Полностью отключаем анимацию для кнопки закрытия модалки набора */
+    #set-modal-close {
         animation: none !important;
     }
     
@@ -1569,6 +1634,68 @@
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(0.1rem) scale(0.995); }
         to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    
+    /* Анимация для выпадающего списка деталей минифигурок */
+    @keyframes minifigPartsExpand {
+        from { 
+            opacity: 0; 
+            max-height: 0; 
+            transform: translateY(-10px);
+            background-color: transparent;
+        }
+        to { 
+            opacity: 1; 
+            max-height: 15rem; 
+            transform: translateY(0);
+            background-color: rgba(55, 65, 81, 0.4); /* bg-gray-700/40 - немного темнее шапки */
+        }
+    }
+    
+    @keyframes minifigPartsCollapse {
+        from { 
+            opacity: 1; 
+            max-height: 15rem; 
+            transform: translateY(0);
+            background-color: rgba(55, 65, 81, 0.4); /* bg-gray-700/40 */
+        }
+        to { 
+            opacity: 0; 
+            max-height: 0; 
+            transform: translateY(-10px);
+            background-color: transparent;
+        }
+    }
+    
+    /* Базовые стили для контейнера деталей минифигурок */
+    .minifig-parts-container {
+        overflow: hidden;
+        background-color: transparent;
+    }
+    
+    /* Анимация только при наличии специальных классов */
+    .minifig-parts-container.animating-expand {
+        animation: minifigPartsExpand 0.3s ease-out forwards;
+    }
+    
+    .minifig-parts-container.animating-collapse {
+        animation: minifigPartsCollapse 0.3s ease-in forwards;
+    }
+    
+    /* Статичный фон для раскрытого состояния - только для не анимирующихся контейнеров */
+    .minifig-parts-container.expanded {
+        background-color: rgba(55, 65, 81, 0.4); /* bg-gray-700/40 */
+    }
+    
+    /* Убираем анимацию для скрытых контейнеров */
+    .minifig-parts-container.hidden {
+        animation: none !important;
+        background-color: transparent !important;
+    }
+    
+    /* Предотвращаем анимацию при перерендере модалки */
+    .minifig-parts-container:not(.animating-expand):not(.animating-collapse) {
+        animation: none !important;
     }
     
     /* Модальные окна - ВАЖНО: не отключать! */
@@ -2097,9 +2224,9 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Стили для белых контейнеров с картинками - обеспечиваем правильное обрезание углов */
+    /* Стили для белых контейнеров с картинками - убираем скругление у изображений в модалках */
     .bg-white[class*="rounded-"] img {
-        border-radius: inherit;
+        border-radius: 0;
     }
     
     /* Дополнительные тени для специфических модальных окон */
@@ -2161,6 +2288,36 @@
     #sidebar-search-clear {
         flex-shrink: 0; /* Предотвращаем сжатие иконок */
         z-index: 10; /* Обеспечиваем правильное наложение */
+        width: 32px;
+        height: 32px;
+        border-radius: 50%; /* Делаем кнопки круглыми */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    /* Стили для кнопки очистки поиска */
+    #sidebar-search-clear {
+        background-color: transparent;
+        border: none;
+    }
+    
+    #sidebar-search-clear:hover {
+        background-color: rgba(239, 68, 68, 0.1); /* Легкий красный фон при наведении */
+        color: #ef4444;
+    }
+    
+    /* Стили для иконки поиска */
+    #sidebar-search-icon {
+        background-color: transparent;
+        border: none;
+    }
+    
+    #sidebar-search-icon:hover {
+        background-color: rgba(59, 130, 246, 0.1); /* Легкий синий фон при наведении */
+        color: #3b82f6;
     }
     
     
@@ -19176,46 +19333,48 @@ function renderSetCollectionControls() {
                     <div class="flex flex-col gap-3 sm:gap-4">
                         <!-- Quantity Controls -->
                         <div class="flex items-center justify-center gap-2 sm:gap-3">
-                            <button data-action="decrease-set-qty" 
-                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${e > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
-                                ${e <= 0 ? 'disabled' : ''} 
+                            <button data-action="decrease-set-qty"
+                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${e > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                ${e <= 0 ? 'disabled' : ''}
                                 title="Уменьшить количество">
                                 ${I_Minus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
                             </button>
-                            
-                            <input id="set-modal-quantity-input" 
-                                type="number" 
-                                value="${e}" 
-                                readonly 
+
+                            <input id="set-modal-quantity-input"
+                                type="number"
+                                value="${e}"
+                                readonly
                                 class="w-14 sm:w-16 md:w-16 lg:w-18 text-center bg-gray-900 text-white font-bold rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 text-sm sm:text-base md:text-sm lg:text-base min-h-[44px] border border-gray-600 focus:border-blue-500 focus:outline-none"/>
-                            
-                            <button data-action="increase-set-qty" 
-                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+
+                            <button data-action="increase-set-qty"
+                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                                 title="Увеличить количество">
                                 ${I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
                             </button>
                         </div>
-                        
-                        <!-- Action Button -->
-                        <button data-action="update-set-collection" 
-                            class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 rounded-[18px] hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-xs sm:text-sm md:text-sm lg:text-base min-h-[36px] sm:min-h-[40px]">
-                            ${t>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
-                            <span class="hidden sm:inline">${t>0 ? "Обновить" : (e > 1 ? "Добавить "+e : "Добавить")}</span>
-                            <span class="sm:hidden">${t>0 ? "Обновить" : (e > 1 ? "Добавить "+e : "Добавить")}</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Delete Button -->
-                    ${t>0?`
-                        <div class="flex justify-center">
-                            <button data-action="delete-from-set-collection-modal" 
-                                class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-1.5 sm:py-2 md:py-1.5 lg:py-2 px-2 sm:px-3 md:px-3 lg:px-4 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[32px] sm:min-h-[36px] w-full sm:w-auto">
-                                ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
-                                <span class="hidden sm:inline">${e > 1 ? "Удалить "+e : "Удалить"}</span>
-                                <span class="sm:hidden">${e > 1 ? "Удалить "+e : "Удалить"}</span>
+
+                        <!-- Action Buttons Row -->
+                        <div class="flex gap-2 sm:gap-3">
+                            <!-- Update Button -->
+                            <button data-action="update-set-collection"
+                                class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-2 sm:px-3 md:px-3 lg:px-4 rounded-[18px] hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-xs sm:text-sm md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px] flex-1">
+                                ${t>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                                <span class="hidden sm:inline">${t>0 ? "Обновить" : (e > 1 ? "Добавить "+e : "Добавить")}</span>
+                                <span class="sm:hidden">${t>0 ? "Обновить" : (e > 1 ? "Добавить "+e : "Добавить")}</span>
                             </button>
+
+                            <!-- Delete Button -->
+                            ${t>0?`
+                                <button data-action="delete-from-set-collection-modal"
+                                    class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-1.5 sm:px-2 md:px-2 lg:px-3 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[48px] sm:min-h-[52px] flex-3"
+                                    title="${e > 1 ? "Удалить "+e+" наборов" : "Удалить набор"}">
+                                    ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
+                                    <span class="hidden sm:inline">${e > 1 ? "Удалить "+e : "Удалить"}</span>
+                                    <span class="sm:hidden">${e > 1 ? "Удалить "+e : "Удалить"}</span>
+                                </button>
+                            `:""}
                         </div>
-                    `:""}
+                    </div>
                     
                     <!-- Info Text -->
                     <div class="text-xs text-gray-400 text-center leading-relaxed px-2 sm:px-4">
@@ -19240,15 +19399,15 @@ function renderSetCollectionControls() {
                                 
                                 if (t > 0) {
                                     if (e > 1) {
-                                        return `Обновление установит точное количество наборов, деталей и минифигурок в коллекции. Удаление уберет ${e} ${getSetWord(e)} со всеми деталями и минифигурками.`;
+                                        return `Обновление установит точное количество наборов в коллекции. Удаление уберет ${e} ${getSetWord(e)}`;
                                     } else {
-                                        return "Обновление установит точное количество наборов, деталей и минифигурок в коллекции. Удаление уберет набор со всеми деталями и минифигурками.";
+                                        return "Обновление установит точное количество наборов в коллекции. Удаление уберет набор с коллекции";
                                     }
                                 } else {
                                     if (e > 1) {
-                                        return `Добавление ${e} ${getSetWord(e)} добавит все детали и минифигурки в коллекцию`;
+                                        return `Добавление ${e} ${getSetWord(e)} добавит их в коллекцию`;
                                     } else {
-                                        return "Добавление набора добавит все детали и минифигурки в коллекцию";
+                                        return "Добавление набора добавит его в коллекцию";
                                     }
                                 }
                             })()}
@@ -19272,10 +19431,10 @@ function renderSetBulkPartsControls() {
             <div class="bg-gray-700/50 rounded-[18px] p-2 sm:p-4 mt-2 sm:mt-4">
                 <h3 class="text-sm sm:text-md font-semibold text-gray-300 mb-1 sm:mb-2">Коллекция деталей</h3>
                 <div class="grid grid-cols-2 gap-1 sm:gap-2 mb-1 sm:mb-2">
-                    <button data-action="bulk-add-parts" class="flex items-center justify-center px-1 sm:px-3 py-2 sm:py-3 text-xs font-semibold rounded-[18px] transition-colors duration-150 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-green-500/25 whitespace-nowrap" title="Добавить все детали из набора в коллекцию деталей">
+                    <button data-action="bulk-add-parts" class="flex items-center justify-center px-1 sm:px-3 py-3 sm:py-3.5 md:py-3 lg:py-3.5 text-xs font-semibold rounded-[18px] transition-colors duration-150 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-green-500/25 whitespace-nowrap min-h-[48px] sm:min-h-[52px]" title="Добавить все детали из набора в коллекцию деталей">
                         Добавить все
                     </button>
-                    <button data-action="bulk-remove-parts" class="flex items-center justify-center px-1 sm:px-3 py-2 sm:py-3 text-xs font-semibold rounded-[18px] transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-red-500/25 whitespace-nowrap" title="Удалить все детали из набора из коллекции деталей">
+                    <button data-action="bulk-remove-parts" class="flex items-center justify-center px-1 sm:px-3 py-3 sm:py-3.5 md:py-3 lg:py-3.5 text-xs font-semibold rounded-[18px] transition-colors duration-150 bg-red-600 hover:bg-red-700 text-white shadow-lg hover:shadow-red-500/25 whitespace-nowrap min-h-[48px] sm:min-h-[52px] flex-3" title="Удалить все детали из набора из коллекции деталей">
                         Удалить все
                     </button>
                 </div>
@@ -19891,6 +20050,14 @@ function renderSetModal(e = !1) {
     if (!S.selSetNum) return void closeSetModal();
     const t = SET_MAP[S.selSetNum];
     if (!t) return void closeSetModal();
+    
+    // Очищаем все классы анимации перед рендером (кроме первого рендера)
+    if (!e) {
+        const allPartsContainers = document.querySelectorAll('.minifig-parts-container');
+        allPartsContainers.forEach(container => {
+            container.classList.remove('animating-expand', 'animating-collapse');
+        });
+    }
     const o = e ? "modal-content-enter" : "",
         l = "inventory" === S.setModal.view;
             e && (document.body.classList.add("overflow-hidden"), setModalEl.classList.remove("modal-hidden"), requestAnimationFrame(() => setModalEl.classList.add("visible"))), setModalEl.innerHTML = `
@@ -19900,7 +20067,7 @@ function renderSetModal(e = !1) {
                  <div class="flex items-center gap-2 flex-shrink-0">
                     ${renderSetModalToggleButton()}
                     <button data-action="share-set" class="text-gray-300 hover:text-white transition-colors" title="Поделиться набором через изображение и CSV файл">${I_Share("w-6 h-6")}</button>
-                    <button id="set-modal-close" class="modal-close-btn animate-once" title="Закрыть модальное окно набора">${I_X("w-4 h-4")}</button>
+                    <button id="set-modal-close" class="modal-close-btn" title="Закрыть модальное окно набора">${I_X("w-4 h-4")}</button>
                  </div>
             </div>
             <div id="set-scroll-progress"><div class="bar"></div></div>
@@ -19930,7 +20097,7 @@ function renderSetInventory() {
         const n = e.isLoadingParts ? '<div class="flex items-center justify-center p-2"><div class="loader !w-5 !h-5"></div></div>' : e.loadingError ? `
                         <div class="text-center p-2">
                             <p class="text-xs text-red-400 mb-2">Не удалось загрузить детали.</p>
-                            <button data-action="retry-load-minifig-parts" data-fig-num="${t}" class="text-xs px-2 py-1 rounded-[18px] bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
+                            <button data-action="retry-load-minifig-parts" data-fig-num="${t}" class="text-xs px-3 py-2 rounded-[18px] bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 min-h-[40px]">
                                 Попробовать снова
                             </button>
                         </div>
@@ -19966,18 +20133,18 @@ function renderSetInventory() {
                             </div>
                             <div class="flex items-center gap-2 flex-shrink-0">
                                 <span class="text-gray-300 w-8 text-right font-semibold">${e.quantity}x</span>
-                                <button data-action="add-minifig-to-collection" data-fig-num="${t}" data-quantity="${e.quantity}" class="z-10 relative p-2 rounded-full text-white transition-colors duration-150 ${o>0?"bg-green-600 shadow-lg hover:shadow-green-500/25":"bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-500/25"}" title="${o>0?`В коллекции: ${o}`:`Добавить ${e.quantity} в коллекцию минифигурок`}">
+                                <button data-action="add-minifig-to-collection" data-fig-num="${t}" data-quantity="${e.quantity}" class="z-10 relative p-2 rounded-full text-white transition-colors duration-150 ${o>0?"bg-green-600 shadow-lg hover:shadow-green-500/25":"bg-blue-600 hover:bg-blue-700 shadow-lg hover:shadow-blue-500/25"} min-h-[44px] min-w-[44px] flex items-center justify-center" title="${o>0?`В коллекции: ${o}`:`Добавить ${e.quantity} в коллекцию минифигурок`}">
                                     ${I_Minifig("w-5 h-5")}
                                 </button>
-                                <button data-action="toggle-minifig-parts" data-fig-num="${t}" class="z-10 relative p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 shadow-lg hover:shadow-gray-500/25" title="Показать/скрыть детали">
+                                <button data-action="toggle-minifig-parts" data-fig-num="${t}" class="z-10 relative p-2 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-colors duration-150 shadow-lg hover:shadow-gray-500/25 min-h-[44px] min-w-[44px] flex items-center justify-center" title="Показать/скрыть детали">
                                     ${I_Chev(`w-5 h-5 transform transition-transform duration-200 ${e.isExpanded?"rotate-180":""}`)}
                                 </button>
                             </div>
                         </div>
-                        <div id="minifig-parts-${t.replace(/[^a-zA-Z0-9]/g,"-")}" class="${e.isExpanded?"bg-gray-900/40 p-2 max-h-60 overflow-y-auto no-scrollbar":"hidden"}">
+                        <div id="minifig-parts-${t.replace(/[^a-zA-Z0-9]/g,"-")}" class="minifig-parts-container ${e.isExpanded?"p-2 max-h-60 overflow-y-auto no-scrollbar expanded":"hidden"}">
                              ${e.isExpanded?`
                                 <div class="flex justify-end items-center mb-2 px-1.5">
-                                    <button data-action="add-minifig-parts-to-collection" data-fig-num="${t}" class="flex items-center gap-2 text-xs px-2 py-1 rounded-[18px] bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 disabled:opacity-50" title="Добавить все детали этой минифигурки в вашу коллекцию деталей" ${S.setModal.bulkUpdate?"disabled":""}>
+                                    <button data-action="add-minifig-parts-to-collection" data-fig-num="${t}" class="flex items-center gap-2 text-xs px-3 py-2 rounded-[18px] bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 disabled:opacity-50 min-h-[40px]" title="Добавить все детали этой минифигурки в вашу коллекцию деталей" ${S.setModal.bulkUpdate?"disabled":""}>
                                         ${I_Plus("w-4 h-4")}
                                         <span>Добавить детали</span>
                                     </button>
@@ -20014,7 +20181,7 @@ function renderSetInventory() {
             <div class="space-y-2">${regularSetInv.map(renderSetInvRow).join("")}</div>
             ${sparesSetInv.length ? `
             <div class="pt-2">
-                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-1">${I_Info("w-3 h-3 text-yellow-400")} Запасные</div>
+                <div class="text-xs text-gray-400 uppercase tracking-wide mb-1 flex items-center justify-center gap-1">${I_Info("w-3 h-3 text-yellow-400")} Запасные</div>
                 <div class="space-y-2">${sparesSetInv.map(renderSetInvRow).join("")}</div>
             </div>` : ''}
         `;
@@ -20405,47 +20572,49 @@ function renderModalControls() {
                     <div class="flex flex-col gap-3 sm:gap-4">
                         <!-- Quantity Controls -->
                         <div class="flex items-center justify-center gap-2 sm:gap-3">
-                            <button data-action="decrease-qty" 
-                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
-                                ${t <= 0 ? 'disabled' : ''} 
+                            <button data-action="decrease-qty"
+                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                                ${t <= 0 ? 'disabled' : ''}
                                 title="Уменьшить количество">
                                 ${I_Minus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
                             </button>
-                            
-                            <input id="modal-quantity-input" 
-                                type="number" 
-                                value="${t}" 
-                                readonly 
+
+                            <input id="modal-quantity-input"
+                                type="number"
+                                value="${t}"
+                                readonly
                                 class="w-14 sm:w-16 md:w-16 lg:w-18 text-center bg-gray-900 text-white font-bold rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 text-sm sm:text-base md:text-sm lg:text-base min-h-[44px] border border-gray-600 focus:border-blue-500 focus:outline-none"/>
-                            
-                            <button data-action="increase-qty" 
-                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+
+                            <button data-action="increase-qty"
+                                class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                                 title="Увеличить количество">
                                 ${I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
                             </button>
                         </div>
-                        
-                        <!-- Action Button -->
-                        <button id="modal-update-collection-btn" data-action="update-collection" 
-                            class="flex items-center justify-center gap-2 sm:gap-3 ${o ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed'} text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-4 sm:px-5 md:px-5 lg:px-6 rounded-[18px] transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px]"
-                            ${!o ? 'disabled' : ''}>
-                            ${l>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
-                            <span class="hidden sm:inline">${!o ? "Выберите цвет" : (l>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить"))}</span>
-                            <span class="sm:hidden">${!o ? "Выберите цвет" : (l>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить"))}</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Delete Button -->
-                    ${l>0?`
-                        <div class="flex justify-center">
-                            <button data-action="delete-from-collection-modal" 
-                                class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[40px] sm:min-h-[44px] w-full sm:w-auto">
-                                ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
-                                <span class="hidden sm:inline">${t > 1 ? "Удалить "+t : "Удалить"}</span>
-                                <span class="sm:hidden">${t > 1 ? "Удалить "+t : "Удалить"}</span>
+
+                        <!-- Action Buttons Row -->
+                        <div class="flex gap-2 sm:gap-3">
+                            <!-- Update Button -->
+                            <button id="modal-update-collection-btn" data-action="update-collection"
+                                class="flex items-center justify-center gap-2 sm:gap-3 ${o ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed'} text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-3 sm:px-4 md:px-4 lg:px-5 rounded-[18px] transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px] flex-1"
+                                ${!o ? 'disabled' : ''}>
+                                ${l>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                                <span class="hidden sm:inline">${!o ? "Выберите цвет" : (l>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить"))}</span>
+                                <span class="sm:hidden">${!o ? "Выберите цвет" : (l>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить"))}</span>
                             </button>
+
+                            <!-- Delete Button -->
+                            ${l>0?`
+                                <button data-action="delete-from-collection-modal"
+                                    class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-2 sm:px-3 md:px-3 lg:px-4 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[48px] sm:min-h-[52px] flex-3"
+                                    title="${t > 1 ? "Удалить "+t+" деталей" : "Удалить деталь"}">
+                                    ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
+                                    <span class="hidden sm:inline">${t > 1 ? "Удалить "+t : "Удалить"}</span>
+                                    <span class="sm:hidden">${t > 1 ? "Удалить "+t : "Удалить"}</span>
+                                </button>
+                            `:""}
                         </div>
-                    `:""}
+                    </div>
                     
                     <!-- Info Text -->
                     <div class="text-xs text-gray-400 text-center leading-relaxed px-2 sm:px-4">
@@ -21623,45 +21792,47 @@ function renderMinifigModalDetailsView() {
                 <div class="flex flex-col gap-3 sm:gap-4">
                     <!-- Quantity Controls -->
                     <div class="flex items-center justify-center gap-2 sm:gap-3">
-                        <button data-action="decrease-minifig-qty" 
-                            class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
-                            ${t <= 0 ? 'disabled' : ''} 
+                        <button data-action="decrease-minifig-qty"
+                            class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
+                            ${t <= 0 ? 'disabled' : ''}
                             title="Уменьшить количество">
                             ${I_Minus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
                         </button>
-                        
-                        <input type="number" 
-                            value="${t}" 
-                            readonly 
+
+                        <input type="number"
+                            value="${t}"
+                            readonly
                             class="w-14 sm:w-16 md:w-16 lg:w-18 text-center bg-gray-900 text-white font-bold rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 text-sm sm:text-base md:text-sm lg:text-base min-h-[44px] border border-gray-600 focus:border-blue-500 focus:outline-none"/>
-                        
-                        <button data-action="increase-minifig-qty" 
-                            class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center" 
+
+                        <button data-action="increase-minifig-qty"
+                            class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full bg-gray-600 hover:bg-gray-500 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
                             title="Увеличить количество">
                             ${I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
                         </button>
                     </div>
-                    
-                    <!-- Action Button -->
-                    <button data-action="update-minifig-collection" 
-                        class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-4 sm:px-5 md:px-5 lg:px-6 rounded-[18px] hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px]">
-                        ${o>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
-                        <span class="hidden sm:inline">${o>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить")}</span>
-                        <span class="sm:hidden">${o>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить")}</span>
-                    </button>
-                </div>
-                
-                <!-- Delete Button -->
-                ${o>0?`
-                    <div class="flex justify-center">
-                        <button data-action="delete-from-minifig-collection-modal" 
-                            class="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-3 sm:px-4 md:px-4 lg:px-5 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[40px] sm:min-h-[44px] w-full sm:w-auto">
-                            ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
-                            <span class="hidden sm:inline">${t > 1 ? "Удалить "+t : "Удалить"}</span>
-                            <span class="sm:hidden">${t > 1 ? "Удалить "+t : "Удалить"}</span>
+
+                    <!-- Action Buttons Row -->
+                    <div class="flex gap-2 sm:gap-3">
+                        <!-- Update Button -->
+                        <button data-action="update-minifig-collection"
+                            class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-3 sm:px-4 md:px-4 lg:px-5 rounded-[18px] hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px] flex-1">
+                            ${o>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
+                            <span class="hidden sm:inline">${o>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить")}</span>
+                            <span class="sm:hidden">${o>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить")}</span>
                         </button>
+
+                        <!-- Delete Button -->
+                        ${o>0?`
+                            <button data-action="delete-from-minifig-collection-modal"
+                                class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-2 sm:px-3 md:px-3 lg:px-4 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[48px] sm:min-h-[52px] flex-3"
+                                title="${t > 1 ? "Удалить "+t+" минифигурок" : "Удалить минифигурку"}">
+                                ${I_Trash("w-3 h-3 sm:w-4 sm:h-4 md:w-3 md:h-3 lg:w-4 lg:h-4")}
+                                <span class="hidden sm:inline">${t > 1 ? "Удалить "+t : "Удалить"}</span>
+                                <span class="sm:hidden">${t > 1 ? "Удалить "+t : "Удалить"}</span>
+                            </button>
+                        `:""}
                     </div>
-                `:""}
+                </div>
                 
                 <!-- Info Text -->
                 <div class="text-xs text-gray-400 text-center leading-relaxed px-2 sm:px-4">
@@ -21699,7 +21870,7 @@ function renderMinifigModalDetailsView() {
                     <button data-action="minifig-gallery-prev" class="set-gallery-btn absolute left-[-3rem] top-1/2 p-2 sm:p-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-white shadow-lg inline-flex z-20 select-none focus:outline-none" title="Предыдущее изображение" style="display: none;">
                         ${I_ChevronLeft("w-6 h-6 sm:w-5 sm:h-5")}
                     </button>
-                    <div data-action="view-image-fullscreen" data-image-url="${e.minifig_img_url||e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:w-64 bg-white rounded-[18px] flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group mx-auto">
+                    <div data-action="view-image-fullscreen" data-image-url="${e.minifig_img_url||e.set_img_url||""}" class="w-48 h-48 sm:w-64 sm:h-64 bg-white rounded-[18px] flex items-center justify-center overflow-hidden shadow-lg relative cursor-pointer group mx-auto">
                         <img ${getPartImageUrl(e.minifig_img_url || e.set_img_url)} alt="${e.name}" class="max-w-full max-h-full object-contain">
                         <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                            ${I_Search("w-10 h-10 text-white")}
@@ -21799,7 +21970,7 @@ function renderMinifigModalInventoryView() {
             const regularHtml = regular.map(p => renderRow(p)).join("");
             const sparesHtml = spares.length ? `
                 <div class="pt-2">
-                    <div class="text-xs text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-1">${I_Alert("w-3 h-3 text-yellow-400")} Запасные</div>
+                    <div class="text-xs text-gray-400 uppercase tracking-wide mb-1 flex items-center justify-center gap-1">${I_Alert("w-3 h-3 text-yellow-400")} Запасные</div>
                     <div class="space-y-2">${spares.map(p => renderRow(p, true)).join("")}</div>
                 </div>` : '';
             r = `<div class="space-y-2">${regularHtml}${sparesHtml}</div>`;
@@ -23927,6 +24098,12 @@ function closeModal() {
 }
 
 function closeSetModal() {
+    // Очищаем все классы анимации перед закрытием
+    const allPartsContainers = document.querySelectorAll('.minifig-parts-container');
+    allPartsContainers.forEach(container => {
+        container.classList.remove('animating-expand', 'animating-collapse', 'expanded');
+    });
+    
     // Сбрасываем состояние
     S.selSetNum = null;
     S.setModal = {
@@ -28281,23 +28458,63 @@ document.addEventListener("click", async e => {
                 if (a) {
                     const e = S.setModal.minifigs.find(e => e.set_num === a);
                     if (e) {
-                        e.isExpanded = !e.isExpanded;
-                        if (e.isExpanded && !e.parts && !e.loadingError) {
-                            // Показываем индикатор загрузки для деталей минифигурки в модальном окне набора
-                            updateLoadingStatus("Загрузка деталей минифигурки...", 75, "Загрузка списка деталей");
-                            
-                            e.isLoadingParts = !0, renderSetModal(!1), fetchMinifigParts(a).then(t => {
-                                e.parts = t;
+                        const partsContainer = document.getElementById(`minifig-parts-${a.replace(/[^a-zA-Z0-9]/g,"-")}`);
+                        
+                        if (e.isExpanded) {
+                            // Скрываем с анимацией
+                            if (partsContainer) {
+                                // Убираем все классы анимации и состояния
+                                partsContainer.classList.remove('expanded', 'animating-expand', 'animating-collapse');
+                                // Добавляем класс анимации скрытия
+                                partsContainer.classList.add('animating-collapse');
                                 
-                                // Обновляем статус загрузки для деталей минифигурки
-                                updateLoadingStatus("Детали минифигурки загружены", 80, `Загружено ${t.length} деталей`);
-                            }).catch(() => {
-                                e.loadingError = !0;
-                                updateLoadingStatus("Ошибка загрузки деталей", 0, "Не удалось загрузить детали минифигурки");
-                            }).finally(() => {
-                                e.isLoadingParts = !1, S.selSetNum && renderSetModal(!1)
-                            })
-                        } else e.isExpanded || (e.loadingError = !1), renderSetModal(!1)
+                                setTimeout(() => {
+                                    e.isExpanded = false;
+                                    renderSetModal(false);
+                                }, 300);
+                            } else {
+                                e.isExpanded = false;
+                                renderSetModal(false);
+                            }
+                        } else {
+                            // Показываем с анимацией
+                            e.isExpanded = true;
+                            renderSetModal(false);
+                            
+                            // Добавляем анимацию после рендера
+                            setTimeout(() => {
+                                const newPartsContainer = document.getElementById(`minifig-parts-${a.replace(/[^a-zA-Z0-9]/g,"-")}`);
+                                if (newPartsContainer) {
+                                    // Убираем все классы анимации
+                                    newPartsContainer.classList.remove('animating-expand', 'animating-collapse', 'expanded');
+                                    // Добавляем класс анимации раскрытия
+                                    newPartsContainer.classList.add('animating-expand');
+                                    
+                                    // После завершения анимации переводим в статичное состояние
+                                    setTimeout(() => {
+                                        newPartsContainer.classList.remove('animating-expand');
+                                        newPartsContainer.classList.add('expanded');
+                                    }, 300);
+                                }
+                            }, 10);
+                            
+                            if (!e.parts && !e.loadingError) {
+                                // Показываем индикатор загрузки для деталей минифигурки в модальном окне набора
+                                updateLoadingStatus("Загрузка деталей минифигурки...", 75, "Загрузка списка деталей");
+                                
+                                e.isLoadingParts = !0, fetchMinifigParts(a).then(t => {
+                                    e.parts = t;
+                                    
+                                    // Обновляем статус загрузки для деталей минифигурки
+                                    updateLoadingStatus("Детали минифигурки загружены", 80, `Загружено ${t.length} деталей`);
+                                }).catch(() => {
+                                    e.loadingError = !0;
+                                    updateLoadingStatus("Ошибка загрузки деталей", 0, "Не удалось загрузить детали минифигурки");
+                                }).finally(() => {
+                                    e.isLoadingParts = !1, S.selSetNum && renderSetModal(!1)
+                                })
+                            }
+                        }
                     }
                 }
                 break;
