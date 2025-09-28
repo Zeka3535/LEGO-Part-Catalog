@@ -7253,7 +7253,6 @@ const inactivityTips = [
     "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
     "🔍 Умный поиск с автодополнением помогает быстро находить нужные элементы",
     "💾 Данные сохраняются локально в браузере для быстрой работы",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
     "🌐 Система прокси автоматически обходит блокировки API для стабильной работы",
     "📋 Переключайтесь между каталогом и коллекцией для разных задач",
     "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
@@ -7275,7 +7274,6 @@ const inactivityTips = [
     "🎯 Приоритетная загрузка критически важных ресурсов",
     "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
     "📊 Мониторинг кэша для оптимизации производительности",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
     "🔄 Автосохранение состояния происходит после каждого действия",
     "🔧 Настраиваемые стратегии кэширования для разных типов данных",
     "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
@@ -7306,7 +7304,6 @@ const inactivityTips = [
     "🤖 Сфотографируйте деталь, минифигурку или даже набор для автоматического распознавания через AI",
     "🔍 Продвинутая фильтрация и сортировка помогают быстро находить нужные элементы",
     "📱 Адаптивный дизайн обеспечивает удобство использования на любых устройствах",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы"
 ];
 const REBRICKABLE_API_URL = 'https://rebrickable.com/api/v3/lego';
 const REBRICKABLE_API_KEYS = ['20c78cc607d6059c8d2a61338d851590', '04a7405ad41f1dd484a562f6e0c57312', 'd93f5c0989f63afa9b1c29ef8ad66002', 'b4179c1b8bd3c022ec9fc0e713e96b77', 'd32527bc33b575b8825a0ba04ba4add5'];
@@ -7867,6 +7864,22 @@ let COLOR_MAP = {},
     MINIFIG_MAP = {},
     THEME_MAP = {},
     flatCategories = [];
+
+// Функция для расчета общего количества деталей в наборе с учетом минифигурок
+// Инициализируем как заглушку, которая будет переопределена после загрузки данных
+window.calculateSetTotalParts = function(setNum) {
+    try {
+        const set = SET_MAP[setNum];
+        if (!set) {
+            console.warn('Set not found in SET_MAP:', setNum);
+            return 0;
+        }
+        return set.num_parts || 0;
+    } catch (error) {
+        console.warn('Error in calculateSetTotalParts:', error);
+        return 0;
+    }
+};
 
 // Кэш для URL изображений цветов, чтобы избежать повторных вызовов API
 const COLOR_IMAGE_CACHE = new Map();
@@ -12811,6 +12824,7 @@ function analyzeCollection() {
     }
     
     
+
     try {
         const analytics = {
             totalParts: 0,
@@ -12904,7 +12918,9 @@ function analyzeCollection() {
                 
                 // Общая статистика наборов
                 analytics.setsStats.totalSets += setData.qty;
-                analytics.setsStats.totalPieces += (set.num_parts || 0) * setData.qty;
+                // Используем правильный расчет с учетом деталей минифигурок
+                const totalPartsPerSet = window.calculateSetTotalParts ? window.calculateSetTotalParts(setNum) : (set.num_parts || 0);
+                analytics.setsStats.totalPieces += totalPartsPerSet * setData.qty;
                 
                 // Статистика по темам наборов
                 analytics.setsStats.themeStats[themeName] = (analytics.setsStats.themeStats[themeName] || 0) + setData.qty;
@@ -12965,7 +12981,7 @@ function analyzeCollection() {
                     setNum,
                     setName: set.name,
                     year: set.year,
-                    numParts: set.num_parts || 0, // Количество деталей в одном экземпляре набора
+                    numParts: window.calculateSetTotalParts ? window.calculateSetTotalParts(setNum) : (set.num_parts || 0), // Используем правильный расчет с учетом минифигурок
                     quantity: setData.qty,
                     theme: THEME_MAP[set.theme_id]?.name || 'Неизвестная тема',
                     setImgUrl: set.set_img_url
@@ -18406,7 +18422,7 @@ function renderSetCard(e, t, o = 0) {
                 </div>
                 <div class="p-4 space-y-1 card-info-container">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none card-title">${e.name}</h3>
-                    <p class="text-xs text-gray-400 pointer-events-none card-info-text">#${e.set_num} • ${e.num_parts} деталей</p>
+                    <p class="text-xs text-gray-400 pointer-events-none card-info-text">#${e.set_num} • ${window.calculateSetTotalParts ? window.calculateSetTotalParts(e.set_num) : (e.num_parts || 0)} деталей</p>
                     <p class="text-xs text-gray-300 pointer-events-none card-info-text">Год выпуска: ${e.year}</p>
                 </div>
             </div>
@@ -27990,7 +28006,7 @@ document.addEventListener("click", async e => {
                         }
                     } else if (sets.length === 1) {
                         const s = SET_MAP[sets[0]] || {};
-                        const piecesInfo = s?.num_parts ? `деталей в наборе: ${s.num_parts}` : '';
+                        const piecesInfo = s?.num_parts ? `деталей в наборе: ${window.calculateSetTotalParts ? window.calculateSetTotalParts(sets[0]) : s.num_parts}` : '';
                         const yearInfo = s?.year ? `год: ${s.year}` : '';
                         metaExtra = [piecesInfo, yearInfo].filter(Boolean).join(', ');
                     } else if (minifigs.length === 1) {
@@ -28220,7 +28236,7 @@ document.addEventListener("click", async e => {
                 const imageUrl = (s?.set_img_url && String(s.set_img_url).startsWith('http')) ? s.set_img_url : '';
                 const opts = { fileName: `lego-set-${setNum}.png` };
                 const theme = s?.theme_id ? THEME_MAP[s.theme_id] : null;
-                const piecesInfo = s?.num_parts ? `деталей: ${s.num_parts}` : '';
+                const piecesInfo = s?.num_parts ? `деталей: ${window.calculateSetTotalParts ? window.calculateSetTotalParts(setNum) : s.num_parts}` : '';
                 const yearInfo = s?.year ? `год: ${s.year}` : '';
                 const idInfo = `ID: ${setNum}`;
                 const extras = [piecesInfo, yearInfo, idInfo].filter(Boolean).join(' • ');
@@ -29483,7 +29499,6 @@ async function initializeApp() {
     "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
     "🔍 Умный поиск с автодополнением помогает быстро находить нужные элементы",
     "💾 Данные сохраняются локально в браузере для быстрой работы",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
     "🌐 Система прокси автоматически обходит блокировки API для стабильной работы",
     "📋 Переключайтесь между каталогом и коллекцией для разных задач",
     "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
@@ -29505,7 +29520,6 @@ async function initializeApp() {
     "🎯 Приоритетная загрузка критически важных ресурсов",
     "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
     "📊 Мониторинг кэша для оптимизации производительности",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
     "🔄 Автосохранение состояния происходит после каждого действия",
     "🔧 Настраиваемые стратегии кэширования для разных типов данных",
     "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
@@ -29536,7 +29550,6 @@ async function initializeApp() {
     "🤖 Сфотографируйте деталь, минифигурку или даже набор для автоматического распознавания через AI",
     "🔍 Продвинутая фильтрация и сортировка помогают быстро находить нужные элементы",
     "📱 Адаптивный дизайн обеспечивает удобство использования на любых устройствах",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы"
     ];
     
     console.log('LOADING_TIPS initialized with', window.LOADING_TIPS.length, 'tips');
@@ -30314,9 +30327,25 @@ document.addEventListener("DOMContentLoaded", () => {
             if (window.stopLoadingTipRotation) {
                 window.stopLoadingTipRotation();
             }
+            
+            // Останавливаем камеру при закрытии страницы
+            if (typeof cleanupCamera === 'function') {
+                cleanupCamera();
+            }
+            
             event.preventDefault();
             event.returnValue = '';
         } catch {}
+    });
+
+    // Обработчик для остановки камеры при скрытии вкладки
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden) {
+            // Останавливаем камеру при скрытии вкладки
+            if (typeof cleanupCamera === 'function') {
+                cleanupCamera();
+            }
+        }
     });
 
     if ('serviceWorker' in navigator) {
@@ -31595,6 +31624,43 @@ async function discoverInventoryPartFiles() {
             parts: inventoryPartsMap,
             sets: inventorySetsMap,
             minifigs: inventoryMinifigsMap
+        };
+
+        // Функция для расчета общего количества деталей в наборе с учетом минифигурок
+        window.calculateSetTotalParts = function(setNum) {
+            try {
+                const set = SET_MAP[setNum];
+                if (!set) return 0;
+                
+                let totalParts = set.num_parts || 0;
+                
+                // Проверяем, что данные инвентаря загружены
+                if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.sets) {
+                    return totalParts; // Возвращаем только детали набора, если данные не загружены
+                }
+                
+                // Находим inventory_id для этого набора
+                const inventoryId = Object.keys(window.INVENTORY_DATA.sets).find(id => {
+                    const sets = window.INVENTORY_DATA.sets[id];
+                    return sets && sets.some(s => s.set_num === setNum);
+                });
+                
+                if (inventoryId && window.INVENTORY_DATA.minifigs?.[inventoryId]) {
+                    // Добавляем детали всех минифигурок в этом наборе
+                    const minifigs = window.INVENTORY_DATA.minifigs[inventoryId];
+                    minifigs.forEach(minifig => {
+                        const minifigData = MINIFIG_MAP[minifig.fig_num];
+                        if (minifigData && minifigData.num_parts) {
+                            totalParts += minifigData.num_parts * minifig.quantity;
+                        }
+                    });
+                }
+                
+                return totalParts;
+            } catch (error) {
+                console.warn('Error calculating set total parts for', setNum, ':', error);
+                return SET_MAP[setNum]?.num_parts || 0; // Возвращаем базовое количество при ошибке
+            }
         };
 
         
@@ -35341,6 +35407,21 @@ function animateCloseButtonClick(button) {
                 photoSearchStream = null;
             }
             
+            // Дополнительная проверка - останавливаем все активные медиа-потоки
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                // Получаем все активные треки и останавливаем их
+                navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                    .then(stream => {
+                        stream.getTracks().forEach(track => {
+                            track.stop();
+                            console.log('Дополнительный трек остановлен:', track.kind);
+                        });
+                    })
+                    .catch(() => {
+                        // Игнорируем ошибки, так как это просто проверка
+                    });
+            }
+            
             // Останавливаем сканеры
             if (scanner) {
                 try {
@@ -36065,6 +36146,11 @@ function animateCloseButtonClick(button) {
             const modal = document.getElementById('camera-selection-modal');
             if (!modal) return;
             
+            // Останавливаем камеру при закрытии модального окна
+            if (typeof stopCamera === 'function') {
+                stopCamera();
+            }
+            
             modal.classList.add('modal-hidden');
             modal.classList.remove('visible');
             document.body.classList.remove('overflow-hidden');
@@ -36708,6 +36794,11 @@ function animateCloseButtonClick(button) {
         function hidePhotoCameraSelectionModal() {
             const modal = document.getElementById('photo-camera-selection-modal');
             if (!modal) return;
+            
+            // Останавливаем камеру при закрытии модального окна
+            if (typeof stopCamera === 'function') {
+                stopCamera();
+            }
             
             modal.classList.add('modal-hidden');
             modal.classList.remove('visible');
