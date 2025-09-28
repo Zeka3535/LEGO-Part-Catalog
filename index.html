@@ -2281,20 +2281,25 @@
     #sidebar-search {
         min-width: 0; /* Предотвращаем переполнение */
         flex-shrink: 1; /* Позволяем сжиматься */
+        padding-right: 2.5rem; /* 40px - достаточно места для кнопки очистки */
     }
     
     /* Стили для иконок в поле поиска боковой панели */
     #sidebar-search-icon,
     #sidebar-search-clear {
-        flex-shrink: 0; /* Предотвращаем сжатие иконок */
-        z-index: 10; /* Обеспечиваем правильное наложение */
-        width: 32px;
-        height: 32px;
-        border-radius: 50%; /* Делаем кнопки круглыми */
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 40px; /* Ширина кнопки очистки */
+        min-width: 40px;
+        height: 40px;
+        min-height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
+        flex-shrink: 0; /* Предотвращаем сжатие */
+        z-index: 10; /* Обеспечиваем правильное наложение */
         cursor: pointer;
     }
     
@@ -2304,20 +2309,25 @@
         border: none;
     }
     
-    #sidebar-search-clear:hover {
-        background-color: rgba(239, 68, 68, 0.1); /* Легкий красный фон при наведении */
-        color: #ef4444;
-    }
-    
     /* Стили для иконки поиска */
     #sidebar-search-icon {
         background-color: transparent;
         border: none;
     }
     
-    #sidebar-search-icon:hover {
-        background-color: rgba(59, 130, 246, 0.1); /* Легкий синий фон при наведении */
-        color: #3b82f6;
+    /* Адаптивные стили для поля поиска в боковой панели на мобильных устройствах */
+    @media (max-width: 640px) {
+        #sidebar-search-icon,
+        #sidebar-search-clear {
+            width: 36px;
+            min-width: 36px;
+            height: 36px;
+            min-height: 36px;
+        }
+        
+        #sidebar-search {
+            padding-right: 2.25rem; /* 36px - достаточно места для кнопки очистки на мобильных */
+        }
     }
     
     
@@ -17365,8 +17375,8 @@ function renderSidebar() {
               <div class="mt-2">
                 <div class="relative">
                     <input id="sidebar-search" type="text" placeholder="Фильтр списков..." value="${S.sidebarFilter||''}" class="w-full h-10 bg-gray-700 border border-gray-600 rounded-[18px] pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-0" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off" aria-label="Фильтр пунктов боковой панели" />
-                    <button id="sidebar-search-clear" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.sidebarFilter? '' : 'hidden'}" title="Очистить">${I_X('w-5 h-5')}</button>
-                    <div id="sidebar-search-icon" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 ${S.sidebarFilter? 'hidden' : ''}" title="Поиск">${I_Search('w-5 h-5')}</div>
+                    <button id="sidebar-search-clear" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white hidden" style="display: none;" title="Очистить">${I_X('w-5 h-5')}</button>
+                    <div id="sidebar-search-icon" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400" title="Поиск">${I_Search('w-5 h-5')}</div>
                 </div>
               </div>
             ` : ''}
@@ -17596,17 +17606,40 @@ function renderSidebar() {
                 if (txt.includes(q)) li.classList.remove('hidden'); else li.classList.add('hidden');
             }
         });
+        // Управление видимостью кнопок вынесено в отдельную функцию
+        updateSidebarSearchButtonsVisibility();
+    };
+    
+    // Функция для обновления видимости кнопок поиска в боковой панели
+    function updateSidebarSearchButtonsVisibility() {
         const clearBtn = document.getElementById('sidebar-search-clear');
         const iconBtn = document.getElementById('sidebar-search-icon');
-        if (clearBtn && iconBtn) {
-            if (q) { clearBtn.classList.remove('hidden'); iconBtn.classList.add('hidden'); }
-            else { clearBtn.classList.add('hidden'); iconBtn.classList.remove('hidden'); }
+        const searchInput = document.getElementById('sidebar-search');
+        
+        if (clearBtn && iconBtn && searchInput) {
+            const hasText = searchInput.value && searchInput.value.trim().length > 0;
+            
+            // Сначала скрываем обе кнопки, чтобы избежать мигания
+            clearBtn.style.display = 'none';
+            iconBtn.style.display = 'none';
+            
+            // Затем показываем нужную кнопку
+            if (hasText) {
+                clearBtn.classList.remove('hidden');
+                clearBtn.style.display = 'flex';
+                iconBtn.classList.add('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+                iconBtn.classList.remove('hidden');
+                iconBtn.style.display = 'flex';
+            }
         }
-    };
+    }
     const sidebarSearch = document.getElementById('sidebar-search');
     if (sidebarSearch) sidebarSearch.addEventListener('input', (e) => {
         S.sidebarFilter = e.target.value || '';
         filterSidebarList(S.sidebarFilter);
+        updateSidebarSearchButtonsVisibility();
     });
     if (sidebarSearch) sidebarSearch.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -17614,6 +17647,7 @@ function renderSidebar() {
             const el = document.getElementById('sidebar-search');
             if (el) { el.value = ''; el.blur(); }
             filterSidebarList('');
+            updateSidebarSearchButtonsVisibility();
             renderSidebar();
         }
     });
@@ -17623,6 +17657,7 @@ function renderSidebar() {
         const el = document.getElementById('sidebar-search');
         if (el) el.value = '';
         filterSidebarList('');
+        updateSidebarSearchButtonsVisibility();
         renderSidebar();
     });
     const sidebarSearchIcon = document.getElementById('sidebar-search-icon');
@@ -17648,6 +17683,9 @@ function renderSidebar() {
         try { localStorage.setItem('sidebarFavsVisible', String(S.sidebarFavsVisible)); } catch {}
         renderSidebar();
     });
+
+    // Обновляем видимость кнопок поиска после рендеринга
+    updateSidebarSearchButtonsVisibility();
 
     return sidebarEl.innerHTML;
 }
@@ -22128,48 +22166,7 @@ function updateUI() {
             resetRandomMinifigImage();
             
             // Переключаем видимость кнопок поиска и AI поиска
-            const searchButton = document.getElementById('search-button');
-            const aiSearchButton = document.getElementById('ai-search-button');
-            const clearButton = document.getElementById('clear-search');
-            const searchIcon = document.getElementById('search-icon');
-            
-            if (S.q && S.q.trim().length > 0) {
-                // Показываем кнопку поиска и скрываем AI поиск и иконку поиска
-                if (searchButton) {
-                    searchButton.classList.remove('hidden');
-                    searchButton.style.display = 'flex';
-                }
-                if (aiSearchButton) {
-                    aiSearchButton.classList.add('hidden');
-                    aiSearchButton.style.display = 'none';
-                }
-                if (clearButton) {
-                    clearButton.classList.remove('hidden');
-                    clearButton.style.display = 'flex';
-                }
-                if (searchIcon) {
-                    searchIcon.classList.add('hidden');
-                    searchIcon.style.display = 'none';
-                }
-            } else {
-                // Скрываем кнопку поиска и показываем AI поиск и иконку поиска
-                if (searchButton) {
-                    searchButton.classList.add('hidden');
-                    searchButton.style.display = 'none';
-                }
-                if (aiSearchButton) {
-                    aiSearchButton.classList.remove('hidden');
-                    aiSearchButton.style.display = 'flex';
-                }
-                if (clearButton) {
-                    clearButton.classList.add('hidden');
-                    clearButton.style.display = 'none';
-                }
-                if (searchIcon) {
-                    searchIcon.classList.remove('hidden');
-                    searchIcon.style.display = 'flex';
-                }
-            }
+            setupSearchButtonsVisibility();
             
             // Показываем автодополнение с дебаунсингом
             if (S.q && S.q.trim().length > 0) {
@@ -27121,30 +27118,18 @@ document.addEventListener("click", async e => {
         // Устанавливаем флаг сброса состояния поиска
         window.searchStateReset = true;
         
+        // Обновляем значение поля поиска
+        const searchInput = document.getElementById("search-input");
+        if (searchInput) {
+            searchInput.value = "";
+        }
+        
         // Переключаем видимость кнопок при очистке поиска
-        const searchButton = document.getElementById('search-button');
-        const aiSearchButton = document.getElementById('ai-search-button');
-        const clearButton = document.getElementById('clear-search');
-        const searchIcon = document.getElementById('search-icon');
+        setupSearchButtonsVisibility();
         
-        if (searchButton) {
-            searchButton.classList.add('hidden');
-            searchButton.style.display = 'none';
+        if (searchInput) {
+            searchInput.focus();
         }
-        if (aiSearchButton) {
-            aiSearchButton.classList.remove('hidden');
-            aiSearchButton.style.display = 'flex';
-        }
-        if (clearButton) {
-            clearButton.classList.add('hidden');
-            clearButton.style.display = 'none';
-        }
-        if (searchIcon) {
-            searchIcon.classList.remove('hidden');
-            searchIcon.style.display = 'flex';
-        }
-        
-        document.getElementById("search-input")?.focus();
         return void triggerSearch()
     }
     // Панель мультивыбора
