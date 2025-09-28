@@ -7859,7 +7859,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v34';
+const CACHE_NAME = 'lego-catalog-cache-v36';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -11443,9 +11443,452 @@ function saveState() {
     localStorage.setItem('wishlists', JSON.stringify(S.wishlists));
     localStorage.setItem('currentWishlist', S.currentWishlist);
         
-    // Все данные будут загружены заново из CSV файлов при каждом запуске
     console.log('User collections and favorites saved to localStorage');
 }
+
+// Функция для сохранения критичных данных каталога в localStorage (сжато)
+function saveCatalogData() {
+    try {
+        // Сохраняем только критичные данные для быстрого старта в localStorage
+        const catalogData = {
+            COLOR_MAP,           // ~0.01 МБ - цвета (критично для UI)
+            THEME_MAP,          // ~0.01 МБ - темы (критично для навигации)
+            flatCategories,     // ~0.01 МБ - категории (критично для навигации)
+            partsCount: Object.keys(PART_MAP).length,    // Счетчики для проверки
+            setsCount: Object.keys(SET_MAP).length,
+            minifigsCount: Object.keys(MINIFIG_MAP).length,
+            timestamp: Date.now(),
+            version: '1.1'
+        };
+        
+        const jsonString = JSON.stringify(catalogData);
+        const sizeKB = Math.round(jsonString.length / 1024);
+        
+        if (sizeKB > 4000) { // Проверяем лимит 4 МБ
+            console.warn('⚠️ Данные слишком велики для localStorage:', sizeKB, 'КБ');
+            return false;
+        }
+        
+        localStorage.setItem('legoCatalogMeta', jsonString);
+        console.log('✅ Метаданные каталога сохранены в localStorage');
+        console.log('📊 Сохранено:', sizeKB, 'КБ');
+        
+        // Дополнительно сохраняем основные данные в IndexedDB для надежного кеширования
+        saveMainDataToIndexedDB();
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Ошибка сохранения метаданных каталога:', error);
+        return false;
+    }
+}
+
+// Функция для сохранения основных данных в sessionStorage
+function saveMainDataToSession() {
+    try {
+        console.log('💾 Попытка сохранения данных в sessionStorage...');
+        console.log('📊 Исходные размеры:', {
+            parts: Object.keys(PART_MAP).length,
+            sets: Object.keys(SET_MAP).length,
+            minifigs: Object.keys(MINIFIG_MAP).length
+        });
+        
+        // Сохраняем только критически важные данные в сжатом виде
+        const mainData = {
+            // Только первые 1000 самых популярных деталей
+            PART_MAP: Object.fromEntries(
+                Object.entries(PART_MAP).slice(0, 1000)
+            ),
+            // Все наборы (обычно не очень много)
+            SET_MAP,
+            // Все минифигурки (обычно не очень много)  
+            MINIFIG_MAP,
+            timestamp: Date.now()
+        };
+        
+        const jsonString = JSON.stringify(mainData);
+        const sizeKB = Math.round(jsonString.length / 1024);
+        const sizeMB = Math.round(sizeKB / 1024 * 100) / 100;
+        
+        console.log('📏 Размер данных для сохранения:', sizeKB, 'КБ (', sizeMB, 'МБ)');
+        
+        if (sizeKB > 5000) { // Ограничиваем 5 МБ для надежности
+            console.warn('⚠️ Данные слишком велики для sessionStorage:', sizeKB, 'КБ');
+            return false;
+        }
+        
+        sessionStorage.setItem('legoMainData', jsonString);
+        console.log('✅ Основные данные сохранены в sessionStorage:', sizeKB, 'КБ');
+        console.log('📊 Сохранено:', {
+            parts: Object.keys(mainData.PART_MAP).length,
+            sets: Object.keys(mainData.SET_MAP).length,
+            minifigs: Object.keys(mainData.MINIFIG_MAP).length
+        });
+        return true;
+    } catch (error) {
+        console.error('❌ Не удалось сохранить основные данные в sessionStorage:', error);
+        return false;
+    }
+}
+
+// Функция для загрузки метаданных каталога из localStorage
+function loadCatalogData() {
+    try {
+        const savedData = localStorage.getItem('legoCatalogMeta');
+        if (!savedData) {
+            console.log('📭 Нет сохраненных метаданных каталога в localStorage');
+            return false;
+        }
+        
+        const catalogData = JSON.parse(savedData);
+        
+        // Проверяем целостность критичных данных
+        if (!catalogData.COLOR_MAP || !catalogData.THEME_MAP || !catalogData.flatCategories) {
+            console.log('⚠️ Неполные метаданные каталога в localStorage, требуется перезагрузка');
+            return false;
+        }
+        
+        // Проверяем возраст данных (6 часов для метаданных)
+        const dataAge = Date.now() - (catalogData.timestamp || 0);
+        const maxAge = 6 * 60 * 60 * 1000; // 6 часов
+        
+        if (dataAge > maxAge) {
+            console.log('⏰ Метаданные каталога устарели, требуется обновление');
+            return false;
+        }
+        
+        // Загружаем только критичные данные для быстрого старта
+        Object.assign(COLOR_MAP, catalogData.COLOR_MAP);
+        Object.assign(THEME_MAP, catalogData.THEME_MAP);
+        flatCategories.splice(0, flatCategories.length, ...catalogData.flatCategories);
+        
+        console.log('✅ Метаданные каталога загружены из localStorage');
+        console.log('📊 Загружено:', {
+            colors: Object.keys(COLOR_MAP).length,
+            themes: Object.keys(THEME_MAP).length,
+            categories: flatCategories.length,
+            expectedParts: catalogData.partsCount,
+            expectedSets: catalogData.setsCount,
+            expectedMinifigs: catalogData.minifigsCount,
+            age: Math.round(dataAge / (1000 * 60)) + ' минут'
+        });
+        
+        // Возвращаем true, так как метаданные успешно загружены
+        return true;
+    } catch (error) {
+        console.error('❌ Ошибка загрузки метаданных каталога:', error);
+        return false;
+    }
+}
+
+// Функция для загрузки основных данных из sessionStorage
+function loadMainDataFromSession() {
+    try {
+        console.log('🔍 Проверяем sessionStorage для основных данных...');
+        const savedData = sessionStorage.getItem('legoMainData');
+        if (!savedData) {
+            console.log('📭 Нет основных данных в sessionStorage');
+            return false;
+        }
+        
+        console.log('📦 Найдены данные в sessionStorage, размер:', Math.round(savedData.length / 1024), 'КБ');
+        
+        const mainData = JSON.parse(savedData);
+        
+        // Проверяем целостность данных
+        if (!mainData.PART_MAP || !mainData.SET_MAP || !mainData.MINIFIG_MAP) {
+            console.log('⚠️ Неполные основные данные в sessionStorage');
+            return false;
+        }
+        
+        // Проверяем возраст данных (1 час для sessionStorage)
+        const dataAge = Date.now() - (mainData.timestamp || 0);
+        const maxAge = 60 * 60 * 1000; // 1 час
+        
+        if (dataAge > maxAge) {
+            console.log('⏰ Основные данные в sessionStorage устарели');
+            return false;
+        }
+        
+        // Загружаем данные в глобальные переменные
+        Object.assign(PART_MAP, mainData.PART_MAP);
+        Object.assign(SET_MAP, mainData.SET_MAP);
+        Object.assign(MINIFIG_MAP, mainData.MINIFIG_MAP);
+        
+        console.log('✅ Основные данные загружены из sessionStorage');
+        console.log('📊 Загружено:', {
+            parts: Object.keys(PART_MAP).length,
+            sets: Object.keys(SET_MAP).length,
+            minifigs: Object.keys(MINIFIG_MAP).length,
+            age: Math.round(dataAge / (1000 * 60)) + ' минут'
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Ошибка загрузки основных данных из sessionStorage:', error);
+        return false;
+    }
+}
+
+// Функция для сохранения основных данных в IndexedDB
+async function saveMainDataToIndexedDB() {
+    try {
+        console.log('💾 Сохранение основных данных в IndexedDB...');
+        
+        const mainData = {
+            PART_MAP,
+            SET_MAP,
+            MINIFIG_MAP,
+            COLOR_MAP,
+            THEME_MAP,
+            flatCategories
+        };
+        
+        // Подсчитываем размер данных
+        const jsonString = JSON.stringify(mainData);
+        const sizeMB = Math.round(jsonString.length / (1024 * 1024) * 100) / 100;
+        
+        console.log('📏 Размер данных для IndexedDB:', sizeMB, 'МБ');
+        
+        const success = await saveToIndexedDB('mainCatalogData', mainData);
+        
+        if (success) {
+            console.log('✅ Основные данные сохранены в IndexedDB:', sizeMB, 'МБ');
+            console.log('📊 Сохранено:', {
+                parts: Object.keys(mainData.PART_MAP).length,
+                sets: Object.keys(mainData.SET_MAP).length,
+                minifigs: Object.keys(mainData.MINIFIG_MAP).length,
+                colors: Object.keys(mainData.COLOR_MAP).length,
+                themes: Object.keys(mainData.THEME_MAP).length,
+                categories: mainData.flatCategories.length
+            });
+        }
+        
+        return success;
+    } catch (error) {
+        console.error('❌ Ошибка сохранения в IndexedDB:', error);
+        return false;
+    }
+}
+
+// Функция для загрузки основных данных из IndexedDB
+async function loadMainDataFromIndexedDB() {
+    try {
+        console.log('🔍 Проверяем IndexedDB для основных данных...');
+        
+        const mainData = await loadFromIndexedDB('mainCatalogData', 6 * 60 * 60 * 1000); // 6 часов
+        
+        if (!mainData) {
+            console.log('📭 Нет данных в IndexedDB');
+            return false;
+        }
+        
+        console.log('📦 Данные найдены в IndexedDB, проверяем целостность...');
+        
+        // Проверяем целостность данных с более подробными логами
+        const checks = {
+            PART_MAP: mainData.PART_MAP && Object.keys(mainData.PART_MAP).length > 0,
+            SET_MAP: mainData.SET_MAP && Object.keys(mainData.SET_MAP).length > 0,
+            MINIFIG_MAP: mainData.MINIFIG_MAP && Object.keys(mainData.MINIFIG_MAP).length > 0,
+            COLOR_MAP: mainData.COLOR_MAP && Object.keys(mainData.COLOR_MAP).length > 0,
+            THEME_MAP: mainData.THEME_MAP && Object.keys(mainData.THEME_MAP).length > 0,
+            flatCategories: mainData.flatCategories && mainData.flatCategories.length > 0
+        };
+        
+        console.log('🔍 Проверка данных:', checks);
+        
+        const missingData = Object.entries(checks).filter(([key, valid]) => !valid).map(([key]) => key);
+        
+        if (missingData.length > 0) {
+            console.log('⚠️ Неполные данные в IndexedDB, отсутствуют:', missingData);
+            return false;
+        }
+        
+        // Очищаем существующие данные перед загрузкой новых
+        Object.keys(PART_MAP).forEach(key => delete PART_MAP[key]);
+        Object.keys(SET_MAP).forEach(key => delete SET_MAP[key]);
+        Object.keys(MINIFIG_MAP).forEach(key => delete MINIFIG_MAP[key]);
+        Object.keys(COLOR_MAP).forEach(key => delete COLOR_MAP[key]);
+        Object.keys(THEME_MAP).forEach(key => delete THEME_MAP[key]);
+        flatCategories.length = 0;
+        
+        // Загружаем данные в глобальные переменные
+        Object.assign(PART_MAP, mainData.PART_MAP);
+        Object.assign(SET_MAP, mainData.SET_MAP);
+        Object.assign(MINIFIG_MAP, mainData.MINIFIG_MAP);
+        Object.assign(COLOR_MAP, mainData.COLOR_MAP);
+        Object.assign(THEME_MAP, mainData.THEME_MAP);
+        flatCategories.push(...mainData.flatCategories);
+        
+        console.log('✅ Основные данные загружены из IndexedDB');
+        console.log('📊 Загружено:', {
+            parts: Object.keys(PART_MAP).length,
+            sets: Object.keys(SET_MAP).length,
+            minifigs: Object.keys(MINIFIG_MAP).length,
+            colors: Object.keys(COLOR_MAP).length,
+            themes: Object.keys(THEME_MAP).length,
+            categories: flatCategories.length
+        });
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Ошибка загрузки из IndexedDB:', error);
+        return false;
+    }
+}
+
+// IndexedDB для кеширования больших данных
+const DB_NAME = 'LegoCatalogDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'catalogData';
+
+// Функция для открытия IndexedDB
+function openIndexedDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => {
+            console.error('❌ Ошибка открытия IndexedDB:', request.error);
+            reject(request.error);
+        };
+        
+        request.onsuccess = () => {
+            resolve(request.result);
+        };
+        
+        request.onupgradeneeded = (event) => {
+            const db = event.target.result;
+            
+            // Создаем хранилище если его нет
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                store.createIndex('timestamp', 'timestamp', { unique: false });
+                console.log('🗃️ Создано хранилище IndexedDB');
+            }
+        };
+    });
+}
+
+// Функция для сохранения данных в IndexedDB
+async function saveToIndexedDB(key, data) {
+    try {
+        const db = await openIndexedDB();
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        
+        const record = {
+            id: key,
+            data: data,
+            timestamp: Date.now()
+        };
+        
+        const request = store.put(record);
+        
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+                console.log('✅ Данные сохранены в IndexedDB:', key);
+                resolve(true);
+            };
+            
+            request.onerror = () => {
+                console.error('❌ Ошибка сохранения в IndexedDB:', request.error);
+                reject(request.error);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Ошибка при работе с IndexedDB:', error);
+        return false;
+    }
+}
+
+// Функция для загрузки данных из IndexedDB
+async function loadFromIndexedDB(key, maxAge = 24 * 60 * 60 * 1000) {
+    try {
+        const db = await openIndexedDB();
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.get(key);
+        
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+                const result = request.result;
+                
+                if (!result) {
+                    console.log('📭 Нет данных в IndexedDB для ключа:', key);
+                    resolve(null);
+                    return;
+                }
+                
+                // Проверяем возраст данных
+                const age = Date.now() - result.timestamp;
+                if (age > maxAge) {
+                    console.log('⏰ Данные в IndexedDB устарели:', key, Math.round(age / (1000 * 60)), 'минут');
+                    resolve(null);
+                    return;
+                }
+                
+                console.log('✅ Данные загружены из IndexedDB:', key, Math.round(age / (1000 * 60)), 'минут назад');
+                resolve(result.data);
+            };
+            
+            request.onerror = () => {
+                console.error('❌ Ошибка загрузки из IndexedDB:', request.error);
+                reject(request.error);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Ошибка при работе с IndexedDB:', error);
+        return null;
+    }
+}
+
+// Функция для очистки IndexedDB
+async function clearIndexedDB() {
+    try {
+        const db = await openIndexedDB();
+        const transaction = db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.clear();
+        
+        return new Promise((resolve, reject) => {
+            request.onsuccess = () => {
+                console.log('🧹 IndexedDB очищен');
+                resolve(true);
+            };
+            
+            request.onerror = () => {
+                console.error('❌ Ошибка очистки IndexedDB:', request.error);
+                reject(request.error);
+            };
+        });
+    } catch (error) {
+        console.error('❌ Ошибка при очистке IndexedDB:', error);
+        return false;
+    }
+}
+
+// Функция для очистки всех кешей (для отладки)
+window.clearAllCaches = async function() {
+    console.log('🧹 Очистка всех кешей...');
+    localStorage.removeItem('legoCatalogMeta');
+    sessionStorage.removeItem('legoMainData');
+    sessionStorage.removeItem('csvDataLoaded');
+    await clearIndexedDB();
+    console.log('✅ Все кеши очищены. Обновите страницу для полной перезагрузки.');
+};
+
+// Функция для проверки состояния кешей (для отладки)
+window.checkCacheStatus = function() {
+    console.log('📊 === СОСТОЯНИЕ КЕШЕЙ ===');
+    console.log('localStorage legoCatalogMeta:', localStorage.getItem('legoCatalogMeta') ? 'есть' : 'нет');
+    console.log('sessionStorage legoMainData:', sessionStorage.getItem('legoMainData') ? 'есть' : 'нет');
+    console.log('sessionStorage csvDataLoaded:', sessionStorage.getItem('csvDataLoaded'));
+    console.log('PART_MAP размер:', Object.keys(PART_MAP).length);
+    console.log('SET_MAP размер:', Object.keys(SET_MAP).length);
+    console.log('MINIFIG_MAP размер:', Object.keys(MINIFIG_MAP).length);
+    console.log('COLOR_MAP размер:', Object.keys(COLOR_MAP).length);
+    console.log('=== КОНЕЦ ===');
+};
 
 // Функции аналитики и определения редкости деталей
 // Новая система определения редкости на основе анализа коллекции
@@ -16962,6 +17405,54 @@ function getMinifigCount() {
     }
 
 function renderSidebar() {
+    console.log('🔧 renderSidebar вызвана');
+    console.log('🔧 S.subView:', S.subView);
+    console.log('🔧 S.catTree:', S.catTree ? `${S.catTree.length} элементов` : 'нет');
+    console.log('🔧 S.themeTree:', S.themeTree ? `${S.themeTree.length} элементов` : 'нет');
+    
+    // Проверяем и пересоздаем деревья, если они пустые, но данные есть
+    if ((!S.catTree || S.catTree.length === 0) && flatCategories && flatCategories.length > 0) {
+        console.log('🔧 Пересоздаем S.catTree из flatCategories...');
+        S.catTree = buildCategoryTree(flatCategories);
+        console.log('✅ S.catTree пересоздан:', S.catTree.length, 'элементов');
+    }
+    
+    if ((!S.themeTree || S.themeTree.length === 0) && THEME_MAP && Object.keys(THEME_MAP).length > 0) {
+        console.log('🔧 Пересоздаем S.themeTree из THEME_MAP...');
+        const themeMap = { ...THEME_MAP };
+        const rootThemes = [];
+        
+        // Сначала добавляем children массив к каждой теме
+        Object.values(themeMap).forEach(theme => {
+            if (!theme.children) {
+                theme.children = [];
+            }
+        });
+        
+        // Затем строим иерархию
+        Object.values(themeMap).forEach(theme => {
+            if (theme.parent_id && themeMap[theme.parent_id]) {
+                themeMap[theme.parent_id].children.push(theme);
+            } else {
+                rootThemes.push(theme);
+            }
+        });
+        
+        // Сортируем темы по имени
+        const sortThemes = (themes) => {
+            themes.sort((a, b) => a.name.localeCompare(b.name, 'en'));
+            themes.forEach(theme => {
+                if (theme.children && theme.children.length > 0) {
+                    sortThemes(theme.children);
+                }
+            });
+        };
+        
+        sortThemes(rootThemes);
+        S.themeTree = rootThemes;
+        console.log('✅ S.themeTree пересоздан:', S.themeTree.length, 'элементов');
+    }
+    
     // Сохраняем позицию прокрутки списка, чтобы избежать подпрыгивания при перерисовке
     const prevScrollTop = sidebarEl.querySelector('#sidebar-scroll-container')?.scrollTop || 0;
     const e = Object.values(S.coll).reduce((e, t) => e + Object.values(t).reduce((e, t) => e + t, 0), 0);
@@ -16986,6 +17477,7 @@ function renderSidebar() {
     if ("sets" === S.subView) {
         d = "Темы";
         let e = S.themeTree;
+        console.log('🔧 Обрабатываем темы, e =', e ? `${e.length} элементов` : 'нет');
         let t = "";
         if ("collection" === S.view || "catalog" === S.view) {
             if ("collection" === S.view) {
@@ -17201,6 +17693,7 @@ function renderSidebar() {
     } else {
         d = "Категории";
         let e = S.catTree;
+        console.log('🔧 Обрабатываем категории, e =', e ? `${e.length} элементов` : 'нет');
         let t = "";
         if ("collection" === S.view || "catalog" === S.view) {
             if ("collection" === S.view) {
@@ -21143,9 +21636,6 @@ function renderSettingsModal() {
                                 <div class="flex gap-3">
                                     <button data-action="clear-app-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
                                         Очистить кэш
-                                    </button>
-                                    <button data-action="refresh-csv-cache" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white shadow-lg hover:shadow-gray-500/25">
-                                        Обновить кэш CSV
                                     </button>
                                 </div>
                                 <div id="cache-usage" class="text-xs text-gray-400"></div>
@@ -28276,19 +28766,6 @@ document.addEventListener("click", async e => {
                                             updateSettingsModalStatus(`Ошибка очистки\nкэша: ${error.message}`, "error");
                 }
                 break;
-            case "refresh-csv-cache":
-                updateSettingsModalStatus("Обновление CSV кэша", "info");
-                try {
-                    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-                        navigator.serviceWorker.controller.postMessage({ type: 'REFRESH_CSV_CACHE' });
-                        updateSettingsModalStatus("CSV кэш обновляется...", "info");
-                    } else {
-                        updateSettingsModalStatus("Сервис-воркер не активен", "error");
-                    }
-                } catch (error) {
-                    updateSettingsModalStatus(`Ошибка обновления CSV: ${error.message}`, "error");
-                }
-                break;
             case "clear-camera-settings":
                 updateSettingsModalStatus("Очистка настроек\nкамеры", "info");
                 try {
@@ -29431,6 +29908,196 @@ async function initializeApp() {
     updateUI();
 
     try {
+        // Отладочная информация о текущем состоянии кешей
+        console.log('🔍 === ОТЛАДКА КЕШИРОВАНИЯ ===');
+        console.log('localStorage legoCatalogMeta:', localStorage.getItem('legoCatalogMeta') ? 'есть' : 'нет');
+        console.log('sessionStorage legoMainData:', sessionStorage.getItem('legoMainData') ? 'есть' : 'нет');
+        console.log('sessionStorage csvDataLoaded:', sessionStorage.getItem('csvDataLoaded'));
+        console.log('IndexedDB поддержка:', 'indexedDB' in window ? 'есть' : 'нет');
+        console.log('PART_MAP размер:', Object.keys(PART_MAP).length);
+        console.log('SET_MAP размер:', Object.keys(SET_MAP).length);
+        console.log('MINIFIG_MAP размер:', Object.keys(MINIFIG_MAP).length);
+        console.log('COLOR_MAP размер:', Object.keys(COLOR_MAP).length);
+        console.log('THEME_MAP размер:', Object.keys(THEME_MAP).length);
+        console.log('flatCategories размер:', flatCategories.length);
+        console.log('=== КОНЕЦ ОТЛАДКИ ===');
+        
+        // Проверяем IndexedDB на наличие данных
+        try {
+            const testData = await loadFromIndexedDB('mainCatalogData', 24 * 60 * 60 * 1000);
+            console.log('🔍 Тест IndexedDB:', testData ? 'данные найдены' : 'данные не найдены');
+            if (testData) {
+                console.log('📊 Размеры в IndexedDB:', {
+                    parts: testData.PART_MAP ? Object.keys(testData.PART_MAP).length : 0,
+                    sets: testData.SET_MAP ? Object.keys(testData.SET_MAP).length : 0,
+                    minifigs: testData.MINIFIG_MAP ? Object.keys(testData.MINIFIG_MAP).length : 0,
+                    colors: testData.COLOR_MAP ? Object.keys(testData.COLOR_MAP).length : 0,
+                    themes: testData.THEME_MAP ? Object.keys(testData.THEME_MAP).length : 0,
+                    categories: testData.flatCategories ? testData.flatCategories.length : 0
+                });
+            }
+        } catch (error) {
+            console.log('🔍 Ошибка теста IndexedDB:', error);
+        }
+        
+        // Сначала пытаемся загрузить критичные метаданные из localStorage
+        const hasMetadata = loadCatalogData();
+        
+        if (hasMetadata) {
+            console.log('✅ Критичные данные предзагружены, UI готов быстрее');
+            updateLoadingStatus("Предзагрузка метаданных", 20, "Критичные данные загружены");
+        }
+        
+        // Пытаемся загрузить основные данные из IndexedDB
+        const mainDataLoaded = await loadMainDataFromIndexedDB();
+        
+        if (mainDataLoaded) {
+            console.log('✅ Основные данные загружены из IndexedDB, пропускаем загрузку CSV');
+            
+            // Быстро обновляем UI без загрузки
+            updateLoadingStatus("Данные загружены из кеша", 100, "Используем сохраненные данные");
+            
+            // Сразу завершаем загрузку для кешированных данных
+            S.sidebarLoading = false;
+            
+            // Принудительно обновляем UI с загруженными данными
+            updateUI();
+            
+            // Обновляем боковую панель с категориями и темами
+            try {
+                console.log('🔍 Отладка данных перед обновлением боковой панели:');
+                console.log('📊 flatCategories:', flatCategories.length, 'элементов');
+                console.log('📊 THEME_MAP:', Object.keys(THEME_MAP).length, 'элементов');
+                console.log('📊 S.catTree:', S.catTree ? 'есть' : 'нет');
+                console.log('📊 S.themeTree:', S.themeTree ? 'есть' : 'нет');
+                
+                // Проверяем, инициализированы ли деревья категорий и тем
+                if (!S.catTree && flatCategories.length > 0) {
+                    console.log('🔧 Инициализируем S.catTree из flatCategories...');
+                    S.catTree = buildCategoryTree(flatCategories);
+                    console.log('✅ S.catTree инициализирован:', S.catTree.length, 'категорий');
+                }
+                
+                // Инициализируем другие необходимые переменные для боковой панели
+                if (!S.expCats) S.expCats = new Set();
+                if (!S.expThemes) S.expThemes = new Set();
+                if (!S.favCatIds) S.favCatIds = new Set();
+                if (!S.favThemeIds) S.favThemeIds = new Set();
+                if (S.sidebarFavsVisible === undefined) S.sidebarFavsVisible = false;
+                
+                // Инициализируем основные переменные состояния
+                if (!S.view) S.view = 'catalog';
+                if (!S.subView) S.subView = 'parts';
+                if (S.sidebarLoading === undefined) S.sidebarLoading = false;
+                if (S.sidebarCompact === undefined) S.sidebarCompact = false;
+                
+                if (!S.themeTree && Object.keys(THEME_MAP).length > 0) {
+                    console.log('🔧 Инициализируем S.themeTree из THEME_MAP...');
+                    
+                    // Строим дерево тем из THEME_MAP
+                    const themeMap = { ...THEME_MAP };
+                    const rootThemes = [];
+                    
+                    // Сначала добавляем children массив к каждой теме
+                    Object.values(themeMap).forEach(theme => {
+                        if (!theme.children) {
+                            theme.children = [];
+                        }
+                    });
+                    
+                    // Затем строим иерархию
+                    Object.values(themeMap).forEach(theme => {
+                        if (theme.parent_id && themeMap[theme.parent_id]) {
+                            themeMap[theme.parent_id].children.push(theme);
+                        } else {
+                            rootThemes.push(theme);
+                        }
+                    });
+                    
+                    // Сортируем темы по имени
+                    const sortThemes = (themes) => {
+                        themes.sort((a, b) => a.name.localeCompare(b.name, 'en'));
+                        themes.forEach(theme => {
+                            if (theme.children && theme.children.length > 0) {
+                                sortThemes(theme.children);
+                            }
+                        });
+                    };
+                    
+                    sortThemes(rootThemes);
+                    S.themeTree = rootThemes;
+                    console.log('✅ S.themeTree инициализирован:', S.themeTree.length, 'корневых тем');
+                }
+                
+                // Обновляем UI и боковую панель после инициализации данных
+                updateUI();
+                
+                // Принудительно обновляем боковую панель после инициализации данных
+                console.log('🔄 Принудительное обновление renderSidebar после инициализации данных...');
+                renderSidebar();
+                console.log('✅ UI и боковая панель обновлены после загрузки данных');
+                
+                // Добавляем небольшую задержку для проверки результата
+                setTimeout(() => {
+                    try {
+                        // Проверяем, что списки действительно отобразились
+                        const categoryList = document.querySelector('#category-list');
+                        console.log('🔍 Проверка отображения списков:');
+                        console.log('📋 categoryList:', categoryList ? 'найден' : 'не найден');
+                        console.log('📋 Текущий S.subView:', S.subView);
+                        
+                        if (categoryList) {
+                            console.log('📋 Количество элементов в списке:', categoryList.children.length);
+                            console.log('📋 HTML содержимое списка:', categoryList.innerHTML.substring(0, 200) + '...');
+                        }
+                    } catch (error) {
+                        console.error('❌ Ошибка при проверке списков:', error);
+                    }
+                }, 100);
+            } catch (error) {
+                console.log('⚠️ Ошибка обновления боковой панели:', error);
+            }
+            
+            // Обновляем статистику в интерфейсе
+            try {
+                // Обновляем счетчики в кнопках навигации
+                const partsBtn = document.querySelector('[data-view="parts"]');
+                const setsBtn = document.querySelector('[data-view="sets"]');  
+                const minifigsBtn = document.querySelector('[data-view="minifigs"]');
+                
+                if (partsBtn) {
+                    const count = partsBtn.querySelector('.count');
+                    if (count) count.textContent = Object.keys(PART_MAP).length.toLocaleString();
+                }
+                
+                if (setsBtn) {
+                    const count = setsBtn.querySelector('.count');
+                    if (count) count.textContent = Object.keys(SET_MAP).length.toLocaleString();
+                }
+                
+                if (minifigsBtn) {
+                    const count = minifigsBtn.querySelector('.count');
+                    if (count) count.textContent = Object.keys(MINIFIG_MAP).length.toLocaleString();
+                }
+                
+                console.log('✅ Счетчики в UI обновлены');
+            } catch (error) {
+                console.log('⚠️ Ошибка обновления счетчиков:', error);
+            }
+            
+            setTimeout(() => {
+                hideLoadingIndicator();
+                animateButtonsAppearance();
+                setTimeout(() => {
+                    showSidebarHint();
+                }, 1500);
+            }, 500);
+            
+            // ВАЖНО: выходим из функции, чтобы не продолжать загрузку CSV
+            return;
+        }
+        
+        // Если данные не загружены из IndexedDB, загружаем из CSV
         console.log('Starting data loading from CSV...');
         
         // Запускаем мониторинг прогресса для предотвращения зависания
@@ -29446,7 +30113,7 @@ async function initializeApp() {
             }
         }, 5000);
         
-        // Всегда сначала загружаем данные из CSV файлов (быстро, офлайн)
+        // Загружаем данные из CSV файлов только если их нет в памяти
         await loadDataFromCSV();
         
         // Останавливаем мониторинг после завершения загрузки
@@ -29784,6 +30451,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     // Добавляем функции управления кэшем
                     window.clearAppCache = async () => {
                         try {
+                            console.log('🧹 Полная очистка всех кешей...');
+                            
+                            // Очищаем Service Worker кеши
                             const cacheNames = await caches.keys();
                             await Promise.all(
                                 cacheNames.map(cacheName => {
@@ -29793,6 +30463,19 @@ document.addEventListener("DOMContentLoaded", () => {
                                     }
                                 })
                             );
+                            
+                            // Очищаем localStorage
+                            localStorage.removeItem('legoCatalogMeta');
+                            console.log('✅ localStorage очищен');
+                            
+                            // Очищаем sessionStorage
+                            sessionStorage.removeItem('legoMainData');
+                            sessionStorage.removeItem('csvDataLoaded');
+                            console.log('✅ sessionStorage очищен');
+                            
+                            // Очищаем IndexedDB
+                            await clearIndexedDB();
+                            console.log('✅ IndexedDB очищен');
                             
                             // Сбрасываем статистику API при очистке кэша
                             try {
@@ -29811,11 +30494,10 @@ document.addEventListener("DOMContentLoaded", () => {
                                 console.error('Failed to reset API stats:', statsError);
                             }
                             
-                            
-                            console.log('App cache cleared successfully');
+                            console.log('✅ Полная очистка всех кешей завершена');
                             return true;
                         } catch (error) {
-                            console.error('Failed to clear cache:', error);
+                            console.error('❌ Ошибка при очистке кешей:', error);
                             return false;
                         }
                     };
@@ -29963,6 +30645,13 @@ async function loadDataFromCSV() {
         
         // Сохраняем состояние после загрузки CSV
         saveState();
+        
+        // Сохраняем метаданные каталога в localStorage для быстрого старта
+        saveCatalogData();
+        
+        // Отмечаем, что данные загружены в этой сессии
+        sessionStorage.setItem('csvDataLoaded', 'true');
+        console.log('✅ Флаг загрузки данных установлен в sessionStorage');
         
         // Отладка: выводим статистику загруженных данных
         console.log('CSV Data loaded successfully:');
