@@ -7859,7 +7859,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v32';
+const CACHE_NAME = 'lego-catalog-cache-v34';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -29667,13 +29667,103 @@ document.addEventListener("DOMContentLoaded", () => {
                         const newWorker = registration.installing;
                         console.log('Service Worker update found');
                         
-                        newWorker.addEventListener('statechange', () => {
+                        newWorker.addEventListener('statechange', async () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 // Новый Service Worker готов, предлагаем пользователю обновить
                                 console.log('New service worker ready, prompting update');
-                                if (confirm('Доступно обновление приложения. Обновить сейчас?')) {
-                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                    window.location.reload();
+                                if (confirm('Доступно обновление приложения!\n\nЧто произойдет:\n• Автоматическая очистка кэша\n• Обновление до новой версии\n• Перезагрузка страницы\n\nЭто займет несколько секунд.\nОбновить сейчас?')) {
+                                    console.log('🔄 Starting app update with cache clearing...');
+                                    
+                                    try {
+                                        // Показываем индикатор обновления
+                                        const updateIndicator = document.createElement('div');
+                                        updateIndicator.id = 'update-indicator';
+                                        updateIndicator.innerHTML = `
+                                            <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;">
+                                                <div style="background: #1f2937; padding: 2rem; border-radius: 1rem; text-align: center; color: white; max-width: 300px;">
+                                                    <div style="margin-bottom: 1rem; display: flex; justify-content: center;">${I_Refresh('w-12 h-12 text-blue-400 animate-spin')}</div>
+                                                    <div style="font-weight: bold; margin-bottom: 0.5rem;">Обновление приложения</div>
+                                                    <div id="update-status" style="color: #9ca3af; font-size: 0.875rem;">Очистка кэша...</div>
+                                                    <div style="margin-top: 1rem; height: 4px; background: #374151; border-radius: 2px; overflow: hidden;">
+                                                        <div id="update-progress" style="height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s ease;"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        `;
+                                        document.body.appendChild(updateIndicator);
+                                        
+                                        // Обновляем прогресс
+                                        const updateProgress = (width, status) => {
+                                            const progressBar = document.getElementById('update-progress');
+                                            const statusText = document.getElementById('update-status');
+                                            if (progressBar) progressBar.style.width = width + '%';
+                                            if (statusText) statusText.textContent = status;
+                                        };
+                                        
+                                        updateProgress(20, 'Очистка кэша...');
+                                        
+                                        // Сначала очищаем кэш приложения
+                                        console.log('🧹 Clearing app cache before update...');
+                                        const cacheCleared = await window.clearAppCache();
+                                        
+                                        updateProgress(60, 'Кэш очищен, подготовка обновления...');
+                                        
+                                        if (cacheCleared) {
+                                            console.log('✅ Cache cleared successfully, proceeding with update');
+                                        } else {
+                                            console.warn('⚠️ Cache clearing failed, but proceeding with update anyway');
+                                        }
+                                        
+                                        // Затем обновляем Service Worker
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        
+                                        updateProgress(80, 'Применение обновления...');
+                                        
+                                        // Небольшая задержка перед перезагрузкой для завершения очистки кэша
+                                        setTimeout(() => {
+                                            updateProgress(100, 'Перезагрузка...');
+                                            setTimeout(() => {
+                                                window.location.reload();
+                                            }, 300);
+                                        }, 500);
+                                        
+                                    } catch (error) {
+                                        console.error('❌ Error during update process:', error);
+                                        
+                                        // Показываем ошибку в индикаторе, если он существует
+                                        const statusText = document.getElementById('update-status');
+                                        if (statusText) {
+                                            statusText.textContent = 'Ошибка, но обновление продолжается...';
+                                            statusText.style.color = '#f59e0b';
+                                        }
+                                        
+                                        // В случае ошибки всё равно пытаемся обновить
+                                        newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                        setTimeout(() => {
+                                            window.location.reload();
+                                        }, 1000);
+                                    }
+                                } else {
+                                    // Пользователь отклонил обновление, показываем уведомление
+                                    console.log('ℹ️ User declined app update');
+                                    
+                                    // Можно показать небольшое уведомление о том, что обновление доступно
+                                    const updateNotification = document.createElement('div');
+                                    updateNotification.innerHTML = `
+                                        <div style="position: fixed; top: 20px; right: 20px; background: #1f2937; color: white; padding: 1rem; border-radius: 0.5rem; z-index: 9999; max-width: 300px; border-left: 4px solid #3b82f6;">
+                                            <div style="font-weight: bold; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">${I_Refresh('w-4 h-4 text-blue-400')} Обновление доступно</div>
+                                            <div style="font-size: 0.875rem; color: #9ca3af; margin-bottom: 1rem;">Обновление будет предложено при следующем посещении</div>
+                                            <button onclick="this.parentElement.parentElement.remove()" style="background: #374151; color: white; border: none; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; cursor: pointer;">Закрыть</button>
+                                        </div>
+                                    `;
+                                    document.body.appendChild(updateNotification);
+                                    
+                                    // Автоматически скрываем через 10 секунд
+                                    setTimeout(() => {
+                                        if (updateNotification.parentElement) {
+                                            updateNotification.remove();
+                                        }
+                                    }, 10000);
                                 }
                             }
                         });
