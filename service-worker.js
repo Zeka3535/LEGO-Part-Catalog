@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lego-catalog-cache-v35';
+const CACHE_NAME = 'lego-catalog-cache-v36';
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
@@ -138,6 +138,12 @@ self.addEventListener('fetch', event => {
         return;
     }
     
+    // Обрабатываем навигационные запросы (основной HTML)
+    if (event.request.mode === 'navigate' || (event.request.destination === 'document' && event.request.method === 'GET')) {
+        event.respondWith(cacheFirst(event.request));
+        return;
+    }
+    
     // Helpers to detect Rebrickable API calls even when proxied
     const isRebrickableApi = url.hostname === 'rebrickable.com' || urlString.includes('rebrickable.com/api/');
     const isColorsEndpoint = isRebrickableApi && urlString.includes('/api/v3/lego/colors');
@@ -170,8 +176,8 @@ self.addEventListener('fetch', event => {
     } else if (url.pathname.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i)) {
         // Other images: cache first with aggressive caching
         event.respondWith(cacheFirst(event.request));
-    } else if (url.pathname.match(/\.(css|js|html)$/)) {
-        // Static assets: cache first
+    } else if (url.pathname.match(/\.(css|js|html)$/) || url.pathname === '/' || url.pathname === './') {
+        // Static assets including HTML and root path: cache first
         event.respondWith(cacheFirst(event.request));
     } else if (url.hostname === 'cdn.rebrickable.com') {
         // External images: cache first with network fallback
