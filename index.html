@@ -3482,11 +3482,28 @@ body.tab-switching button[data-view] {
 }
 */
 
-/* Анимация для изменения темы (светлая/темная) - ОПТИМИЗИРОВАННАЯ */
+    /* Анимация для изменения темы (светлая/темная) - ОПТИМИЗИРОВАННАЯ */
 .theme-switch .part-card,
 .theme-switch .set-card,
 .theme-switch .minifig-card {
     animation: themeSwitch 0.3s ease-out forwards;
+}
+
+/* Подложка для раскрывающихся списков */
+.sidebar-dropdown {
+    background: rgba(55, 65, 81, 0.3); /* bg-gray-700/30 */
+    border-radius: 12px;
+    margin: 4px 0;
+    padding: 2px;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(75, 85, 99, 0.2); /* border-gray-600/20 */
+}
+
+.sidebar-dropdown ul {
+    background: rgba(31, 41, 55, 0.4); /* bg-gray-800/40 */
+    border-radius: 8px;
+    padding: 4px;
+    margin: 0;
 }
 
 /*
@@ -14584,45 +14601,9 @@ async function fetchSets() {
         results = searchInCSVData(S.q, 'sets');
         } else if (S.selThemeId) {
             // Фильтруем по теме из данных CSV
-            const allSets = Object.values(SET_MAP);
-            
-            // Получаем название темы по ID
-            const selectedTheme = THEME_MAP[S.selThemeId];
-            const themeName = selectedTheme?.name || 'Unknown Theme';
-            
-            // Ищем все темы с таким же названием (включая подтемы)
-            
-            // Находим все темы с таким же названием
-            const themesWithSameName = Object.entries(THEME_MAP).filter(([id, theme]) => 
-                theme.name && theme.name === themeName
+            results = Object.values(SET_MAP).filter(set => 
+                set.theme_id === S.selThemeId
             );
-            
-            if (themesWithSameName.length > 1) {
-                
-                // Получаем ID всех тем с таким же названием
-                const themeIds = themesWithSameName.map(([id]) => parseInt(id, 10));
-                
-                // Фильтруем наборы по всем темам с таким же названием
-                results = allSets.filter(set => {
-                    const matches = themeIds.includes(set.theme_id);
-                    if (matches) {
-                    }
-                    return matches;
-                });
-                
-                // Показываем статистику по темам
-                themesWithSameName.forEach(([themeId, theme]) => {
-                    const setsInTheme = results.filter(set => set.theme_id === parseInt(themeId, 10));
-                });
-            } else {
-                // Если только одна тема с таким названием, фильтруем только по выбранной теме
-                results = allSets.filter(set => {
-                    const matches = set.theme_id === S.selThemeId;
-                    if (matches) {
-                    }
-                    return matches;
-                });
-            }
             
         } else {
                     // Получаем все наборы из CSV
@@ -16976,7 +16957,7 @@ function renderSidebar() {
                 if (!e) return "";
                 const o = S.expThemes.has(e.id),
                     a = ("catalog" === S.view && S.selThemeId === e.id || "collection" === S.view && S.selCollThemeId === e.id) ? "bg-blue-600/80 text-white" : "text-gray-400 hover:bg-gray-700/50 hover:text-gray-200",
-                    i = Array.isArray(e.children) && e.children.length > 0 ? `<ul class="space-y-1 ${o?"":"hidden"}">${l(e.children,t+1)}</ul>` : "",
+                    i = Array.isArray(e.children) && e.children.length > 0 ? `<div class="sidebar-dropdown ${o?"":"hidden"}"><ul class="space-y-1">${l(e.children,t+1)}</ul></div>` : "",
                     n = S.favThemeIds.has(e.id),
                     r = n ? "text-red-400 opacity-100" : "text-gray-500 lg:opacity-0 lg:group-hover:opacity-100";
                 const setCount = getThemeSetCount(e.id);
@@ -17217,9 +17198,11 @@ function renderSidebar() {
                                     ${I_Chev(`w-5 h-5 text-gray-400 transform transition-transform duration-200 ${t?"rotate-180":""}`)}
                                   </div>
                               </button>
-                              <ul class="space-y-1 ${t?"":"hidden"}">
-                                  ${o}
-                              </ul>
+                              <div class="sidebar-dropdown ${t?"":"hidden"}">
+                                  <ul class="space-y-1">
+                                      ${o}
+                                  </ul>
+                              </div>
                           </li>
                       `
                 }).join("")
@@ -17281,9 +17264,11 @@ function renderSidebar() {
                             ${I_Chev(`w-5 h-5 text-gray-400 transform transition-transform duration-200 ${t?"rotate-180":""}`)}
                           </div>
                       </button>
-                      <ul class="space-y-1 ${t?"":"hidden"}">
-                          ${o}
-                      </ul>
+                      <div class="sidebar-dropdown ${t?"":"hidden"}">
+                          <ul class="space-y-1">
+                              ${o}
+                          </ul>
+                      </div>
                   </li>
               `
         }).join("")
@@ -29970,6 +29955,37 @@ async function loadCategoriesFromCSV() {
     }
 }
 
+// Функция для исправления иерархии тем
+function fixThemeHierarchy(themeMap) {
+    // Исправляем неправильную иерархию: основные темы не должны быть под Advent
+    // Advent должен содержать только календари, а не основные темы
+    
+    // Список основных тем, которые неправильно находятся под Advent (207)
+    const mainThemesUnderAdvent = [208, 209, 210, 211, 212, 213, 214, 215, 216, 710, 751, 780]; 
+    // City, Star Wars, Belville, Castle, Classic Basic, Clikits, Creator, Pirates, Friends, Harry Potter, Marvel, Disney
+    
+    // Перемещаем основные темы из-под Advent в корень (делаем их корневыми темами)
+    mainThemesUnderAdvent.forEach(themeId => {
+        if (themeMap[themeId] && themeMap[themeId].parent_id === 207) {
+            themeMap[themeId].parent_id = null; // Делаем корневой темой
+        }
+    });
+    
+    // Создаем правильную структуру для Advent под Seasonal (206)
+    if (themeMap[207]) {
+        themeMap[207].parent_id = 206; // Seasonal
+        themeMap[207].name = 'Advent Calendars';
+    }
+    
+    // Добавляем календари под Advent
+    const calendarThemes = [227, 228, 229, 230, 231, 232]; // Christmas, Creator, Easter, Halloween, Thanksgiving, Valentine
+    calendarThemes.forEach(themeId => {
+        if (themeMap[themeId]) {
+            themeMap[themeId].parent_id = 207; // Advent Calendars
+        }
+    });
+}
+
 // Функция для загрузки тем из CSV
 async function loadThemesFromCSV() {
     try {
@@ -29994,6 +30010,9 @@ async function loadThemesFromCSV() {
                 }
             }
         });
+        
+        // Исправляем иерархию тем
+        fixThemeHierarchy(themeMap);
         
         // Строим дерево тем
         const rootThemes = [];
@@ -30053,6 +30072,18 @@ async function loadPartsFromCSV() {
         throw error;
     }
 }
+
+// Функция для переназначения theme_id адвент-календарей
+function fixAdventCalendarThemes() {
+    // Находим все наборы-календари и переназначаем их theme_id на 207 (Advent Calendars)
+    Object.values(SET_MAP).forEach(set => {
+        if (set.name && set.name.toLowerCase().includes('advent calendar')) {
+            set.original_theme_id = set.theme_id; // Сохраняем оригинальную тему
+            set.theme_id = 207; // Переназначаем на Advent Calendars
+        }
+    });
+}
+
 // Функция для загрузки наборов из CSV
 async function loadSetsFromCSV() {
     try {
@@ -30096,6 +30127,8 @@ async function loadSetsFromCSV() {
             }
         });
         
+        // Исправляем theme_id для адвент-календарей
+        fixAdventCalendarThemes();
 
     } catch (error) {
         console.error('Failed to load sets from CSV:', error);
