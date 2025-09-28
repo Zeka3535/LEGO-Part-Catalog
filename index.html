@@ -15867,7 +15867,7 @@ function updatePartVariantDots() {
         const idx = Math.max(0, variants.findIndex(v => v?.id === S.selPartId));
         const hasMany = total > 1;
         const parentContainer = dotsWrap.parentElement;
-        if (!hasMany) { 
+        if (!hasMany || total > 48) { 
             dotsWrap.innerHTML = ''; 
             dotsWrap.style.opacity = '0'; 
             dotsWrap.style.height = '12px';
