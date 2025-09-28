@@ -10431,6 +10431,9 @@ function setupRemoteStorageEventHandlers() {
         
         // Загружаем список версий при готовности
         debouncedLoadBackupsList(true, 1000);
+        
+        // Запускаем периодическое обновление списка версий
+        startPeriodicVersionsRefresh();
     });
     
     cloudStorageClient.on('connected', () => {
@@ -10459,12 +10462,18 @@ function setupRemoteStorageEventHandlers() {
         
         // Загружаем список версий при подключении
         debouncedLoadBackupsList(true, 1000);
+        
+        // Запускаем периодическое обновление списка версий
+        startPeriodicVersionsRefresh();
     });
     
     cloudStorageClient.on('disconnected', () => {
         console.log('⚠️ RemoteStorage disconnected');
         cloudStorageConnected = false;
         isReconnecting = false; // Сбрасываем флаг переподключения
+        
+        // Останавливаем периодическое обновление списка версий
+        stopPeriodicVersionsRefresh();
         
         // Сохраняем состояние отключения
         saveRemoteStorageState(false);
@@ -10480,6 +10489,9 @@ function setupRemoteStorageEventHandlers() {
         console.error('❌ RemoteStorage error:', error);
         cloudStorageConnected = false;
         isReconnecting = false; // Сбрасываем флаг переподключения при ошибке
+        
+        // Останавливаем периодическое обновление списка версий
+        stopPeriodicVersionsRefresh();
         
         // Обрабатываем разные типы ошибок
         let errorMessage = 'Ошибка подключения';
@@ -10497,12 +10509,42 @@ function setupRemoteStorageEventHandlers() {
         // Обновляем UI при ошибке
         updateCloudStorageUI();
     });
+    
+    // Добавляем обработчик события синхронизации (если поддерживается)
+    if (typeof cloudStorageClient.on === 'function') {
+        try {
+            cloudStorageClient.on('sync-done', () => {
+                console.log('🔄 RemoteStorage sync completed');
+                // Обновляем список версий после синхронизации
+                if (S.view === 'tools' && S.toolSubView === 'cloud-backup') {
+                    debouncedLoadBackupsList(true, 500);
+                    updateCloudBackupInfo();
+                }
+            });
+            
+            // Обработчик изменений в облачном хранилище
+            cloudStorageClient.on('change', (event) => {
+                console.log('🔄 RemoteStorage change detected:', event);
+                // Проверяем, касается ли изменение наших файлов резервных копий
+                if (event && event.path && event.path.includes('lego-catalog')) {
+                    console.log('📝 Backup files changed, refreshing list');
+                    // Обновляем список версий при изменениях
+                    if (S.view === 'tools' && S.toolSubView === 'cloud-backup') {
+                        debouncedLoadBackupsList(true, 1000);
+                        updateCloudBackupInfo();
+                    }
+                }
+            });
+        } catch (error) {
+            console.log('ℹ️ Some RemoteStorage events not supported:', error.message);
+        }
+    }
 }
 
 // Кэш для списка версий
 let backupsListCache = null;
 let backupsListCacheTime = 0;
-const BACKUPS_CACHE_DURATION = 30000; // 30 секунд (увеличено с 10)
+const BACKUPS_CACHE_DURATION = 15000; // 15 секунд (уменьшено для более частого обновления)
 
 // Защита от множественных одновременных вызовов
 let isLoadingBackupsList = false;
@@ -10513,6 +10555,10 @@ let lastBackupFreshnessCheck = 0;
 const BACKUP_FRESHNESS_CHECK_INTERVAL = 30000; // 30 секунд
 let checkBackupFreshnessTimeout = null;
 
+// Периодическое обновление списка версий
+let periodicVersionsRefreshInterval = null;
+const VERSIONS_REFRESH_INTERVAL = 60000; // 60 секунд
+
 // Debounce функция для loadBackupsList
 function debouncedLoadBackupsList(forceRefresh = false, delay = 500) {
     if (loadBackupsListTimeout) {
@@ -10522,6 +10568,35 @@ function debouncedLoadBackupsList(forceRefresh = false, delay = 500) {
     loadBackupsListTimeout = setTimeout(() => {
         loadBackupsList(forceRefresh);
     }, delay);
+}
+
+// Функция для запуска периодического обновления списка версий
+function startPeriodicVersionsRefresh() {
+    // Останавливаем предыдущий интервал, если он есть
+    stopPeriodicVersionsRefresh();
+    
+    // Запускаем новый интервал только если подключены к облачному хранилищу
+    if (cloudStorageConnected && cloudStorageClient) {
+        periodicVersionsRefreshInterval = setInterval(() => {
+            // Обновляем только если пользователь на вкладке облачного хранилища
+            if (S.view === 'tools' && S.toolSubView === 'cloud-backup') {
+                console.log('🔄 Periodic versions refresh triggered');
+                debouncedLoadBackupsList(true, 100);
+                updateCloudBackupInfo();
+            }
+        }, VERSIONS_REFRESH_INTERVAL);
+        
+        console.log('✅ Started periodic versions refresh');
+    }
+}
+
+// Функция для остановки периодического обновления списка версий
+function stopPeriodicVersionsRefresh() {
+    if (periodicVersionsRefreshInterval) {
+        clearInterval(periodicVersionsRefreshInterval);
+        periodicVersionsRefreshInterval = null;
+        console.log('⏹️ Stopped periodic versions refresh');
+    }
 }
 
 // Debounce функция для checkBackupFreshness
@@ -10819,15 +10894,43 @@ async function loadBackupsList(forceRefresh = false) {
         console.error('❌ Error loading backups list:', error);
         const backupsList = document.getElementById('backups-list');
         if (backupsList) {
+            // Определяем тип ошибки для более информативного сообщения
+            let errorTitle = 'Ошибка загрузки списка версий';
+            let errorDetails = 'Попробуйте обновить или переподключиться';
+            
+            if (error.name === 'UnauthorizedError' || error.message.includes('401')) {
+                errorTitle = 'Ошибка авторизации';
+                errorDetails = 'Переподключитесь к облачному хранилищу';
+            } else if (error.name === 'NetworkError' || error.message.includes('network')) {
+                errorTitle = 'Ошибка сети';
+                errorDetails = 'Проверьте подключение к интернету';
+            } else if (error.message.includes('timeout')) {
+                errorTitle = 'Превышено время ожидания';
+                errorDetails = 'Попробуйте еще раз через несколько секунд';
+            }
+            
             backupsList.innerHTML = `
                 <div class="text-center py-8">
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-red-500/20 rounded-full mb-4">
                         <span class="text-red-400">${I_X('w-8 h-8')}</span>
                     </div>
-                    <p class="text-red-400 text-sm font-medium">Ошибка загрузки списка версий</p>
-                    <p class="text-gray-500 text-xs mt-1">Попробуйте обновить или переподключиться</p>
+                    <p class="text-red-400 text-sm font-medium">${errorTitle}</p>
+                    <p class="text-gray-500 text-xs mt-1">${errorDetails}</p>
+                    <button 
+                        id="retry-load-backups" 
+                        class="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-[18px] transition-colors"
+                        onclick="debouncedLoadBackupsList(true, 100)"
+                    >
+                        Повторить попытку
+                    </button>
                 </div>
             `;
+        }
+        
+        // Если ошибка авторизации, останавливаем периодическое обновление
+        if (error.name === 'UnauthorizedError' || error.message.includes('401')) {
+            cloudStorageConnected = false;
+            stopPeriodicVersionsRefresh();
         }
     } finally {
         // Сбрасываем флаг загрузки
@@ -26518,6 +26621,12 @@ document.addEventListener("click", async e => {
             window.stopTipRotation();
         }
         
+        // Останавливаем периодическое обновление при уходе с вкладки инструментов
+        if (S.view === 'tools' && S.toolSubView === 'cloud-backup' && e !== 'tools') {
+            console.log('⏹️ Stopping periodic versions refresh - leaving tools tab');
+            stopPeriodicVersionsRefresh();
+        }
+        
         // Сбрасываем выбранную минифигурку при переключении на другие вкладки
         if (e !== 'sets') {
             S.selFigNum = null;
@@ -26604,6 +26713,12 @@ document.addEventListener("click", async e => {
             cleanupCamera();
         }
         
+        // Останавливаем периодическое обновление при уходе с вкладки облачного хранилища
+        if (S.toolSubView === 'cloud-backup' && toolSubView !== 'cloud-backup') {
+            console.log('⏹️ Stopping periodic versions refresh - leaving cloud backup tab');
+            stopPeriodicVersionsRefresh();
+        }
+        
         S.toolSubView = toolSubView;
         S.gridStale = true;
         
@@ -26617,6 +26732,11 @@ document.addEventListener("click", async e => {
                     updateCloudStorageUI();
                     // Автоматически загружаем список версий при открытии вкладки
                     debouncedLoadBackupsList(true, 500); // Принудительное обновление при открытии вкладки
+                    
+                    // Запускаем периодическое обновление, если подключены к облачному хранилищу
+                    if (cloudStorageConnected && cloudStorageClient) {
+                        startPeriodicVersionsRefresh();
+                    }
                 } else {
                     console.log('⚠️ RemoteStorage not available');
                 }
