@@ -11664,6 +11664,40 @@ async function saveMainDataToIndexedDB() {
         
         console.log('📏 Размер данных для IndexedDB:', sizeMB, 'МБ');
         
+        // Проверяем размер данных для мобильных устройств
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const maxSizeMB = isMobile ? 200 : 500; // Ограничение для мобильных устройств
+        
+        if (sizeMB > maxSizeMB) {
+            console.warn(`⚠️ Размер данных (${sizeMB} МБ) превышает рекомендуемый лимит для ${isMobile ? 'мобильных' : 'десктопных'} устройств (${maxSizeMB} МБ)`);
+            
+            // Если данные слишком большие, сохраняем без INVENTORY_DATA
+            if (mainData.INVENTORY_DATA && sizeMB > maxSizeMB) {
+                console.log('🔄 Сохраняем данные без инвентаря для экономии места...');
+                const mainDataWithoutInventory = {
+                    PART_MAP: mainData.PART_MAP,
+                    SET_MAP: mainData.SET_MAP,
+                    MINIFIG_MAP: mainData.MINIFIG_MAP,
+                    COLOR_MAP: mainData.COLOR_MAP,
+                    THEME_MAP: mainData.THEME_MAP,
+                    flatCategories: mainData.flatCategories,
+                    INVENTORY_DATA: null
+                };
+                
+                const jsonStringWithoutInventory = JSON.stringify(mainDataWithoutInventory);
+                const sizeWithoutInventoryMB = Math.round(jsonStringWithoutInventory.length / (1024 * 1024) * 100) / 100;
+                console.log('📏 Размер данных без инвентаря:', sizeWithoutInventoryMB, 'МБ');
+                
+                if (sizeWithoutInventoryMB <= maxSizeMB) {
+                    const success = await saveToIndexedDB('mainCatalogData', mainDataWithoutInventory);
+                    if (success) {
+                        console.log('✅ Основные данные сохранены в IndexedDB без инвентаря:', sizeWithoutInventoryMB, 'МБ');
+                    }
+                    return success;
+                }
+            }
+        }
+        
         const success = await saveToIndexedDB('mainCatalogData', mainData);
         
         if (success) {
@@ -11744,6 +11778,20 @@ async function loadMainDataFromIndexedDB() {
             console.log('✅ Данные инвентаря восстановлены из IndexedDB');
         } else {
             console.log('⚠️ Данные инвентаря отсутствуют в IndexedDB');
+            
+            // Пытаемся восстановить из localStorage для мобильных устройств
+            try {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                if (isMobile) {
+                    const inventoryDataFromLocal = localStorage.getItem('legoInventoryData');
+                    if (inventoryDataFromLocal) {
+                        window.INVENTORY_DATA = JSON.parse(inventoryDataFromLocal);
+                        console.log('✅ Данные инвентаря восстановлены из localStorage');
+                    }
+                }
+            } catch (error) {
+                console.warn('⚠️ Не удалось восстановить данные инвентаря из localStorage:', error);
+            }
         }
         
         console.log('✅ Основные данные загружены из IndexedDB');
@@ -29981,6 +30029,22 @@ async function initializeApp() {
         if (mainDataLoaded) {
             console.log('✅ Основные данные загружены из IndexedDB, пропускаем загрузку CSV');
             
+            // Проверяем, есть ли данные инвентаря, если нет - пытаемся загрузить из localStorage
+            if (!window.INVENTORY_DATA) {
+                try {
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        const inventoryDataFromLocal = localStorage.getItem('legoInventoryData');
+                        if (inventoryDataFromLocal) {
+                            window.INVENTORY_DATA = JSON.parse(inventoryDataFromLocal);
+                            console.log('✅ Данные инвентаря восстановлены из localStorage для мобильного устройства');
+                        }
+                    }
+                } catch (error) {
+                    console.warn('⚠️ Не удалось восстановить данные инвентаря из localStorage:', error);
+                }
+            }
+            
             // Быстро обновляем UI без загрузки
             updateLoadingStatus("Данные загружены из кеша", 100, "Используем сохраненные данные");
             
@@ -30692,10 +30756,26 @@ async function loadDataFromCSV() {
         // Сохраняем метаданные каталога в localStorage для быстрого старта
         saveCatalogData();
         
-        // Сохраняем данные инвентаря в IndexedDB
+        // Сохраняем данные инвентаря в IndexedDB (неблокирующе)
         if (window.INVENTORY_DATA) {
             console.log('💾 Сохранение данных инвентаря в IndexedDB...');
-            await saveMainDataToIndexedDB();
+            try {
+                await saveMainDataToIndexedDB();
+            } catch (error) {
+                console.warn('⚠️ Не удалось сохранить данные инвентаря в IndexedDB:', error);
+                
+                // Альтернативное сохранение в localStorage для мобильных устройств
+                try {
+                    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                    if (isMobile) {
+                        console.log('📱 Сохранение данных инвентаря в localStorage для мобильного устройства...');
+                        localStorage.setItem('legoInventoryData', JSON.stringify(window.INVENTORY_DATA));
+                        console.log('✅ Данные инвентаря сохранены в localStorage');
+                    }
+                } catch (localError) {
+                    console.warn('⚠️ Не удалось сохранить данные инвентаря в localStorage:', localError);
+                }
+            }
         }
         
         // Отмечаем, что данные загружены в этой сессии
