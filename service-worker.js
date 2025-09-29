@@ -77,6 +77,29 @@ function cacheFirst(request) {
                 });
             }
             return networkResponse;
+        }).catch(() => {
+            // Return error response if fetch fails
+            return new Response(JSON.stringify({
+                error: 'Network request failed',
+                url: request.url
+            }), {
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'application/json' }
+            });
+        });
+    }).catch(() => {
+        // Fallback to network request if cache fails
+        return fetch(request).catch(() => {
+            // Final fallback
+            return new Response(JSON.stringify({
+                error: 'All requests failed',
+                url: request.url
+            }), {
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'application/json' }
+            });
         });
     });
 }
@@ -105,6 +128,16 @@ function networkFirst(request) {
                 statusText: 'Service Unavailable',
                 headers: { 'Content-Type': 'application/json' }
             });
+        }).catch(() => {
+            // Final fallback
+            return new Response(JSON.stringify({
+                error: 'All requests failed',
+                url: request.url
+            }), {
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'application/json' }
+            });
         });
     });
 }
@@ -125,7 +158,28 @@ function staleWhileRevalidate(request) {
             return cachedResponse;
         });
 
-        return cachedResponse || fetchPromise;
+        // Always return a valid response
+        if (cachedResponse) {
+            // Return cached response immediately, but also trigger fetch in background
+            fetchPromise.catch(() => {}); // Ignore fetch errors in background
+            return cachedResponse;
+        } else {
+            // No cached response, wait for fetch
+            return fetchPromise;
+        }
+    }).catch(() => {
+        // Fallback to network request if cache fails
+        return fetch(request).catch(() => {
+            // Final fallback - return error response
+            return new Response(JSON.stringify({
+                error: 'All requests failed',
+                url: request.url
+            }), {
+                status: 503,
+                statusText: 'Service Unavailable',
+                headers: { 'Content-Type': 'application/json' }
+            });
+        });
     });
 }
 
@@ -146,26 +200,34 @@ self.addEventListener('fetch', event => {
     
     // Helpers to detect Rebrickable API calls even when proxied
     const isRebrickableApi = url.hostname === 'rebrickable.com' || urlString.includes('rebrickable.com/api/');
-    const isColorsEndpoint = isRebrickableApi && urlString.includes('/api/v3/lego/colors');
+    const isProxiedRequest = urlString.includes('corsproxy.io') || urlString.includes('cors-anywhere') || urlString.includes('proxy');
+    const isColorsEndpoint = isRebrickableApi && urlString.includes('/api/v3/lego/colors') && !isProxiedRequest;
     const isInventoryEndpoint = isRebrickableApi && (
         (urlString.includes('/api/v3/lego/sets/') && urlString.includes('/parts')) ||
         (urlString.includes('/api/v3/lego/minifigs/') && urlString.includes('/parts'))
-    );
+    ) && !isProxiedRequest;
 
-    // Prefer SWR for relatively static API endpoints (colors, inventories)
+    // Skip service worker for direct Rebrickable API calls (they should go through proxy)
+    if (isRebrickableApi && !isProxiedRequest) {
+        console.log('🚫 Skipping service worker for direct API call:', urlString);
+        return; // Let the browser handle it normally
+    }
+
+    // Prefer SWR for relatively static API endpoints (colors, inventories) - only for proxied requests
     if (isColorsEndpoint || isInventoryEndpoint) {
         event.respondWith(staleWhileRevalidate(event.request));
         return;
     }
 
     // Handle different types of requests
-    if (url.pathname.includes('/api/') || 
+    if ((url.pathname.includes('/api/') || 
         url.pathname.includes('/sets/') || 
         url.pathname.includes('/parts/') || 
-        url.pathname.includes('/minifigs/') ||
-        url.hostname === 'rebrickable.com' ||
-        isRebrickableApi) {
-        // API requests: network first with fallback to cache
+        url.pathname.includes('/minifigs/')) && !isRebrickableApi) {
+        // API requests: network first with fallback to cache (only for non-Rebrickable APIs)
+        event.respondWith(networkFirst(event.request));
+    } else if (isRebrickableApi && isProxiedRequest) {
+        // Only handle Rebrickable API requests if they're going through a proxy
         event.respondWith(networkFirst(event.request));
     } else if ((url.pathname.includes('/Data/') || url.pathname.includes('/dist/Downloads/') || url.pathname.includes('/Downloads/')) && url.pathname.endsWith('.csv')) {
         // CSV data files: stale-while-revalidate for better performance

@@ -7723,10 +7723,15 @@ function buildProxyUrl(originalUrl, proxyUrl) {
 }
 
 async function fetchWithProxy(url, options = {}, retryCount = 0) {
-    // Если прокси отключены в настройках, не используем их
-    if (!S.proxyEnabled) {
-        console.log('🚫 Прокси отключены в настройках, используем прямой запрос');
-        return await fetch(url, options);
+    try {
+        // Если прокси отключены в настройках, не используем их
+        if (!S.proxyEnabled) {
+            console.log('🚫 Прокси отключены в настройках, используем прямой запрос');
+            return await fetch(url, options);
+        }
+    } catch (error) {
+        console.error('❌ Ошибка в fetchWithProxy:', error);
+        throw error;
     }
     
     // Проверяем, нужно ли обновить список рабочих прокси
@@ -7864,6 +7869,134 @@ let COLOR_MAP = {},
     MINIFIG_MAP = {},
     THEME_MAP = {},
     flatCategories = [];
+
+// ===== ФУНКЦИИ ДЛЯ ЗАГРУЗКИ ДАННЫХ ИЗ КЕША =====
+
+// Функция для загрузки цветов детали из кеша
+function loadPartColorsFromCache(partId) {
+    try {
+        const part = PART_MAP[partId];
+        if (part && part.availableColorIds && part.availableColorIds.length > 0) {
+            console.log('✅ Цвета детали загружены из кеша:', partId, part.availableColorIds.length);
+            return part.availableColorIds;
+        }
+        return null;
+    } catch (error) {
+        console.error('❌ Ошибка загрузки цветов детали из кеша:', error);
+        return null;
+    }
+}
+
+// Функция для загрузки инвентаря набора из кеша
+function loadSetInventoryFromCache(setNum) {
+    try {
+        if (window.INVENTORY_DATA && window.INVENTORY_DATA.sets) {
+            // Ищем набор в данных инвентаря
+            for (const [inventoryId, sets] of Object.entries(window.INVENTORY_DATA.sets)) {
+                const set = sets.find(s => s.set_num === setNum);
+                if (set) {
+                    console.log('✅ Инвентарь набора найден в кеше:', setNum);
+                    const parts = window.INVENTORY_DATA.parts[inventoryId] || [];
+                    const minifigs = window.INVENTORY_DATA.minifigs[inventoryId] || [];
+                    
+                    // Преобразуем данные в формат, который ожидает модальное окно
+                    const formattedParts = parts.map(part => {
+                        const colorId = String(part.color_id);
+                        const color = COLOR_MAP[colorId] || {
+                            id: colorId,
+                            name: part.color_name || 'Unknown',
+                            hex: `#${part.color_rgb || '000000'}`,
+                            isTransparent: part.color_is_trans || false,
+                            rgb: part.color_rgb || '000000',
+                            is_trans: part.color_is_trans || false
+                        };
+                        
+                        return {
+                            part: {
+                                part_num: part.part_num,
+                                name: part.part_name,
+                                part_cat_id: part.part_cat_id,
+                                part_img_url: part.part_img_url,
+                                rebrickable_img_url: part.rebrickable_img_url
+                            },
+                            color: color,
+                            quantity: part.quantity,
+                            is_spare: part.is_spare || false,
+                            element_id: part.element_id
+                        };
+                    });
+                    
+                    const formattedMinifigs = minifigs.map(minifig => {
+                        const minifigData = MINIFIG_MAP[minifig.fig_num] || {
+                            set_num: minifig.fig_num,
+                            name: minifig.name || `Минифигурка ${minifig.fig_num}`,
+                            minifig_img_url: minifig.img_url
+                        };
+                        
+                        return {
+                            ...minifigData,
+                            quantity: minifig.quantity,
+                            isExpanded: false,
+                            isLoadingParts: false,
+                            parts: null,
+                            loadingError: false
+                        };
+                    });
+                    
+                    return {
+                        parts: formattedParts,
+                        minifigs: formattedMinifigs
+                    };
+                }
+            }
+        }
+        return null;
+    } catch (error) {
+        console.error('❌ Ошибка загрузки инвентаря набора из кеша:', error);
+        return null;
+    }
+}
+
+// Функция для загрузки деталей минифигурки из кеша
+function loadMinifigPartsFromCache(figNum) {
+    try {
+        const minifig = MINIFIG_MAP[figNum];
+        if (minifig && minifig.parts && minifig.parts.length > 0) {
+            console.log('✅ Детали минифигурки загружены из кеша:', figNum, minifig.parts.length);
+            return minifig.parts;
+        }
+        return null;
+    } catch (error) {
+        console.error('❌ Ошибка загрузки деталей минифигурки из кеша:', error);
+        return null;
+    }
+}
+
+// Функция для сохранения цветов детали в кеш
+function savePartColorsToCache(partId, colorIds) {
+    try {
+        if (!PART_MAP[partId]) {
+            PART_MAP[partId] = {};
+        }
+        PART_MAP[partId].availableColorIds = colorIds;
+        console.log('💾 Цвета детали сохранены в кеш:', partId, colorIds.length);
+    } catch (error) {
+        console.error('❌ Ошибка сохранения цветов детали в кеш:', error);
+    }
+}
+
+// Функция для сохранения деталей минифигурки в кеш
+function saveMinifigPartsToCache(figNum, parts) {
+    try {
+        if (!MINIFIG_MAP[figNum]) {
+            MINIFIG_MAP[figNum] = {};
+        }
+        MINIFIG_MAP[figNum].parts = parts;
+        console.log('💾 Детали минифигурки сохранены в кеш:', figNum, parts.length);
+    } catch (error) {
+        console.error('❌ Ошибка сохранения деталей минифигурки в кеш:', error);
+    }
+}
 
 // Функция для расчета общего количества деталей в наборе с учетом минифигурок
 // Инициализируем как заглушку, которая будет переопределена после загрузки данных
@@ -15319,7 +15452,41 @@ async function fetchMinifigs() {
     }
 }
 async function fetchPartColors(e) {
-    // Показываем индикатор загрузки для загрузки цветов
+    // Сначала проверяем кеш
+    const cachedColors = loadPartColorsFromCache(e);
+    if (cachedColors) {
+        console.log('🚀 Используем цвета детали из кеша:', e);
+        S.partModal.loadingColors = !0;
+        updateModalPartially({
+            colors: !0,
+            relatedSets: !0
+        });
+        
+        if (PART_MAP[e]) {
+            PART_MAP[e].availableColorIds = cachedColors;
+            
+            if (cachedColors.length > 0 && (!S.partModal.selColorId || !cachedColors.includes(S.partModal.selColorId))) {
+                S.partModal.selColorId = sortColorIds(cachedColors, e)[0];
+            }
+        }
+        
+        S.partModal.loadingColors = !1;
+        updateLoadingStatus("Цвета загружены из кеша", 80, `Доступно ${cachedColors.length} ${getColorWord(cachedColors.length)}`);
+        
+        updateModalPartially({
+            colors: !0,
+            controls: !0,
+            relatedSets: !0
+        });
+        
+        if (S.partModal.selColorId) {
+            fetchPartColorSpecifics(e, S.partModal.selColorId);
+        }
+        return;
+    }
+    
+    // Если в кеше нет, загружаем из API
+    console.log('🌐 Загружаем цвета детали из API:', e);
     updateLoadingStatus("Загрузка цветов детали...", 75, "Загрузка доступных цветов");
     
     S.partModal.loadingColors = !0;
@@ -15339,6 +15506,9 @@ async function fetchPartColors(e) {
                 S.partModal.selColorId = sortColorIds(t, e)[0];
             }
         }
+        
+        // Сохраняем в кеш
+        savePartColorsToCache(e, t);
     } catch (error) {
         console.error(`Failed to fetch colors for ${e}:`, error);
         if (!PART_MAP[e]) {
@@ -15702,8 +15872,30 @@ async function fetchMinifigDetails(e) {
 }
 
 async function fetchSetInventory(e, t = 1) {
-            // Показываем индикатор загрузки для инвентаря набора
-        updateLoadingStatus("Загрузка инвентаря набора...", 75, "Загрузка списка деталей");
+    // Сначала проверяем кеш (только для первой страницы)
+    if (t === 1) {
+        const cachedInventory = loadSetInventoryFromCache(e);
+        if (cachedInventory) {
+            console.log('🚀 Используем инвентарь набора из кеша:', e);
+            S.setModal.loading = !0;
+            updateSetModalView();
+            
+            // Устанавливаем данные из кеша
+            S.setModal.inv = cachedInventory.parts || [];
+            S.setModal.minifigs = cachedInventory.minifigs || [];
+            S.setModal.invPage = 1;
+            S.setModal.hasNextInv = false; // В кеше обычно все данные сразу
+            
+            S.setModal.loading = !1;
+            updateLoadingStatus("Инвентарь загружен из кеша", 80, `Загружено ${S.setModal.inv.length} деталей, ${S.setModal.minifigs.length} минифигурок`);
+            updateSetModalView();
+            return;
+        }
+    }
+    
+    // Если в кеше нет, загружаем из API
+    console.log('🌐 Загружаем инвентарь набора из API:', e);
+    updateLoadingStatus("Загрузка инвентаря набора...", 75, "Загрузка списка деталей");
     
     if (S.setModal.loading = !0, t === 1 && (S.setModal.inv = []), updateSetModalView(), !S.selSetNum) return;
     try {
@@ -15751,19 +15943,27 @@ async function fetchSetInventory(e, t = 1) {
 async function fetchAllSetInventory(e) {
     let t = [];
     let o = 1;
-    for (;;) {
-        const l = `/sets/${e}/parts/?page=${o}&page_size=500&inc_spares=1`,
-            a = await fetchWithProxy(`${REBRICKABLE_API_URL}${l}`, {
-                headers: {
-                    Authorization: `key ${getApiKey()}`
-                }
-            });
-        if (!a.ok) {
-            const e = await a.json().catch(() => ({
-                detail: "Не удалось получить детали ошибки."
-            }));
-            throw new Error(`Ошибка API Rebrickable: ${a.status} - ${e.detail}`)
-        }
+    try {
+        for (;;) {
+            const l = `/sets/${e}/parts/?page=${o}&page_size=500&inc_spares=1`;
+            let a;
+            try {
+                a = await fetchWithProxy(`${REBRICKABLE_API_URL}${l}`, {
+                    headers: {
+                        Authorization: `key ${getApiKey()}`
+                    }
+                });
+            } catch (fetchError) {
+                console.error(`❌ Ошибка загрузки инвентаря набора ${e}:`, fetchError);
+                throw new Error(`Ошибка сети: ${fetchError.message}`);
+            }
+            
+            if (!a.ok) {
+                const e = await a.json().catch(() => ({
+                    detail: "Не удалось получить детали ошибки."
+                }));
+                throw new Error(`Ошибка API Rebrickable: ${a.status} - ${e.detail}`)
+            }
         const i = await a.json();
         const n = (i.results || []).map((e) => {
                 procPart(e.part);
@@ -15792,6 +15992,10 @@ async function fetchAllSetInventory(e) {
             // Принудительно сохраняем состояние после загрузки всего инвентаря набора для немедленного сохранения данных инвентаря
         forceSaveState();
     return t
+    } catch (error) {
+        console.error(`❌ Ошибка в fetchAllSetInventory для набора ${e}:`, error);
+        throw error;
+    }
 }
 async function loadAllSetInventoryIntoModal(e) {
     // Показываем индикатор загрузки и очищаем текущий инвентарь
@@ -15844,7 +16048,16 @@ async function fetchSetMinifigs(e) {
     }
 }
 async function fetchMinifigParts(e) {
-    // Показываем индикатор загрузки для деталей минифигурки
+    // Сначала проверяем кеш
+    const cachedParts = loadMinifigPartsFromCache(e);
+    if (cachedParts) {
+        console.log('🚀 Используем детали минифигурки из кеша:', e);
+        updateLoadingStatus("Детали загружены из кеша", 80, `Загружено ${cachedParts.length} деталей`);
+        return cachedParts;
+    }
+    
+    // Если в кеше нет, загружаем из API
+    console.log('🌐 Загружаем детали минифигурки из API:', e);
     updateLoadingStatus("Загрузка деталей минифигурки...", 75, "Загрузка списка деталей");
     
     try {
@@ -15863,6 +16076,9 @@ async function fetchMinifigParts(e) {
                 color: COLOR_MAP[t]
             }
         });
+        
+        // Сохраняем в кеш
+        saveMinifigPartsToCache(e, result);
         
         // Принудительно сохраняем состояние после загрузки деталей минифигурки для немедленного сохранения данных деталей
         forceSaveState();
@@ -22299,17 +22515,11 @@ function getRelatedSetsForMinifig(figNum) {
     console.log('🔍 window.INVENTORY_DATA:', window.INVENTORY_DATA ? 'есть' : 'нет');
     console.log('🔍 window.INVENTORY_DATA.minifigs:', window.INVENTORY_DATA?.minifigs ? 'есть' : 'нет');
     
-    // Проверяем и пересоздаем данные инвентаря, если они пустые, но данные есть
-    if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.minifigs) {
-        console.log('🔧 Пересоздаем данные инвентаря для минифигурок...');
-        if (typeof initializeInventoryData === 'function') {
-            initializeInventoryData();
-        }
+        // Проверяем данные инвентаря
         if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.minifigs) {
-            console.log('❌ Данные инвентаря недоступны');
+            console.log('❌ Данные инвентаря недоступны для минифигурок');
             return [];
         }
-    }
     
     const relatedSets = [];
     const inventoryMinifigs = window.INVENTORY_DATA.minifigs;
@@ -22410,17 +22620,11 @@ function getRelatedSetsForPart(partId) {
     console.log('🔍 window.INVENTORY_DATA:', window.INVENTORY_DATA ? 'есть' : 'нет');
     console.log('🔍 window.INVENTORY_DATA.parts:', window.INVENTORY_DATA?.parts ? 'есть' : 'нет');
     
-    // Проверяем и пересоздаем данные инвентаря, если они пустые, но данные есть
-    if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.parts) {
-        console.log('🔧 Пересоздаем данные инвентаря для деталей...');
-        if (typeof initializeInventoryData === 'function') {
-            initializeInventoryData();
-        }
+        // Проверяем данные инвентаря
         if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.parts) {
-            console.log('❌ Данные инвентаря недоступны');
+            console.log('❌ Данные инвентаря недоступны для деталей');
             return [];
         }
-    }
     const relatedSets = [];
     const inventoryParts = window.INVENTORY_DATA.parts;
     // Проходим по всем инвентарям, где есть эта деталь (без учета запчастей)
@@ -29591,13 +29795,14 @@ async function initializeApp() {
     // Проверяем доступность прокси серверов при запуске (только если прокси включены)
     console.log('🚀 Инициализация приложения...');
     
-    // Создаем функцию для инициализации данных инвентаря из localStorage
-    window.initializeInventoryData = function() {
+    // Создаем функцию для инициализации данных инвентаря из IndexedDB
+    window.initializeInventoryData = async function() {
         try {
-            const savedData = localStorage.getItem('legoInventoryData');
-            if (savedData) {
-                window.INVENTORY_DATA = JSON.parse(savedData);
-                console.log('✅ INVENTORY_DATA восстановлен из localStorage');
+            // Пытаемся загрузить данные из IndexedDB
+            const mainData = await loadFromIndexedDB('mainCatalogData', 6 * 60 * 60 * 1000); // 6 часов
+            if (mainData && mainData.INVENTORY_DATA) {
+                window.INVENTORY_DATA = mainData.INVENTORY_DATA;
+                console.log('✅ INVENTORY_DATA восстановлен из IndexedDB');
                 console.log('📊 Размеры восстановленных данных:', {
                     parts: Object.keys(window.INVENTORY_DATA.parts || {}).length,
                     sets: Object.keys(window.INVENTORY_DATA.sets || {}).length,
@@ -29605,11 +29810,11 @@ async function initializeApp() {
                 });
                 return true;
             } else {
-                console.log('❌ Нет сохраненных данных инвентаря в localStorage');
+                console.log('❌ Нет сохраненных данных инвентаря в IndexedDB');
                 return false;
             }
         } catch (error) {
-            console.error('❌ Ошибка восстановления INVENTORY_DATA из localStorage:', error);
+            console.error('❌ Ошибка восстановления INVENTORY_DATA из IndexedDB:', error);
             return false;
         }
     };
@@ -30272,14 +30477,14 @@ async function initializeApp() {
             }
         }, 5000);
         
-        // Инициализируем данные инвентаря из localStorage, если они есть
+        // Инициализируем данные инвентаря из IndexedDB, если они есть
         if (typeof window.initializeInventoryData === 'function') {
-            console.log('🔧 Пытаемся восстановить данные инвентаря из localStorage...');
-            const restored = window.initializeInventoryData();
+            console.log('🔧 Пытаемся восстановить данные инвентаря из IndexedDB...');
+            const restored = await window.initializeInventoryData();
             if (restored) {
-                console.log('✅ Данные инвентаря восстановлены из localStorage');
+                console.log('✅ Данные инвентаря восстановлены из IndexedDB');
             } else {
-                console.log('❌ Не удалось восстановить данные инвентаря из localStorage');
+                console.log('❌ Не удалось восстановить данные инвентаря из IndexedDB');
             }
         } else {
             console.log('❌ Функция initializeInventoryData недоступна');
@@ -31796,13 +32001,8 @@ async function discoverInventoryPartFiles() {
             window.INVENTORY_DATA.minifigs = inventoryMinifigsMap;
         }
         
-        // Сохраняем данные инвентаря в localStorage для восстановления после перезагрузки
-        try {
-            localStorage.setItem('legoInventoryData', JSON.stringify(window.INVENTORY_DATA));
-            console.log('✅ INVENTORY_DATA сохранен в localStorage');
-        } catch (error) {
-            console.error('❌ Ошибка сохранения INVENTORY_DATA в localStorage:', error);
-        }
+        // Данные инвентаря сохраняются в IndexedDB через saveMainDataToIndexedDB
+        console.log('✅ INVENTORY_DATA готов для сохранения в IndexedDB');
         
 
         // Функция для расчета общего количества деталей в наборе с учетом минифигурок
@@ -37645,6 +37845,7 @@ function animateCloseButtonClick(button) {
             }
         }, 3000);
     }
+
   </script>
 
 </body>
