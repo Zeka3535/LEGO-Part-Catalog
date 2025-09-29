@@ -1904,6 +1904,55 @@
         margin-top: 0.5rem !important;
     }
     
+    /* Анимация для настроек камеры в DataMatrix и AI камере */
+    details.group {
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    details.group summary {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Анимация содержимого details */
+    details.group > div {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateY(-10px);
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+    }
+    
+    details.group[open] > div {
+        transform: translateY(0);
+        opacity: 1;
+        max-height: 1000px;
+    }
+    
+    /* Анимация для элементов внутри настроек камеры */
+    details.group[open] > div > div {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        transform: translateY(5px);
+        opacity: 0;
+    }
+    
+    details.group[open] > div > div:nth-child(1) { transition-delay: 0.1s; }
+    details.group[open] > div > div:nth-child(2) { transition-delay: 0.15s; }
+    
+    details.group[open] > div > div {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    
+    /* Улучшенная анимация шеврона в details */
+    details.group summary .text-gray-400 {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    details.group[open] summary .text-gray-400 {
+        transform: rotate(180deg);
+    }
+    
     .rotate {
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -26693,6 +26742,13 @@ document.addEventListener("click", async e => {
         
         console.log('🔄 Switching to view:', e, 'from:', S.view);
         console.log('🔄 Before reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups);
+        // Сбрасываем позицию прокрутки к началу при переключении между разделами
+        if (mainEl) {
+            mainEl.scrollTo({
+                top: 0,
+                behavior: 'instant'
+            });
+        }
         return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, S.searchGroups = null, S.catGroups = null, S.setRes = null, S.searchSetRes = null, S.minifigRes = null, S.searchMinifigRes = null, S.showUniversalSearch = false, S.universalSearchResults = null, S.universalSearchTerm = "", S.originalSearchContext = null, window.searchStateReset = true, console.log('🔄 After reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups, 'S.showUniversalSearch:', S.showUniversalSearch, 'window.searchStateReset:', window.searchStateReset), void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setTimeout(() => {
             setupScrollListener();
             // НЕ перезапускаем ротацию подсказок - это создает бесконечный цикл!
@@ -26813,10 +26869,24 @@ document.addEventListener("click", async e => {
         } else if ("minifigs" === e && S.view === "collection" && Object.keys(S.minifigColl).length > 0) {
             fetchMissingCollectionMinifigDetails().then(() => { 
                 S.gridStale = true; 
+                // Сбрасываем позицию прокрутки к началу при переключении между вкладками
+                if (mainEl) {
+                    mainEl.scrollTo({
+                        top: 0,
+                        behavior: 'instant'
+                    });
+                }
                 updateUI(); 
                 
             }).catch(console.error);
         } else {
+            // Сбрасываем позицию прокрутки к началу при переключении между вкладками
+            if (mainEl) {
+                mainEl.scrollTo({
+                    top: 0,
+                    behavior: 'instant'
+                });
+            }
             updateUI();
         }
         
