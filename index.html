@@ -11654,7 +11654,8 @@ async function saveMainDataToIndexedDB() {
             MINIFIG_MAP,
             COLOR_MAP,
             THEME_MAP,
-            flatCategories
+            flatCategories,
+            INVENTORY_DATA: window.INVENTORY_DATA
         };
         
         // Подсчитываем размер данных
@@ -11705,7 +11706,8 @@ async function loadMainDataFromIndexedDB() {
             MINIFIG_MAP: mainData.MINIFIG_MAP && Object.keys(mainData.MINIFIG_MAP).length > 0,
             COLOR_MAP: mainData.COLOR_MAP && Object.keys(mainData.COLOR_MAP).length > 0,
             THEME_MAP: mainData.THEME_MAP && Object.keys(mainData.THEME_MAP).length > 0,
-            flatCategories: mainData.flatCategories && mainData.flatCategories.length > 0
+            flatCategories: mainData.flatCategories && mainData.flatCategories.length > 0,
+            INVENTORY_DATA: mainData.INVENTORY_DATA && mainData.INVENTORY_DATA.parts && mainData.INVENTORY_DATA.sets && mainData.INVENTORY_DATA.minifigs
         };
         
         console.log('🔍 Проверка данных:', checks);
@@ -11732,6 +11734,19 @@ async function loadMainDataFromIndexedDB() {
         Object.assign(COLOR_MAP, mainData.COLOR_MAP);
         Object.assign(THEME_MAP, mainData.THEME_MAP);
         flatCategories.push(...mainData.flatCategories);
+        
+        // Загружаем данные инвентаря, если они есть
+        if (mainData.INVENTORY_DATA) {
+            window.INVENTORY_DATA = mainData.INVENTORY_DATA;
+            console.log('✅ Данные инвентаря загружены из IndexedDB');
+            console.log('📊 Размеры INVENTORY_DATA:', {
+                parts: Object.keys(window.INVENTORY_DATA.parts || {}).length,
+                sets: Object.keys(window.INVENTORY_DATA.sets || {}).length,
+                minifigs: Object.keys(window.INVENTORY_DATA.minifigs || {}).length
+            });
+        } else {
+            console.log('⚠️ Данные инвентаря отсутствуют в IndexedDB');
+        }
         
         console.log('✅ Основные данные загружены из IndexedDB');
         console.log('📊 Загружено:', {
@@ -15005,7 +15020,7 @@ async function loadPartsForCategory(e) {
     // Показываем индикатор загрузки для загрузки категории
     updateLoadingStatus("Загрузка деталей категории...", 65, "Загрузка данных из CSV");
     
-    if (S.selCatId = e, S.selFigNum = null, S.showRelatedSets = false, S.loading = !0, S.err = null, S.searchGroups = null, S.q = '', S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.catGroups = {}, S.loading = !1, void updateUI();
+    if (S.selCatId = e, S.selFigNum = null, S.selRelatedPartId = null, S.showRelatedSets = false, S.loading = !0, S.err = null, S.searchGroups = null, S.q = '', S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.catGroups = {}, S.loading = !1, void updateUI();
     
     let o = []; // Объявляем o в начале функции
     let l = []; // Объявляем l в начале функции
@@ -15075,8 +15090,8 @@ async function searchRebrickableParts(e) {
         document.body.classList.remove('catalog-parts-view');
     }, 800);
     
-    if (!e || e.trim().length === 0) return S.searchGroups = null, S.loading = !1, S.selCatId = null, S.selFigNum = null, S.showRelatedSets = false, S.gridStale = !0, void updateUI();
-    if (S.loading = !0, S.err = null, S.selCatId = null, S.selFigNum = null, S.showRelatedSets = false, S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.searchGroups = {}, S.loading = !1, void updateUI();
+    if (!e || e.trim().length === 0) return S.searchGroups = null, S.loading = !1, S.selCatId = null, S.selFigNum = null, S.selRelatedPartId = null, S.showRelatedSets = false, S.gridStale = !0, void updateUI();
+    if (S.loading = !0, S.err = null, S.selCatId = null, S.selFigNum = null, S.selRelatedPartId = null, S.showRelatedSets = false, S.catGroups = null, S.toDisplay = S.increment, S.gridStale = !0, updateUI(), S.filters.colorIds?.length > 1) return S.searchGroups = {}, S.loading = !1, void updateUI();
     
     let o = []; // Объявляем o в начале функции
     let l = {}; // Объявляем l в начале функции
@@ -15309,7 +15324,8 @@ async function fetchPartColors(e) {
     
     S.partModal.loadingColors = !0;
     updateModalPartially({
-        colors: !0
+        colors: !0,
+        relatedSets: !0
     });
     
     let t = []; // Объявляем t в начале функции
@@ -15339,7 +15355,8 @@ async function fetchPartColors(e) {
         
         updateModalPartially({
             colors: !0,
-            controls: !0
+            controls: !0,
+            relatedSets: !0
         });
         
         if (S.partModal.selColorId) {
@@ -15349,7 +15366,8 @@ async function fetchPartColors(e) {
 }
 async function fetchPartColorSpecifics(e, t) {
     S.partModal.loadingImg = !0, updateModalPartially({
-        image: !0
+        image: !0,
+        relatedSets: !0
     });
     
     // Сначала проверяем кэш
@@ -15357,7 +15375,7 @@ async function fetchPartColorSpecifics(e, t) {
     if (COLOR_IMAGE_CACHE.has(cacheKey)) {
         S.partModal.imgUrl = COLOR_IMAGE_CACHE.get(cacheKey);
         S.partModal.loadingImg = !1;
-        updateModalPartially({ image: !0 });
+        updateModalPartially({ image: !0, relatedSets: !0 });
         return;
     }
     
@@ -15411,7 +15429,8 @@ async function fetchPartColorSpecifics(e, t) {
         }
         
         updateModalPartially({
-            image: !0
+            image: !0,
+            relatedSets: !0
         });
     }
 }
@@ -16516,10 +16535,13 @@ function applyPartVariantImageToDom() {
                 if (catName) catBtn.textContent = catName;
             }
             const relWrap = document.getElementById('related-sets-for-part');
+            console.log('🔍 applyPartVariantImageToDom: relWrap найден:', !!relWrap);
             if (relWrap) {
                 let html = '';
                 try {
+                    console.log('🔍 applyPartVariantImageToDom: вызываем getRelatedSetsForPart для', p.id);
                     const related = getRelatedSetsForPart(p.id);
+                    console.log('🔍 applyPartVariantImageToDom: результат getRelatedSetsForPart:', related);
                     if (related && related.length > 0) {
                         html = `<div class="mt-2">
                             <button data-action="show-related-sets-for-part" class="flex items-center gap-2 px-2 py-1 text-xs font-semibold rounded-[18px] bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
@@ -16527,9 +16549,15 @@ function applyPartVariantImageToDom() {
                                 ${related.length === 1 ? 'Связанный набор: 1' : `Связанных наборов: ${related.length}`}
                             </button>
                         </div>`;
+                        console.log('✅ applyPartVariantImageToDom: создаем HTML для кнопок связанных наборов');
+                    } else {
+                        console.log('❌ applyPartVariantImageToDom: нет связанных наборов');
                     }
-                } catch(_) {}
+                } catch(error) {
+                    console.error('❌ applyPartVariantImageToDom: ошибка при получении связанных наборов:', error);
+                }
                 relWrap.innerHTML = html;
+                console.log('🔍 applyPartVariantImageToDom: установлен HTML:', html);
             }
             // Обновляем заголовок и кнопку выбора вариации
             const headerName = content.querySelector('#modal-content h2');
@@ -16560,11 +16588,11 @@ function tryAdvancePartVariantNext() {
                 S.partModal.imgUrl = newPart.rebrickable_img_url || null;
                 S.partModal.selColorId = null;
                 S.partModal.qty = 0;
-                updateModalPartially({ image: true, controls: true });
+                updateModalPartially({ image: true, controls: true, relatedSets: true });
                 if (newPart.availableColorIds?.length) {
                     S.partModal.selColorId = sortColorIds(newPart.availableColorIds, newPart.id)[0];
                     S.partModal.qty = S.coll[newPart.id]?.[S.partModal.selColorId] || 0;
-                    updateModalPartially({ colors: true, controls: true });
+                    updateModalPartially({ colors: true, controls: true, relatedSets: true });
                     fetchPartColorSpecifics(newPart.id, S.partModal.selColorId);
                 } else {
                     fetchPartColors(newPart.id);
@@ -16591,11 +16619,11 @@ function tryAdvancePartVariantPrev() {
                 S.partModal.imgUrl = newPart.rebrickable_img_url || null;
                 S.partModal.selColorId = null;
                 S.partModal.qty = 0;
-                updateModalPartially({ image: true, controls: true });
+                updateModalPartially({ image: true, controls: true, relatedSets: true });
                 if (newPart.availableColorIds?.length) {
                     S.partModal.selColorId = sortColorIds(newPart.availableColorIds, newPart.id)[0];
                     S.partModal.qty = S.coll[newPart.id]?.[S.partModal.selColorId] || 0;
-                    updateModalPartially({ colors: true, controls: true });
+                    updateModalPartially({ colors: true, controls: true, relatedSets: true });
                     fetchPartColorSpecifics(newPart.id, S.partModal.selColorId);
                 } else {
                     fetchPartColors(newPart.id);
@@ -20960,11 +20988,51 @@ function renderModal() {
     // Если окно уже открыто, убираем класс входной анимации у контента
     setTimeout(() => { try { if (partModalEl.classList.contains('visible')) { const c = document.getElementById('modal-content'); c && c.classList.remove('modal-content-enter'); } } catch(_) {} }, 0);
     updateModalPartially({
-        image: !0
+        image: !0,
+        relatedSets: !0
     });
     setTimeout(() => { try { setupPartImageSwipe(); } catch(_) {} }, 0);
     // После первого рендера показываем/инициализируем кнопки и точки вариаций
     setTimeout(() => { try { applyPartVariantImageToDom(); } catch(_) {} }, 0);
+    
+    // Проверяем и пересоздаем кнопки связанных наборов, если они пустые, но данные есть
+    setTimeout(() => {
+        try {
+            console.log('🔍 Проверяем кнопки связанных наборов в renderModal...');
+            const relWrap = document.getElementById('related-sets-for-part');
+            console.log('🔍 relWrap найден:', !!relWrap);
+            console.log('🔍 relWrap.innerHTML:', relWrap?.innerHTML);
+            console.log('🔍 S.selPartId:', S.selPartId);
+            
+            if (relWrap && (!relWrap.innerHTML || relWrap.innerHTML.trim() === '')) {
+                console.log('🔧 Пересоздаем кнопки связанных наборов...');
+                const p = PART_MAP[S.selPartId];
+                console.log('🔍 PART_MAP[S.selPartId]:', p);
+                if (p) {
+                    const related = getRelatedSetsForPart(p.id);
+                    console.log('🔍 getRelatedSetsForPart результат:', related);
+                    if (related && related.length > 0) {
+                        const html = `<div class="mt-2">
+                            <button data-action="show-related-sets-for-part" class="flex items-center gap-2 px-2 py-1 text-xs font-semibold rounded-[18px] bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
+                                ${I_Set("w-3 h-3")}
+                                ${related.length === 1 ? 'Связанный набор: 1' : `Связанных наборов: ${related.length}`}
+                            </button>
+                        </div>`;
+                        relWrap.innerHTML = html;
+                        console.log('✅ Кнопки связанных наборов пересозданы');
+                    } else {
+                        console.log('❌ Нет связанных наборов для детали');
+                    }
+                } else {
+                    console.log('❌ Деталь не найдена в PART_MAP');
+                }
+            } else {
+                console.log('🔍 Кнопки связанных наборов уже есть или контейнер не найден');
+            }
+        } catch (error) {
+            console.error('Ошибка при пересоздании кнопок связанных наборов:', error);
+        }
+    }, 100);
     
     // Добавляем слушатель событий для селектора пользовательских вариаций
     const variationSelectButton = document.getElementById("variation-select-button");
@@ -22080,6 +22148,28 @@ function updateModalPartially(e) {
         const e = document.getElementById("modal-controls-container");
         e && (e.innerHTML = renderModalControls())
     }
+    if (e.relatedSets) {
+        // Обновляем кнопки связанных наборов
+        const relWrap = document.getElementById('related-sets-for-part');
+        if (relWrap) {
+            let html = '';
+            try {
+                const p = PART_MAP[S.selPartId];
+                if (p) {
+                    const related = getRelatedSetsForPart(p.id);
+                    if (related && related.length > 0) {
+                        html = `<div class="mt-2">
+                            <button data-action="show-related-sets-for-part" class="flex items-center gap-2 px-2 py-1 text-xs font-semibold rounded-[18px] bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
+                                ${I_Set("w-3 h-3")}
+                                ${related.length === 1 ? 'Связанный набор: 1' : `Связанных наборов: ${related.length}`}
+                            </button>
+                        </div>`;
+                    }
+                }
+            } catch(_) {}
+            relWrap.innerHTML = html;
+        }
+    }
 }
 
 // Свайпы в модалке детали (переключение вариаций)
@@ -22205,8 +22295,20 @@ function renderMinifigModalToggleButton() {
 
 // Функция для получения связанных наборов минифигурки
 function getRelatedSetsForMinifig(figNum) {
+    console.log('🔍 getRelatedSetsForMinifig вызвана для figNum:', figNum);
+    console.log('🔍 window.INVENTORY_DATA:', window.INVENTORY_DATA ? 'есть' : 'нет');
+    console.log('🔍 window.INVENTORY_DATA.minifigs:', window.INVENTORY_DATA?.minifigs ? 'есть' : 'нет');
+    
+    // Проверяем и пересоздаем данные инвентаря, если они пустые, но данные есть
     if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.minifigs) {
-        return [];
+        console.log('🔧 Пересоздаем данные инвентаря для минифигурок...');
+        if (typeof initializeInventoryData === 'function') {
+            initializeInventoryData();
+        }
+        if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.minifigs) {
+            console.log('❌ Данные инвентаря недоступны');
+            return [];
+        }
     }
     
     const relatedSets = [];
@@ -22304,9 +22406,20 @@ function showRelatedSetsModal(relatedSets, entityName, entityLabel = "миниф
 
 // Функция для получения связанных наборов детали
 function getRelatedSetsForPart(partId) {
-    // Возвращаем пустой массив, если нет данных инвентаря
+    console.log('🔍 getRelatedSetsForPart вызвана для partId:', partId);
+    console.log('🔍 window.INVENTORY_DATA:', window.INVENTORY_DATA ? 'есть' : 'нет');
+    console.log('🔍 window.INVENTORY_DATA.parts:', window.INVENTORY_DATA?.parts ? 'есть' : 'нет');
+    
+    // Проверяем и пересоздаем данные инвентаря, если они пустые, но данные есть
     if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.parts) {
-        return [];
+        console.log('🔧 Пересоздаем данные инвентаря для деталей...');
+        if (typeof initializeInventoryData === 'function') {
+            initializeInventoryData();
+        }
+        if (!window.INVENTORY_DATA || !window.INVENTORY_DATA.parts) {
+            console.log('❌ Данные инвентаря недоступны');
+            return [];
+        }
     }
     const relatedSets = [];
     const inventoryParts = window.INVENTORY_DATA.parts;
@@ -22537,15 +22650,19 @@ function renderMinifigModalDetailsView() {
                             })()}
                             <p>Кол-во деталей: ${e.num_parts}</p>
                             ${(() => {
+                                console.log('🔍 renderMinifigModalDetailsView: проверяем связанные наборы для', S.selFigNum);
                                 const relatedSets = getRelatedSetsForMinifig(S.selFigNum);
-                                console.log('Related sets for', S.selFigNum, ':', relatedSets);
+                                console.log('🔍 getRelatedSetsForMinifig результат:', relatedSets);
                                 if (relatedSets.length > 0) {
+                                    console.log('✅ Создаем кнопку связанных наборов для минифигурки');
                                     return `<div class="mt-2">
                                         <button data-action="show-related-sets" class="flex items-center gap-2 px-2 py-1 text-xs font-semibold rounded-[18px] bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-150 shadow-lg hover:shadow-blue-500/25">
                                             ${I_Set("w-3 h-3")}
                                             ${relatedSets.length === 1 ? 'Связанный набор: 1' : `Связанных наборов: ${relatedSets.length}`}
                                         </button>
                                     </div>`;
+                                } else {
+                                    console.log('❌ Нет связанных наборов для минифигурки');
                                 }
                                 return '';
                             })()}
@@ -26744,7 +26861,7 @@ document.addEventListener("click", async e => {
                 if (colorId) {
                     S.partModal.selColorId = String(colorId);
                     S.partModal.qty = S.coll[part.id]?.[S.partModal.selColorId] || 0;
-                    updateModalPartially({ controls: true, image: true });
+                    updateModalPartially({ controls: true, image: true, relatedSets: true });
                     fetchPartColorSpecifics(part.id, S.partModal.selColorId);
                 }
             }
@@ -26783,7 +26900,7 @@ document.addEventListener("click", async e => {
                 
                 S.partModal.selColorId = String(cid);
                 S.partModal.qty = S.coll[part.id]?.[S.partModal.selColorId] || 0;
-                updateModalPartially({ controls: !0, image: !0 });
+                updateModalPartially({ controls: !0, image: !0, relatedSets: !0 });
                 fetchPartColorSpecifics(part.id, S.partModal.selColorId);
             }
         }
@@ -27008,9 +27125,13 @@ document.addEventListener("click", async e => {
             hideSidebarHint();
         }
         
-        // Сохраняем selFigNum только если переключаемся на каталог и вкладку "Наборы"
-        const shouldKeepSelFigNum = (e === 'catalog' && S.subView === 'sets' && S.selFigNum);
+        // Сохраняем selFigNum и selRelatedPartId только если переключаемся на каталог и вкладку "Наборы" и показываем связанные наборы
+        const shouldKeepSelFigNum = (e === 'catalog' && S.subView === 'sets' && S.selFigNum && S.showRelatedSets);
+        const shouldKeepSelRelatedPartId = (e === 'catalog' && S.subView === 'sets' && S.selRelatedPartId && S.showRelatedSets);
+        const shouldKeepShowRelatedSets = (e === 'catalog' && S.subView === 'sets' && S.showRelatedSets);
         const newSelFigNum = shouldKeepSelFigNum ? S.selFigNum : null;
+        const newSelRelatedPartId = shouldKeepSelRelatedPartId ? S.selRelatedPartId : null;
+        const newShowRelatedSets = shouldKeepShowRelatedSets ? S.showRelatedSets : false;
         
         // Если переключаемся на каталог или инструменты, принудительно закрываем все модальные окна
         if (e === 'catalog' || e === 'tools') {
@@ -27054,7 +27175,7 @@ document.addEventListener("click", async e => {
         
         console.log('🔄 Switching to view:', e, 'from:', S.view);
         console.log('🔄 Before reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups);
-        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, S.searchGroups = null, S.catGroups = null, S.setRes = null, S.searchSetRes = null, S.minifigRes = null, S.searchMinifigRes = null, S.showUniversalSearch = false, S.universalSearchResults = null, S.universalSearchTerm = "", S.originalSearchContext = null, window.searchStateReset = true, console.log('🔄 After reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups, 'S.showUniversalSearch:', S.showUniversalSearch, 'window.searchStateReset:', window.searchStateReset), void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setTimeout(() => {
+        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, S.selRelatedPartId = newSelRelatedPartId, S.showRelatedSets = newShowRelatedSets, S.searchGroups = null, S.catGroups = null, S.setRes = null, S.searchSetRes = null, S.minifigRes = null, S.searchMinifigRes = null, S.showUniversalSearch = false, S.universalSearchResults = null, S.universalSearchTerm = "", S.originalSearchContext = null, window.searchStateReset = true, console.log('🔄 After reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups, 'S.showUniversalSearch:', S.showUniversalSearch, 'window.searchStateReset:', window.searchStateReset), void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setTimeout(() => {
             setupScrollListener();
             // НЕ перезапускаем ротацию подсказок - это создает бесконечный цикл!
             console.log('⚠️ Skipping tip rotation restart to prevent infinite loop');
@@ -27133,9 +27254,10 @@ document.addEventListener("click", async e => {
             stopPeriodicVersionsRefresh();
         }
         
-        // Сбрасываем выбранную минифигурку при переключении на другие вкладки
+        // Сбрасываем выбранную минифигурку и связанные наборы при переключении на другие вкладки
         if (e !== 'sets') {
             S.selFigNum = null;
+            S.selRelatedPartId = null;
             S.showRelatedSets = false;
         }
         S.q = "";
@@ -27470,7 +27592,7 @@ document.addEventListener("click", async e => {
             // Сбрасываем случайное изображение минифигурки при навигации по темам
             resetRandomMinifigImage();
             
-            S.selThemeId = e, S.selFigNum = null, S.showRelatedSets = false, S.q = "", S.sortBy = "year_desc", S.setFilters = {
+            S.selThemeId = e, S.selFigNum = null, S.selRelatedPartId = null, S.showRelatedSets = false, S.q = "", S.sortBy = "year_desc", S.setFilters = {
                 minYear: "",
                 maxYear: "",
                 minParts: "",
@@ -27502,7 +27624,7 @@ document.addEventListener("click", async e => {
             document.body.classList.remove('category-navigation');
         }, 800);
         // Переход остаётся в текущем режиме (каталог/коллекция)
-        return S.q = "", S.selFigNum = null, S.showRelatedSets = false, "collection" === S.view ? (() => {
+        return S.q = "", S.selFigNum = null, S.selRelatedPartId = null, S.showRelatedSets = false, "collection" === S.view ? (() => {
             // Отключаем анимации при навигании по коллекции категорий для улучшения производительности
             document.body.classList.add('collection-view');
             setTimeout(() => {
@@ -27606,7 +27728,7 @@ document.addEventListener("click", async e => {
                 openModalForPart(partId, groupId, [part]);
                 S.partModal.selColorId = String(cardColorId);
                 S.partModal.qty = S.coll[partId]?.[S.partModal.selColorId] || 0;
-                updateModalPartially({ controls: !0, image: !0 });
+                updateModalPartially({ controls: !0, image: !0, relatedSets: !0 });
                 fetchPartColorSpecifics(partId, S.partModal.selColorId);
                 return;
             }
@@ -27635,7 +27757,7 @@ document.addEventListener("click", async e => {
                 if (cardColorId) {
                     S.partModal.selColorId = String(cardColorId);
                     S.partModal.qty = S.coll[partId]?.[S.partModal.selColorId] || 0;
-                    updateModalPartially({ controls: !0, image: !0 });
+                    updateModalPartially({ controls: !0, image: !0, relatedSets: !0 });
                     fetchPartColorSpecifics(partId, S.partModal.selColorId);
                 }
                 return;
@@ -27715,6 +27837,7 @@ document.addEventListener("click", async e => {
     if (t.closest("#clear-search")) {
         S.q = "";
         S.selFigNum = null;
+        S.selRelatedPartId = null;
         S.showRelatedSets = false;
         // Сбрасываем универсальный поиск
         S.showUniversalSearch = false;
@@ -29232,7 +29355,7 @@ document.addEventListener("click", async e => {
                     S.selPartId && S.partModal.selColorId && (await handleUpdateCollection(S.selPartId, S.partModal.selColorId, 0), S.partModal.qty = 0);
                     break;
                 case "go-to-category":
-                    o && (closeModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "parts", S.selCatId = parseInt(o, 10), S.selFigNum = null, S.showRelatedSets = false, loadPartsForCategory(S.selCatId));
+                    o && (closeModal(), S.view = "catalog", S.multiSelect.active = false, S.multiSelect.items = new Set(), S.subView = "parts", S.selCatId = parseInt(o, 10), S.selFigNum = null, S.selRelatedPartId = null, S.showRelatedSets = false, loadPartsForCategory(S.selCatId));
                     break;
                 case "retry-fetch-colors":
                     S.selPartId && fetchPartColors(S.selPartId)
@@ -29467,6 +29590,29 @@ async function initializeApp() {
     
     // Проверяем доступность прокси серверов при запуске (только если прокси включены)
     console.log('🚀 Инициализация приложения...');
+    
+    // Создаем функцию для инициализации данных инвентаря из localStorage
+    window.initializeInventoryData = function() {
+        try {
+            const savedData = localStorage.getItem('legoInventoryData');
+            if (savedData) {
+                window.INVENTORY_DATA = JSON.parse(savedData);
+                console.log('✅ INVENTORY_DATA восстановлен из localStorage');
+                console.log('📊 Размеры восстановленных данных:', {
+                    parts: Object.keys(window.INVENTORY_DATA.parts || {}).length,
+                    sets: Object.keys(window.INVENTORY_DATA.sets || {}).length,
+                    minifigs: Object.keys(window.INVENTORY_DATA.minifigs || {}).length
+                });
+                return true;
+            } else {
+                console.log('❌ Нет сохраненных данных инвентаря в localStorage');
+                return false;
+            }
+        } catch (error) {
+            console.error('❌ Ошибка восстановления INVENTORY_DATA из localStorage:', error);
+            return false;
+        }
+    };
     
     const proxyCheckPromise = !S.proxyEnabled ? 
         Promise.resolve(false) : 
@@ -30125,6 +30271,19 @@ async function initializeApp() {
                 }
             }
         }, 5000);
+        
+        // Инициализируем данные инвентаря из localStorage, если они есть
+        if (typeof window.initializeInventoryData === 'function') {
+            console.log('🔧 Пытаемся восстановить данные инвентаря из localStorage...');
+            const restored = window.initializeInventoryData();
+            if (restored) {
+                console.log('✅ Данные инвентаря восстановлены из localStorage');
+            } else {
+                console.log('❌ Не удалось восстановить данные инвентаря из localStorage');
+            }
+        } else {
+            console.log('❌ Функция initializeInventoryData недоступна');
+        }
         
         // Загружаем данные из CSV файлов только если их нет в памяти
         await loadDataFromCSV();
@@ -31335,6 +31494,7 @@ async function discoverInventoryPartFiles() {
 
 // Функция для загрузки инвентарей из CSV
     async function loadInventoriesFromCSV() {
+    console.log('🔍 loadInventoriesFromCSV вызвана');
     try {
         // Загружаем inventory_parts: при наличии воркера парсим потоково
         const inventoryPartsLines = [];
@@ -31620,11 +31780,30 @@ async function discoverInventoryPartFiles() {
         });
         
         // Сохраняем данные инвентаря глобально для использования в модальных окнах
-        window.INVENTORY_DATA = {
-            parts: inventoryPartsMap,
-            sets: inventorySetsMap,
-            minifigs: inventoryMinifigsMap
-        };
+        // Только если данные еще не были восстановлены из localStorage
+        if (!window.INVENTORY_DATA) {
+            window.INVENTORY_DATA = {
+                parts: inventoryPartsMap,
+                sets: inventorySetsMap,
+                minifigs: inventoryMinifigsMap
+            };
+            console.log('✅ INVENTORY_DATA создан из CSV данных');
+        } else {
+            console.log('✅ INVENTORY_DATA уже существует, обновляем данные из CSV');
+            // Обновляем существующие данные новыми данными из CSV
+            window.INVENTORY_DATA.parts = inventoryPartsMap;
+            window.INVENTORY_DATA.sets = inventorySetsMap;
+            window.INVENTORY_DATA.minifigs = inventoryMinifigsMap;
+        }
+        
+        // Сохраняем данные инвентаря в localStorage для восстановления после перезагрузки
+        try {
+            localStorage.setItem('legoInventoryData', JSON.stringify(window.INVENTORY_DATA));
+            console.log('✅ INVENTORY_DATA сохранен в localStorage');
+        } catch (error) {
+            console.error('❌ Ошибка сохранения INVENTORY_DATA в localStorage:', error);
+        }
+        
 
         // Функция для расчета общего количества деталей в наборе с учетом минифигурок
         window.calculateSetTotalParts = function(setNum) {
@@ -31666,6 +31845,16 @@ async function discoverInventoryPartFiles() {
         
         // Загружаем отсутствующие изображения для элементов коллекции
         // await fetchMissingImagesFromCSV(); // Moved to initializeApp to ensure proper order
+        
+        console.log('✅ loadInventoriesFromCSV завершена успешно');
+        console.log('📊 INVENTORY_DATA создан:', window.INVENTORY_DATA ? 'да' : 'нет');
+        if (window.INVENTORY_DATA) {
+            console.log('📊 Размеры INVENTORY_DATA:', {
+                parts: Object.keys(window.INVENTORY_DATA.parts || {}).length,
+                sets: Object.keys(window.INVENTORY_DATA.sets || {}).length,
+                minifigs: Object.keys(window.INVENTORY_DATA.minifigs || {}).length
+            });
+        }
     } catch (error) {
         console.error('Failed to load inventory data from CSV:', error);
         // Не выбрасываем ошибку для инвентаря, так как это не критично
