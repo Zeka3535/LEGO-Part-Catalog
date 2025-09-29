@@ -1636,36 +1636,6 @@
         to { opacity: 1; transform: translateY(0) scale(1); }
     }
     
-    /* Анимация для выпадающего списка деталей минифигурок */
-    @keyframes minifigPartsExpand {
-        from { 
-            opacity: 0; 
-            max-height: 0; 
-            transform: translateY(-10px);
-            background-color: transparent;
-        }
-        to { 
-            opacity: 1; 
-            max-height: 15rem; 
-            transform: translateY(0);
-            background-color: rgba(55, 65, 81, 0.4); /* bg-gray-700/40 - немного темнее шапки */
-        }
-    }
-    
-    @keyframes minifigPartsCollapse {
-        from { 
-            opacity: 1; 
-            max-height: 15rem; 
-            transform: translateY(0);
-            background-color: rgba(55, 65, 81, 0.4); /* bg-gray-700/40 */
-        }
-        to { 
-            opacity: 0; 
-            max-height: 0; 
-            transform: translateY(-10px);
-            background-color: transparent;
-        }
-    }
     
     /* Базовые стили для контейнера деталей минифигурок */
     .minifig-parts-container {
@@ -1673,14 +1643,6 @@
         background-color: transparent;
     }
     
-    /* Анимация только при наличии специальных классов */
-    .minifig-parts-container.animating-expand {
-        animation: minifigPartsExpand 0.3s ease-out forwards;
-    }
-    
-    .minifig-parts-container.animating-collapse {
-        animation: minifigPartsCollapse 0.3s ease-in forwards;
-    }
     
     /* Статичный фон для раскрытого состояния - только для не анимирующихся контейнеров */
     .minifig-parts-container.expanded {
@@ -1693,10 +1655,6 @@
         background-color: transparent !important;
     }
     
-    /* Предотвращаем анимацию при перерендере модалки */
-    .minifig-parts-container:not(.animating-expand):not(.animating-collapse) {
-        animation: none !important;
-    }
     
     /* Модальные окна - ВАЖНО: не отключать! */
     #modal-container,
@@ -20177,13 +20135,6 @@ function renderSetModal(e = !1) {
     const t = SET_MAP[S.selSetNum];
     if (!t) return void closeSetModal();
     
-    // Очищаем все классы анимации перед рендером (кроме первого рендера)
-    if (!e) {
-        const allPartsContainers = document.querySelectorAll('.minifig-parts-container');
-        allPartsContainers.forEach(container => {
-            container.classList.remove('animating-expand', 'animating-collapse');
-        });
-    }
     const o = e ? "modal-content-enter" : "",
         l = "inventory" === S.setModal.view;
             e && (document.body.classList.add("overflow-hidden"), setModalEl.classList.remove("modal-hidden"), requestAnimationFrame(() => setModalEl.classList.add("visible"))), setModalEl.innerHTML = `
@@ -24183,11 +24134,6 @@ function closeModal() {
 }
 
 function closeSetModal() {
-    // Очищаем все классы анимации перед закрытием
-    const allPartsContainers = document.querySelectorAll('.minifig-parts-container');
-    allPartsContainers.forEach(container => {
-        container.classList.remove('animating-expand', 'animating-collapse', 'expanded');
-    });
     
     // Сбрасываем состояние
     S.selSetNum = null;
@@ -28548,62 +28494,25 @@ document.addEventListener("click", async e => {
                 if (a) {
                     const e = S.setModal.minifigs.find(e => e.set_num === a);
                     if (e) {
-                        const partsContainer = document.getElementById(`minifig-parts-${a.replace(/[^a-zA-Z0-9]/g,"-")}`);
+                        // Простое переключение без анимаций
+                        e.isExpanded = !e.isExpanded;
+                        renderSetModal(false);
                         
-                        if (e.isExpanded) {
-                            // Скрываем с анимацией
-                            if (partsContainer) {
-                                // Убираем все классы анимации и состояния
-                                partsContainer.classList.remove('expanded', 'animating-expand', 'animating-collapse');
-                                // Добавляем класс анимации скрытия
-                                partsContainer.classList.add('animating-collapse');
-                                
-                                setTimeout(() => {
-                                    e.isExpanded = false;
-                                    renderSetModal(false);
-                                }, 300);
-                            } else {
-                                e.isExpanded = false;
-                                renderSetModal(false);
-                            }
-                        } else {
-                            // Показываем с анимацией
-                            e.isExpanded = true;
-                            renderSetModal(false);
+                        if (!e.parts && !e.loadingError) {
+                            // Показываем индикатор загрузки для деталей минифигурки в модальном окне набора
+                            updateLoadingStatus("Загрузка деталей минифигурки...", 75, "Загрузка списка деталей");
                             
-                            // Добавляем анимацию после рендера
-                            setTimeout(() => {
-                                const newPartsContainer = document.getElementById(`minifig-parts-${a.replace(/[^a-zA-Z0-9]/g,"-")}`);
-                                if (newPartsContainer) {
-                                    // Убираем все классы анимации
-                                    newPartsContainer.classList.remove('animating-expand', 'animating-collapse', 'expanded');
-                                    // Добавляем класс анимации раскрытия
-                                    newPartsContainer.classList.add('animating-expand');
-                                    
-                                    // После завершения анимации переводим в статичное состояние
-                                    setTimeout(() => {
-                                        newPartsContainer.classList.remove('animating-expand');
-                                        newPartsContainer.classList.add('expanded');
-                                    }, 300);
-                                }
-                            }, 10);
-                            
-                            if (!e.parts && !e.loadingError) {
-                                // Показываем индикатор загрузки для деталей минифигурки в модальном окне набора
-                                updateLoadingStatus("Загрузка деталей минифигурки...", 75, "Загрузка списка деталей");
+                            e.isLoadingParts = !0, fetchMinifigParts(a).then(t => {
+                                e.parts = t;
                                 
-                                e.isLoadingParts = !0, fetchMinifigParts(a).then(t => {
-                                    e.parts = t;
-                                    
-                                    // Обновляем статус загрузки для деталей минифигурки
-                                    updateLoadingStatus("Детали минифигурки загружены", 80, `Загружено ${t.length} деталей`);
-                                }).catch(() => {
-                                    e.loadingError = !0;
-                                    updateLoadingStatus("Ошибка загрузки деталей", 0, "Не удалось загрузить детали минифигурки");
-                                }).finally(() => {
-                                    e.isLoadingParts = !1, S.selSetNum && renderSetModal(!1)
-                                })
-                            }
+                                // Обновляем статус загрузки для деталей минифигурки
+                                updateLoadingStatus("Детали минифигурки загружены", 80, `Загружено ${t.length} деталей`);
+                            }).catch(() => {
+                                e.loadingError = !0;
+                                updateLoadingStatus("Ошибка загрузки деталей", 0, "Не удалось загрузить детали минифигурки");
+                            }).finally(() => {
+                                e.isLoadingParts = !1, S.selSetNum && renderSetModal(!1)
+                            })
                         }
                     }
                 }
