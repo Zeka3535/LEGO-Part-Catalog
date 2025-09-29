@@ -11654,7 +11654,8 @@ async function saveMainDataToIndexedDB() {
             MINIFIG_MAP,
             COLOR_MAP,
             THEME_MAP,
-            flatCategories
+            flatCategories,
+            INVENTORY_DATA: window.INVENTORY_DATA || null
         };
         
         // Подсчитываем размер данных
@@ -11673,7 +11674,8 @@ async function saveMainDataToIndexedDB() {
                 minifigs: Object.keys(mainData.MINIFIG_MAP).length,
                 colors: Object.keys(mainData.COLOR_MAP).length,
                 themes: Object.keys(mainData.THEME_MAP).length,
-                categories: mainData.flatCategories.length
+                categories: mainData.flatCategories.length,
+                inventory: mainData.INVENTORY_DATA ? 'есть' : 'нет'
             });
         }
         
@@ -11705,12 +11707,15 @@ async function loadMainDataFromIndexedDB() {
             MINIFIG_MAP: mainData.MINIFIG_MAP && Object.keys(mainData.MINIFIG_MAP).length > 0,
             COLOR_MAP: mainData.COLOR_MAP && Object.keys(mainData.COLOR_MAP).length > 0,
             THEME_MAP: mainData.THEME_MAP && Object.keys(mainData.THEME_MAP).length > 0,
-            flatCategories: mainData.flatCategories && mainData.flatCategories.length > 0
+            flatCategories: mainData.flatCategories && mainData.flatCategories.length > 0,
+            INVENTORY_DATA: mainData.INVENTORY_DATA && (mainData.INVENTORY_DATA.parts || mainData.INVENTORY_DATA.sets || mainData.INVENTORY_DATA.minifigs)
         };
         
         console.log('🔍 Проверка данных:', checks);
         
-        const missingData = Object.entries(checks).filter(([key, valid]) => !valid).map(([key]) => key);
+        // Исключаем INVENTORY_DATA из обязательных проверок, так как старые данные могут не содержать его
+        const requiredChecks = Object.entries(checks).filter(([key]) => key !== 'INVENTORY_DATA');
+        const missingData = requiredChecks.filter(([key, valid]) => !valid).map(([key]) => key);
         
         if (missingData.length > 0) {
             console.log('⚠️ Неполные данные в IndexedDB, отсутствуют:', missingData);
@@ -11733,6 +11738,14 @@ async function loadMainDataFromIndexedDB() {
         Object.assign(THEME_MAP, mainData.THEME_MAP);
         flatCategories.push(...mainData.flatCategories);
         
+        // Восстанавливаем данные инвентаря
+        if (mainData.INVENTORY_DATA) {
+            window.INVENTORY_DATA = mainData.INVENTORY_DATA;
+            console.log('✅ Данные инвентаря восстановлены из IndexedDB');
+        } else {
+            console.log('⚠️ Данные инвентаря отсутствуют в IndexedDB');
+        }
+        
         console.log('✅ Основные данные загружены из IndexedDB');
         console.log('📊 Загружено:', {
             parts: Object.keys(PART_MAP).length,
@@ -11740,7 +11753,8 @@ async function loadMainDataFromIndexedDB() {
             minifigs: Object.keys(MINIFIG_MAP).length,
             colors: Object.keys(COLOR_MAP).length,
             themes: Object.keys(THEME_MAP).length,
-            categories: flatCategories.length
+            categories: flatCategories.length,
+            inventory: window.INVENTORY_DATA ? 'есть' : 'нет'
         });
         
         return true;
@@ -30677,6 +30691,12 @@ async function loadDataFromCSV() {
         
         // Сохраняем метаданные каталога в localStorage для быстрого старта
         saveCatalogData();
+        
+        // Сохраняем данные инвентаря в IndexedDB
+        if (window.INVENTORY_DATA) {
+            console.log('💾 Сохранение данных инвентаря в IndexedDB...');
+            await saveMainDataToIndexedDB();
+        }
         
         // Отмечаем, что данные загружены в этой сессии
         sessionStorage.setItem('csvDataLoaded', 'true');
