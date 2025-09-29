@@ -4704,6 +4704,16 @@ button[disabled]:hover {
         #minifig-modal-content [data-action="view-image-fullscreen"]:hover .group-hover\:opacity-100 {
             opacity: 0 !important;
         }
+        
+        /* Отключаем hover для карточек */
+        .part-card:hover,
+        .set-card:hover,
+        .minifig-card:hover,
+        .wishlist-item:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+  
     }
 
   </style>
