@@ -4689,7 +4689,20 @@ button[disabled]:hover {
         body.no-hover .group:hover,
         body.no-hover .group:hover * {
             transform: none !important;
-            box-shadow: none !important;
+        }
+        
+        /* Скрываем иконку лупы в модальных окнах на малых экранах */
+        #modal-content [data-action="view-image-fullscreen"] .group-hover\:opacity-100,
+        #set-modal-content [data-action="view-image-fullscreen"] .group-hover\:opacity-100,
+        #minifig-modal-content [data-action="view-image-fullscreen"] .group-hover\:opacity-100 {
+            display: none !important;
+        }
+        
+        /* Убираем hover эффекты на изображениях в модальных окнах на малых экранах */
+        #modal-content [data-action="view-image-fullscreen"]:hover .group-hover\:opacity-100,
+        #set-modal-content [data-action="view-image-fullscreen"]:hover .group-hover\:opacity-100,
+        #minifig-modal-content [data-action="view-image-fullscreen"]:hover .group-hover\:opacity-100 {
+            opacity: 0 !important;
         }
     }
 
