@@ -1953,19 +1953,19 @@
         transform: rotate(180deg);
     }
     
+    /* Улучшенная анимация для шевронов в модалке настроек */
+    #about-chevron,
+    #technologies-chevron,
+    #settings-stats-chevron,
     .rotate {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
+    #about-chevron.rotate-180,
+    #technologies-chevron.rotate-180,
+    #settings-stats-chevron.rotate-180,
+    .rotate.rotate-180,
     .rotate-180 {
-        transform: rotate(180deg);
-    }
-    
-    /* Улучшенная анимация для шеврона панели "О сайте" */
-    #about-chevron {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    #about-chevron.rotate-180 {
-        transform: rotate(180deg);
+        transform: rotate(180deg) !important;
     }
     
     /* Анимации кнопок в боковом меню */
@@ -28200,6 +28200,15 @@ document.addEventListener("click", async e => {
                     // Сохраняем состояние панели
                     localStorage.setItem('settingsStatsOpen', String(isOpen));
                     
+                    // Обновляем состояние шеврона
+                    if (chevron) {
+                        if (isOpen) {
+                            chevron.classList.add('rotate-180');
+                        } else {
+                            chevron.classList.remove('rotate-180');
+                        }
+                    }
+                    
                     // Автопроверка прокси при разворачивании панели
                     if (!wasOpen && isOpen) {
                         console.log('🔍 Статистика загрузки развернута, проверяем прокси...');
@@ -28211,9 +28220,6 @@ document.addEventListener("click", async e => {
                             // Автопроверка прокси убрана
                         }, 300);
                     }
-                }
-                if (chevron) {
-                    chevron.classList.toggle('rotate-180');
                 }
                 break;
             case "toggle-technologies":
@@ -28252,6 +28258,7 @@ document.addEventListener("click", async e => {
                     if (aboutChevron) {
                         if (isOpen) {
                             aboutChevron.classList.add('rotate-180');
+                            console.log('🔄 Добавлен класс rotate-180 для about-chevron');
                         } else {
                             aboutChevron.classList.remove('rotate-180');
                         }
