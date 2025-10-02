@@ -22,21 +22,50 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- remoteStorage.js library -->
-  <script src="https://unpkg.com/remotestoragejs/release/remotestorage.js"></script>
-  <!-- QR Code and DataMatrix scanner library -->
-  <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
   <script>
-    // Проверяем загрузку RemoteStorage
-    window.addEventListener('load', function() {
-      if (typeof RemoteStorage !== 'undefined') {
-        console.log('✅ RemoteStorage loaded successfully');
-        window.remoteStorageAvailable = true;
-      } else {
+    // Динамическая загрузка библиотек
+    window.remoteStorageAvailable = false;
+    window.zxingAvailable = false;
+    
+    // Загружаем RemoteStorage только при необходимости
+    window.loadRemoteStorage = async function() {
+      if (window.remoteStorageAvailable) return;
+      try {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/remotestoragejs/release/remotestorage.js';
+        script.async = true;
+        document.head.appendChild(script);
+        await new Promise((resolve, reject) => {
+          script.onload = () => {
+            window.remoteStorageAvailable = true;
+            resolve();
+          };
+          script.onerror = reject;
+        });
+      } catch (e) {
         console.warn('⚠️ RemoteStorage not loaded, using fallback');
-        window.remoteStorageAvailable = false;
       }
-    });
+    };
+    
+    // Загружаем ZXing только при необходимости
+    window.loadZXing = async function() {
+      if (window.zxingAvailable) return;
+      try {
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/@zxing/library@latest/umd/index.min.js';
+        script.async = true;
+        document.head.appendChild(script);
+        await new Promise((resolve, reject) => {
+          script.onload = () => {
+            window.zxingAvailable = true;
+            resolve();
+          };
+          script.onerror = reject;
+        });
+      } catch (e) {
+        console.warn('⚠️ ZXing not loaded');
+      }
+    };
   </script>
   <script>
     tailwind.config = {
@@ -86,6 +115,24 @@
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
         }
+    }
+    
+    /* Оптимизация производительности для крупных секций */
+    .content-section {
+        content-visibility: auto;
+        contain-intrinsic-size: 0 500px;
+    }
+    
+    /* Оптимизация для модальных окон */
+    .modal-content {
+        content-visibility: auto;
+        contain-intrinsic-size: 0 400px;
+    }
+    
+    /* Оптимизация для списков */
+    .list-container {
+        content-visibility: auto;
+        contain-intrinsic-size: 0 300px;
     }
     
     /* Анимация для индикатора фокусировки */
@@ -911,12 +958,6 @@
     color: transparent;
 }
 
-
-
-
-
-
-
 /* Отступы между блоками в модальном окне детали */
 .modal-section-spacing {
     margin-bottom: 1.5rem; /* 24px */
@@ -1199,7 +1240,7 @@
     
     /* Пульсация для кнопки sidebar-toggle при первом показе */
     .sidebar-toggle-btn.pulse {
-        animation: buttonPulse 2s ease-in-out infinite;
+        animation: buttonPulse 1s ease-in-out infinite;
     }
     
     @keyframes buttonPulse {
@@ -2900,6 +2941,107 @@
     /* Кнопка закрытия всегда поверх и кликабельна */
     #image-viewer-close {
         pointer-events: auto !important;
+    }
+    
+    /* Стили для зума и перетаскивания изображения */
+    #image-viewer-container.zoom-mode {
+        cursor: grab;
+    }
+    
+    #image-viewer-container.zoom-mode:active {
+        cursor: grabbing;
+    }
+    
+    #image-viewer-container.zoom-mode .image-wrapper {
+        cursor: grab;
+        transition: transform 0.1s ease-out;
+    }
+    
+    #image-viewer-container.zoom-mode .image-wrapper:active {
+        cursor: grabbing;
+    }
+    
+    #image-viewer-container.zoom-mode .image-wrapper.dragging {
+        cursor: grabbing;
+        transition: none;
+    }
+    
+    /* Кнопки управления зумом */
+    .zoom-controls {
+        position: absolute;
+        top: 60px;
+        right: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 100;
+    }
+    
+    .zoom-btn {
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 0, 0, 0.8);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* На мобильных устройствах кнопки внизу по центру */
+    @media (max-width: 768px) {
+        .zoom-controls {
+            top: auto;
+            bottom: 40px;
+            right: auto;
+            left: 50%;
+            transform: translateX(-50%);
+            flex-direction: row;
+            gap: 15px;
+        }
+        
+        .zoom-btn {
+            width: 50px;
+            height: 50px;
+        }
+    }
+    
+    .zoom-btn:hover {
+        background: rgba(0, 0, 0, 0.9);
+        transform: scale(1.05);
+    }
+    
+    .zoom-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .zoom-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    /* Увеличенные иконки на мобильных */
+    @media (max-width: 768px) {
+        .zoom-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+    }
+    
+    .zoom-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .zoom-btn:disabled:hover {
+        background: rgba(0, 0, 0, 0.7);
+        transform: none;
     }
     
     /* Принудительно восстанавливаем pointer-events для модальных окон */
@@ -4941,15 +5083,20 @@ button[disabled]:hover {
   
     }
 
+    /* Отключаем margin-top только для блока настроек */
+    .flex-shrink-0.mt-4.border-t.border-gray-700.pt-4.space-y-4 {
+        margin-top: 0.5 !important;
+    }
+
   </style>
 </head>
 <body class="bg-gray-900 text-gray-200">
   <div id="scroll-progress"><div class="bar"></div></div>
-  <aside id="sidebar-container" role="complementary" aria-label="Боковая панель навигации" class="w-80 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 lg:translate-x-0 -translate-x-full"></aside>
+  <aside id="sidebar-container" role="complementary" aria-label="Боковая панель навигации" class="w-80 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 lg:translate-x-0 -translate-x-full content-section"></aside>
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden lg:hidden"></div>
   <div class="lg:ml-80 flex flex-col h-screen">
     <header id="header-container" class="bg-gray-800 sticky top-0 z-20 p-4 border-b border-gray-700"></header>
-    <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar">
+    <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar content-section">
       
       <div id="loading-container" class="flex flex-col items-center justify-center h-full p-8">
         <div class="text-center">
@@ -4969,23 +5116,47 @@ button[disabled]:hover {
       </div>
     </main>
   </div>
-  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
-          <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
-  <div id="minifig-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
-  <div id="colors-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
-  <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
-  <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
-  <div id="related-sets-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
-  <div id="wishlist-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden"></div>
+  <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden modal-content"></div>
+          <div id="set-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden modal-content"></div>
+  <div id="minifig-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden modal-content"></div>
+  <div id="colors-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden modal-content"></div>
+  <div id="filter-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden modal-content"></div>
+  <div id="settings-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden modal-content"></div>
+  <div id="related-sets-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden modal-content"></div>
+  <div id="wishlist-modal-container" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden modal-content"></div>
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
   <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center viewer-hidden">
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
       <div class="image-wrapper bg-white rounded-[18px] shadow-2xl overflow-hidden">
-        <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out rounded-[18px]">
+        <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out rounded-[18px]" loading="lazy" decoding="async">
       </div>
     </div>
+    <div class="zoom-controls">
+      <button id="zoom-in-btn" class="zoom-btn" title="Увеличить">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+          <line x1="11" y1="8" x2="11" y2="14"/>
+          <line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+      </button>
+      <button id="zoom-out-btn" class="zoom-btn" title="Уменьшить">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.35-4.35"/>
+          <line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+      </button>
+      <button id="zoom-reset-btn" class="zoom-btn" title="Сбросить зум">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="currentColor">
+          <path d="M125.7 160H176c17.7 0 32 14.3 32 32s-14.3 32-32 32H48c-17.7 0-32-14.3-32-32V64c0-17.7 14.3-32 32-32s32 14.3 32 32v51.2L97.6 97.6c87.6-87.6 229.3-87.6 316.9 0s87.6 229.3 0 316.9s-229.3 87.6-316.9 0c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0c62.5 62.5 163.8 62.5 226.3 0s62.5-163.8 0-226.3s-163.8-62.5-226.3 0L125.7 160z"/>
+        </svg>
+      </button>
+    </div>
     <button id="image-viewer-close" class="modal-close-btn absolute top-4 right-4 z-[101]">
-      ${I_X("w-4 h-4")}
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
     </button>
   </div>
   <button id="scroll-to-top-btn" class="fixed bottom-6 right-6 bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 opacity-0 pointer-events-none z-40 transform translate-y-4" aria-label="Вернуться наверх" title="Прокрутить страницу в начало">
@@ -5610,12 +5781,21 @@ window.setupUniversalSearchModalHandlers = function() {
     const progressBar = document.getElementById('universal-search-scroll-progress');
     
     if (scrollContainer && progressBar) {
-        scrollContainer.addEventListener('scroll', () => {
+        let ticking = false;
+        const updateProgress = () => {
             const scrollTop = scrollContainer.scrollTop;
             const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
             const progress = (scrollTop / scrollHeight) * 100;
             progressBar.querySelector('.bar').style.width = `${progress}%`;
-        });
+            ticking = false;
+        };
+        
+        scrollContainer.addEventListener('scroll', () => {
+            if (!ticking) {
+                requestAnimationFrame(updateProgress);
+                ticking = true;
+            }
+        }, { passive: true });
     }
 }
 
@@ -6970,7 +7150,7 @@ window.setupSetsSearchScrollProgress = function() {
     
     // Добавляем новый обработчик
     scrollArea._scrollHandler = updateScrollProgress;
-    scrollArea.addEventListener('scroll', updateScrollProgress);
+    scrollArea.addEventListener('scroll', updateScrollProgress, { passive: true });
     
     // Наблюдаем за изменениями размера контента
     if (scrollArea._resizeObserver) {
@@ -7016,7 +7196,7 @@ window.setupMinifigsSearchScrollProgress = function() {
     
     // Добавляем новый обработчик
     scrollArea._scrollHandler = updateScrollProgress;
-    scrollArea.addEventListener('scroll', updateScrollProgress);
+    scrollArea.addEventListener('scroll', updateScrollProgress, { passive: true });
     
     // Наблюдаем за изменениями размера контента
     if (scrollArea._resizeObserver) {
@@ -7254,7 +7434,7 @@ window.setupPartSearchScrollProgress = function() {
     };
     
     // Обновляем при прокрутке
-    scrollArea.addEventListener('scroll', updateScrollProgress);
+    scrollArea.addEventListener('scroll', updateScrollProgress, { passive: true });
     
     // Обновляем при изменении размера
     const resizeObserver = new ResizeObserver(updateScrollProgress);
@@ -15950,7 +16130,7 @@ function getPartImageUrl(e) {
     const t = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
     
     if (!e || typeof e !== 'string' || e.trim() === '') {
-        return `src="${t}"`;
+        return `src="${t}" loading="lazy" decoding="async"`;
     }
     
     // Принимаем различные типы URL изображений
@@ -15959,12 +16139,12 @@ function getPartImageUrl(e) {
     // Принимаем HTTP URL, data URL и относительные пути
     if (trimmedUrl.startsWith('http') || trimmedUrl.startsWith('data:') || trimmedUrl.startsWith('./') || trimmedUrl.startsWith('/')) {
         // Простая заглушка при ошибке загрузки
-        return `src="${trimmedUrl}" onerror="this.onerror=null; this.src='${t}';"`
+        return `src="${trimmedUrl}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${t}';"`
     }
     
     // Для других случаев пытаемся использовать URL как есть, но выводим предупреждение
     console.warn('Potentially invalid image URL detected:', trimmedUrl);
-    return `src="${trimmedUrl}" onerror="this.onerror=null; this.src='${t}';"`
+    return `src="${trimmedUrl}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${t}';"`
 }
 
 // Специальные атрибуты изображения для детали с простой заглушкой при ошибке
@@ -15974,9 +16154,9 @@ function getPartImageAttrs(partId, url) {
     
     if (u && (u.startsWith('http') || u.startsWith('./') || u.startsWith('/'))) {
         // Простая заглушка при ошибке загрузки
-        return `src="${u}" onerror="this.onerror=null; this.src='${fallback}';"`;
+        return `src="${u}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${fallback}';"`;
     }
-    return `src="${fallback}"`;
+    return `src="${fallback}" loading="lazy" decoding="async"`;
 }
 
 // Специальные атрибуты изображения для набора с обработкой ошибки загрузки
@@ -15984,9 +16164,9 @@ function getSetImageAttrs(setNum, url) {
     const fallback = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
     const u = (url || '').trim();
     if (u && (u.startsWith('http') || u.startsWith('./') || u.startsWith('/'))) {
-        return `src="${u}" onerror="window.onSetImgError && window.onSetImgError('${setNum}', this)"`;
+        return `src="${u}" loading="lazy" decoding="async" onerror="window.onSetImgError && window.onSetImgError('${setNum}', this)"`;
     }
-    return `src="${fallback}"`;
+    return `src="${fallback}" loading="lazy" decoding="async"`;
 }
 // Глобальный обработчик ошибки загрузки изображения набора
 window.onSetImgError = async (setNum, imgEl) => {
@@ -24248,8 +24428,11 @@ function openImageViewer(e) {
 
     // Устанавливаем изображение
     viewerImg.setAttribute("src", e);
-    viewerEl.classList.remove("zoomed");
+    viewerEl.classList.remove("zoomed", "zoom-mode");
     viewerImg.classList.remove("zoomed");
+    
+    // Сбрасываем состояние зума
+    resetZoom();
     
     // Убираем класс viewer-hidden перед открытием
     viewerEl.classList.remove("viewer-hidden");
@@ -24275,10 +24458,16 @@ function openImageViewer(e) {
             closeBtn.style.transform = 'scale(1) rotate(0deg)';
         }, 200);
     }
+    
+    // Инициализируем обработчики зума
+    initializeZoomControls();
 }
 function closeImageViewer() {
     // Сбрасываем изображение
     viewerImg.setAttribute("src", "");
+    
+    // Сбрасываем состояние зума
+    resetZoom();
     
     // Закрываем через modalManager
     modalManager.closeModal('image-viewer-container');
@@ -24286,7 +24475,271 @@ function closeImageViewer() {
         // Дополнительно убеждаемся, что image viewer скрыт
     if (viewerEl) {
         viewerEl.classList.add('viewer-hidden');
-        viewerEl.classList.remove('visible');
+        viewerEl.classList.remove('visible', 'zoom-mode');
+    }
+}
+
+// Переменные для состояния зума
+let zoomState = {
+    scale: 1,
+    translateX: 0,
+    translateY: 0,
+    isDragging: false,
+    dragStart: { x: 0, y: 0 },
+    lastTranslate: { x: 0, y: 0 }
+};
+
+// Функция сброса зума
+function resetZoom() {
+    zoomState.scale = 1;
+    zoomState.translateX = 0;
+    zoomState.translateY = 0;
+    zoomState.isDragging = false;
+    zoomState.lastTranslate = { x: 0, y: 0 };
+    
+    if (viewerEl) {
+        viewerEl.classList.remove('zoom-mode');
+        const imageWrapper = viewerEl.querySelector('.image-wrapper');
+        if (imageWrapper) {
+            imageWrapper.style.transform = 'scale(1) translate(0px, 0px)';
+            imageWrapper.classList.remove('dragging');
+        }
+    }
+    
+    updateZoomButtons();
+}
+
+// Функция применения зума
+function applyZoom() {
+    const imageWrapper = viewerEl.querySelector('.image-wrapper');
+    if (imageWrapper) {
+        // Ограничиваем перемещение, чтобы изображение не уходило слишком далеко
+        const maxTranslate = 200; // Максимальное смещение в пикселях
+        const constrainedX = Math.max(-maxTranslate, Math.min(maxTranslate, zoomState.translateX));
+        const constrainedY = Math.max(-maxTranslate, Math.min(maxTranslate, zoomState.translateY));
+        
+        imageWrapper.style.transform = `scale(${zoomState.scale}) translate(${constrainedX}px, ${constrainedY}px)`;
+    }
+}
+
+// Функция увеличения зума
+function zoomIn() {
+    if (zoomState.scale < 3) {
+        zoomState.scale = Math.min(zoomState.scale * 1.5, 3);
+        applyZoom();
+        updateZoomButtons();
+        
+        if (zoomState.scale > 1) {
+            viewerEl.classList.add('zoom-mode');
+        }
+    }
+}
+
+// Функция уменьшения зума
+function zoomOut() {
+    if (zoomState.scale > 1) {
+        zoomState.scale = Math.max(zoomState.scale / 1.5, 1);
+        applyZoom();
+        updateZoomButtons();
+        
+        if (zoomState.scale === 1) {
+            viewerEl.classList.remove('zoom-mode');
+            resetZoom();
+        }
+    }
+}
+
+// Функция обновления состояния кнопок зума
+function updateZoomButtons() {
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    const zoomResetBtn = document.getElementById('zoom-reset-btn');
+    
+    if (zoomInBtn) {
+        zoomInBtn.disabled = zoomState.scale >= 3;
+    }
+    if (zoomOutBtn) {
+        zoomOutBtn.disabled = zoomState.scale <= 1;
+    }
+    if (zoomResetBtn) {
+        zoomResetBtn.disabled = zoomState.scale === 1;
+    }
+}
+
+// Функция инициализации обработчиков зума
+function initializeZoomControls() {
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    const zoomResetBtn = document.getElementById('zoom-reset-btn');
+    const imageWrapper = viewerEl.querySelector('.image-wrapper');
+    
+    if (zoomInBtn) {
+        zoomInBtn.onclick = (e) => {
+            e.stopPropagation();
+            zoomIn();
+        };
+    }
+    
+    if (zoomOutBtn) {
+        zoomOutBtn.onclick = (e) => {
+            e.stopPropagation();
+            zoomOut();
+        };
+    }
+    
+    if (zoomResetBtn) {
+        zoomResetBtn.onclick = (e) => {
+            e.stopPropagation();
+            resetZoom();
+        };
+    }
+    
+    if (imageWrapper) {
+        // Обработчики для перетаскивания
+        imageWrapper.addEventListener('mousedown', startDrag);
+        imageWrapper.addEventListener('mousemove', drag);
+        imageWrapper.addEventListener('mouseup', endDrag);
+        imageWrapper.addEventListener('mouseleave', endDrag);
+        
+        // Обработчики для тач-событий
+        imageWrapper.addEventListener('touchstart', startDragTouch);
+        imageWrapper.addEventListener('touchmove', dragTouch);
+        imageWrapper.addEventListener('touchend', endDragTouch);
+        
+        // Обработчик колесика мыши для зума
+        imageWrapper.addEventListener('wheel', handleWheel, { passive: false });
+        
+        // Обработчик двойного клика для быстрого зума
+        imageWrapper.addEventListener('dblclick', handleDoubleClick);
+        
+        // Предотвращаем контекстное меню при перетаскивании
+        imageWrapper.addEventListener('contextmenu', (e) => {
+            if (zoomState.isDragging) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    updateZoomButtons();
+}
+
+// Обработчики мыши
+function startDrag(e) {
+    if (zoomState.scale > 1) {
+        zoomState.isDragging = true;
+        zoomState.dragStart.x = e.clientX - zoomState.translateX;
+        zoomState.dragStart.y = e.clientY - zoomState.translateY;
+        
+        const imageWrapper = viewerEl.querySelector('.image-wrapper');
+        if (imageWrapper) {
+            imageWrapper.classList.add('dragging');
+        }
+        
+        e.preventDefault();
+    }
+}
+
+function drag(e) {
+    if (zoomState.isDragging && zoomState.scale > 1) {
+        const newTranslateX = e.clientX - zoomState.dragStart.x;
+        const newTranslateY = e.clientY - zoomState.dragStart.y;
+        
+        // Ограничиваем перемещение
+        const maxTranslate = 200;
+        zoomState.translateX = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateX));
+        zoomState.translateY = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateY));
+        
+        applyZoom();
+        e.preventDefault();
+    }
+}
+
+function endDrag(e) {
+    if (zoomState.isDragging) {
+        zoomState.isDragging = false;
+        zoomState.lastTranslate.x = zoomState.translateX;
+        zoomState.lastTranslate.y = zoomState.translateY;
+        
+        const imageWrapper = viewerEl.querySelector('.image-wrapper');
+        if (imageWrapper) {
+            imageWrapper.classList.remove('dragging');
+        }
+    }
+}
+
+// Обработчики тач-событий
+function startDragTouch(e) {
+    if (zoomState.scale > 1 && e.touches.length === 1) {
+        const touch = e.touches[0];
+        zoomState.isDragging = true;
+        zoomState.dragStart.x = touch.clientX - zoomState.translateX;
+        zoomState.dragStart.y = touch.clientY - zoomState.translateY;
+        
+        const imageWrapper = viewerEl.querySelector('.image-wrapper');
+        if (imageWrapper) {
+            imageWrapper.classList.add('dragging');
+        }
+        
+        e.preventDefault();
+    }
+}
+
+function dragTouch(e) {
+    if (zoomState.isDragging && zoomState.scale > 1 && e.touches.length === 1) {
+        const touch = e.touches[0];
+        const newTranslateX = touch.clientX - zoomState.dragStart.x;
+        const newTranslateY = touch.clientY - zoomState.dragStart.y;
+        
+        // Ограничиваем перемещение
+        const maxTranslate = 200;
+        zoomState.translateX = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateX));
+        zoomState.translateY = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateY));
+        
+        applyZoom();
+        e.preventDefault();
+    }
+}
+
+function endDragTouch(e) {
+    if (zoomState.isDragging) {
+        zoomState.isDragging = false;
+        zoomState.lastTranslate.x = zoomState.translateX;
+        zoomState.lastTranslate.y = zoomState.translateY;
+        
+        const imageWrapper = viewerEl.querySelector('.image-wrapper');
+        if (imageWrapper) {
+            imageWrapper.classList.remove('dragging');
+        }
+    }
+}
+
+// Обработчик колесика мыши для зума
+function handleWheel(e) {
+    e.preventDefault();
+    
+    if (e.deltaY < 0) {
+        // Прокрутка вверх - увеличиваем зум
+        zoomIn();
+    } else if (e.deltaY > 0) {
+        // Прокрутка вниз - уменьшаем зум
+        zoomOut();
+    }
+}
+
+// Обработчик двойного клика для быстрого зума
+function handleDoubleClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (zoomState.scale === 1) {
+        // Если зум сброшен, увеличиваем до 2x
+        zoomState.scale = 2;
+        applyZoom();
+        updateZoomButtons();
+        viewerEl.classList.add('zoom-mode');
+    } else {
+        // Если зум активен, сбрасываем
+        resetZoom();
     }
 }
 
@@ -32784,7 +33237,7 @@ function getColorImageUrl(partNum, colorId, fallbackUrl = null) {
         return fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
     }
     
-    return `src="${colorImageUrl}" onerror="this.onerror=null; this.src='${fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`}'; handleColorImageLoadError(this, '${partNum}', '${colorId}', '${colorImageUrl}');"`
+    return `src="${colorImageUrl}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`}'; handleColorImageLoadError(this, '${partNum}', '${colorId}', '${colorImageUrl}');"`
 }
 // Function to handle color image load errors and fetch from API
 async function handleColorImageLoadError(imgElement, partNum, colorId, originalUrl) {
