@@ -3010,21 +3010,11 @@
             touch-action: manipulation;
         }
         
-        /* Агрессивная блокировка для заблокированных кнопок на мобильных */
+        /* Блокировка touch событий для заблокированных кнопок на мобильных */
         .zoom-btn:disabled {
-            pointer-events: none !important;
-            touch-action: none !important;
-            -webkit-touch-callout: none !important;
-            -webkit-user-select: none !important;
-            -khtml-user-select: none !important;
-            -moz-user-select: none !important;
-            -ms-user-select: none !important;
-            user-select: none !important;
-        }
-        
-        .zoom-btn:disabled * {
-            pointer-events: none !important;
-            touch-action: none !important;
+            pointer-events: none;
+            touch-action: none;
+            -webkit-touch-callout: none;
         }
     }
     
@@ -3117,28 +3107,27 @@
     .zoom-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
-        pointer-events: none !important;
-        user-select: none;
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
+        pointer-events: none;
         touch-action: none;
+    }
+    
+    /* Дополнительный класс для полной блокировки на мобильных */
+    .zoom-btn.no-touch {
+        pointer-events: none !important;
+        touch-action: none !important;
+        -webkit-touch-callout: none !important;
+        -webkit-user-select: none !important;
+        user-select: none !important;
     }
     
     .zoom-btn:disabled:hover {
         background-color: rgba(255, 255, 255, 0.1);
         transform: none;
-        pointer-events: none !important;
     }
     
     .zoom-btn:disabled:active {
         transform: none;
         background-color: rgba(255, 255, 255, 0.1);
-        pointer-events: none !important;
-    }
-    
-    .zoom-btn:disabled * {
-        pointer-events: none !important;
     }
     
     .zoom-btn svg {
@@ -5249,9 +5238,9 @@ button[disabled]:hover {
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
       <!-- Контейнер-полотно для перемещения -->
       <div id="image-canvas" class="image-canvas">
-        <div class="image-wrapper bg-white rounded-[18px] shadow-2xl overflow-hidden">
-          <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out rounded-[18px]" loading="lazy" decoding="async">
-        </div>
+      <div class="image-wrapper bg-white rounded-[18px] shadow-2xl overflow-hidden">
+        <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out rounded-[18px]" loading="lazy" decoding="async">
+      </div>
       </div>
     </div>
     <div class="zoom-controls">
@@ -24687,56 +24676,34 @@ function updateZoomButtons() {
     const zoomOutBtn = document.getElementById('zoom-out-btn');
     const zoomResetBtn = document.getElementById('zoom-reset-btn');
     
-    // Блокируем кнопки когда действие недоступно
+    // Блокируем кнопки и добавляем класс no-touch для мобильных
     if (zoomInBtn) {
         const isDisabled = zoomState.scale >= 3;
         zoomInBtn.disabled = isDisabled;
-        
-        // Полностью отключаем все события для заблокированной кнопки
         if (isDisabled) {
-            zoomInBtn.style.pointerEvents = 'none';
-            zoomInBtn.style.touchAction = 'none';
-            zoomInBtn.style.userSelect = 'none';
-            zoomInBtn.style.webkitUserSelect = 'none';
-            zoomInBtn.style.mozUserSelect = 'none';
-            zoomInBtn.style.msUserSelect = 'none';
+            zoomInBtn.classList.add('no-touch');
         } else {
-            zoomInBtn.style.pointerEvents = 'auto';
-            zoomInBtn.style.touchAction = 'manipulation';
+            zoomInBtn.classList.remove('no-touch');
         }
     }
     
     if (zoomOutBtn) {
         const isDisabled = zoomState.scale <= 1;
         zoomOutBtn.disabled = isDisabled;
-        
         if (isDisabled) {
-            zoomOutBtn.style.pointerEvents = 'none';
-            zoomOutBtn.style.touchAction = 'none';
-            zoomOutBtn.style.userSelect = 'none';
-            zoomOutBtn.style.webkitUserSelect = 'none';
-            zoomOutBtn.style.mozUserSelect = 'none';
-            zoomOutBtn.style.msUserSelect = 'none';
+            zoomOutBtn.classList.add('no-touch');
         } else {
-            zoomOutBtn.style.pointerEvents = 'auto';
-            zoomOutBtn.style.touchAction = 'manipulation';
+            zoomOutBtn.classList.remove('no-touch');
         }
     }
     
     if (zoomResetBtn) {
         const isDisabled = zoomState.scale <= 1;
         zoomResetBtn.disabled = isDisabled;
-        
         if (isDisabled) {
-            zoomResetBtn.style.pointerEvents = 'none';
-            zoomResetBtn.style.touchAction = 'none';
-            zoomResetBtn.style.userSelect = 'none';
-            zoomResetBtn.style.webkitUserSelect = 'none';
-            zoomResetBtn.style.mozUserSelect = 'none';
-            zoomResetBtn.style.msUserSelect = 'none';
+            zoomResetBtn.classList.add('no-touch');
         } else {
-            zoomResetBtn.style.pointerEvents = 'auto';
-            zoomResetBtn.style.touchAction = 'manipulation';
+            zoomResetBtn.classList.remove('no-touch');
         }
     }
 }
@@ -24831,23 +24798,17 @@ function handleWindowResize() {
 
 // Обработчики для кнопок зума
 function handleZoomIn(e) {
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    
+    // Простая проверка - если кнопка заблокирована, ничего не делаем
+    if (zoomInBtn && zoomInBtn.disabled) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+    }
+    
     e.preventDefault();
     e.stopPropagation();
-    
-    // Проверяем, не заблокирована ли кнопка
-    const zoomInBtn = document.getElementById('zoom-in-btn');
-    if (zoomInBtn && (zoomInBtn.disabled || zoomInBtn.style.pointerEvents === 'none')) {
-        e.stopImmediatePropagation();
-        return false;
-    }
-    
-    // Дополнительная проверка для сенсорных устройств
-    if (e.type === 'touchstart' || e.type === 'touchend') {
-        if (zoomInBtn && zoomInBtn.style.touchAction === 'none') {
-            e.stopImmediatePropagation();
-            return false;
-        }
-    }
     
     // Защита от двойного срабатывания
     if (e.type === 'touchstart' && e.changedTouches.length > 1) {
@@ -24861,23 +24822,17 @@ function handleZoomIn(e) {
 }
 
 function handleZoomOut(e) {
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    
+    // Простая проверка - если кнопка заблокирована, ничего не делаем
+    if (zoomOutBtn && zoomOutBtn.disabled) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+    }
+    
     e.preventDefault();
     e.stopPropagation();
-    
-    // Проверяем, не заблокирована ли кнопка
-    const zoomOutBtn = document.getElementById('zoom-out-btn');
-    if (zoomOutBtn && (zoomOutBtn.disabled || zoomOutBtn.style.pointerEvents === 'none')) {
-        e.stopImmediatePropagation();
-        return false;
-    }
-    
-    // Дополнительная проверка для сенсорных устройств
-    if (e.type === 'touchstart' || e.type === 'touchend') {
-        if (zoomOutBtn && zoomOutBtn.style.touchAction === 'none') {
-            e.stopImmediatePropagation();
-            return false;
-        }
-    }
     
     // Защита от двойного срабатывания
     if (e.type === 'touchstart' && e.changedTouches.length > 1) {
@@ -24891,23 +24846,17 @@ function handleZoomOut(e) {
 }
 
 function handleZoomReset(e) {
+    const zoomResetBtn = document.getElementById('zoom-reset-btn');
+    
+    // Простая проверка - если кнопка заблокирована, ничего не делаем
+    if (zoomResetBtn && zoomResetBtn.disabled) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+    }
+    
     e.preventDefault();
     e.stopPropagation();
-    
-    // Проверяем, не заблокирована ли кнопка
-    const zoomResetBtn = document.getElementById('zoom-reset-btn');
-    if (zoomResetBtn && (zoomResetBtn.disabled || zoomResetBtn.style.pointerEvents === 'none')) {
-        e.stopImmediatePropagation();
-        return false;
-    }
-    
-    // Дополнительная проверка для сенсорных устройств
-    if (e.type === 'touchstart' || e.type === 'touchend') {
-        if (zoomResetBtn && zoomResetBtn.style.touchAction === 'none') {
-            e.stopImmediatePropagation();
-            return false;
-        }
-    }
     
     // Защита от двойного срабатывания
     if (e.type === 'touchstart' && e.changedTouches.length > 1) {
