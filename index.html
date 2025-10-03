@@ -3000,6 +3000,17 @@
         transform-style: preserve-3d;
     }
     
+    /* Отключаем двойное нажатие на сенсорных экранах */
+    @media (hover: none) and (pointer: coarse) {
+        #image-viewer-container {
+            touch-action: manipulation;
+        }
+        
+        #image-viewer-container * {
+            touch-action: manipulation;
+        }
+    }
+    
     /* Кнопки управления зумом */
     .zoom-controls {
         position: absolute;
@@ -3074,6 +3085,22 @@
     
     .zoom-btn:active {
         transform: scale(0.95);
+    }
+    
+    .zoom-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .zoom-btn:disabled:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: none;
+    }
+    
+    .zoom-btn:disabled:active {
+        transform: none;
+        background-color: rgba(255, 255, 255, 0.1);
     }
     
     .zoom-btn svg {
@@ -3155,7 +3182,6 @@
         #modal-content > div:first-child,
         #set-modal-content > div:first-child,
         #minifig-modal-content > div:first-child {
-            padding: 0.5rem !important;
             gap: 0.5rem !important;
         }
         #modal-content h2,
@@ -24915,6 +24941,11 @@ function handleWheel(e) {
 
 // Обработчик двойного клика для быстрого зума
 function handleDoubleClick(e) {
+    // Отключаем двойной клик на сенсорных экранах
+    if ('ontouchstart' in window) {
+        return;
+    }
+    
     e.preventDefault();
     e.stopPropagation();
     
