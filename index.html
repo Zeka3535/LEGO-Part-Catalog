@@ -29,21 +29,41 @@
     
     // Загружаем RemoteStorage только при необходимости
     window.loadRemoteStorage = async function() {
-      if (window.remoteStorageAvailable) return;
+      if (window.remoteStorageAvailable) {
+        console.log('✅ RemoteStorage already loaded');
+        return true;
+      }
+      
       try {
+        console.log('🔄 Loading RemoteStorage library...');
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/remotestoragejs/release/remotestorage.js';
         script.async = true;
+        script.crossOrigin = 'anonymous';
         document.head.appendChild(script);
+        
         await new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('RemoteStorage loading timeout'));
+          }, 10000); // 10 секунд таймаут
+          
           script.onload = () => {
+            clearTimeout(timeout);
             window.remoteStorageAvailable = true;
+            console.log('✅ RemoteStorage library loaded successfully');
             resolve();
           };
-          script.onerror = reject;
+          script.onerror = (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          };
         });
+        
+        return true;
       } catch (e) {
-        console.warn('⚠️ RemoteStorage not loaded, using fallback');
+        console.warn('⚠️ RemoteStorage not loaded, using fallback:', e);
+        window.remoteStorageAvailable = false;
+        return false;
       }
     };
     
@@ -3015,6 +3035,16 @@
             pointer-events: none;
             touch-action: none;
             -webkit-touch-callout: none;
+            /* Скрываем заблокированные кнопки на мобильных */
+            display: none !important;
+        }
+        
+        /* Центрируем доступные кнопки на мобильных */
+        .zoom-controls {
+            justify-content: center !important;
+            left: 50% !important;
+            right: auto !important;
+            transform: translateX(-50%) !important;
         }
     }
     
@@ -3108,6 +3138,14 @@
         opacity: 0.5;
         cursor: not-allowed;
         pointer-events: none;
+        /* На десктопе показываем заблокированные кнопки с пониженной прозрачностью */
+    }
+    
+    /* На мобильных устройствах скрываем заблокированные кнопки */
+    @media (max-width: 768px) {
+        .zoom-btn:disabled {
+            display: none !important;
+        }
     }
     
     .zoom-btn:disabled:hover {
@@ -24616,6 +24654,18 @@ function resetZoom() {
         }
     }
     
+    // Сбрасываем стили кнопок на мобильных
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        const zoomInBtn = document.getElementById('zoom-in-btn');
+        const zoomOutBtn = document.getElementById('zoom-out-btn');
+        const zoomResetBtn = document.getElementById('zoom-reset-btn');
+        
+        if (zoomInBtn) zoomInBtn.style.display = 'flex';
+        if (zoomOutBtn) zoomOutBtn.style.display = 'none'; // Скрываем при зуме 1x
+        if (zoomResetBtn) zoomResetBtn.style.display = 'none'; // Скрываем при зуме 1x и сброшенной позиции
+    }
+    
     updateZoomButtons();
 }
 
@@ -24666,15 +24716,64 @@ function updateZoomButtons() {
     const zoomOutBtn = document.getElementById('zoom-out-btn');
     const zoomResetBtn = document.getElementById('zoom-reset-btn');
     
-    // Простая блокировка кнопок
+    // Определяем, мобильное ли устройство
+    const isMobile = window.innerWidth <= 768;
+    
+    // Блокируем кнопки и управляем их видимостью
     if (zoomInBtn) {
-        zoomInBtn.disabled = zoomState.scale >= 3;
+        const isDisabled = zoomState.scale >= 3;
+        zoomInBtn.disabled = isDisabled;
+        
+        // На мобильных скрываем заблокированные кнопки
+        if (isMobile) {
+            zoomInBtn.style.display = isDisabled ? 'none' : 'flex';
+        }
     }
+    
     if (zoomOutBtn) {
-        zoomOutBtn.disabled = zoomState.scale <= 1;
+        const isDisabled = zoomState.scale <= 1;
+        zoomOutBtn.disabled = isDisabled;
+        
+        // На мобильных скрываем заблокированные кнопки
+        if (isMobile) {
+            zoomOutBtn.style.display = isDisabled ? 'none' : 'flex';
+        }
     }
+    
     if (zoomResetBtn) {
-        zoomResetBtn.disabled = zoomState.scale <= 1;
+        const isDisabled = zoomState.scale <= 1;
+        zoomResetBtn.disabled = isDisabled;
+        
+        // На мобильных скрываем заблокированные кнопки
+        if (isMobile) {
+            zoomResetBtn.style.display = isDisabled ? 'none' : 'flex';
+        }
+    }
+    
+    // Дополнительная проверка для кнопки сброса - скрываем если нет смещения
+    if (zoomResetBtn && isMobile) {
+        const hasOffset = zoomState.viewportX !== 0 || zoomState.viewportY !== 0;
+        const shouldShow = zoomState.scale > 1 && hasOffset;
+        zoomResetBtn.style.display = shouldShow ? 'flex' : 'none';
+    }
+    
+    // На мобильных устройствах центрируем контейнер кнопок
+    if (isMobile) {
+        const zoomControls = document.querySelector('.zoom-controls');
+        if (zoomControls) {
+            // Подсчитываем видимые кнопки
+            const visibleButtons = Array.from(zoomControls.children).filter(btn => 
+                btn.style.display !== 'none' && !btn.disabled
+            );
+            
+            // Если есть видимые кнопки, центрируем контейнер
+            if (visibleButtons.length > 0) {
+                zoomControls.style.justifyContent = 'center';
+                zoomControls.style.left = '50%';
+                zoomControls.style.right = 'auto';
+                zoomControls.style.transform = 'translateX(-50%)';
+            }
+        }
     }
 }
 
@@ -24764,6 +24863,9 @@ function handleWindowResize() {
         
         applyZoom();
     }
+    
+    // Обновляем видимость кнопок при изменении размера окна
+    updateZoomButtons();
 }
 
 // Обработчики для кнопок зума
@@ -24923,6 +25025,10 @@ function drag(e) {
         zoomState.viewportY = Math.max(-maxViewportY, Math.min(maxViewportY, newViewportY));
         
         applyZoom();
+        
+        // Обновляем кнопки после изменения позиции
+        updateZoomButtons();
+        
         e.preventDefault();
     }
 }
@@ -24990,6 +25096,10 @@ function dragTouch(e) {
         zoomState.viewportY = Math.max(-maxViewportY, Math.min(maxViewportY, newViewportY));
         
         applyZoom();
+        
+        // Обновляем кнопки после изменения позиции
+        updateZoomButtons();
+        
         e.preventDefault();
         e.stopPropagation();
     }
@@ -29887,6 +29997,14 @@ async function preloadImages() {
 }
 
 async function initializeApp() {
+    // Загружаем RemoteStorage при инициализации приложения
+    try {
+        await window.loadRemoteStorage();
+        console.log('✅ RemoteStorage loaded during app initialization');
+    } catch (error) {
+        console.warn('⚠️ Failed to load RemoteStorage during initialization:', error);
+    }
+    
     // Защита от случайного выхода: сначала закрываем открытые окна/панели, а не выходим
     try {
         window.history.pushState({lock:true}, '', window.location.href);
@@ -37579,7 +37697,12 @@ function animateCloseButtonClick(button) {
     }
     
     // Запускаем инициализацию после загрузки страницы
-    window.addEventListener('load', initCloudBackup);
+    window.addEventListener('load', async () => {
+        // Сначала загружаем RemoteStorage
+        await window.loadRemoteStorage();
+        // Затем инициализируем облачное резервное копирование
+        initCloudBackup();
+    });
     
     // Функция для показа сообщения об ошибке в поле камеры
     function showCameraErrorMessage(message) {
