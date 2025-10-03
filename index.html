@@ -3009,6 +3009,23 @@
         #image-viewer-container * {
             touch-action: manipulation;
         }
+        
+        /* Агрессивная блокировка для заблокированных кнопок на мобильных */
+        .zoom-btn:disabled {
+            pointer-events: none !important;
+            touch-action: none !important;
+            -webkit-touch-callout: none !important;
+            -webkit-user-select: none !important;
+            -khtml-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+        }
+        
+        .zoom-btn:disabled * {
+            pointer-events: none !important;
+            touch-action: none !important;
+        }
     }
     
     /* Кнопки управления зумом */
@@ -24670,14 +24687,57 @@ function updateZoomButtons() {
     const zoomOutBtn = document.getElementById('zoom-out-btn');
     const zoomResetBtn = document.getElementById('zoom-reset-btn');
     
+    // Блокируем кнопки когда действие недоступно
     if (zoomInBtn) {
-        zoomInBtn.disabled = zoomState.scale >= 3;
+        const isDisabled = zoomState.scale >= 3;
+        zoomInBtn.disabled = isDisabled;
+        
+        // Полностью отключаем все события для заблокированной кнопки
+        if (isDisabled) {
+            zoomInBtn.style.pointerEvents = 'none';
+            zoomInBtn.style.touchAction = 'none';
+            zoomInBtn.style.userSelect = 'none';
+            zoomInBtn.style.webkitUserSelect = 'none';
+            zoomInBtn.style.mozUserSelect = 'none';
+            zoomInBtn.style.msUserSelect = 'none';
+        } else {
+            zoomInBtn.style.pointerEvents = 'auto';
+            zoomInBtn.style.touchAction = 'manipulation';
+        }
     }
+    
     if (zoomOutBtn) {
-        zoomOutBtn.disabled = zoomState.scale <= 1;
+        const isDisabled = zoomState.scale <= 1;
+        zoomOutBtn.disabled = isDisabled;
+        
+        if (isDisabled) {
+            zoomOutBtn.style.pointerEvents = 'none';
+            zoomOutBtn.style.touchAction = 'none';
+            zoomOutBtn.style.userSelect = 'none';
+            zoomOutBtn.style.webkitUserSelect = 'none';
+            zoomOutBtn.style.mozUserSelect = 'none';
+            zoomOutBtn.style.msUserSelect = 'none';
+        } else {
+            zoomOutBtn.style.pointerEvents = 'auto';
+            zoomOutBtn.style.touchAction = 'manipulation';
+        }
     }
+    
     if (zoomResetBtn) {
-        zoomResetBtn.disabled = zoomState.scale === 1;
+        const isDisabled = zoomState.scale <= 1;
+        zoomResetBtn.disabled = isDisabled;
+        
+        if (isDisabled) {
+            zoomResetBtn.style.pointerEvents = 'none';
+            zoomResetBtn.style.touchAction = 'none';
+            zoomResetBtn.style.userSelect = 'none';
+            zoomResetBtn.style.webkitUserSelect = 'none';
+            zoomResetBtn.style.mozUserSelect = 'none';
+            zoomResetBtn.style.msUserSelect = 'none';
+        } else {
+            zoomResetBtn.style.pointerEvents = 'auto';
+            zoomResetBtn.style.touchAction = 'manipulation';
+        }
     }
 }
 
@@ -24776,8 +24836,17 @@ function handleZoomIn(e) {
     
     // Проверяем, не заблокирована ли кнопка
     const zoomInBtn = document.getElementById('zoom-in-btn');
-    if (zoomInBtn && zoomInBtn.disabled) {
-        return;
+    if (zoomInBtn && (zoomInBtn.disabled || zoomInBtn.style.pointerEvents === 'none')) {
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Дополнительная проверка для сенсорных устройств
+    if (e.type === 'touchstart' || e.type === 'touchend') {
+        if (zoomInBtn && zoomInBtn.style.touchAction === 'none') {
+            e.stopImmediatePropagation();
+            return false;
+        }
     }
     
     // Защита от двойного срабатывания
@@ -24797,8 +24866,17 @@ function handleZoomOut(e) {
     
     // Проверяем, не заблокирована ли кнопка
     const zoomOutBtn = document.getElementById('zoom-out-btn');
-    if (zoomOutBtn && zoomOutBtn.disabled) {
-        return;
+    if (zoomOutBtn && (zoomOutBtn.disabled || zoomOutBtn.style.pointerEvents === 'none')) {
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Дополнительная проверка для сенсорных устройств
+    if (e.type === 'touchstart' || e.type === 'touchend') {
+        if (zoomOutBtn && zoomOutBtn.style.touchAction === 'none') {
+            e.stopImmediatePropagation();
+            return false;
+        }
     }
     
     // Защита от двойного срабатывания
@@ -24818,8 +24896,17 @@ function handleZoomReset(e) {
     
     // Проверяем, не заблокирована ли кнопка
     const zoomResetBtn = document.getElementById('zoom-reset-btn');
-    if (zoomResetBtn && zoomResetBtn.disabled) {
-        return;
+    if (zoomResetBtn && (zoomResetBtn.disabled || zoomResetBtn.style.pointerEvents === 'none')) {
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Дополнительная проверка для сенсорных устройств
+    if (e.type === 'touchstart' || e.type === 'touchend') {
+        if (zoomResetBtn && zoomResetBtn.style.touchAction === 'none') {
+            e.stopImmediatePropagation();
+            return false;
+        }
     }
     
     // Защита от двойного срабатывания
