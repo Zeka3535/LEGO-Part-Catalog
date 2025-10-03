@@ -3175,6 +3175,12 @@
         .zoom-btn:disabled {
             display: none !important;
         }
+        
+        /* Отключаем двойное нажатие на мобильных устройствах */
+        .image-canvas {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
     }
     
     .zoom-btn:disabled:hover {
@@ -24714,27 +24720,54 @@ function applyZoom() {
 
 // Функция увеличения зума
 function zoomIn() {
-    if (zoomState.scale < 3) {
-        zoomState.scale = Math.min(zoomState.scale * 1.5, 3);
-        applyZoom();
-        updateZoomButtons();
-        
-        if (zoomState.scale > 1) {
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // На мобильных устройствах - только 1x и 3x
+        if (zoomState.scale === 1) {
+            zoomState.scale = 3;
+            applyZoom();
+            updateZoomButtons();
             viewerEl.classList.add('zoom-mode');
+        }
+    } else {
+        // На десктопе - обычная логика с промежуточными градациями
+        if (zoomState.scale < 3) {
+            zoomState.scale = Math.min(zoomState.scale * 1.5, 3);
+            applyZoom();
+            updateZoomButtons();
+            
+            if (zoomState.scale > 1) {
+                viewerEl.classList.add('zoom-mode');
+            }
         }
     }
 }
 
 // Функция уменьшения зума
 function zoomOut() {
-    if (zoomState.scale > 1) {
-        zoomState.scale = Math.max(zoomState.scale / 1.5, 1);
-        applyZoom();
-        updateZoomButtons();
-        
-        if (zoomState.scale === 1) {
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile) {
+        // На мобильных устройствах - только 1x и 3x
+        if (zoomState.scale === 3) {
+            zoomState.scale = 1;
+            applyZoom();
+            updateZoomButtons();
             viewerEl.classList.remove('zoom-mode');
             resetZoom();
+        }
+    } else {
+        // На десктопе - обычная логика с промежуточными градациями
+        if (zoomState.scale > 1) {
+            zoomState.scale = Math.max(zoomState.scale / 1.5, 1);
+            applyZoom();
+            updateZoomButtons();
+            
+            if (zoomState.scale === 1) {
+                viewerEl.classList.remove('zoom-mode');
+                resetZoom();
+            }
         }
     }
 }
