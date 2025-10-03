@@ -3046,6 +3046,27 @@
             right: auto !important;
             transform: translateX(-50%) !important;
         }
+        
+        /* Улучшенная отзывчивость кнопок на сенсорных устройствах */
+        .zoom-btn {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        /* Увеличиваем область касания для кнопок на мобильных */
+        .zoom-btn::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            z-index: -1;
+        }
     }
     
     /* Кнопки управления зумом */
@@ -8385,7 +8406,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v34';
+const CACHE_NAME = 'lego-catalog-cache-v37';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -8403,8 +8424,8 @@ const SET_IMAGE_WAITERS = new Map(); // set_num -> HTMLElement[]
 const SET_IMAGE_FAILED = new Set(); // set_num, где получение изображения по API уже провалилось
 let API_IMAGE_FETCH_COUNT = 0;
 const API_IMAGE_FETCH_LIMIT = 50; // предохранитель на сессию от избыточных запросов
-// Ускоряем загрузку ~в 3 раза: 200мс -> ~66мс
-const API_REQUEST_DELAY = 66;
+// Ускоряем загрузку -> ~50мс
+const API_REQUEST_DELAY = 50;
 // Ограничения для подгрузки изображений деталей по цветам
 const PART_COLOR_FETCHING = new Set(); // key: `${partNum}:${colorId}`
 const PART_COLOR_FAILED = new Set();   // key: `${partNum}:${colorId}`
@@ -24885,6 +24906,30 @@ function handleZoomIn(e) {
         return;
     }
     
+    // Дополнительная защита для сенсорных устройств
+    if (e.type === 'touchstart' || e.type === 'touchend') {
+        // Проверяем, что это не часть перетаскивания
+        if (zoomState.isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
+        
+        // Проверяем, что касание точно по кнопке
+        const rect = zoomInBtn.getBoundingClientRect();
+        const touch = e.type === 'touchstart' ? e.touches[0] : e.changedTouches[0];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
+    }
+    
     e.preventDefault();
     e.stopPropagation();
     
@@ -24921,6 +24966,30 @@ function handleZoomOut(e) {
         return;
     }
     
+    // Дополнительная защита для сенсорных устройств
+    if (e.type === 'touchstart' || e.type === 'touchend') {
+        // Проверяем, что это не часть перетаскивания
+        if (zoomState.isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
+        
+        // Проверяем, что касание точно по кнопке
+        const rect = zoomOutBtn.getBoundingClientRect();
+        const touch = e.type === 'touchstart' ? e.touches[0] : e.changedTouches[0];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
+    }
+    
     e.preventDefault();
     e.stopPropagation();
     
@@ -24955,6 +25024,30 @@ function handleZoomReset(e) {
     // Проверяем, что это именно клик по кнопке, а не случайное касание
     if (e.target !== zoomResetBtn && !zoomResetBtn.contains(e.target)) {
         return;
+    }
+    
+    // Дополнительная защита для сенсорных устройств
+    if (e.type === 'touchstart' || e.type === 'touchend') {
+        // Проверяем, что это не часть перетаскивания
+        if (zoomState.isDragging) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
+        
+        // Проверяем, что касание точно по кнопке
+        const rect = zoomResetBtn.getBoundingClientRect();
+        const touch = e.type === 'touchstart' ? e.touches[0] : e.changedTouches[0];
+        const x = touch.clientX;
+        const y = touch.clientY;
+        
+        if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            return false;
+        }
     }
     
     e.preventDefault();
@@ -25049,11 +25142,29 @@ function endDrag(e) {
 function startDragTouch(e) {
     // Предотвращаем срабатывание на кнопках зума
     if (e.target.closest('.zoom-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
         return;
     }
     
     if (zoomState.scale > 1 && e.touches.length === 1) {
         const touch = e.touches[0];
+        
+        // Дополнительная проверка - убеждаемся, что это не касание по кнопке
+        const zoomControls = document.querySelector('.zoom-controls');
+        if (zoomControls) {
+            const rect = zoomControls.getBoundingClientRect();
+            const x = touch.clientX;
+            const y = touch.clientY;
+            
+            // Если касание в области кнопок зума, не начинаем перетаскивание
+            if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                e.preventDefault();
+                e.stopPropagation();
+                return;
+            }
+        }
+        
         zoomState.isDragging = true;
         zoomState.startX = touch.clientX;
         zoomState.startY = touch.clientY;
