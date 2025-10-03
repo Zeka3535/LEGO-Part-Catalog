@@ -24969,7 +24969,7 @@ function handleZoomIn(e) {
     // Дополнительная защита от быстрых повторных нажатий
     const now = Date.now();
     const lastClick = parseInt(zoomInBtn.dataset.lastClick || '0');
-    if (now - lastClick < 1000) { // 1000ms минимальный интервал
+    if (now - lastClick < 300) { // 300ms минимальный интервал
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
@@ -24982,7 +24982,7 @@ function handleZoomIn(e) {
     setTimeout(() => {
         zoomIn();
         zoomInBtn.dataset.processing = 'false';
-    }, 1000); // Увеличиваем интервал до 1000ms
+    }, 200); // Увеличиваем интервал до 200ms
 }
 
 function handleZoomOut(e) {
