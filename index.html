@@ -2943,6 +2943,19 @@
         pointer-events: auto !important;
     }
     
+    /* Контейнер-полотно для изображения */
+    .image-canvas {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: transform 0.2s ease-out;
+        will-change: transform;
+        transform-style: preserve-3d;
+    }
+    
     /* Стили для зума и перетаскивания изображения */
     #image-viewer-container.zoom-mode {
         cursor: grab;
@@ -2952,18 +2965,39 @@
         cursor: grabbing;
     }
     
-    #image-viewer-container.zoom-mode .image-wrapper {
+    #image-viewer-container.zoom-mode .image-canvas {
         cursor: grab;
-        transition: transform 0.1s ease-out;
+        transition: transform 0.2s ease-out;
+        /* Улучшенная производительность для полотна */
+        will-change: transform;
+        transform-style: preserve-3d;
     }
     
-    #image-viewer-container.zoom-mode .image-wrapper:active {
+    #image-viewer-container.zoom-mode .image-canvas:active {
         cursor: grabbing;
     }
     
-    #image-viewer-container.zoom-mode .image-wrapper.dragging {
+    #image-viewer-container.zoom-mode .image-canvas.dragging {
         cursor: grabbing;
         transition: none;
+        /* Отключаем все переходы при перетаскивании полотна */
+        will-change: transform;
+        transform-style: preserve-3d;
+    }
+    
+    .image-canvas .image-wrapper {
+        /* Базовые стили для изображения в полотне */
+        max-width: 90%;
+        max-height: 90%;
+        width: auto;
+        height: auto;
+    }
+    
+    #image-viewer-container.zoom-mode .image-wrapper {
+        transition: transform 0.2s ease-out;
+        /* Улучшенная производительность для изображения */
+        will-change: transform;
+        transform-style: preserve-3d;
     }
     
     /* Кнопки управления зумом */
@@ -3008,6 +3042,28 @@
         .zoom-btn {
             width: 50px;
             height: 50px;
+            /* Улучшенные стили для мобильных */
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            /* Предотвращаем случайные срабатывания */
+            pointer-events: auto;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .zoom-btn:active {
+            transform: scale(0.9);
+            background: rgba(0, 0, 0, 0.9);
+        }
+        
+        /* Дополнительная защита от случайных касаний */
+        .zoom-controls {
+            pointer-events: auto;
+            z-index: 100;
         }
     }
     
@@ -5127,8 +5183,11 @@ button[disabled]:hover {
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
   <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center viewer-hidden">
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
-      <div class="image-wrapper bg-white rounded-[18px] shadow-2xl overflow-hidden">
-        <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out rounded-[18px]" loading="lazy" decoding="async">
+      <!-- Контейнер-полотно для перемещения -->
+      <div id="image-canvas" class="image-canvas">
+        <div class="image-wrapper bg-white rounded-[18px] shadow-2xl overflow-hidden">
+          <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out rounded-[18px]" loading="lazy" decoding="async">
+        </div>
       </div>
     </div>
     <div class="zoom-controls">
@@ -24482,27 +24541,35 @@ function closeImageViewer() {
 // Переменные для состояния зума
 let zoomState = {
     scale: 1,
-    translateX: 0,
-    translateY: 0,
+    viewportX: 0,
+    viewportY: 0,
     isDragging: false,
-    dragStart: { x: 0, y: 0 },
-    lastTranslate: { x: 0, y: 0 }
+    startX: 0,
+    startY: 0,
+    startViewportX: 0,
+    startViewportY: 0
 };
 
 // Функция сброса зума
 function resetZoom() {
     zoomState.scale = 1;
-    zoomState.translateX = 0;
-    zoomState.translateY = 0;
+    zoomState.viewportX = 0;
+    zoomState.viewportY = 0;
     zoomState.isDragging = false;
-    zoomState.lastTranslate = { x: 0, y: 0 };
+    zoomState.startX = 0;
+    zoomState.startY = 0;
+    zoomState.startViewportX = 0;
+    zoomState.startViewportY = 0;
     
     if (viewerEl) {
         viewerEl.classList.remove('zoom-mode');
+        const imageCanvas = viewerEl.querySelector('.image-canvas');
         const imageWrapper = viewerEl.querySelector('.image-wrapper');
-        if (imageWrapper) {
-            imageWrapper.style.transform = 'scale(1) translate(0px, 0px)';
-            imageWrapper.classList.remove('dragging');
+        
+        if (imageCanvas && imageWrapper) {
+            imageWrapper.style.transform = 'scale(1)';
+            imageCanvas.style.transform = 'translate(0px, 0px)';
+            imageCanvas.classList.remove('dragging');
         }
     }
     
@@ -24511,14 +24578,15 @@ function resetZoom() {
 
 // Функция применения зума
 function applyZoom() {
+    const imageCanvas = viewerEl.querySelector('.image-canvas');
     const imageWrapper = viewerEl.querySelector('.image-wrapper');
-    if (imageWrapper) {
-        // Ограничиваем перемещение, чтобы изображение не уходило слишком далеко
-        const maxTranslate = 200; // Максимальное смещение в пикселях
-        const constrainedX = Math.max(-maxTranslate, Math.min(maxTranslate, zoomState.translateX));
-        const constrainedY = Math.max(-maxTranslate, Math.min(maxTranslate, zoomState.translateY));
+    
+    if (imageCanvas && imageWrapper) {
+        // Применяем зум к изображению
+        imageWrapper.style.transform = `scale(${zoomState.scale})`;
         
-        imageWrapper.style.transform = `scale(${zoomState.scale}) translate(${constrainedX}px, ${constrainedY}px)`;
+        // Применяем перемещение к полотну
+        imageCanvas.style.transform = `translate(${zoomState.viewportX}px, ${zoomState.viewportY}px)`;
     }
 }
 
@@ -24573,38 +24641,51 @@ function initializeZoomControls() {
     const zoomResetBtn = document.getElementById('zoom-reset-btn');
     const imageWrapper = viewerEl.querySelector('.image-wrapper');
     
+    // Удаляем старые обработчики если они есть
     if (zoomInBtn) {
-        zoomInBtn.onclick = (e) => {
-            e.stopPropagation();
-            zoomIn();
-        };
+        zoomInBtn.onclick = null;
+        zoomInBtn.ontouchstart = null;
+        zoomInBtn.addEventListener('click', handleZoomIn, { passive: false });
+        zoomInBtn.addEventListener('touchstart', handleZoomIn, { passive: false });
     }
     
     if (zoomOutBtn) {
-        zoomOutBtn.onclick = (e) => {
-            e.stopPropagation();
-            zoomOut();
-        };
+        zoomOutBtn.onclick = null;
+        zoomOutBtn.ontouchstart = null;
+        zoomOutBtn.addEventListener('click', handleZoomOut, { passive: false });
+        zoomOutBtn.addEventListener('touchstart', handleZoomOut, { passive: false });
     }
     
     if (zoomResetBtn) {
-        zoomResetBtn.onclick = (e) => {
-            e.stopPropagation();
-            resetZoom();
-        };
+        zoomResetBtn.onclick = null;
+        zoomResetBtn.ontouchstart = null;
+        zoomResetBtn.addEventListener('click', handleZoomReset, { passive: false });
+        zoomResetBtn.addEventListener('touchstart', handleZoomReset, { passive: false });
     }
     
     if (imageWrapper) {
-        // Обработчики для перетаскивания
+        // Удаляем старые обработчики
+        imageWrapper.removeEventListener('mousedown', startDrag);
+        imageWrapper.removeEventListener('mousemove', drag);
+        imageWrapper.removeEventListener('mouseup', endDrag);
+        imageWrapper.removeEventListener('mouseleave', endDrag);
+        imageWrapper.removeEventListener('touchstart', startDragTouch);
+        imageWrapper.removeEventListener('touchmove', dragTouch);
+        imageWrapper.removeEventListener('touchend', endDragTouch);
+        imageWrapper.removeEventListener('wheel', handleWheel);
+        imageWrapper.removeEventListener('dblclick', handleDoubleClick);
+        imageWrapper.removeEventListener('contextmenu', handleContextMenu);
+        
+        // Добавляем новые обработчики
         imageWrapper.addEventListener('mousedown', startDrag);
         imageWrapper.addEventListener('mousemove', drag);
         imageWrapper.addEventListener('mouseup', endDrag);
         imageWrapper.addEventListener('mouseleave', endDrag);
         
         // Обработчики для тач-событий
-        imageWrapper.addEventListener('touchstart', startDragTouch);
-        imageWrapper.addEventListener('touchmove', dragTouch);
-        imageWrapper.addEventListener('touchend', endDragTouch);
+        imageWrapper.addEventListener('touchstart', startDragTouch, { passive: false });
+        imageWrapper.addEventListener('touchmove', dragTouch, { passive: false });
+        imageWrapper.addEventListener('touchend', endDragTouch, { passive: false });
         
         // Обработчик колесика мыши для зума
         imageWrapper.addEventListener('wheel', handleWheel, { passive: false });
@@ -24613,26 +24694,99 @@ function initializeZoomControls() {
         imageWrapper.addEventListener('dblclick', handleDoubleClick);
         
         // Предотвращаем контекстное меню при перетаскивании
-        imageWrapper.addEventListener('contextmenu', (e) => {
-            if (zoomState.isDragging) {
-                e.preventDefault();
-            }
-        });
+        imageWrapper.addEventListener('contextmenu', handleContextMenu);
     }
     
+    // Добавляем обработчик изменения размера окна для корректировки ограничений
+    window.addEventListener('resize', handleWindowResize);
+    
     updateZoomButtons();
+}
+
+// Обработчик изменения размера окна
+function handleWindowResize() {
+    if (zoomState.scale > 1) {
+        // Пересчитываем ограничения при изменении размера окна
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scale = zoomState.scale;
+        
+        const maxViewportX = viewportWidth * (scale - 1) * 0.5;
+        const maxViewportY = viewportHeight * (scale - 1) * 0.5;
+        
+        // Корректируем текущее смещение viewport если оно превышает новые ограничения
+        zoomState.viewportX = Math.max(-maxViewportX, Math.min(maxViewportX, zoomState.viewportX));
+        zoomState.viewportY = Math.max(-maxViewportY, Math.min(maxViewportY, zoomState.viewportY));
+        
+        applyZoom();
+    }
+}
+
+// Обработчики для кнопок зума
+function handleZoomIn(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Защита от двойного срабатывания
+    if (e.type === 'touchstart' && e.changedTouches.length > 1) {
+        return;
+    }
+    
+    // Небольшая задержка для предотвращения случайных срабатываний
+    setTimeout(() => {
+        zoomIn();
+    }, 50);
+}
+
+function handleZoomOut(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Защита от двойного срабатывания
+    if (e.type === 'touchstart' && e.changedTouches.length > 1) {
+        return;
+    }
+    
+    // Небольшая задержка для предотвращения случайных срабатываний
+    setTimeout(() => {
+        zoomOut();
+    }, 50);
+}
+
+function handleZoomReset(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Защита от двойного срабатывания
+    if (e.type === 'touchstart' && e.changedTouches.length > 1) {
+        return;
+    }
+    
+    // Небольшая задержка для предотвращения случайных срабатываний
+    setTimeout(() => {
+        resetZoom();
+    }, 50);
+}
+
+function handleContextMenu(e) {
+    if (zoomState.isDragging) {
+        e.preventDefault();
+    }
 }
 
 // Обработчики мыши
 function startDrag(e) {
     if (zoomState.scale > 1) {
         zoomState.isDragging = true;
-        zoomState.dragStart.x = e.clientX - zoomState.translateX;
-        zoomState.dragStart.y = e.clientY - zoomState.translateY;
+        zoomState.startX = e.clientX;
+        zoomState.startY = e.clientY;
+        zoomState.startViewportX = zoomState.viewportX;
+        zoomState.startViewportY = zoomState.viewportY;
         
-        const imageWrapper = viewerEl.querySelector('.image-wrapper');
-        if (imageWrapper) {
-            imageWrapper.classList.add('dragging');
+        // Добавляем класс dragging к полотну
+        const imageCanvas = viewerEl.querySelector('.image-canvas');
+        if (imageCanvas) {
+            imageCanvas.classList.add('dragging');
         }
         
         e.preventDefault();
@@ -24641,13 +24795,25 @@ function startDrag(e) {
 
 function drag(e) {
     if (zoomState.isDragging && zoomState.scale > 1) {
-        const newTranslateX = e.clientX - zoomState.dragStart.x;
-        const newTranslateY = e.clientY - zoomState.dragStart.y;
+        // Вычисляем смещение от начальной позиции
+        const deltaX = e.clientX - zoomState.startX;
+        const deltaY = e.clientY - zoomState.startY;
         
-        // Ограничиваем перемещение
-        const maxTranslate = 200;
-        zoomState.translateX = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateX));
-        zoomState.translateY = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateY));
+        // Применяем смещение к начальному положению viewport
+        const newViewportX = zoomState.startViewportX + deltaX;
+        const newViewportY = zoomState.startViewportY + deltaY;
+        
+        // Адаптивные ограничения в зависимости от размера экрана и зума
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scale = zoomState.scale;
+        
+        // Вычисляем максимальное смещение viewport
+        const maxViewportX = viewportWidth * (scale - 1) * 0.5;
+        const maxViewportY = viewportHeight * (scale - 1) * 0.5;
+        
+        zoomState.viewportX = Math.max(-maxViewportX, Math.min(maxViewportX, newViewportX));
+        zoomState.viewportY = Math.max(-maxViewportY, Math.min(maxViewportY, newViewportY));
         
         applyZoom();
         e.preventDefault();
@@ -24657,58 +24823,79 @@ function drag(e) {
 function endDrag(e) {
     if (zoomState.isDragging) {
         zoomState.isDragging = false;
-        zoomState.lastTranslate.x = zoomState.translateX;
-        zoomState.lastTranslate.y = zoomState.translateY;
         
-        const imageWrapper = viewerEl.querySelector('.image-wrapper');
-        if (imageWrapper) {
-            imageWrapper.classList.remove('dragging');
+        // Убираем класс dragging с полотна
+        const imageCanvas = viewerEl.querySelector('.image-canvas');
+        if (imageCanvas) {
+            imageCanvas.classList.remove('dragging');
         }
     }
 }
 
 // Обработчики тач-событий
 function startDragTouch(e) {
+    // Предотвращаем срабатывание на кнопках зума
+    if (e.target.closest('.zoom-btn')) {
+        return;
+    }
+    
     if (zoomState.scale > 1 && e.touches.length === 1) {
         const touch = e.touches[0];
         zoomState.isDragging = true;
-        zoomState.dragStart.x = touch.clientX - zoomState.translateX;
-        zoomState.dragStart.y = touch.clientY - zoomState.translateY;
+        zoomState.startX = touch.clientX;
+        zoomState.startY = touch.clientY;
+        zoomState.startViewportX = zoomState.viewportX;
+        zoomState.startViewportY = zoomState.viewportY;
         
-        const imageWrapper = viewerEl.querySelector('.image-wrapper');
-        if (imageWrapper) {
-            imageWrapper.classList.add('dragging');
+        // Добавляем класс dragging к полотну
+        const imageCanvas = viewerEl.querySelector('.image-canvas');
+        if (imageCanvas) {
+            imageCanvas.classList.add('dragging');
         }
         
         e.preventDefault();
+        e.stopPropagation();
     }
 }
 
 function dragTouch(e) {
     if (zoomState.isDragging && zoomState.scale > 1 && e.touches.length === 1) {
         const touch = e.touches[0];
-        const newTranslateX = touch.clientX - zoomState.dragStart.x;
-        const newTranslateY = touch.clientY - zoomState.dragStart.y;
         
-        // Ограничиваем перемещение
-        const maxTranslate = 200;
-        zoomState.translateX = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateX));
-        zoomState.translateY = Math.max(-maxTranslate, Math.min(maxTranslate, newTranslateY));
+        // Вычисляем смещение от начальной позиции
+        const deltaX = touch.clientX - zoomState.startX;
+        const deltaY = touch.clientY - zoomState.startY;
+        
+        // Применяем смещение к начальному положению viewport
+        const newViewportX = zoomState.startViewportX + deltaX;
+        const newViewportY = zoomState.startViewportY + deltaY;
+        
+        // Адаптивные ограничения в зависимости от размера экрана и зума
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scale = zoomState.scale;
+        
+        // Вычисляем максимальное смещение viewport
+        const maxViewportX = viewportWidth * (scale - 1) * 0.5;
+        const maxViewportY = viewportHeight * (scale - 1) * 0.5;
+        
+        zoomState.viewportX = Math.max(-maxViewportX, Math.min(maxViewportX, newViewportX));
+        zoomState.viewportY = Math.max(-maxViewportY, Math.min(maxViewportY, newViewportY));
         
         applyZoom();
         e.preventDefault();
+        e.stopPropagation();
     }
 }
 
 function endDragTouch(e) {
     if (zoomState.isDragging) {
         zoomState.isDragging = false;
-        zoomState.lastTranslate.x = zoomState.translateX;
-        zoomState.lastTranslate.y = zoomState.translateY;
         
-        const imageWrapper = viewerEl.querySelector('.image-wrapper');
-        if (imageWrapper) {
-            imageWrapper.classList.remove('dragging');
+        // Убираем класс dragging с полотна
+        const imageCanvas = viewerEl.querySelector('.image-canvas');
+        if (imageCanvas) {
+            imageCanvas.classList.remove('dragging');
         }
     }
 }
