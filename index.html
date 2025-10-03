@@ -3071,6 +3071,16 @@
             background: rgba(0, 0, 0, 0.9);
         }
         
+        .zoom-btn:disabled {
+            pointer-events: none !important;
+            touch-action: none !important;
+        }
+        
+        .zoom-btn:disabled:active {
+            transform: none !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
+        
         /* Дополнительная защита от случайных касаний */
         .zoom-controls {
             pointer-events: auto;
@@ -3090,17 +3100,28 @@
     .zoom-btn:disabled {
         opacity: 0.5;
         cursor: not-allowed;
-        pointer-events: none;
+        pointer-events: none !important;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        touch-action: none;
     }
     
     .zoom-btn:disabled:hover {
         background-color: rgba(255, 255, 255, 0.1);
         transform: none;
+        pointer-events: none !important;
     }
     
     .zoom-btn:disabled:active {
         transform: none;
         background-color: rgba(255, 255, 255, 0.1);
+        pointer-events: none !important;
+    }
+    
+    .zoom-btn:disabled * {
+        pointer-events: none !important;
     }
     
     .zoom-btn svg {
@@ -24753,6 +24774,12 @@ function handleZoomIn(e) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Проверяем, не заблокирована ли кнопка
+    const zoomInBtn = document.getElementById('zoom-in-btn');
+    if (zoomInBtn && zoomInBtn.disabled) {
+        return;
+    }
+    
     // Защита от двойного срабатывания
     if (e.type === 'touchstart' && e.changedTouches.length > 1) {
         return;
@@ -24768,6 +24795,12 @@ function handleZoomOut(e) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Проверяем, не заблокирована ли кнопка
+    const zoomOutBtn = document.getElementById('zoom-out-btn');
+    if (zoomOutBtn && zoomOutBtn.disabled) {
+        return;
+    }
+    
     // Защита от двойного срабатывания
     if (e.type === 'touchstart' && e.changedTouches.length > 1) {
         return;
@@ -24782,6 +24815,12 @@ function handleZoomOut(e) {
 function handleZoomReset(e) {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Проверяем, не заблокирована ли кнопка
+    const zoomResetBtn = document.getElementById('zoom-reset-btn');
+    if (zoomResetBtn && zoomResetBtn.disabled) {
+        return;
+    }
     
     // Защита от двойного срабатывания
     if (e.type === 'touchstart' && e.changedTouches.length > 1) {
