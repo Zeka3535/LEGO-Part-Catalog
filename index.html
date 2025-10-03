@@ -3108,16 +3108,6 @@
         opacity: 0.5;
         cursor: not-allowed;
         pointer-events: none;
-        touch-action: none;
-    }
-    
-    /* Дополнительный класс для полной блокировки на мобильных */
-    .zoom-btn.no-touch {
-        pointer-events: none !important;
-        touch-action: none !important;
-        -webkit-touch-callout: none !important;
-        -webkit-user-select: none !important;
-        user-select: none !important;
     }
     
     .zoom-btn:disabled:hover {
@@ -24676,35 +24666,15 @@ function updateZoomButtons() {
     const zoomOutBtn = document.getElementById('zoom-out-btn');
     const zoomResetBtn = document.getElementById('zoom-reset-btn');
     
-    // Блокируем кнопки и добавляем класс no-touch для мобильных
+    // Простая блокировка кнопок
     if (zoomInBtn) {
-        const isDisabled = zoomState.scale >= 3;
-        zoomInBtn.disabled = isDisabled;
-        if (isDisabled) {
-            zoomInBtn.classList.add('no-touch');
-        } else {
-            zoomInBtn.classList.remove('no-touch');
-        }
+        zoomInBtn.disabled = zoomState.scale >= 3;
     }
-    
     if (zoomOutBtn) {
-        const isDisabled = zoomState.scale <= 1;
-        zoomOutBtn.disabled = isDisabled;
-        if (isDisabled) {
-            zoomOutBtn.classList.add('no-touch');
-        } else {
-            zoomOutBtn.classList.remove('no-touch');
-        }
+        zoomOutBtn.disabled = zoomState.scale <= 1;
     }
-    
     if (zoomResetBtn) {
-        const isDisabled = zoomState.scale <= 1;
-        zoomResetBtn.disabled = isDisabled;
-        if (isDisabled) {
-            zoomResetBtn.classList.add('no-touch');
-        } else {
-            zoomResetBtn.classList.remove('no-touch');
-        }
+        zoomResetBtn.disabled = zoomState.scale <= 1;
     }
 }
 
@@ -24800,10 +24770,16 @@ function handleWindowResize() {
 function handleZoomIn(e) {
     const zoomInBtn = document.getElementById('zoom-in-btn');
     
-    // Простая проверка - если кнопка заблокирована, ничего не делаем
-    if (zoomInBtn && zoomInBtn.disabled) {
+    // Проверяем, не заблокирована ли кнопка
+    if (!zoomInBtn || zoomInBtn.disabled) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Проверяем, что это именно клик по кнопке, а не случайное касание
+    if (e.target !== zoomInBtn && !zoomInBtn.contains(e.target)) {
         return;
     }
     
@@ -24815,19 +24791,31 @@ function handleZoomIn(e) {
         return;
     }
     
-    // Небольшая задержка для предотвращения случайных срабатываний
+    // Защита от повторных вызовов
+    if (zoomInBtn.dataset.processing === 'true') {
+        return;
+    }
+    
+    zoomInBtn.dataset.processing = 'true';
     setTimeout(() => {
         zoomIn();
-    }, 50);
+        zoomInBtn.dataset.processing = 'false';
+    }, 100);
 }
 
 function handleZoomOut(e) {
     const zoomOutBtn = document.getElementById('zoom-out-btn');
     
-    // Простая проверка - если кнопка заблокирована, ничего не делаем
-    if (zoomOutBtn && zoomOutBtn.disabled) {
+    // Проверяем, не заблокирована ли кнопка
+    if (!zoomOutBtn || zoomOutBtn.disabled) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Проверяем, что это именно клик по кнопке, а не случайное касание
+    if (e.target !== zoomOutBtn && !zoomOutBtn.contains(e.target)) {
         return;
     }
     
@@ -24839,19 +24827,31 @@ function handleZoomOut(e) {
         return;
     }
     
-    // Небольшая задержка для предотвращения случайных срабатываний
+    // Защита от повторных вызовов
+    if (zoomOutBtn.dataset.processing === 'true') {
+        return;
+    }
+    
+    zoomOutBtn.dataset.processing = 'true';
     setTimeout(() => {
         zoomOut();
-    }, 50);
+        zoomOutBtn.dataset.processing = 'false';
+    }, 100);
 }
 
 function handleZoomReset(e) {
     const zoomResetBtn = document.getElementById('zoom-reset-btn');
     
-    // Простая проверка - если кнопка заблокирована, ничего не делаем
-    if (zoomResetBtn && zoomResetBtn.disabled) {
+    // Проверяем, не заблокирована ли кнопка
+    if (!zoomResetBtn || zoomResetBtn.disabled) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Проверяем, что это именно клик по кнопке, а не случайное касание
+    if (e.target !== zoomResetBtn && !zoomResetBtn.contains(e.target)) {
         return;
     }
     
@@ -24863,10 +24863,16 @@ function handleZoomReset(e) {
         return;
     }
     
-    // Небольшая задержка для предотвращения случайных срабатываний
+    // Защита от повторных вызовов
+    if (zoomResetBtn.dataset.processing === 'true') {
+        return;
+    }
+    
+    zoomResetBtn.dataset.processing = 'true';
     setTimeout(() => {
         resetZoom();
-    }, 50);
+        zoomResetBtn.dataset.processing = 'false';
+    }, 100);
 }
 
 function handleContextMenu(e) {
