@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lego-catalog-cache-v35';
+const CACHE_NAME = 'lego-catalog-cache-v37';
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
@@ -48,19 +48,26 @@ self.addEventListener('install', event => {
     })());
 });
 
+// Включаем Navigation Preload для быстрой навигации
 self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName !== CACHE_NAME) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        }).then(() => self.clients.claim())
+        Promise.all([
+            // Очистка старых кэшей
+            caches.keys().then(cacheNames => {
+                return Promise.all(
+                    cacheNames.map(cacheName => {
+                        if (cacheName !== CACHE_NAME) {
+                            return caches.delete(cacheName);
+                        }
+                    })
+                );
+            }),
+            // Включение Navigation Preload
+            self.registration.navigationPreload.enable()
+        ]).then(() => self.clients.claim())
     );
 });
+
 
 // Cache-first strategy for static assets
 function cacheFirst(request) {
@@ -135,6 +142,19 @@ self.addEventListener('fetch', event => {
     
     // Skip non-GET requests
     if (event.request.method !== 'GET') {
+        return;
+    }
+    
+    // Используем Navigation Preload для навигационных запросов
+    if (event.request.mode === 'navigate') {
+        event.respondWith(
+            event.preloadResponse.then(response => {
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request);
+            })
+        );
         return;
     }
     
