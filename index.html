@@ -3162,6 +3162,14 @@
         /* На десктопе показываем заблокированные кнопки с пониженной прозрачностью */
     }
     
+    /* Стили для кнопок в процессе обработки */
+    .zoom-btn[data-processing="true"] {
+        opacity: 0.7;
+        pointer-events: none;
+        transform: scale(0.95);
+        transition: all 0.1s ease;
+    }
+    
     /* На мобильных устройствах скрываем заблокированные кнопки */
     @media (max-width: 768px) {
         .zoom-btn:disabled {
@@ -24811,6 +24819,10 @@ function initializeZoomControls() {
         zoomInBtn.ontouchstart = null;
         zoomInBtn.addEventListener('click', handleZoomIn, { passive: false });
         zoomInBtn.addEventListener('touchstart', handleZoomIn, { passive: false });
+        
+        // Сбрасываем состояние кнопки при инициализации
+        zoomInBtn.dataset.processing = 'false';
+        zoomInBtn.dataset.lastClick = '0';
     }
     
     if (zoomOutBtn) {
@@ -24818,6 +24830,10 @@ function initializeZoomControls() {
         zoomOutBtn.ontouchstart = null;
         zoomOutBtn.addEventListener('click', handleZoomOut, { passive: false });
         zoomOutBtn.addEventListener('touchstart', handleZoomOut, { passive: false });
+        
+        // Сбрасываем состояние кнопки при инициализации
+        zoomOutBtn.dataset.processing = 'false';
+        zoomOutBtn.dataset.lastClick = '0';
     }
     
     if (zoomResetBtn) {
@@ -24825,6 +24841,10 @@ function initializeZoomControls() {
         zoomResetBtn.ontouchstart = null;
         zoomResetBtn.addEventListener('click', handleZoomReset, { passive: false });
         zoomResetBtn.addEventListener('touchstart', handleZoomReset, { passive: false });
+        
+        // Сбрасываем состояние кнопки при инициализации
+        zoomResetBtn.dataset.processing = 'false';
+        zoomResetBtn.dataset.lastClick = '0';
     }
     
     if (imageWrapper) {
@@ -24940,14 +24960,29 @@ function handleZoomIn(e) {
     
     // Защита от повторных вызовов
     if (zoomInBtn.dataset.processing === 'true') {
-        return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Дополнительная защита от быстрых повторных нажатий
+    const now = Date.now();
+    const lastClick = parseInt(zoomInBtn.dataset.lastClick || '0');
+    if (now - lastClick < 300) { // 300ms минимальный интервал
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
     }
     
     zoomInBtn.dataset.processing = 'true';
+    zoomInBtn.dataset.lastClick = now.toString();
+    
     setTimeout(() => {
         zoomIn();
         zoomInBtn.dataset.processing = 'false';
-    }, 100);
+    }, 200); // Увеличиваем интервал до 200ms
 }
 
 function handleZoomOut(e) {
@@ -25000,14 +25035,29 @@ function handleZoomOut(e) {
     
     // Защита от повторных вызовов
     if (zoomOutBtn.dataset.processing === 'true') {
-        return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Дополнительная защита от быстрых повторных нажатий
+    const now = Date.now();
+    const lastClick = parseInt(zoomOutBtn.dataset.lastClick || '0');
+    if (now - lastClick < 300) { // 300ms минимальный интервал
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
     }
     
     zoomOutBtn.dataset.processing = 'true';
+    zoomOutBtn.dataset.lastClick = now.toString();
+    
     setTimeout(() => {
         zoomOut();
         zoomOutBtn.dataset.processing = 'false';
-    }, 100);
+    }, 200); // Увеличиваем интервал до 200ms
 }
 
 function handleZoomReset(e) {
@@ -25060,14 +25110,29 @@ function handleZoomReset(e) {
     
     // Защита от повторных вызовов
     if (zoomResetBtn.dataset.processing === 'true') {
-        return;
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Дополнительная защита от быстрых повторных нажатий
+    const now = Date.now();
+    const lastClick = parseInt(zoomResetBtn.dataset.lastClick || '0');
+    if (now - lastClick < 300) { // 300ms минимальный интервал
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
     }
     
     zoomResetBtn.dataset.processing = 'true';
+    zoomResetBtn.dataset.lastClick = now.toString();
+    
     setTimeout(() => {
         resetZoom();
         zoomResetBtn.dataset.processing = 'false';
-    }, 100);
+    }, 200); // Увеличиваем интервал до 200ms
 }
 
 function handleContextMenu(e) {
