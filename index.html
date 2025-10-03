@@ -3176,10 +3176,36 @@
             display: none !important;
         }
         
-        /* Отключаем двойное нажатие на мобильных устройствах */
-        .image-canvas {
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
+        /* Отключаем двойное нажатие и одиночный клик на мобильных устройствах */
+        .viewer,
+        .viewer *,
+        .image-canvas,
+        .image-wrapper,
+        .fullscreen-image {
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+            user-select: none !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Блокируем одиночный клик для картинки на мобильных, но оставляем перетаскивание */
+        .fullscreen-image {
+            pointer-events: none !important;
+        }
+        
+        /* Разрешаем события только для кнопок зума */
+        .zoom-controls,
+        .zoom-controls * {
+            pointer-events: auto !important;
+        }
+        
+        /* Дополнительная защита от двойного нажатия */
+        .viewer * {
+            touch-action: manipulation !important;
+            -webkit-tap-highlight-color: transparent !important;
         }
     }
     
@@ -24899,7 +24925,7 @@ function initializeZoomControls() {
         imageWrapper.addEventListener('mouseup', endDrag);
         imageWrapper.addEventListener('mouseleave', endDrag);
         
-        // Обработчики для тач-событий
+        // Обработчики для тач-событий (перетаскивание)
         imageWrapper.addEventListener('touchstart', startDragTouch, { passive: false });
         imageWrapper.addEventListener('touchmove', dragTouch, { passive: false });
         imageWrapper.addEventListener('touchend', endDragTouch, { passive: false });
@@ -24909,6 +24935,66 @@ function initializeZoomControls() {
         
         // Обработчик двойного клика для быстрого зума
         imageWrapper.addEventListener('dblclick', handleDoubleClick);
+        
+        // Дополнительная защита от двойного нажатия и одиночного клика на мобильных
+        if (window.innerWidth <= 768) {
+            // Защита от множественных касаний (добавляем после обработчиков перетаскивания)
+            imageWrapper.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            }, { passive: false });
+            
+            imageWrapper.addEventListener('touchend', function(e) {
+                if (e.changedTouches.length > 1) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            }, { passive: false });
+            
+            // Блокируем только одиночный клик, но оставляем перетаскивание
+            imageWrapper.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                return false;
+            }, { passive: false });
+            
+            // Глобальная защита от двойного нажатия для всего окна просмотра
+            viewerEl.addEventListener('touchstart', function(e) {
+                if (e.touches.length > 1) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            }, { passive: false });
+            
+            viewerEl.addEventListener('touchend', function(e) {
+                if (e.changedTouches.length > 1) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            }, { passive: false });
+            
+            // Блокируем одиночный клик для всего окна просмотра
+            viewerEl.addEventListener('click', function(e) {
+                // Разрешаем клики только по кнопкам зума
+                if (!e.target.closest('.zoom-controls')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    return false;
+                }
+            }, { passive: false });
+        }
         
         // Предотвращаем контекстное меню при перетаскивании
         imageWrapper.addEventListener('contextmenu', handleContextMenu);
@@ -25341,9 +25427,12 @@ function handleWheel(e) {
 
 // Обработчик двойного клика для быстрого зума
 function handleDoubleClick(e) {
-    // Отключаем двойной клик на сенсорных экранах
-    if ('ontouchstart' in window) {
-        return;
+    // Полностью отключаем двойной клик на сенсорных экранах и мобильных устройствах
+    if ('ontouchstart' in window || window.innerWidth <= 768) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
     }
     
     e.preventDefault();
