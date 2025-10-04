@@ -5428,7 +5428,7 @@ button[disabled]:hover {
     window.addEventListener('click', addNoHover, { passive: true });
 })();
 
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -9507,7 +9507,7 @@ function renderScannerContent() {
             <!-- Заголовок -->
             <div class="text-center mb-6 sm:mb-8">
                 <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Сканер минифигурок</h1>
-                <p class="text-gray-400 text-sm sm:text-base">Для поиска отсканируйте DataMatrix код на коробке минифигурки</p>
+                <p class="text-gray-400 text-sm sm:text-base">Для поиска отсканируйте DataMatrix код (квадратный) на коробке минифигурки. Предварительно закройте обычный штрихкод пальцем</p>
             </div>
 
             <!-- Основной контент -->
