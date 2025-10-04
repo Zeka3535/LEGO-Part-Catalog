@@ -1,4 +1,16 @@
-const CACHE_NAME = 'lego-catalog-cache-v37';
+const CACHE_PREFIX = 'lego-catalog-cache-v';
+let CACHE_NAME_PROMISE;
+
+// Получение имени кэша из metadata.json
+function getCacheName() {
+    if (!CACHE_NAME_PROMISE) {
+        CACHE_NAME_PROMISE = fetch('./metadata.json', { cache: 'no-store' })
+            .then(r => r.ok ? r.json() : {})
+            .then(meta => CACHE_PREFIX + (meta.version || '0'))
+            .catch(() => CACHE_PREFIX + '0');
+    }
+    return CACHE_NAME_PROMISE;
+}
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
@@ -39,7 +51,7 @@ for (let i = 1; i <= 28; i++) {
 self.addEventListener('install', event => {
     event.waitUntil((async () => {
         try {
-            const cache = await caches.open(CACHE_NAME);
+            const cache = await caches.open(await getCacheName());
             const assets = [...PRECACHE_ASSETS];
             await Promise.allSettled(assets.map(url => cache.add(url).catch(() => null)));
         } finally {
@@ -50,22 +62,13 @@ self.addEventListener('install', event => {
 
 // Включаем Navigation Preload для быстрой навигации
 self.addEventListener('activate', event => {
-    event.waitUntil(
-        Promise.all([
-            // Очистка старых кэшей
-            caches.keys().then(cacheNames => {
-                return Promise.all(
-                    cacheNames.map(cacheName => {
-                        if (cacheName !== CACHE_NAME) {
-                            return caches.delete(cacheName);
-                        }
-                    })
-                );
-            }),
-            // Включение Navigation Preload
-            self.registration.navigationPreload.enable()
-        ]).then(() => self.clients.claim())
-    );
+    event.waitUntil((async () => {
+        const name = await getCacheName();
+        const names = await caches.keys();
+        await Promise.all(names.map(n => (n !== name && n.startsWith(CACHE_PREFIX)) ? caches.delete(n) : null));
+        await self.registration.navigationPreload.enable();
+        await self.clients.claim();
+    })());
 });
 
 
@@ -79,8 +82,10 @@ function cacheFirst(request) {
             // Cache all responses including opaque (cross-origin images)
             if (networkResponse.ok || networkResponse.type === 'opaque') {
                 const responseToCache = networkResponse.clone();
-                caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, responseToCache).catch(() => {});
+                getCacheName().then(cacheName => {
+                    caches.open(cacheName).then(cache => {
+                        cache.put(request, responseToCache).catch(() => {});
+                    });
                 });
             }
             return networkResponse;
@@ -93,8 +98,10 @@ function networkFirst(request) {
     return fetch(request).then(networkResponse => {
         if (networkResponse.ok) {
             const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then(cache => {
-                cache.put(request, responseToCache).catch(() => {});
+            getCacheName().then(cacheName => {
+                caches.open(cacheName).then(cache => {
+                    cache.put(request, responseToCache).catch(() => {});
+                });
             });
         }
         return networkResponse;
@@ -122,8 +129,10 @@ function staleWhileRevalidate(request) {
         const fetchPromise = fetch(request).then(networkResponse => {
             if (networkResponse.ok) {
                 const responseToCache = networkResponse.clone();
-                caches.open(CACHE_NAME).then(cache => {
-                    cache.put(request, responseToCache).catch(() => {});
+                getCacheName().then(cacheName => {
+                    caches.open(cacheName).then(cache => {
+                        cache.put(request, responseToCache).catch(() => {});
+                    });
                 });
             }
             return networkResponse;
@@ -145,16 +154,18 @@ self.addEventListener('fetch', event => {
         return;
     }
     
-    // Используем Navigation Preload для навигационных запросов
+    // Используем Navigation Preload для навигационных запросов с офлайн-фолбэком
     if (event.request.mode === 'navigate') {
-        event.respondWith(
-            event.preloadResponse.then(response => {
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request);
-            })
-        );
+        event.respondWith((async () => {
+            try {
+                const preload = await event.preloadResponse;
+                if (preload) return preload;
+                return await fetch(event.request);
+            } catch {
+                const cache = await caches.open(await getCacheName());
+                return (await cache.match('./index.html')) || Response.error();
+            }
+        })());
         return;
     }
     
@@ -215,6 +226,21 @@ self.addEventListener('fetch', event => {
 self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
+    } else if (event.data && event.data.type === 'REFRESH_MINIFIG_CACHE') {
+        // Принудительное обновление кэша минифигурок
+        refreshMinifigCache();
+    } else if (event.data && event.data.type === 'REFRESH_CSV_CACHE') {
+        // Принудительное обновление CSV в кэше
+        refreshCsvCache();
+    } else if (event.data && event.data.type === 'REFRESH_API_CACHE') {
+        // Принудительное обновление кэша API (цвета и инвентари)
+        refreshApiCache();
+    } else if (event.data && event.data.type === 'GET_VERSION') {
+        // Отправка версии клиенту
+        getCacheName().then(cacheName => {
+            const version = cacheName.replace(CACHE_PREFIX, '');
+            event.ports[0]?.postMessage({ type: 'VERSION', version });
+        });
     }
 });
 
@@ -231,7 +257,7 @@ self.addEventListener('controllerchange', () => {
 // Function to force refresh minifig images cache
 async function refreshMinifigCache() {
     try {
-        const cache = await caches.open(CACHE_NAME);
+        const cache = await caches.open(await getCacheName());
         // Remove old minifig images from cache
         const oldMinifigKeys = await cache.keys();
         const minifigKeys = oldMinifigKeys.filter(key => key.url.includes('/Minifig_png/'));
@@ -251,26 +277,10 @@ async function refreshMinifigCache() {
     }
 }
 
-// Handle messages from main thread
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    } else if (event.data && event.data.type === 'REFRESH_MINIFIG_CACHE') {
-        // Force refresh minifig images cache
-        refreshMinifigCache();
-    } else if (event.data && event.data.type === 'REFRESH_CSV_CACHE') {
-        // Принудительное обновление CSV в кэше
-        refreshCsvCache();
-    } else if (event.data && event.data.type === 'REFRESH_API_CACHE') {
-        // Принудительное обновление кэша API (цвета и инвентари)
-        refreshApiCache();
-    }
-});
-
 // Принудительное обновление CSV-файлов в кэше
 async function refreshCsvCache() {
     try {
-        const cache = await caches.open(CACHE_NAME);
+        const cache = await caches.open(await getCacheName());
         const keys = await cache.keys();
         const csvKeys = keys.filter(k => /\.csv($|\?)/i.test(new URL(k.url).pathname));
         await Promise.allSettled(csvKeys.map(async (request) => {
@@ -291,7 +301,7 @@ async function refreshCsvCache() {
 // Принудительное обновление кэша API (цвета и инвентари)
 async function refreshApiCache() {
     try {
-        const cache = await caches.open(CACHE_NAME);
+        const cache = await caches.open(await getCacheName());
         const keys = await cache.keys();
         const apiKeys = keys.filter(k => {
             const u = k.url;
