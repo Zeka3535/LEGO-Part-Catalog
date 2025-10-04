@@ -25262,6 +25262,13 @@ function handleContextMenu(e) {
 
 // Обработчики мыши
 function startDrag(e) {
+    // Запрещаем перетаскивание если зум не активен
+    if (zoomState.scale <= 1) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+    }
+    
     if (zoomState.scale > 1) {
         zoomState.isDragging = true;
         zoomState.startX = e.clientX;
@@ -25326,6 +25333,13 @@ function endDrag(e) {
 function startDragTouch(e) {
     // Предотвращаем срабатывание на кнопках зума
     if (e.target.closest('.zoom-btn')) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+    }
+    
+    // Запрещаем перетаскивание если зум не активен
+    if (zoomState.scale <= 1) {
         e.preventDefault();
         e.stopPropagation();
         return;
@@ -25416,6 +25430,11 @@ function endDragTouch(e) {
 function handleWheel(e) {
     e.preventDefault();
     
+    // Запрещаем зум колесиком если зум не активен
+    if (zoomState.scale <= 1) {
+        return;
+    }
+    
     if (e.deltaY < 0) {
         // Прокрутка вверх - увеличиваем зум
         zoomIn();
@@ -25429,6 +25448,14 @@ function handleWheel(e) {
 function handleDoubleClick(e) {
     // Полностью отключаем двойной клик на сенсорных экранах и мобильных устройствах
     if ('ontouchstart' in window || window.innerWidth <= 768) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+    
+    // Запрещаем двойной клик если зум не активен
+    if (zoomState.scale <= 1) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
