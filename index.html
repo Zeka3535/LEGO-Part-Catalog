@@ -8473,22 +8473,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-// Получение имени кэша из метаданных
-async function getCacheName() {
-    try {
-        const meta = await (await fetch('./metadata.json', { 
-            cache: 'no-store',
-            headers: {
-                'Cache-Control': 'no-cache, no-store, must-revalidate',
-                'Pragma': 'no-cache',
-                'Expires': '0'
-            }
-        })).json();
-        return 'lego-catalog-cache-v' + (meta.version || '0');
-    } catch {
-        return 'lego-catalog-cache-v0';
-    }
-}
+const CACHE_NAME = 'lego-catalog-cache-v37';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -10413,37 +10398,6 @@ async function loadFromCloud() {
     }
 }
 
-// Проверка обновлений приложения
-async function checkForUpdates() {
-    try {
-        updateSettingsModalStatus('Проверка обновлений...', 'info');
-        
-        if ('serviceWorker' in navigator) {
-            const registration = await navigator.serviceWorker.getRegistration();
-            if (registration) {
-                // Принудительно проверяем обновления
-                await registration.update();
-                
-                // Проверяем, есть ли новый Service Worker
-                if (registration.waiting) {
-                    updateSettingsModalStatus('Доступно обновление!\nПерезагрузите страницу', 'success');
-                } else if (registration.installing) {
-                    updateSettingsModalStatus('Обновление загружается...', 'info');
-                } else {
-                    updateSettingsModalStatus('У вас актуальная версия', 'success');
-                }
-            } else {
-                updateSettingsModalStatus('Service Worker не найден', 'error');
-            }
-        } else {
-            updateSettingsModalStatus('Service Worker не поддерживается', 'error');
-        }
-    } catch (error) {
-        console.error('Ошибка проверки обновлений:', error);
-        updateSettingsModalStatus('Ошибка проверки обновлений', 'error');
-    }
-}
-
 function initializeCloudStorage() {
     // Эта функция теперь не используется, так как виджет инициализируется отдельно
     console.log('Cloud storage initialization handled by widget');
@@ -11843,7 +11797,6 @@ let S = {
     view: 'collection',
     subView: 'parts',
     toolSubView: '',
-    appMeta: null, // Метаданные приложения (версия, дата обновления)
     catTree: [],
     expCats: new Set,
     selCatId: null,
@@ -22036,16 +21989,6 @@ function renderSettingsModal() {
                             <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 .5C5.73.5.98 5.24.98 11.5c0 4.85 3.15 8.96 7.52 10.41.55.1.75-.24.75-.53 0-.26-.01-1.13-.02-2.05-3.06.66-3.71-1.3-3.71-1.3-.5-1.26-1.22-1.6-1.22-1.6-1-.69.08-.68.08-.68 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.58 1.2 3.2.92.1-.71.38-1.2.69-1.48-2.44-.28-5-1.22-5-5.43 0-1.2.43-2.19 1.13-2.96-.11-.28-.49-1.41.11-2.94 0 0 .92-.29 3.02 1.13.88-.24 1.82-.36 2.76-.36.94 0 1.88.12 2.76.36 2.1-1.42 3.02-1.13 3.02-1.13.6 1.53.22 2.66.11 2.94.7.77 1.13 1.76 1.13 2.96 0 4.22-2.56 5.15-5 5.43.4.34.73 1.01.73 2.04 0 1.47-.01 2.65-.01 3.01 0 .29.2.64.75.53 4.37-1.45 7.52-5.56 7.52-10.41C23.02 5.24 18.27.5 12 .5z"/></svg>
                             <span class="font-semibold">GitHub проекта</span>
                         </a>
-                        
-                        <!-- Компактная информация о версии -->
-                        <div class="text-center">
-                            <div class="text-xs text-gray-400 flex items-center justify-center gap-2">
-                                <span>v${S.appMeta?.version || '—'} • ${S.appMeta?.updatedAt ? new Date(S.appMeta.updatedAt).toLocaleDateString('ru-RU') : '—'}</span>
-                                <button data-action="check-updates" class="text-xs text-gray-500 hover:text-gray-300 transition-colors duration-150 flex items-center gap-1" title="Проверить обновления">
-                                    ${I_Refresh("w-3 h-3")} Обновить
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -29949,9 +29892,6 @@ document.addEventListener("click", async e => {
             case "save-to-cloud":
                 saveToCloud();
                 break;
-            case "check-updates":
-                checkForUpdates();
-                break;
         }
     } else if (minifigModalEl?.contains(t)) {
         const e = t.closest("[data-action]");
@@ -31237,74 +31177,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         } catch {}
     });
 
-    // Загружаем метаданные приложения при запуске
-    (async () => {
-        try {
-            const newMeta = await (await fetch('./metadata.json', { 
-                cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            })).json();
-            
-            const oldVersion = S.appMeta?.version;
-            S.appMeta = newMeta;
-            
-            // Проверяем, изменилась ли версия
-            if (oldVersion && newMeta.version && oldVersion !== newMeta.version) {
-                console.log(`🔄 Версия изменилась: ${oldVersion} → ${newMeta.version}`);
-                // Предлагаем обновление если есть новый Service Worker
-                if ('serviceWorker' in navigator) {
-                    const registration = await navigator.serviceWorker.getRegistration();
-                    if (registration) {
-                        await registration.update();
-                        if (registration.waiting) {
-                            if (confirm(`Доступно обновление до версии ${newMeta.version}!\n\nОбновить сейчас?`)) {
-                                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            console.error('Ошибка загрузки метаданных:', e);
-        }
-    })();
-
-    // Периодическая проверка обновлений каждые 5 минут
-    setInterval(async () => {
-        try {
-            const newMeta = await (await fetch('./metadata.json', { 
-                cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache',
-                    'Expires': '0'
-                }
-            })).json();
-            if (S.appMeta?.version && newMeta.version && S.appMeta.version !== newMeta.version) {
-                console.log(`🔄 Обнаружено обновление: ${S.appMeta.version} → ${newMeta.version}`);
-                S.appMeta = newMeta;
-                
-                if ('serviceWorker' in navigator) {
-                    const registration = await navigator.serviceWorker.getRegistration();
-                    if (registration) {
-                        await registration.update();
-                        if (registration.waiting) {
-                            if (confirm(`Доступно обновление до версии ${newMeta.version}!\n\nОбновить сейчас?`)) {
-                                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (e) {
-            // Игнорируем ошибки проверки обновлений
-        }
-    }, 5 * 60 * 1000); // 5 минут
-
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             if (!window.isSecureContext && location.hostname !== 'localhost') {
@@ -31313,33 +31185,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             // Проверяем обновления Service Worker
             navigator.serviceWorker.register('./service-worker.js', { scope: './' })
                 .then(registration => {
+                    console.log('ServiceWorker registration successful with scope:', registration.scope);
                     
                     // Проверяем обновления
-                    registration.addEventListener('updatefound', async () => {
+                    registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
-                        
-                        // Проверяем версию при обнаружении обновления SW
-                        try {
-                            const newMeta = await (await fetch('./metadata.json', { 
-                                cache: 'no-store',
-                                headers: {
-                                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                                    'Pragma': 'no-cache',
-                                    'Expires': '0'
-                                }
-                            })).json();
-                            
-                            if (newMeta.version) {
-                                S.appMeta = newMeta;
-                                console.log(`🔄 Обновление SW обнаружено, версия: ${newMeta.version}`);
-                            }
-                        } catch (e) {
-                            console.error('Ошибка загрузки метаданных при обновлении SW:', e);
-                        }
+                        console.log('Service Worker update found');
                         
                         newWorker.addEventListener('statechange', async () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 // Новый Service Worker готов, предлагаем пользователю обновить
+                                console.log('New service worker ready, prompting update');
                                 if (confirm('Доступно обновление приложения!\n\nЧто произойдет:\n• Автоматическая очистка кэша\n• Обновление до новой версии\n• Перезагрузка страницы\n\nЭто займет несколько секунд.\nОбновить сейчас?')) {
                                     console.log('🔄 Starting app update with cache clearing...');
                                     
@@ -31441,6 +31297,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     return navigator.serviceWorker.ready;
                 })
                 .then(() => {
+                    console.log('ServiceWorker is active and ready.');
                     
                     // Слушаем сообщения от Service Worker
                     navigator.serviceWorker.addEventListener('message', event => {
@@ -34199,7 +34056,7 @@ async function refreshMinifigData() {
 // Function to force refresh image cache for better performance
 async function refreshImageCache() {
     try {
-        const cache = await caches.open(await getCacheName());
+        const cache = await caches.open(CACHE_NAME);
         const requests = await cache.keys();
         
         // Find image requests
