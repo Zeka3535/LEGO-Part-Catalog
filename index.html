@@ -24939,6 +24939,13 @@ function initializeZoomControls() {
         imageWrapper.addEventListener('touchmove', dragTouch, { passive: false });
         imageWrapper.addEventListener('touchend', endDragTouch, { passive: false });
         
+        // Обработчики pinch-to-zoom для мобильных устройств
+        if (window.innerWidth <= 768) {
+            imageWrapper.addEventListener('touchstart', handlePinchStart, { passive: false });
+            imageWrapper.addEventListener('touchmove', handlePinchMove, { passive: false });
+            imageWrapper.addEventListener('touchend', handlePinchEnd, { passive: false });
+        }
+        
         // Обработчик колесика мыши для зума
         imageWrapper.addEventListener('wheel', handleWheel, { passive: false });
         
@@ -25347,6 +25354,11 @@ function startDragTouch(e) {
         return;
     }
     
+    // Если это pinch-жест, не обрабатываем как перетаскивание
+    if (e.touches.length > 1) {
+        return;
+    }
+    
     // Запрещаем перетаскивание если зум не активен
     if (zoomState.scale <= 1) {
         e.preventDefault();
@@ -25390,6 +25402,11 @@ function startDragTouch(e) {
 }
 
 function dragTouch(e) {
+    // Если это pinch-жест, не обрабатываем как перетаскивание
+    if (e.touches.length > 1) {
+        return;
+    }
+    
     if (zoomState.isDragging && zoomState.scale > 1 && e.touches.length === 1) {
         const touch = e.touches[0];
         
@@ -25424,6 +25441,11 @@ function dragTouch(e) {
 }
 
 function endDragTouch(e) {
+    // Если это pinch-жест, не обрабатываем как перетаскивание
+    if (e.touches.length > 1) {
+        return;
+    }
+    
     if (zoomState.isDragging) {
         zoomState.isDragging = false;
         
@@ -25439,8 +25461,10 @@ function endDragTouch(e) {
 function handleWheel(e) {
     e.preventDefault();
     
-    // Запрещаем зум колесиком если зум не активен
-    if (zoomState.scale <= 1) {
+    // На ПК разрешаем зум колесиком всегда, на мобильных только при активном зуме
+    const isMobile = window.innerWidth <= 768;
+    
+    if (isMobile && zoomState.scale <= 1) {
         return;
     }
     
@@ -25451,6 +25475,54 @@ function handleWheel(e) {
         // Прокрутка вниз - уменьшаем зум
         zoomOut();
     }
+}
+
+// Переменные для pinch-to-zoom
+let lastPinchDistance = 0;
+let isPinching = false;
+
+// Функция для вычисления расстояния между двумя точками
+function getDistance(touches) {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+// Обработчик pinch-to-zoom для мобильных устройств
+function handlePinchStart(e) {
+    if (e.touches.length === 2) {
+        isPinching = true;
+        lastPinchDistance = getDistance(e.touches);
+        e.preventDefault();
+        e.stopPropagation();
+    }
+}
+
+function handlePinchMove(e) {
+    if (isPinching && e.touches.length === 2) {
+        const currentDistance = getDistance(e.touches);
+        const distanceDiff = currentDistance - lastPinchDistance;
+        
+        // Минимальное изменение для срабатывания зума
+        if (Math.abs(distanceDiff) > 10) {
+            if (distanceDiff > 0) {
+                // Разведение пальцев - увеличение
+                zoomIn();
+            } else {
+                // Сжатие пальцев - уменьшение
+                zoomOut();
+            }
+            lastPinchDistance = currentDistance;
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+    }
+}
+
+function handlePinchEnd(e) {
+    isPinching = false;
+    lastPinchDistance = 0;
 }
 
 // Обработчик двойного клика для быстрого зума
