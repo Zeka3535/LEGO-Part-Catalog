@@ -3,13 +3,11 @@ let CACHE_NAME_PROMISE;
 
 // Получение имени кэша из metadata.json
 function getCacheName() {
-    if (!CACHE_NAME_PROMISE) {
-        CACHE_NAME_PROMISE = fetch('./metadata.json', { cache: 'no-store' })
-            .then(r => r.ok ? r.json() : {})
-            .then(meta => CACHE_PREFIX + (meta.version || '0'))
-            .catch(() => CACHE_PREFIX + '0');
-    }
-    return CACHE_NAME_PROMISE;
+    // Всегда загружаем актуальную версию metadata.json
+    return fetch('./metadata.json', { cache: 'no-store' })
+        .then(r => r.ok ? r.json() : {})
+        .then(meta => CACHE_PREFIX + (meta.version || '0'))
+        .catch(() => CACHE_PREFIX + '0');
 }
 
 // Keep precache minimal to avoid install failures due to missing files
@@ -191,6 +189,9 @@ self.addEventListener('fetch', event => {
         url.hostname === 'rebrickable.com' ||
         isRebrickableApi) {
         // API requests: network first with fallback to cache
+        event.respondWith(networkFirst(event.request));
+    } else if (url.pathname === '/metadata.json' || url.pathname.endsWith('/metadata.json')) {
+        // metadata.json: always network first to get latest version
         event.respondWith(networkFirst(event.request));
     } else if ((url.pathname.includes('/Data/') || url.pathname.includes('/dist/Downloads/') || url.pathname.includes('/Downloads/')) && url.pathname.endsWith('.csv')) {
         // CSV data files: stale-while-revalidate for better performance

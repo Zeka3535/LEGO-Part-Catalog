@@ -31233,11 +31233,55 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Загружаем метаданные приложения при запуске
     (async () => {
         try {
-            S.appMeta = await (await fetch('./metadata.json', { cache: 'no-store' })).json();
+            const newMeta = await (await fetch('./metadata.json', { cache: 'no-store' })).json();
+            const oldVersion = S.appMeta?.version;
+            S.appMeta = newMeta;
+            
+            // Проверяем, изменилась ли версия
+            if (oldVersion && newMeta.version && oldVersion !== newMeta.version) {
+                console.log(`🔄 Версия изменилась: ${oldVersion} → ${newMeta.version}`);
+                // Предлагаем обновление если есть новый Service Worker
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        await registration.update();
+                        if (registration.waiting) {
+                            if (confirm(`Доступно обновление до версии ${newMeta.version}!\n\nОбновить сейчас?`)) {
+                                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                        }
+                    }
+                }
+            }
         } catch (e) {
             // Игнорируем ошибки загрузки метаданных
         }
     })();
+
+    // Периодическая проверка обновлений каждые 5 минут
+    setInterval(async () => {
+        try {
+            const newMeta = await (await fetch('./metadata.json', { cache: 'no-store' })).json();
+            if (S.appMeta?.version && newMeta.version && S.appMeta.version !== newMeta.version) {
+                console.log(`🔄 Обнаружено обновление: ${S.appMeta.version} → ${newMeta.version}`);
+                S.appMeta = newMeta;
+                
+                if ('serviceWorker' in navigator) {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration) {
+                        await registration.update();
+                        if (registration.waiting) {
+                            if (confirm(`Доступно обновление до версии ${newMeta.version}!\n\nОбновить сейчас?`)) {
+                                registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            // Игнорируем ошибки проверки обновлений
+        }
+    }, 5 * 60 * 1000); // 5 минут
 
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
