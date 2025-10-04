@@ -26,6 +26,7 @@
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
     window.zxingAvailable = false;
+    window.tensorflowAvailable = false;
     
     // Загружаем RemoteStorage только при необходимости
     window.loadRemoteStorage = async function() {
@@ -84,6 +85,32 @@
         });
       } catch (e) {
         console.warn('⚠️ ZXing not loaded');
+      }
+    };
+    
+    // Загружаем TensorFlow.js для AI поиска по фото
+    window.loadTensorFlow = async function() {
+      if (window.tensorflowAvailable) {
+        console.log('✅ TensorFlow.js already loaded');
+        return true;
+      }
+      try {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js';
+        script.async = true;
+        document.head.appendChild(script);
+        await new Promise((resolve, reject) => {
+          script.onload = () => {
+            window.tensorflowAvailable = true;
+            console.log('✅ TensorFlow.js loaded');
+            resolve();
+          };
+          script.onerror = reject;
+        });
+        return true;
+      } catch (e) {
+        console.warn('⚠️ TensorFlow.js not loaded');
+        return false;
       }
     };
   </script>
@@ -5401,7 +5428,7 @@ button[disabled]:hover {
     window.addEventListener('click', addNoHover, { passive: true });
 })();
 
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -8829,6 +8856,12 @@ let inactivityOverlay = null;
 let inactivityTip = null;
 let inactivityCloseBtn = null;
 let inactivityTimer = null;
+
+// Глобальные переменные для состояний камеры
+let isCameraStarting = false;
+let currentStream = null;
+let isPhotoCameraStarting = false;
+let photoSearchStream = null;
 let tipRotationTimer = null;
 
 // Функции для работы с localStorage
@@ -11232,6 +11265,11 @@ async function loadBackupsList(forceRefresh = false) {
 
         // Устанавливаем флаг загрузки
         isLoadingBackupsList = true;
+        
+        // Проверяем состояния неактивности при начале загрузки списка версий
+        if (window.checkInactivityConditions) {
+            window.checkInactivityConditions();
+        }
 
         // Показываем индикатор загрузки только если список пустой или содержит только индикатор
         const currentContent = backupsList.innerHTML.trim();
@@ -11522,6 +11560,11 @@ async function loadBackupsList(forceRefresh = false) {
     } finally {
         // Сбрасываем флаг загрузки
         isLoadingBackupsList = false;
+        
+        // Проверяем состояния неактивности после завершения загрузки списка версий
+        if (window.checkInactivityConditions) {
+            window.checkInactivityConditions();
+        }
     }
 }
 
@@ -31047,7 +31090,28 @@ async function initializeApp() {
         }
     }, 3000); // Ждем 3 секунды после завершения загрузки данных
 }
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
+    // Предварительная загрузка библиотек для быстрого доступа
+    console.log('🚀 Начинаем предварительную загрузку библиотек...');
+    
+    // Загружаем ZXing для DataMatrix сканера
+    try {
+        await window.loadZXing();
+        console.log('✅ ZXing загружен предварительно');
+    } catch (e) {
+        console.warn('⚠️ Ошибка предварительной загрузки ZXing:', e);
+    }
+    
+    // Загружаем TensorFlow.js для AI поиска по фото
+    try {
+        await window.loadTensorFlow();
+        console.log('✅ TensorFlow.js загружен предварительно');
+    } catch (e) {
+        console.warn('⚠️ Ошибка предварительной загрузки TensorFlow.js:', e);
+    }
+    
+    console.log('🎉 Предварительная загрузка библиотек завершена');
+    
     // Инициализируем drag-and-drop для списков желаний
     // Перетаскивание заменено на кнопки перемещения
     
@@ -32790,6 +32854,11 @@ async function fetchTextWithProgress(url, statusText, label) {
                     
                     progressElement.style.width = state.current.toFixed(2) + '%';
                     
+                    // Проверяем состояния неактивности при обновлении прогресса
+                    if (window.checkInactivityConditions) {
+                        window.checkInactivityConditions();
+                    }
+                    
                     if (state.current < state.target) {
                         state.rafId = requestAnimationFrame(step);
                     } else {
@@ -34466,6 +34535,12 @@ function animateCloseButtonClick(button) {
             return;
         }
         
+        // Проверяем, можно ли показывать подсказки
+        if (!canShowInactivityTip()) {
+            console.log('🚫 Показ подсказки отменен: не выполнены условия');
+            return;
+        }
+        
         // Показываем подсказку по текущему индексу
         inactivityTip.textContent = inactivityTips[currentTipIndex];
         
@@ -34490,6 +34565,13 @@ function animateCloseButtonClick(button) {
         
         tipRotationTimer = setInterval(() => {
             if (inactivityOverlay && inactivityOverlay.classList.contains('show') && inactivityTip) {
+                // Проверяем, можно ли продолжать показывать подсказки
+                if (!canShowInactivityTip()) {
+                    console.log('🚫 Смена подсказки отменена: не выполнены условия');
+                    hideInactivityTip();
+                    return;
+                }
+                
                 // Переходим к следующей подсказке
                 currentTipIndex = (currentTipIndex + 1) % inactivityTips.length;
                 const newTip = inactivityTips[currentTipIndex];
@@ -34527,6 +34609,35 @@ function animateCloseButtonClick(button) {
         resetInactivityTimer();
     }
 
+    // Функция для проверки, можно ли показывать подсказки
+    function canShowInactivityTip() {
+        // Проверяем состояние загрузки
+        if (window._loadingProgressState && window._loadingProgressState.current < 99) {
+            console.log('🚫 Подсказки заблокированы: идет загрузка сайта');
+            return false;
+        }
+        
+        // Проверяем состояние загрузки списка версий
+        if (window.isLoadingBackupsList) {
+            console.log('🚫 Подсказки заблокированы: идет загрузка списка версий');
+            return false;
+        }
+        
+        // Проверяем состояние камеры DataMatrix
+        if (isCameraStarting || currentStream) {
+            console.log('🚫 Подсказки заблокированы: камера DataMatrix активна');
+            return false;
+        }
+        
+        // Проверяем состояние камеры для поиска по фото
+        if (isPhotoCameraStarting || photoSearchStream) {
+            console.log('🚫 Подсказки заблокированы: камера поиска по фото активна');
+            return false;
+        }
+        
+        return true;
+    }
+
     // Функция для сброса таймера неактивности
     function resetInactivityTimer() {
         if (inactivityTimer) {
@@ -34539,7 +34650,14 @@ function animateCloseButtonClick(button) {
         
         // Запускаем таймер на 120 секунд
         inactivityTimer = setTimeout(() => {
-            showRandomTip();
+            // Проверяем, можно ли показывать подсказки
+            if (canShowInactivityTip()) {
+                showRandomTip();
+            } else {
+                // Если нельзя показывать, перезапускаем таймер через 30 секунд
+                console.log('⏰ Перезапуск таймера неактивности через 30 секунд');
+                resetInactivityTimer();
+            }
         }, 120000);
     }
 
@@ -34635,6 +34753,16 @@ function animateCloseButtonClick(button) {
         initInactivitySystem();
     }
 
+    // Функция для принудительной проверки состояний и скрытия подсказок при необходимости
+    window.checkInactivityConditions = () => {
+        if (inactivityOverlay && inactivityOverlay.classList.contains('show')) {
+            if (!canShowInactivityTip()) {
+                console.log('🚫 Принудительное скрытие подсказки: изменились условия');
+                hideInactivityTip();
+            }
+        }
+    };
+
     // Функции для управления прокси через консоль
     window.enableProxy = () => {
         forceProxy = true;
@@ -34718,6 +34846,25 @@ function animateCloseButtonClick(button) {
             console.error('❌ Элементы системы неактивности не найдены');
         }
     };
+
+    // Функция для тестирования блокировки подсказок
+    window.testInactivityBlocking = () => {
+        console.log('🧪 Тестируем блокировку подсказок...');
+        console.log('📊 Текущие состояния:');
+        console.log('  - Загрузка сайта:', window._loadingProgressState ? `${window._loadingProgressState.current}%` : 'не определена');
+        console.log('  - Загрузка списка версий:', window.isLoadingBackupsList ? 'активна' : 'неактивна');
+        console.log('  - Камера DataMatrix запускается:', isCameraStarting ? 'да' : 'нет');
+        console.log('  - Камера DataMatrix активна:', currentStream ? 'да' : 'нет');
+        console.log('  - Камера поиска по фото запускается:', isPhotoCameraStarting ? 'да' : 'нет');
+        console.log('  - Камера поиска по фото активна:', photoSearchStream ? 'да' : 'нет');
+        console.log('  - Можно показывать подсказки:', canShowInactivityTip() ? 'да' : 'нет');
+        
+        if (canShowInactivityTip()) {
+            console.log('✅ Подсказки разрешены - можно тестировать');
+        } else {
+            console.log('🚫 Подсказки заблокированы - система работает корректно');
+        }
+    };
     
     // Функция для принудительного показа подсказки
     window.showInactivityTip = () => {
@@ -34727,6 +34874,52 @@ function animateCloseButtonClick(button) {
         } else {
             console.error('❌ Функция showRandomTip не найдена');
         }
+    };
+
+    // Функция для симуляции состояний камеры для тестирования
+    window.simulateCameraState = (state) => {
+        console.log(`🧪 Симулируем состояние камеры: ${state}`);
+        switch(state) {
+            case 'start':
+                isCameraStarting = true;
+                console.log('✅ isCameraStarting = true');
+                break;
+            case 'active':
+                isCameraStarting = false;
+                currentStream = { test: true }; // Симулируем активный поток
+                console.log('✅ Камера активна (currentStream установлен)');
+                break;
+            case 'stop':
+                isCameraStarting = false;
+                currentStream = null;
+                console.log('✅ Камера остановлена');
+                break;
+            case 'photo-start':
+                isPhotoCameraStarting = true;
+                console.log('✅ isPhotoCameraStarting = true');
+                break;
+            case 'photo-active':
+                isPhotoCameraStarting = false;
+                photoSearchStream = { test: true }; // Симулируем активный поток
+                console.log('✅ Камера поиска по фото активна');
+                break;
+            case 'photo-stop':
+                isPhotoCameraStarting = false;
+                photoSearchStream = null;
+                console.log('✅ Камера поиска по фото остановлена');
+                break;
+            default:
+                console.log('❌ Неизвестное состояние. Доступные: start, active, stop, photo-start, photo-active, photo-stop');
+                return;
+        }
+        
+        // Проверяем состояния неактивности
+        if (window.checkInactivityConditions) {
+            window.checkInactivityConditions();
+        }
+        
+        // Показываем текущий статус
+        window.testInactivityBlocking();
     };
     
     // Функция для тестирования с коротким таймером (10 секунд)
@@ -34825,13 +35018,13 @@ function animateCloseButtonClick(button) {
         
         // Глобальные переменные для сканера
         let scanner = null;
-        let currentStream = null;
+        // currentStream теперь глобальная переменная
         let isScanning = false;
         let scanTimer = null;
         let isProcessingScan = false;
         let isScannerInitialized = false;
         let isMobile = false;
-        let isCameraStarting = false;
+        // isCameraStarting теперь глобальная переменная
         let mobileScanner = null;
         let mobileScanInterval = null;
         let scanStats = {
@@ -35323,8 +35516,13 @@ function animateCloseButtonClick(button) {
         }
         
         // Инициализация сканера при загрузке страницы
-        function initScanner() {
+        async function initScanner() {
             if (S.view === 'tools' && S.toolSubView === 'scanner') {
+                // Загружаем библиотеку ZXing перед инициализацией
+                console.log('Загрузка библиотеки ZXing...');
+                await window.loadZXing();
+                console.log('Библиотека ZXing загружена');
+                
                 detectMobile();
                 // setupCameraSelect вызывается в initScannerOnViewChange
                 setupScannerEventListeners();
@@ -35333,9 +35531,15 @@ function animateCloseButtonClick(button) {
         }
         
         // Инициализация сканера при смене представления
-        function initScannerOnViewChange() {
+        async function initScannerOnViewChange() {
             if (S.view === 'tools' && S.toolSubView === 'scanner') {
                 console.log('Инициализация сканера...');
+                
+                // Загружаем библиотеку ZXing перед инициализацией
+                console.log('Загрузка библиотеки ZXing...');
+                await window.loadZXing();
+                console.log('Библиотека ZXing загружена');
+                
                 // Небольшая задержка для рендеринга DOM
                 setTimeout(() => {
                     console.log('Настройка камеры...');
@@ -35354,9 +35558,15 @@ function animateCloseButtonClick(button) {
         }
         
         // Инициализация поиска по фото при смене представления
-        function initPhotoSearchOnViewChange() {
+        async function initPhotoSearchOnViewChange() {
             if (S.view === 'tools' && S.toolSubView === 'photo-search') {
                 console.log('Инициализация поиска по фото...');
+                
+                // Загружаем библиотеку TensorFlow.js перед инициализацией
+                console.log('Загрузка библиотеки TensorFlow.js...');
+                await window.loadTensorFlow();
+                console.log('Библиотека TensorFlow.js загружена');
+                
                 // Небольшая задержка для рендеринга DOM
                 setTimeout(() => {
                     console.log('Настройка камеры для поиска по фото...');
@@ -35720,6 +35930,11 @@ function animateCloseButtonClick(button) {
             addLog('Начинаем запуск камеры...', 'info');
             isCameraStarting = true;
             
+            // Проверяем состояния неактивности при запуске камеры
+            if (window.checkInactivityConditions) {
+                window.checkInactivityConditions();
+            }
+            
             const cameraSelect = document.getElementById('camera-select');
             const resolutionSelect = document.getElementById('resolution-select');
             const video = document.getElementById('scanner-video');
@@ -35817,6 +36032,11 @@ function animateCloseButtonClick(button) {
                     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
                         console.log('Пробуем запустить камеру через новый API...');
                         currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                        
+                        // Проверяем состояния неактивности после успешного запуска камеры
+                        if (window.checkInactivityConditions) {
+                            window.checkInactivityConditions();
+                        }
                     } else {
                         throw new Error('getUserMedia не поддерживается');
                     }
@@ -35834,6 +36054,11 @@ function animateCloseButtonClick(button) {
                             }
                         };
                         currentStream = await navigator.mediaDevices.getUserMedia(simpleConstraints);
+                        
+                        // Проверяем состояния неактивности после успешного запуска камеры
+                        if (window.checkInactivityConditions) {
+                            window.checkInactivityConditions();
+                        }
                     } catch (error2) {
                         console.warn('Ошибка при запуске камеры с упрощенными настройками:', error2);
                         
@@ -35842,6 +36067,11 @@ function animateCloseButtonClick(button) {
                             console.log('Пробуем запустить камеру с базовыми настройками...');
                             const basicConstraints = { video: true };
                             currentStream = await navigator.mediaDevices.getUserMedia(basicConstraints);
+                            
+                            // Проверяем состояния неактивности после успешного запуска камеры
+                            if (window.checkInactivityConditions) {
+                                window.checkInactivityConditions();
+                            }
                         } catch (error3) {
                             console.error('Не удалось запустить камеру ни одним способом:', error3);
                             throw new Error(`Не удалось запустить камеру: ${error3.message}`);
@@ -35936,6 +36166,11 @@ function animateCloseButtonClick(button) {
             } catch (error) {
                 console.error('Ошибка запуска камеры:', error);
                 isCameraStarting = false;
+                
+                // Проверяем состояния неактивности после ошибки запуска камеры
+                if (window.checkInactivityConditions) {
+                    window.checkInactivityConditions();
+                }
                 let errorMessage = 'Не удалось запустить камеру.';
                 
                 if (error.name === 'NotAllowedError') {
@@ -35973,6 +36208,11 @@ function animateCloseButtonClick(button) {
                     console.log('Трек остановлен:', track.kind);
                 });
                 currentStream = null;
+                
+                // Проверяем состояния неактивности после остановки камеры
+                if (window.checkInactivityConditions) {
+                    window.checkInactivityConditions();
+                }
             }
             
             // Остановить сканер
@@ -37112,9 +37352,9 @@ function animateCloseButtonClick(button) {
         // ========== ФУНКЦИИ ДЛЯ ПОИСКА ДЕТАЛЕЙ ПО ФОТО ==========
         
         // Переменные для поиска по фото
-        let photoSearchStream = null;
+        // photoSearchStream теперь глобальная переменная
         let photoSearchInitialized = false;
-        let isPhotoCameraStarting = false;
+        // isPhotoCameraStarting теперь глобальная переменная
         
         // Настройка камеры для поиска по фото
         async function setupPhotoSearchCamera() {
@@ -37312,6 +37552,11 @@ function animateCloseButtonClick(button) {
                 
             isPhotoCameraStarting = true;
             
+            // Проверяем состояния неактивности при запуске камеры поиска по фото
+            if (window.checkInactivityConditions) {
+                window.checkInactivityConditions();
+            }
+            
             const cameraSelect = document.getElementById('photo-camera-select');
             const resolutionSelect = document.getElementById('photo-resolution-select');
             const video = document.getElementById('photo-search-video');
@@ -37343,6 +37588,11 @@ function animateCloseButtonClick(button) {
                 };
                 
                 photoSearchStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                // Проверяем состояния неактивности после успешного запуска камеры поиска по фото
+                if (window.checkInactivityConditions) {
+                    window.checkInactivityConditions();
+                }
                 video.srcObject = photoSearchStream;
                 
                 video.onloadedmetadata = () => {
@@ -37372,6 +37622,11 @@ function animateCloseButtonClick(button) {
                 console.error('Ошибка запуска камеры:', error);
             } finally {
                 isPhotoCameraStarting = false;
+                
+                // Проверяем состояния неактивности после завершения запуска камеры поиска по фото
+                if (window.checkInactivityConditions) {
+                    window.checkInactivityConditions();
+                }
             }
         }
         
@@ -37380,6 +37635,11 @@ function animateCloseButtonClick(button) {
             if (photoSearchStream) {
                 photoSearchStream.getTracks().forEach(track => track.stop());
                 photoSearchStream = null;
+                
+                // Проверяем состояния неактивности после остановки камеры поиска по фото
+                if (window.checkInactivityConditions) {
+                    window.checkInactivityConditions();
+                }
             }
             
             const video = document.getElementById('photo-search-video');
