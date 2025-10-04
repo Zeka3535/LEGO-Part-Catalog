@@ -8476,7 +8476,14 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
 // Получение имени кэша из метаданных
 async function getCacheName() {
     try {
-        const meta = await (await fetch('./metadata.json', { cache: 'no-store' })).json();
+        const meta = await (await fetch('./metadata.json', { 
+            cache: 'no-store',
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            }
+        })).json();
         return 'lego-catalog-cache-v' + (meta.version || '0');
     } catch {
         return 'lego-catalog-cache-v0';
@@ -31233,7 +31240,15 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Загружаем метаданные приложения при запуске
     (async () => {
         try {
-            const newMeta = await (await fetch('./metadata.json', { cache: 'no-store' })).json();
+            const newMeta = await (await fetch('./metadata.json', { 
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            })).json();
+            
             const oldVersion = S.appMeta?.version;
             S.appMeta = newMeta;
             
@@ -31254,14 +31269,21 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
         } catch (e) {
-            // Игнорируем ошибки загрузки метаданных
+            console.error('Ошибка загрузки метаданных:', e);
         }
     })();
 
     // Периодическая проверка обновлений каждые 5 минут
     setInterval(async () => {
         try {
-            const newMeta = await (await fetch('./metadata.json', { cache: 'no-store' })).json();
+            const newMeta = await (await fetch('./metadata.json', { 
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache',
+                    'Expires': '0'
+                }
+            })).json();
             if (S.appMeta?.version && newMeta.version && S.appMeta.version !== newMeta.version) {
                 console.log(`🔄 Обнаружено обновление: ${S.appMeta.version} → ${newMeta.version}`);
                 S.appMeta = newMeta;
@@ -31293,8 +31315,27 @@ document.addEventListener("DOMContentLoaded", async () => {
                 .then(registration => {
                     
                     // Проверяем обновления
-                    registration.addEventListener('updatefound', () => {
+                    registration.addEventListener('updatefound', async () => {
                         const newWorker = registration.installing;
+                        
+                        // Проверяем версию при обнаружении обновления SW
+                        try {
+                            const newMeta = await (await fetch('./metadata.json', { 
+                                cache: 'no-store',
+                                headers: {
+                                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                    'Pragma': 'no-cache',
+                                    'Expires': '0'
+                                }
+                            })).json();
+                            
+                            if (newMeta.version) {
+                                S.appMeta = newMeta;
+                                console.log(`🔄 Обновление SW обнаружено, версия: ${newMeta.version}`);
+                            }
+                        } catch (e) {
+                            console.error('Ошибка загрузки метаданных при обновлении SW:', e);
+                        }
                         
                         newWorker.addEventListener('statechange', async () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {

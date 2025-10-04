@@ -191,8 +191,8 @@ self.addEventListener('fetch', event => {
         // API requests: network first with fallback to cache
         event.respondWith(networkFirst(event.request));
     } else if (url.pathname === '/metadata.json' || url.pathname.endsWith('/metadata.json')) {
-        // metadata.json: always network first to get latest version
-        event.respondWith(networkFirst(event.request));
+        // metadata.json: never cache, always fetch from network
+        event.respondWith(fetch(event.request, { cache: 'no-store' }));
     } else if ((url.pathname.includes('/Data/') || url.pathname.includes('/dist/Downloads/') || url.pathname.includes('/Downloads/')) && url.pathname.endsWith('.csv')) {
         // CSV data files: stale-while-revalidate for better performance
         event.respondWith(staleWhileRevalidate(event.request));
