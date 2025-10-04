@@ -34979,7 +34979,11 @@ function animateCloseButtonClick(button) {
     // Автоматическое включение прокси при загрузке, если API заблокирован
     setTimeout(() => {
         console.log('🔍 Проверяем доступность API...');
-        fetch(`${REBRICKABLE_API_URL}/colors/?page=1&page_size=1`)
+        fetch(`${REBRICKABLE_API_URL}/colors/?page=1&page_size=1`, {
+            headers: {
+                Authorization: `key ${getApiKey()}`
+            }
+        })
             .then(response => {
                 if (response.ok) {
                     console.log('✅ API доступен, прокси не нужен');
