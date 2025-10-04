@@ -24749,9 +24749,14 @@ function zoomIn() {
     const isMobile = window.innerWidth <= 768;
     
     if (isMobile) {
-        // На мобильных устройствах - только 1x и 3x
+        // На мобильных устройствах - 1x → 2x → 3x
         if (zoomState.scale === 1) {
+            zoomState.scale = 2;
+        } else if (zoomState.scale === 2) {
             zoomState.scale = 3;
+        }
+        
+        if (zoomState.scale > 1) {
             applyZoom();
             updateZoomButtons();
             viewerEl.classList.add('zoom-mode');
@@ -24775,8 +24780,12 @@ function zoomOut() {
     const isMobile = window.innerWidth <= 768;
     
     if (isMobile) {
-        // На мобильных устройствах - только 1x и 3x
+        // На мобильных устройствах - 3x → 2x → 1x
         if (zoomState.scale === 3) {
+            zoomState.scale = 2;
+            applyZoom();
+            updateZoomButtons();
+        } else if (zoomState.scale === 2) {
             zoomState.scale = 1;
             applyZoom();
             updateZoomButtons();
