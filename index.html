@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v52';
+    const CACHE_NAME = 'lego-catalog-cache-v53';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -2133,6 +2133,32 @@
     
     #settings-modal-scroll::-webkit-scrollbar-thumb:hover {
         background: rgba(107, 114, 128, 0.8);
+    }
+    
+    /* Стили для скроллбара textarea в модальном окне "Поделиться" */
+    #share-text-content::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #share-text-content::-webkit-scrollbar-track {
+        background: rgba(55, 65, 81, 0.3);
+        border-radius: 3px;
+        margin: 12px 0; /* Отступы сверху и снизу для скругленных углов */
+    }
+    
+    #share-text-content::-webkit-scrollbar-thumb {
+        background: rgba(107, 114, 128, 0.6);
+        border-radius: 3px;
+        min-height: 20px; /* Минимальная высота ползунка */
+    }
+    
+    #share-text-content::-webkit-scrollbar-thumb:hover {
+        background: rgba(107, 114, 128, 0.8);
+    }
+    
+    /* Дополнительные отступы для textarea чтобы скроллбар не касался краев */
+    #share-text-content {
+        padding-right: 8px; /* Дополнительный отступ справа для скроллбара */
     }
     
     /* Стили для отображения версии */
@@ -8843,6 +8869,9 @@ const I_Folder = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vi
 const I_Circle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle></svg>`;
 const I_CheckCircle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M8 12l2.5 2.5L16 9"></path></svg>`;
 const I_Share = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="M8.59 13.51l6.83 3.98"></path><path d="M15.41 6.51L8.59 10.49"></path></svg>`;
+const I_Image = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`;
+const I_Text = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg>`;
+const I_Warning = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>`;
 const I_Settings = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
 const I_Heart = (c, f = !1) => f ? `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>` : `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
 const I_List = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>`;
@@ -12263,6 +12292,559 @@ async function showCustomConfirm(message, options = {}) {
         };
         document.addEventListener('keydown', handleKeydown);
     });
+}
+
+// Функция показа модального окна "Поделиться"
+async function showShareModal(options) {
+    const {
+        type, // 'collection', 'part', 'set', 'minifig', 'multiselect'
+        data, // данные для экспорта
+        title, // заголовок модального окна
+        stats // статистика элементов
+    } = options;
+
+    // Загружаем сохраненные настройки пользователя
+    const defaultPreferences = {
+        includeCsv: true,
+        includeImage: true,
+        includeText: true,
+        includeLink: true,
+        collectionFilter: 'all' // 'parts', 'sets', 'minifigs', 'all'
+    };
+    
+    const savedPreferences = JSON.parse(localStorage.getItem('shareModalPreferences') || '{}');
+    let preferences = { ...defaultPreferences, ...savedPreferences };
+    
+    // Умные рекомендации
+    const totalItems = (stats.parts || 0) + (stats.sets || 0) + (stats.minifigs || 0);
+    
+    // Если коллекция большая (>1000 элементов), предупреждаем о размере CSV
+    const isLargeCollection = totalItems > 1000;
+    
+    // Проверяем доступность изображения
+    const hasImage = await checkImageAvailability(type, data);
+    if (!hasImage) {
+        preferences.includeImage = false;
+    }
+    
+    // Проверяем поддержку navigator.share
+    const supportsFileSharing = navigator.share && navigator.canShare;
+
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.id = 'share-modal';
+        modal.innerHTML = `
+            <div class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-md flex flex-col max-h-[calc(100dvh-2rem)]">
+                    <!-- Заголовок -->
+                    <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-white">Поделиться ${title}</h2>
+                        <button id="share-modal-close" class="modal-close-btn" title="Закрыть модальное окно">${I_X("w-4 h-4")}</button>
+                    </div>
+                    
+                    <!-- Контент -->
+                    <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-4">
+                        <!-- Предупреждения -->
+                        ${isLargeCollection ? `
+                        <div class="bg-yellow-900/20 border border-yellow-600/30 rounded-[18px] p-3">
+                            <div class="flex items-center gap-2 text-yellow-300 text-sm">
+                                ${I_Warning('w-4 h-4')} Большая коллекция (${totalItems} элементов)
+                            </div>
+                            <div class="text-xs text-yellow-200 mt-1">
+                                CSV файл может быть большим. Рекомендуется поделиться только текстом или ссылкой.
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${!supportsFileSharing ? `
+                        <div class="bg-blue-900/20 border border-blue-600/30 rounded-[18px] p-3">
+                            <div class="flex items-center gap-2 text-blue-300 text-sm">
+                                ${I_Info('w-4 h-4')} Ограниченная поддержка
+                            </div>
+                            <div class="text-xs text-blue-200 mt-1">
+                                Ваш браузер не поддерживает передачу файлов. Будут скачаны файлы и скопирован текст.
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Чекбоксы опций -->
+                        <div>
+                            <h3 class="text-sm font-semibold text-white mb-3">Что включить:</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-sm text-gray-300 flex items-center gap-2">${I_Down('w-4 h-4 text-blue-400')} CSV файл (данные)</span>
+                                    <button id="share-csv-toggle" class="toggle-switch ${preferences.includeCsv ? 'on' : ''}" aria-pressed="${preferences.includeCsv}"><span class="knob"></span></button>
+                                </div>
+                                ${type !== 'collection' ? `
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-sm text-gray-300 flex items-center gap-2 ${!hasImage ? 'opacity-50' : ''}">${I_Image('w-4 h-4 text-green-400')} Изображение (превью)${!hasImage ? ' (недоступно)' : ''}</span>
+                                    <button id="share-image-toggle" class="toggle-switch ${preferences.includeImage ? 'on' : ''}" aria-pressed="${preferences.includeImage}" ${!hasImage ? 'disabled' : ''}><span class="knob"></span></button>
+                                </div>
+                                ` : ''}
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-sm text-gray-300 flex items-center gap-2">${I_Text('w-4 h-4 text-yellow-400')} Текстовое описание</span>
+                                    <button id="share-text-toggle" class="toggle-switch ${preferences.includeText ? 'on' : ''}" aria-pressed="${preferences.includeText}"><span class="knob"></span></button>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-sm text-gray-300 flex items-center gap-2">${I_Link('w-4 h-4 text-purple-400')} Ссылка на сайт</span>
+                                    <button id="share-link-toggle" class="toggle-switch ${preferences.includeLink ? 'on' : ''}" aria-pressed="${preferences.includeLink}"><span class="knob"></span></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Дополнительные опции для коллекции -->
+                        ${type === 'collection' ? `
+                        <div class="border-t border-gray-700/50 pt-4">
+                            <h3 class="text-sm font-semibold text-white mb-3">Дополнительно:</h3>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="collection-filter" value="all" ${preferences.collectionFilter === 'all' ? 'checked' : ''} class="text-blue-600">
+                                    <span class="text-sm text-gray-300">Всё вместе</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="collection-filter" value="parts" ${preferences.collectionFilter === 'parts' ? 'checked' : ''} class="text-blue-600">
+                                    <span class="text-sm text-gray-300">Только детали</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="collection-filter" value="sets" ${preferences.collectionFilter === 'sets' ? 'checked' : ''} class="text-blue-600">
+                                    <span class="text-sm text-gray-300">Только наборы</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" name="collection-filter" value="minifigs" ${preferences.collectionFilter === 'minifigs' ? 'checked' : ''} class="text-blue-600">
+                                    <span class="text-sm text-gray-300">Только минифигурки</span>
+                                </label>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Редактирование текста -->
+                        <div class="border-t border-gray-700/50 pt-4">
+                            <div id="share-preview-text" class="${preferences.includeText ? '' : 'hidden'}">
+                                <label class="block text-sm text-gray-300 mb-2">Описание:</label>
+                                <textarea id="share-text-content" class="w-full h-32 pl-4 pr-3 py-3 pb-4 bg-gray-700 border border-gray-600 rounded-[18px] text-white text-sm resize-none focus:outline-none focus:border-blue-500 overflow-y-auto leading-relaxed" placeholder="Введите описание..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Статистика -->
+                        <div class="border-t border-gray-700/50 pt-4">
+                            <h3 class="text-sm font-semibold text-white mb-2">Статистика:</h3>
+                            <div class="text-sm text-gray-300 space-y-1">
+                                ${stats.parts > 0 ? `<div>Детали: ${stats.parts} шт.</div>` : ''}
+                                ${stats.sets > 0 ? `<div>Наборы: ${stats.sets} шт.</div>` : ''}
+                                ${stats.minifigs > 0 ? `<div>Минифигурки: ${stats.minifigs} шт.</div>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопки действий -->
+                    <div class="flex-shrink-0 p-4 border-t border-gray-700 flex gap-3">
+                        <button id="share-cancel-btn" class="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-[18px] transition-colors font-medium focus:outline-none">
+                            Отмена
+                        </button>
+                        <button id="share-confirm-btn" class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 hover:shadow-blue-500/25 text-white rounded-[18px] transition-colors font-medium shadow-lg focus:outline-none flex items-center justify-center gap-2">
+                            ${I_Share('w-4 h-4')} Поделиться
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Обработчики событий
+        const closeModal = (result) => {
+            modal.remove();
+            resolve(result);
+        };
+        
+        // Кнопка закрытия
+        document.getElementById('share-modal-close').addEventListener('click', () => closeModal(false));
+        document.getElementById('share-cancel-btn').addEventListener('click', () => closeModal(false));
+        
+        // Тумблеры
+        const toggles = ['csv', 'text', 'link'];
+        if (type !== 'collection') {
+            toggles.push('image');
+        }
+        toggles.forEach(toggle => {
+            const toggleBtn = document.getElementById(`share-${toggle}-toggle`);
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const isOn = toggleBtn.classList.contains('on');
+                    if (isOn) {
+                        toggleBtn.classList.remove('on');
+                        toggleBtn.setAttribute('aria-pressed', 'false');
+                    } else {
+                        toggleBtn.classList.add('on');
+                        toggleBtn.setAttribute('aria-pressed', 'true');
+                    }
+                    
+                    // Показываем/скрываем соответствующие секции
+                    if (toggle === 'text') {
+                        const previewText = document.getElementById('share-preview-text');
+                        previewText.classList.toggle('hidden');
+                    }
+                });
+            }
+        });
+        
+        // Кнопка "Поделиться"
+        document.getElementById('share-confirm-btn').addEventListener('click', async () => {
+            // Собираем текущие настройки
+            const currentPreferences = {
+                includeCsv: document.getElementById('share-csv-toggle').classList.contains('on'),
+                includeImage: type !== 'collection' ? document.getElementById('share-image-toggle')?.classList.contains('on') || false : false,
+                includeText: document.getElementById('share-text-toggle').classList.contains('on'),
+                includeLink: document.getElementById('share-link-toggle').classList.contains('on'),
+                collectionFilter: type === 'collection' ? document.querySelector('input[name="collection-filter"]:checked')?.value || 'all' : 'all'
+            };
+            
+            // Сохраняем настройки
+            localStorage.setItem('shareModalPreferences', JSON.stringify(currentPreferences));
+            
+            // Получаем текст из textarea
+            const textContent = document.getElementById('share-text-content').value;
+            
+            // Подготавливаем данные для отправки
+            const shareData = await prepareShareData(type, data, currentPreferences, textContent);
+            
+            // Пытаемся поделиться
+            try {
+                if (navigator.share && shareData.files && shareData.files.length > 0) {
+                    // Проверяем поддержку файлов
+                    if (navigator.canShare && navigator.canShare({ files: shareData.files })) {
+                        await navigator.share(shareData);
+                        closeModal(true);
+                        return;
+                    }
+                }
+                
+                // Fallback: если navigator.share не поддерживается или не поддерживает файлы
+                if (shareData.files && shareData.files.length > 0) {
+                    // Скачиваем файлы
+                    for (const file of shareData.files) {
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(file);
+                        link.download = file.name;
+                        link.click();
+                        URL.revokeObjectURL(link.href);
+                    }
+                }
+                
+                // Копируем текст в буфер обмена если есть
+                if (shareData.text) {
+                    try {
+                        await navigator.clipboard.writeText(shareData.text);
+                    } catch (e) {
+                        // Fallback для старых браузеров
+                        const textArea = document.createElement('textarea');
+                        textArea.value = shareData.text;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                    }
+                }
+                
+                closeModal(true);
+            } catch (error) {
+                console.error('Ошибка при попытке поделиться:', error);
+                closeModal(false);
+            }
+        });
+        
+        // Закрытие по Escape
+        const handleKeydown = (e) => {
+            if (e.key === 'Escape') {
+                closeModal(false);
+                document.removeEventListener('keydown', handleKeydown);
+            }
+        };
+        document.addEventListener('keydown', handleKeydown);
+        
+        // Загружаем предпросмотр данных
+        loadSharePreview(type, data, preferences);
+    });
+}
+
+// Функция загрузки предпросмотра данных
+async function loadSharePreview(type, data, preferences) {
+    try {
+        // Загружаем текст по умолчанию
+        if (preferences.includeText) {
+            const defaultText = await getShareDefaultText(type, data);
+            const textArea = document.getElementById('share-text-content');
+            textArea.value = defaultText;
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки предпросмотра:', error);
+    }
+}
+
+// Функция получения URL изображения для предпросмотра
+async function getShareImageUrl(type, data) {
+    switch (type) {
+        case 'part':
+            const part = PART_MAP[data.partId];
+            return part?.part_img_url || '';
+        case 'set':
+            const set = SET_MAP[data.setNum];
+            return set?.set_img_url || '';
+        case 'minifig':
+            const minifig = MINIFIG_MAP[data.figNum];
+            return minifig?.minifig_img_url || minifig?.set_img_url || '';
+        case 'multiselect':
+            // Для мультивыбора возвращаем изображение первого элемента
+            if (data.selection.parts.length > 0) {
+                const part = PART_MAP[data.selection.parts[0].id];
+                return part?.part_img_url || '';
+            } else if (data.selection.sets.length > 0) {
+                const set = SET_MAP[data.selection.sets[0]];
+                return set?.set_img_url || '';
+            } else if (data.selection.minifigs.length > 0) {
+                const minifig = MINIFIG_MAP[data.selection.minifigs[0]];
+                return minifig?.minifig_img_url || minifig?.set_img_url || '';
+            }
+            return '';
+        default:
+            return '';
+    }
+}
+
+// Функция получения текста по умолчанию
+async function getShareDefaultText(type, data) {
+    const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
+    
+    switch (type) {
+        case 'collection':
+            const counts = getCollectionCounts();
+            return `Моя коллекция из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n\n` +
+                   `Детали: ${counts.totalParts} шт.\n` +
+                   `Наборы: ${counts.totalSets} шт.\n` +
+                   `Минифигурки: ${counts.totalMinifigs} шт.\n\n` +
+                   `Сайт: ${siteUrl}`;
+                   
+        case 'part':
+            const part = PART_MAP[data.partId];
+            const color = COLOR_MAP[data.colorId];
+            return `${part?.name || 'Деталь'} (${data.partId})${color ? ` - ${color.name}` : ''}\n\n` +
+                   `Количество: ${data.qty || 1}\n\n` +
+                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n` +
+                   `Сайт: ${siteUrl}`;
+                   
+        case 'set':
+            const set = SET_MAP[data.setNum];
+            return `${set?.name || 'Набор'} (#${data.setNum})\n\n` +
+                   `${set?.num_parts ? `${set.num_parts} деталей` : ''}${set?.year ? ` • ${set.year} год` : ''}\n` +
+                   `Количество: ${data.qty || 1}\n\n` +
+                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n` +
+                   `Сайт: ${siteUrl}`;
+                   
+        case 'minifig':
+            const minifig = MINIFIG_MAP[data.figNum];
+            return `${minifig?.name || 'Минифигурка'} (${data.figNum})\n\n` +
+                   `${minifig?.num_parts ? `${minifig.num_parts} деталей` : ''}\n` +
+                   `Количество: ${data.qty || 1}\n\n` +
+                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n` +
+                   `Сайт: ${siteUrl}`;
+                   
+        case 'multiselect':
+            const totalSelected = data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length;
+            const partsText = data.selection.parts.length > 0 ? `• Детали: ${data.selection.parts.length}` : '';
+            const setsText = data.selection.sets.length > 0 ? `• Наборы: ${data.selection.sets.length}` : '';
+            const minifigsText = data.selection.minifigs.length > 0 ? `• Минифигурки: ${data.selection.minifigs.length}` : '';
+            const foldersText = data.selection.folders.length > 0 ? `• Папки: ${data.selection.folders.length}` : '';
+            
+            const itemsList = [partsText, setsText, minifigsText, foldersText].filter(Boolean).join('\n');
+            
+            return `Мой подбор из LEGO Part Catalog\n` +
+                   `Всего: ${totalSelected} элементов\n` +
+                   `${itemsList}\n` +
+                   `LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n` +
+                   `Сайт: ${siteUrl}`;
+                   
+        default:
+            return `Элемент из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\nСайт: ${siteUrl}`;
+    }
+}
+
+// Функция подготовки данных для отправки
+async function prepareShareData(type, data, preferences, textContent) {
+    const shareData = {
+        title: 'LEGO Part Catalog',
+        text: preferences.includeText ? textContent : '',
+        url: preferences.includeLink ? 'https://zeka3535.github.io/LEGO-Part-Catalog/' : '',
+        files: []
+    };
+    
+    try {
+        // Подготавливаем CSV файл
+        if (preferences.includeCsv) {
+            let csvData = '';
+            let fileName = '';
+            
+            switch (type) {
+                case 'collection':
+                    csvData = generateCsvData();
+                    fileName = `lego-collection-${new Date().toISOString().slice(0,10)}.csv`;
+                    break;
+                case 'part':
+                    csvData = generateCsvDataForSelection({ parts: [{ id: data.partId, colorId: data.colorId }] });
+                    fileName = `lego-selection-${data.partId}${data.colorId ? '-' + data.colorId : ''}.csv`;
+                    break;
+                case 'set':
+                    csvData = generateCsvDataForSelection({ sets: [data.setNum] });
+                    fileName = `lego-selection-set-${data.setNum}.csv`;
+                    break;
+                case 'minifig':
+                    csvData = generateCsvDataForSelection({ minifigs: [data.figNum] });
+                    fileName = `lego-selection-minifig-${data.figNum}.csv`;
+                    break;
+                case 'multiselect':
+                    csvData = generateCsvDataForSelection(data.selection);
+                    fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
+                    break;
+            }
+            
+            if (csvData) {
+                const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
+                const csvFile = new File([csvBlob], fileName, { type: 'text/csv' });
+                shareData.files.push(csvFile);
+            }
+        }
+        
+        // Подготавливаем изображение
+        if (preferences.includeImage) {
+            const imageFile = await createShareImage(type, data);
+            if (imageFile) {
+                shareData.files.push(imageFile);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Ошибка подготовки данных для отправки:', error);
+    }
+    
+    return shareData;
+}
+
+// Функция проверки доступности изображения
+async function checkImageAvailability(type, data) {
+    try {
+        switch (type) {
+            case 'part':
+                const part = PART_MAP[data.partId];
+                const colorId = data.colorId;
+                if (part?.colorImages && colorId && part.colorImages[colorId]) {
+                    return part.colorImages[colorId].startsWith('http');
+                }
+                return part?.part_img_url?.startsWith('http') || part?.rebrickable_img_url?.startsWith('http');
+                
+            case 'set':
+                const set = SET_MAP[data.setNum];
+                return set?.set_img_url?.startsWith('http');
+                
+            case 'minifig':
+                const minifig = MINIFIG_MAP[data.figNum];
+                return minifig?.minifig_img_url?.startsWith('http') || minifig?.set_img_url?.startsWith('http');
+                
+            case 'multiselect':
+                // Для мультивыбора проверяем первый элемент
+                if (data.selection.parts.length > 0) {
+                    const part = PART_MAP[data.selection.parts[0].id];
+                    return part?.part_img_url?.startsWith('http') || part?.rebrickable_img_url?.startsWith('http');
+                } else if (data.selection.sets.length > 0) {
+                    const set = SET_MAP[data.selection.sets[0]];
+                    return set?.set_img_url?.startsWith('http');
+                } else if (data.selection.minifigs.length > 0) {
+                    const minifig = MINIFIG_MAP[data.selection.minifigs[0]];
+                    return minifig?.minifig_img_url?.startsWith('http') || minifig?.set_img_url?.startsWith('http');
+                }
+                return false;
+                
+            case 'collection':
+                // Для коллекции всегда возвращаем false, так как нет единого изображения
+                return false;
+                
+            default:
+                return false;
+        }
+    } catch (error) {
+        console.error('Ошибка проверки доступности изображения:', error);
+        return false;
+    }
+}
+
+// Функция создания изображения для отправки
+async function createShareImage(type, data) {
+    try {
+        let imageUrl = '';
+        let title = '';
+        let subtitle = '';
+        let fileName = '';
+        
+        switch (type) {
+            case 'part':
+                const part = PART_MAP[data.partId];
+                const color = COLOR_MAP[data.colorId];
+                imageUrl = part?.part_img_url || '';
+                title = part?.name || 'Деталь';
+                subtitle = `${data.qty || 1} шт.${color ? ` • ${color.name}` : ''}`;
+                fileName = `lego-part-${data.partId}${data.colorId ? '-' + data.colorId : ''}.png`;
+                break;
+                
+            case 'set':
+                const set = SET_MAP[data.setNum];
+                imageUrl = set?.set_img_url || '';
+                title = set?.name || 'Набор';
+                subtitle = `${data.qty || 1} шт.${set?.num_parts ? ` • ${set.num_parts} pcs` : ''}${set?.year ? ` • ${set.year}` : ''}`;
+                fileName = `lego-set-${data.setNum}.png`;
+                break;
+                
+            case 'minifig':
+                const minifig = MINIFIG_MAP[data.figNum];
+                imageUrl = minifig?.minifig_img_url || minifig?.set_img_url || '';
+                title = minifig?.name || 'Минифигурка';
+                subtitle = `${data.qty || 1} шт.${minifig?.num_parts ? ` • ${minifig.num_parts} pcs` : ''}`;
+                fileName = `lego-minifig-${data.figNum}.png`;
+                break;
+                
+            case 'multiselect':
+                // Для мультивыбора создаем изображение первого элемента
+                if (data.selection.parts.length > 0) {
+                    const part = PART_MAP[data.selection.parts[0].id];
+                    const color = COLOR_MAP[data.selection.parts[0].colorId];
+                    imageUrl = part?.part_img_url || '';
+                    title = part?.name || 'Деталь';
+                    subtitle = `Выбрано: ${data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length} элементов`;
+                    fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.png`;
+                } else if (data.selection.sets.length > 0) {
+                    const set = SET_MAP[data.selection.sets[0]];
+                    imageUrl = set?.set_img_url || '';
+                    title = set?.name || 'Набор';
+                    subtitle = `Выбрано: ${data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length} элементов`;
+                    fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.png`;
+                } else if (data.selection.minifigs.length > 0) {
+                    const minifig = MINIFIG_MAP[data.selection.minifigs[0]];
+                    imageUrl = minifig?.minifig_img_url || minifig?.set_img_url || '';
+                    title = minifig?.name || 'Минифигурка';
+                    subtitle = `Выбрано: ${data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length} элементов`;
+                    fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.png`;
+                }
+                break;
+        }
+        
+        if (imageUrl && imageUrl.startsWith('http')) {
+            const opts = { fileName };
+            const imageFile = await createCompositePreviewImage(imageUrl, title, subtitle, opts);
+            return imageFile;
+        }
+        
+        return null;
+    } catch (error) {
+        console.error('Ошибка создания изображения:', error);
+        return null;
+    }
 }
 
 let S = {
@@ -29447,273 +30029,18 @@ document.addEventListener("click", async e => {
             }
         }
         const selection = { parts, sets, minifigs, folders };
-        console.log('Share multiselect selection:', selection);
-        console.log('S.coll:', S.coll);
-        console.log('S.view:', S.view);
-        try {
-            const csvData = generateCsvDataForSelection(selection);
-            const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-            let fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.csv`;
-            const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
-            const totalSelected = parts.length + sets.length + minifigs.length + folders.length;
-            let prettyText = '';
-            let files = [];
-            let csvFile = null;
-            // Подготовка красивого текста и, при единственном выборе, попытка приложить изображение
-            if (totalSelected === 1) {
-                // Определяем единственный элемент и заполняем подробности
-                let titleLine = 'Выбранный элемент из LEGO Part Catalog';
-                let detailsLine = '';
-                const countsLine = (() => {
-                    // Если один элемент, показываем его количество из коллекции (если есть)
-                    if (sets.length === 1) {
-                        const sId = sets[0];
-                        const qty = (S.view === 'collection') ? (S.setColl?.[sId]?.qty || 1) : 1;
-                        return `— наборов: 1 (qty ${qty})`;
-                    }
-                    if (minifigs.length === 1) {
-                        const mId = minifigs[0];
-                        const qty = (S.view === 'collection') ? (S.minifigColl?.[mId]?.qty || 1) : 1;
-                        return `— минифигурок: 1 (qty ${qty})`;
-                    }
-                    if (parts.length === 1) {
-                        const { id: pId, colorId } = parts[0];
-                        const qty = (S.view === 'collection') ? (S.coll?.[pId]?.[colorId] || 1) : 1;
-                        const colorName = (COLOR_MAP[colorId]?.name || '');
-                        return `— деталей: 1 (qty ${qty})${colorName ? `, цвет: ${colorName}` : ''}`;
-                    }
-                    if (folders.length === 1) {
-                        const folderId = folders[0];
-                        const part = PART_MAP[folderId];
-                        const totalQty = (S.view === 'collection' && S.coll?.[folderId]) ? 
-                            Object.values(S.coll[folderId]).reduce((a, b) => a + b, 0) : 0;
-                        const colorsCount = (S.view === 'collection' && S.coll?.[folderId]) ? 
-                            Object.keys(S.coll[folderId]).length : 0;
-                        
-                        // Для папки показываем перечисление всех цветов
-                        if (S.view === 'collection' && S.coll?.[folderId]) {
-                            const colorDetails = [];
-                            for (const [colorId, qty] of Object.entries(S.coll[folderId])) {
-                                if (qty > 0) {
-                                    const color = COLOR_MAP[colorId];
-                                    const colorName = color?.name || colorId;
-                                    colorDetails.push(`${colorName}: ${qty}`);
-                                }
-                            }
-                            return `— папка: ${part?.name || folderId} • ${colorDetails.join(', ')}`;
-                        } else {
-                            return `— папка: ${part?.name || folderId} (${colorsCount} цветов, всего: ${totalQty})`;
-                        }
-                    }
-                    return `— деталей: ${parts.length}, папок: ${folders.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`;
-                })();
-                let imageUrl = '';
-                let selectedName = '';
-                if (sets.length === 1) {
-                    const sId = sets[0];
-                    const s = SET_MAP[sId] || {};
-                    const pcs = (s?.num_parts ? `${s.num_parts} pcs` : '');
-                    const year = (s?.year ? `${s.year}` : '');
-                    detailsLine = `${s?.name || 'Набор'} (#${sId})${pcs ? ' • ' + pcs : ''}${year ? ' • ' + year : ''}`;
-                    imageUrl = (s?.set_img_url && s.set_img_url.startsWith('http')) ? s.set_img_url : '';
-                    selectedName = s?.name || `set-${sId}`;
-                } else if (minifigs.length === 1) {
-                    const mId = minifigs[0];
-                    const m = MINIFIG_MAP[mId] || {};
-                    const pcs = (m?.num_parts ? `${m.num_parts} pcs` : '');
-                    detailsLine = `${m?.name || 'Минифигурка'} (${mId})${pcs ? ' • ' + pcs : ''}`;
-                    imageUrl = (m?.minifig_img_url && m.minifig_img_url.startsWith('http')) ? m.minifig_img_url : (m?.set_img_url || '');
-                    selectedName = m?.name || `minifig-${mId}`;
-                } else if (parts.length === 1) {
-                    const { id: pId, colorId } = parts[0];
-                    const p = PART_MAP[pId] || {};
-                    const colorName = (COLOR_MAP[colorId]?.name || '');
-                    detailsLine = `${p?.name || 'Деталь'} (${pId})${colorName ? ' • ' + colorName : ''}`;
-                    // Предпочтительно берём цветоспецифичную картинку
-                    const colorImg = (p?.colorImages && p.colorImages[colorId]) ? p.colorImages[colorId] : '';
-                    imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || '');
-                    selectedName = p?.name || `part-${pId}`;
-                } else if (folders.length === 1) {
-                    const folderId = folders[0];
-                    const p = PART_MAP[folderId] || {};
-                    const totalQty = (S.view === 'collection' && S.coll?.[folderId]) ? 
-                        Object.values(S.coll[folderId]).reduce((a, b) => a + b, 0) : 0;
-                    const colorsCount = (S.view === 'collection' && S.coll?.[folderId]) ? 
-                        Object.keys(S.coll[folderId]).length : 0;
-                    
-                    // Для папки показываем перечисление всех цветов
-                    if (S.view === 'collection' && S.coll?.[folderId]) {
-                        const colorDetails = [];
-                        for (const [colorId, qty] of Object.entries(S.coll[folderId])) {
-                            if (qty > 0) {
-                                const color = COLOR_MAP[colorId];
-                                const colorName = color?.name || colorId;
-                                colorDetails.push(`${colorName}: ${qty}`);
-                            }
-                        }
-                        detailsLine = `${p?.name || 'Папка деталей'} (${folderId}) • ${colorDetails.join(', ')}`;
-                    } else {
-                        detailsLine = `${p?.name || 'Папка деталей'} (${folderId}) • ${colorsCount} цветов • всего: ${totalQty}`;
-                    }
-                    imageUrl = (p?.part_img_url || p?.rebrickable_img_url || '');
-                    selectedName = p?.name || `folder-${folderId}`;
-                }
-                prettyText = [titleLine, detailsLine, countsLine, '', `Сайт: ${siteUrl}`].join('\n');
-                // Пытаемся собрать композит с реальным изображением; затем фолбэки SVG/PNG
-                let imageFile = null;
-                if (imageUrl && imageUrl.startsWith('http')) {
-                    const opts = {};
-                    if (folders.length === 1) {
-                        // Для папки используем основной цвет детали или первый доступный цвет
-                        const folderId = folders[0];
-                        const p = PART_MAP[folderId];
-                        if (p?.colorImages && Object.keys(p.colorImages).length > 0) {
-                            const firstColorId = Object.keys(p.colorImages)[0];
-                            const c = COLOR_MAP[firstColorId];
-                            if (c) {
-                                opts.colorHex = c.hex || '#000000';
-                                opts.colorName = c.name || '';
-                                opts.isTransparent = !!c.isTransparent;
-                            }
-                        }
-                    } else if (parts.length === 1) {
-                        const { colorId } = parts[0];
-                        const c = COLOR_MAP[colorId];
-                        if (c) {
-                            opts.colorHex = c.hex || '#000000';
-                            opts.colorName = c.name || '';
-                            opts.isTransparent = !!c.isTransparent;
-                        }
-                    }
-                    // Добавим строку метаданных (кол-во, год, детали и т.д.)
-                    let metaExtra = '';
-                    if (folders.length === 1) {
-                        const folderId = folders[0];
-                        const p = PART_MAP[folderId] || {};
-                        const totalQty = (S.view === 'collection' && S.coll?.[folderId]) ? 
-                            Object.values(S.coll[folderId]).reduce((a, b) => a + b, 0) : 0;
-                        const colorsCount = (S.view === 'collection' && S.coll?.[folderId]) ? 
-                            Object.keys(S.coll[folderId]).length : 0;
-                        
-                        // Для папки показываем перечисление всех цветов
-                        if (S.view === 'collection' && S.coll?.[folderId]) {
-                            const colorDetails = [];
-                            for (const [colorId, qty] of Object.entries(S.coll[folderId])) {
-                                if (qty > 0) {
-                                    const color = COLOR_MAP[colorId];
-                                    const colorName = color?.name || colorId;
-                                    colorDetails.push(`${colorName}: ${qty}`);
-                                }
-                            }
-                            metaExtra = `папка: ${colorDetails.join(', ')}`;
-                        } else {
-                            metaExtra = `папка: ${colorsCount} цветов, всего: ${totalQty}`;
-                        }
-                    } else if (sets.length === 1) {
-                        const s = SET_MAP[sets[0]] || {};
-                        const piecesInfo = s?.num_parts ? `деталей в наборе: ${s.num_parts}` : '';
-                        const yearInfo = s?.year ? `год: ${s.year}` : '';
-                        metaExtra = [piecesInfo, yearInfo].filter(Boolean).join(', ');
-                    } else if (minifigs.length === 1) {
-                        const m = MINIFIG_MAP[minifigs[0]] || {};
-                        const piecesInfo = m?.num_parts ? `деталей в инвентаре: ${m.num_parts}` : '';
-                        metaExtra = [piecesInfo].filter(Boolean).join(', ');
-                    }
-                    const baseMeta = countsLine.replace(/^—\s?/, '');
-                    opts.meta = [baseMeta, metaExtra].filter(Boolean).join(' • ');
-                    // Имя файла изображения по выбранному элементу
-                    const safe = String(selectedName || 'item').replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
-                    opts.fileName = `lego-${safe}.png`;
-                    imageFile = await createCompositePreviewImage(
-                        imageUrl,
-                        detailsLine.split(' • ')[0] || 'LEGO Item',
-                        'CSV включает:',
-                        opts
-                    );
-                }
-                if (!imageFile) {
-                    const fallbackTitle = detailsLine.split(' • ')[0] || 'LEGO Item';
-                    const fallbackSub = 'CSV включает:';
-                    const safe = String(selectedName || 'item').replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
-                    imageFile = await createRasterPreviewImage(fallbackTitle, fallbackSub, { fileName: `lego-${safe}.png` });
-                }
-                if (selectedName) {
-                    const safeCsv = String(selectedName).replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '').slice(0, 80);
-                    fileName = `lego-selection-${safeCsv}.csv`;
-                }
-                // Создаём CSV-файл с актуальным именем
-                csvFile = new File([blob], fileName, { type: 'text/csv' });
-                files = imageFile ? [csvFile, imageFile] : [csvFile];
-            } else {
-                // Для множественного выбора показываем детальную информацию о папках
-                let folderDetails = '';
-                if (folders.length > 0) {
-                    const folderInfo = [];
-                    for (const folderId of folders) {
-                        const part = PART_MAP[folderId];
-                        if (S.view === 'collection' && S.coll?.[folderId]) {
-                            const colorDetails = [];
-                            for (const [colorId, qty] of Object.entries(S.coll[folderId])) {
-                                if (qty > 0) {
-                                    const color = COLOR_MAP[colorId];
-                                    const colorName = color?.name || colorId;
-                                    colorDetails.push(`${colorName}: ${qty}`);
-                                }
-                            }
-                            folderInfo.push(`${part?.name || folderId} (${colorDetails.join(', ')})`);
-                        } else {
-                            folderInfo.push(`${part?.name || folderId}`);
-                        }
-                    }
-                    folderDetails = folderInfo.join('\n');
-                }
-                
-                prettyText = [
-                    'Мой подбор из LEGO Part Catalog',
-                    `— деталей: ${parts.length}, папок: ${folders.length}, наборов: ${sets.length}, минифигурок: ${minifigs.length}`,
-                    ...(folderDetails ? ['', 'Содержимое папок:', folderDetails] : []),
-                    `Сайт: ${siteUrl}`
-                ].join('\n');
-                
-                // Для множественного выбора используем дефолтное имя, создаём CSV сейчас
-                csvFile = new File([blob], fileName, { type: 'text/csv' });
-                files = [csvFile];
+        
+        // Показываем модальное окно "Поделиться"
+        await showShareModal({
+            type: 'multiselect',
+            data: { selection },
+            title: 'выбранными элементами',
+            stats: {
+                parts: parts.length,
+                sets: sets.length,
+                minifigs: minifigs.length
             }
-            if (navigator.share) {
-                let shared = false;
-                if (navigator.canShare) {
-                    // Пробуем оба файла (CSV + изображение)
-                    if (!shared && files.length === 2 && navigator.canShare({ files })) {
-                        await navigator.share({ files, title: 'Подбор LEGO', text: prettyText });
-                        shared = true;
-                    }
-                    // Если нельзя оба файла — пробуем только изображение
-                    const imageOnly = files.find(f => f.type && f.type.startsWith('image/'));
-                    if (!shared && imageOnly && navigator.canShare({ files: [imageOnly] })) {
-                        await navigator.share({ files: [imageOnly], title: 'Подбор LEGO', text: prettyText });
-                        shared = true;
-                    }
-                    // Если нельзя изображение — пробуем только CSV
-                    if (!shared && navigator.canShare({ files: [csvFile] })) {
-                        await navigator.share({ files: [csvFile], title: 'Подбор LEGO (CSV)', text: prettyText });
-                        shared = true;
-                    }
-                }
-                if (!shared) {
-                    // Файлы не поддерживаются — делимся текстом + CSV в тексте
-                    await navigator.share({ title: 'Подбор LEGO', text: prettyText + (csvData ? '\n\n' + csvData : ''), url: siteUrl });
-                }
-            } else {
-                // Фолбэк: скачиваем CSV и открываем сайт; изображение не прикладываем
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 5000);
-                window.open(siteUrl, '_blank');
-            }
-        } catch (err) {
-            console.error('Share selection failed:', err);
-        }
+        });
         return;
     }
     
@@ -29769,142 +30096,46 @@ document.addEventListener("click", async e => {
     
     // Share buttons in modals
     if (t.closest('[data-action="share-part"]')) {
-        (async () => {
-            try {
-                const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
-                const partId = S.selPartId;
-                if (!partId) return;
-                const colorId = S.partModal?.selColorId || '';
-                const qty = S.partModal?.qty || 0;
-                const includeCsv = (qty > 0) && !!colorId;
-                const p = PART_MAP[partId] || {};
-                const color = COLOR_MAP[colorId];
-                const title = `${p?.name || 'Деталь'} (${partId})`;
-                const subtitle = includeCsv ? 'CSV включает:' : '';
-                const colorImg = (p?.colorImages && colorId && p.colorImages[colorId]) ? p.colorImages[colorId] : '';
-                const imageUrl = (colorImg && colorImg.startsWith('http')) ? colorImg : (p?.part_img_url || p?.rebrickable_img_url || S.partModal?.imgUrl || '');
-                const opts = {};
-                if (color) {
-                    opts.colorHex = color.hex || '#000000';
-                    opts.colorName = color.name || '';
-                    opts.isTransparent = !!color.isTransparent;
-                }
-                if (qty > 0) {
-                    opts.meta = `количество: ${qty}`;
-                }
-                const safeBase = String(p?.name || `part-${partId}`).replace(/[\\/:*?"<>|]+/g, '').trim().replace(/\s+/g, '-').slice(0, 80);
-                opts.fileName = `lego-${safeBase}.png`;
-                let imageFile = await createCompositePreviewImage(imageUrl, title, subtitle, opts);
-                if (!imageFile) {
-                    const fallbackSub = qty > 0 ? `количество: ${qty}` : '';
-                    imageFile = await createRasterPreviewImage(title, fallbackSub, { fileName: `lego-${safeBase}.png` });
-                }
-                let files = [imageFile];
-                let csvData = '';
-                let csvFile = null;
-                if (includeCsv) {
-                    csvData = generateCsvDataForSelection({ parts: [{ id: partId, colorId }] });
-                    const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-                    const csvName = `lego-selection-${partId}${colorId ? '-' + colorId : ''}.csv`;
-                    csvFile = new File([csvBlob], csvName, { type: 'text/csv' });
-                    files = [csvFile, imageFile];
-                }
-                if (navigator.share) {
-                    let shared = false;
-                    if (navigator.canShare) {
-                        if (!shared && files.length === 2 && navigator.canShare({ files })) { await navigator.share({ files, title, text: `Сайт: ${siteUrl}` }); shared = true; }
-                        if (!shared && navigator.canShare({ files: [imageFile] })) { await navigator.share({ files: [imageFile], title, text: `Сайт: ${siteUrl}` }); shared = true; }
-                        if (!shared && csvFile && navigator.canShare({ files: [csvFile] })) { await navigator.share({ files: [csvFile], title: title + ' (CSV)', text: `Сайт: ${siteUrl}` }); shared = true; }
-                    }
-                    if (!shared) {
-                        await navigator.share({ title, text: `Сайт: ${siteUrl}` + (includeCsv ? ('\n\n' + csvData) : '') , url: siteUrl });
-                    }
-                } else {
-                    // Fallback: download files
-                    const urlImg = URL.createObjectURL(imageFile); const a1 = document.createElement('a'); a1.href = urlImg; a1.download = imageFile.name || 'lego-part.png'; document.body.appendChild(a1); a1.click(); a1.remove(); setTimeout(() => URL.revokeObjectURL(urlImg), 5000);
-                    if (csvFile) { const urlCsv = URL.createObjectURL(csvFile); const a2 = document.createElement('a'); a2.href = urlCsv; a2.download = csvFile.name; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(urlCsv), 5000); }
-                    window.open(siteUrl, '_blank');
-                }
-            } catch (err) { console.error('Share part failed:', err); }
-        })();
+        const partId = S.selPartId;
+        if (!partId) return;
+        const colorId = S.partModal?.selColorId || '';
+        const qty = S.partModal?.qty || 0;
+        
+        // Показываем модальное окно "Поделиться"
+        await showShareModal({
+            type: 'part',
+            data: { partId, colorId, qty },
+            title: 'деталью',
+            stats: { parts: 1, sets: 0, minifigs: 0 }
+        });
         return;
     }
     if (t.closest('[data-action="share-set"]')) {
-        (async () => {
-            try {
-                const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
-                const setNum = S.selSetNum; if (!setNum) return;
-                const s = SET_MAP[setNum] || {};
-                const qty = S.setModal?.qty || 0;
-                const title = `${s?.name || 'Набор'}`;
-                const subtitle = 'CSV включает:';
-                const imageUrl = (s?.set_img_url && String(s.set_img_url).startsWith('http')) ? s.set_img_url : '';
-                const opts = { fileName: `lego-set-${setNum}.png` };
-                const theme = s?.theme_id ? THEME_MAP[s.theme_id] : null;
-                const piecesInfo = s?.num_parts ? `деталей: ${s.num_parts}` : '';
-                const yearInfo = s?.year ? `год: ${s.year}` : '';
-                const idInfo = `ID: ${setNum}`;
-                const extras = [piecesInfo, yearInfo, idInfo].filter(Boolean).join(' • ');
-                if (extras) opts.meta = extras;
-                let imageFile = await createCompositePreviewImage(imageUrl, title, subtitle, opts);
-                if (!imageFile) imageFile = await createRasterPreviewImage(title, qty>0?`количество: ${qty}`:'' , { fileName: `lego-set-${setNum}.png` });
-                const csvData = generateCsvDataForSelection({ sets: [setNum] });
-                const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-                const csvFile = new File([csvBlob], `lego-selection-set-${setNum}.csv`, { type: 'text/csv' });
-                if (navigator.share) {
-                    let shared = false;
-                    const files = [csvFile, imageFile];
-                    if (navigator.canShare) {
-                        if (!shared && navigator.canShare({ files })) { await navigator.share({ files, title, text: `Сайт: ${siteUrl}` }); shared = true; }
-                        if (!shared && navigator.canShare({ files: [imageFile] })) { await navigator.share({ files: [imageFile], title, text: `Сайт: ${siteUrl}` }); shared = true; }
-                        if (!shared && navigator.canShare({ files: [csvFile] })) { await navigator.share({ files: [csvFile], title: title + ' (CSV)', text: `Сайт: ${siteUrl}` }); shared = true; }
-                    }
-                    if (!shared) { await navigator.share({ title, text: `Сайт: ${siteUrl}\n\n` + csvData, url: siteUrl }); }
-                } else {
-                    const urlImg = URL.createObjectURL(imageFile); const a1 = document.createElement('a'); a1.href = urlImg; a1.download = imageFile.name || 'lego-set.png'; document.body.appendChild(a1); a1.click(); a1.remove(); setTimeout(() => URL.revokeObjectURL(urlImg), 5000);
-                    const urlCsv = URL.createObjectURL(csvBlob); const a2 = document.createElement('a'); a2.href = urlCsv; a2.download = csvFile.name; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(urlCsv), 5000);
-                    window.open(siteUrl, '_blank');
-                }
-            } catch (err) { console.error('Share set failed:', err); }
-        })();
+        const setNum = S.selSetNum;
+        if (!setNum) return;
+        const qty = S.setModal?.qty || 0;
+        
+        // Показываем модальное окно "Поделиться"
+        await showShareModal({
+            type: 'set',
+            data: { setNum, qty },
+            title: 'набором',
+            stats: { parts: 0, sets: 1, minifigs: 0 }
+        });
         return;
     }
     if (t.closest('[data-action="share-minifig"]')) {
-        (async () => {
-            try {
-                const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
-                const figNum = S.selFigNum; if (!figNum) return;
-                const m = MINIFIG_MAP[figNum] || {};
-                const qty = S.minifigModal?.qty || 0;
-                const title = `${m?.name || 'Минифигурка'}`;
-                const subtitle = 'CSV включает:';
-                const imageUrl = (m?.minifig_img_url && String(m.minifig_img_url).startsWith('http')) ? m.minifig_img_url : (m?.set_img_url || '');
-                const opts = { fileName: `lego-minifig-${figNum}.png` };
-                const piecesInfo = m?.num_parts ? `деталей: ${m.num_parts}` : '';
-                const idInfo = `ID: ${figNum}`;
-                const extras = [piecesInfo, idInfo].filter(Boolean).join(' • ');
-                if (extras) opts.meta = extras;
-                let imageFile = await createCompositePreviewImage(imageUrl, title, subtitle, opts);
-                if (!imageFile) imageFile = await createRasterPreviewImage(title, qty>0?`количество: ${qty}`:'' , { fileName: `lego-minifig-${figNum}.png` });
-                const csvData = generateCsvDataForSelection({ minifigs: [figNum] });
-                const csvBlob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-                const csvFile = new File([csvBlob], `lego-selection-minifig-${figNum}.csv`, { type: 'text/csv' });
-                if (navigator.share) {
-                    let shared = false;
-                    const files = [csvFile, imageFile];
-                    if (navigator.canShare) {
-                        if (!shared && navigator.canShare({ files })) { await navigator.share({ files, title, text: `Сайт: ${siteUrl}` }); shared = true; }
-                        if (!shared && navigator.canShare({ files: [imageFile] })) { await navigator.share({ files: [imageFile], title, text: `Сайт: ${siteUrl}` }); shared = true; }
-                        if (!shared && navigator.canShare({ files: [csvFile] })) { await navigator.share({ files: [csvFile], title: title + ' (CSV)', text: `Сайт: ${siteUrl}` }); shared = true; }
-                    }
-                    if (!shared) { await navigator.share({ title, text: `Сайт: ${siteUrl}\n\n` + csvData, url: siteUrl }); }
-                } else {
-                    const urlImg = URL.createObjectURL(imageFile); const a1 = document.createElement('a'); a1.href = urlImg; a1.download = imageFile.name || 'lego-minifig.png'; document.body.appendChild(a1); a1.click(); a1.remove(); setTimeout(() => URL.revokeObjectURL(urlImg), 5000);
-                    const urlCsv = URL.createObjectURL(csvBlob); const a2 = document.createElement('a'); a2.href = urlCsv; a2.download = csvFile.name; document.body.appendChild(a2); a2.click(); a2.remove(); setTimeout(() => URL.revokeObjectURL(urlCsv), 5000);
-                    window.open(siteUrl, '_blank');
-                }
-            } catch (err) { console.error('Share minifig failed:', err); }
-        })();
+        const figNum = S.selFigNum;
+        if (!figNum) return;
+        const qty = S.minifigModal?.qty || 0;
+        
+        // Показываем модальное окно "Поделиться"
+        await showShareModal({
+            type: 'minifig',
+            data: { figNum, qty },
+            title: 'минифигуркой',
+            stats: { parts: 0, sets: 0, minifigs: 1 }
+        });
         return;
     }
     if (t.closest("#filter-button")) {
@@ -30172,34 +30403,19 @@ document.addEventListener("click", async e => {
                 }
                 break;
             case "share-collection": {
-                (async () => {
-                    try {
-                        const csvData = generateCsvData();
-                        const blob = new Blob([csvData], { type: 'text/csv;charset=utf-8;' });
-                        const fileName = `lego-collection-${new Date().toISOString().slice(0,10)}.csv`;
-                        const siteUrl = 'https://zeka3535.github.io/LEGO-Part-Catalog/';
-                        const siteText = `Моя коллекция из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок. Сайт: ${siteUrl}`;
-                        if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], fileName, { type: 'text/csv' })] })) {
-                            const file = new File([blob], fileName, { type: 'text/csv' });
-                            await navigator.share({ files: [file], title: 'Коллекция LEGO (CSV)', text: siteText });
-                        } else if (navigator.share) {
-                            await navigator.share({ title: 'Коллекция LEGO (CSV)', text: siteText + '\n\n' + csvData, url: siteUrl });
-                        } else {
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url; a.download = fileName; document.body.appendChild(a); a.click(); a.remove();
-                            setTimeout(() => URL.revokeObjectURL(url), 5000);
-                            window.open(siteUrl, '_blank');
-                        }
-                        updateSettingsModalStatus('Коллекция подготовлена\nи передана', 'success');
-                        // Автоочистка статуса через 2.5с
-                        setTimeout(() => { if (S.settingsOpen && S.settingsModal.status === 'Коллекция подготовлена\nи передана') { clearSettingsModalStatus(); } }, 2500);
-                    } catch (err) {
-                        console.error('Share collection failed:', err);
-                        updateSettingsModalStatus('Не удалось передать\nколлекцию', 'error');
-                        setTimeout(() => { if (S.settingsOpen && S.settingsModal.status === 'Не удалось передать\nколлекцию') { clearSettingsModalStatus(); } }, 3000);
+                const counts = getCollectionCounts();
+                
+                // Показываем модальное окно "Поделиться"
+                await showShareModal({
+                    type: 'collection',
+                    data: {},
+                    title: 'коллекцией',
+                    stats: {
+                        parts: counts.totalParts,
+                        sets: counts.totalSets,
+                        minifigs: counts.totalMinifigs
                     }
-                })();
+                });
                 return;
             }
             case "toggle-catalog-multiselect":
