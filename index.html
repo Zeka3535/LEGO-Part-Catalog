@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v53';
+    const CACHE_NAME = 'lego-catalog-cache-v54';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -12675,11 +12675,27 @@ async function loadImagePreview(type, data) {
     }
 }
 
+// Функция для правильных окончаний в русском языке
+function getSmartEnding(count, wordForms) {
+    const [one, few, many] = wordForms;
+    if (count % 10 === 1 && count % 100 !== 11) {
+        return one;
+    } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+        return few;
+    } else {
+        return many;
+    }
+}
+
 // Функция получения URL изображения для предпросмотра
 async function getShareImageUrl(type, data) {
     switch (type) {
         case 'part':
             const part = PART_MAP[data.partId];
+            // Используем изображение в выбранном цвете, если доступно
+            if (part?.colorImages && data.colorId && part.colorImages[data.colorId]) {
+                return part.colorImages[data.colorId];
+            }
             return part?.part_img_url || '';
         case 'set':
             const set = SET_MAP[data.setNum];
@@ -12691,6 +12707,10 @@ async function getShareImageUrl(type, data) {
             // Для мультивыбора возвращаем изображение первого элемента
             if (data.selection.parts.length > 0) {
                 const part = PART_MAP[data.selection.parts[0].id];
+                // Используем изображение в выбранном цвете, если доступно
+                if (part?.colorImages && data.selection.parts[0].colorId && part.colorImages[data.selection.parts[0].colorId]) {
+                    return part.colorImages[data.selection.parts[0].colorId];
+                }
                 return part?.part_img_url || '';
             } else if (data.selection.sets.length > 0) {
                 const set = SET_MAP[data.selection.sets[0]];
@@ -12713,42 +12733,42 @@ async function getShareDefaultText(type, data) {
         case 'collection':
             const counts = getCollectionCounts();
             return `Моя коллекция из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n\n` +
-                   `Детали: ${counts.totalParts} шт.\n` +
-                   `Наборы: ${counts.totalSets} шт.\n` +
-                   `Минифигурки: ${counts.totalMinifigs} шт.`;
+                   `Детали: ${counts.totalParts} ${getSmartEnding(counts.totalParts, ['штука', 'штуки', 'штук'])}\n` +
+                   `Наборы: ${counts.totalSets} ${getSmartEnding(counts.totalSets, ['штука', 'штуки', 'штук'])}\n` +
+                   `Минифигурки: ${counts.totalMinifigs} ${getSmartEnding(counts.totalMinifigs, ['штука', 'штуки', 'штук'])}`;
                    
         case 'part':
             const part = PART_MAP[data.partId];
-            const color = COLOR_MAP[data.colorId];
-            return `${part?.name || 'Деталь'} (${data.partId})${color ? ` - ${color.name}` : ''}\n\n` +
-                   `Количество: ${data.qty || 1}\n\n` +
+            const partQty = data.qty || 1;
+            return `${part?.name || 'Деталь'} (${data.partId})\n\n` +
+                   `Количество: ${partQty} ${getSmartEnding(partQty, ['штука', 'штуки', 'штук'])}\n\n` +
                    `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
                    
         case 'set':
             const set = SET_MAP[data.setNum];
+            const setQty = data.qty || 1;
             return `${set?.name || 'Набор'} (#${data.setNum})\n\n` +
-                   `${set?.num_parts ? `${set.num_parts} деталей` : ''}${set?.year ? ` • ${set.year} год` : ''}\n` +
-                   `Количество: ${data.qty || 1}\n\n` +
+                   `Количество: ${setQty} ${getSmartEnding(setQty, ['штука', 'штуки', 'штук'])}\n\n` +
                    `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
                    
         case 'minifig':
             const minifig = MINIFIG_MAP[data.figNum];
+            const minifigQty = data.qty || 1;
             return `${minifig?.name || 'Минифигурка'} (${data.figNum})\n\n` +
-                   `${minifig?.num_parts ? `${minifig.num_parts} деталей` : ''}\n` +
-                   `Количество: ${data.qty || 1}\n\n` +
+                   `Количество: ${minifigQty} ${getSmartEnding(minifigQty, ['штука', 'штуки', 'штук'])}\n\n` +
                    `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
                    
         case 'multiselect':
             const totalSelected = data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length;
-            const partsText = data.selection.parts.length > 0 ? `• Детали: ${data.selection.parts.length}` : '';
-            const setsText = data.selection.sets.length > 0 ? `• Наборы: ${data.selection.sets.length}` : '';
-            const minifigsText = data.selection.minifigs.length > 0 ? `• Минифигурки: ${data.selection.minifigs.length}` : '';
-            const foldersText = data.selection.folders.length > 0 ? `• Папки: ${data.selection.folders.length}` : '';
+            const partsText = data.selection.parts.length > 0 ? `• Детали: ${data.selection.parts.length} ${getSmartEnding(data.selection.parts.length, ['штука', 'штуки', 'штук'])}` : '';
+            const setsText = data.selection.sets.length > 0 ? `• Наборы: ${data.selection.sets.length} ${getSmartEnding(data.selection.sets.length, ['штука', 'штуки', 'штук'])}` : '';
+            const minifigsText = data.selection.minifigs.length > 0 ? `• Минифигурки: ${data.selection.minifigs.length} ${getSmartEnding(data.selection.minifigs.length, ['штука', 'штуки', 'штук'])}` : '';
+            const foldersText = data.selection.folders.length > 0 ? `• Папки: ${data.selection.folders.length} ${getSmartEnding(data.selection.folders.length, ['штука', 'штуки', 'штук'])}` : '';
             
             const itemsList = [partsText, setsText, minifigsText, foldersText].filter(Boolean).join('\n');
             
             return `Мой подбор из LEGO Part Catalog\n` +
-                   `Всего: ${totalSelected} элементов\n` +
+                   `Всего: ${totalSelected} ${getSmartEnding(totalSelected, ['элемент', 'элемента', 'элементов'])}\n` +
                    `${itemsList}\n` +
                    `LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
                    
@@ -12876,25 +12896,39 @@ async function createShareImage(type, data) {
             case 'part':
                 const part = PART_MAP[data.partId];
                 const color = COLOR_MAP[data.colorId];
-                imageUrl = part?.part_img_url || '';
-                title = part?.name || 'Деталь';
-                subtitle = `${data.qty || 1} шт.${color ? ` • ${color.name}` : ''}`;
+                // Используем изображение в выбранном цвете, если доступно
+                if (part?.colorImages && data.colorId && part.colorImages[data.colorId]) {
+                    imageUrl = part.colorImages[data.colorId];
+                } else {
+                    imageUrl = part?.part_img_url || '';
+                }
+                const partQty = data.qty || 1;
+                const partQtyText = `${partQty} ${getSmartEnding(partQty, ['штука', 'штуки', 'штук'])}`;
+                title = `${part?.name || 'Деталь'} (${data.partId}) • ${partQtyText}`;
+                subtitle = '';
                 fileName = `lego-part-${data.partId}${data.colorId ? '-' + data.colorId : ''}.png`;
                 break;
                 
             case 'set':
                 const set = SET_MAP[data.setNum];
                 imageUrl = set?.set_img_url || '';
-                title = set?.name || 'Набор';
-                subtitle = `${data.qty || 1} шт.${set?.num_parts ? ` • ${set.num_parts} pcs` : ''}${set?.year ? ` • ${set.year}` : ''}`;
+                const setQty = data.qty || 1;
+                const setQtyText = `${setQty} ${getSmartEnding(setQty, ['штука', 'штуки', 'штук'])}`;
+                const setPartsText = set?.num_parts ? ` • ${set.num_parts} ${getSmartEnding(set.num_parts, ['деталь', 'детали', 'деталей'])}` : '';
+                const setYearText = set?.year ? ` • ${set.year}` : '';
+                title = `${set?.name || 'Набор'} (#${data.setNum}) • ${setQtyText}${setPartsText}${setYearText}`;
+                subtitle = '';
                 fileName = `lego-set-${data.setNum}.png`;
                 break;
                 
             case 'minifig':
                 const minifig = MINIFIG_MAP[data.figNum];
                 imageUrl = minifig?.minifig_img_url || minifig?.set_img_url || '';
-                title = minifig?.name || 'Минифигурка';
-                subtitle = `${data.qty || 1} шт.${minifig?.num_parts ? ` • ${minifig.num_parts} pcs` : ''}`;
+                const minifigQty = data.qty || 1;
+                const minifigQtyText = `${minifigQty} ${getSmartEnding(minifigQty, ['штука', 'штуки', 'штук'])}`;
+                const minifigPartsText = minifig?.num_parts ? ` • ${minifig.num_parts} ${getSmartEnding(minifig.num_parts, ['деталь', 'детали', 'деталей'])}` : '';
+                title = `${minifig?.name || 'Минифигурка'} (${data.figNum}) • ${minifigQtyText}${minifigPartsText}`;
+                subtitle = '';
                 fileName = `lego-minifig-${data.figNum}.png`;
                 break;
                 
@@ -12903,21 +12937,32 @@ async function createShareImage(type, data) {
                 if (data.selection.parts.length > 0) {
                     const part = PART_MAP[data.selection.parts[0].id];
                     const color = COLOR_MAP[data.selection.parts[0].colorId];
-                    imageUrl = part?.part_img_url || '';
-                    title = part?.name || 'Деталь';
-                    subtitle = `Выбрано: ${data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length} элементов`;
+                    // Используем изображение в выбранном цвете, если доступно
+                    if (part?.colorImages && data.selection.parts[0].colorId && part.colorImages[data.selection.parts[0].colorId]) {
+                        imageUrl = part.colorImages[data.selection.parts[0].colorId];
+                    } else {
+                        imageUrl = part?.part_img_url || '';
+                    }
+                    const totalSelected = data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length;
+                    const selectedText = `Выбрано: ${totalSelected} ${getSmartEnding(totalSelected, ['элемент', 'элемента', 'элементов'])}`;
+                    title = `${part?.name || 'Деталь'} (${data.selection.parts[0].id}) • ${selectedText}`;
+                    subtitle = '';
                     fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.png`;
                 } else if (data.selection.sets.length > 0) {
                     const set = SET_MAP[data.selection.sets[0]];
                     imageUrl = set?.set_img_url || '';
-                    title = set?.name || 'Набор';
-                    subtitle = `Выбрано: ${data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length} элементов`;
+                    const totalSelected = data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length;
+                    const selectedText = `Выбрано: ${totalSelected} ${getSmartEnding(totalSelected, ['элемент', 'элемента', 'элементов'])}`;
+                    title = `${set?.name || 'Набор'} (#${data.selection.sets[0]}) • ${selectedText}`;
+                    subtitle = '';
                     fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.png`;
                 } else if (data.selection.minifigs.length > 0) {
                     const minifig = MINIFIG_MAP[data.selection.minifigs[0]];
                     imageUrl = minifig?.minifig_img_url || minifig?.set_img_url || '';
-                    title = minifig?.name || 'Минифигурка';
-                    subtitle = `Выбрано: ${data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length} элементов`;
+                    const totalSelected = data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length;
+                    const selectedText = `Выбрано: ${totalSelected} ${getSmartEnding(totalSelected, ['элемент', 'элемента', 'элементов'])}`;
+                    title = `${minifig?.name || 'Минифигурка'} (${data.selection.minifigs[0]}) • ${selectedText}`;
+                    subtitle = '';
                     fileName = `lego-selection-${new Date().toISOString().slice(0,10)}.png`;
                 }
                 break;
@@ -12925,6 +12970,27 @@ async function createShareImage(type, data) {
         
         if (imageUrl && imageUrl.startsWith('http')) {
             const opts = { fileName };
+            
+            // Добавляем информацию о цвете для деталей
+            if (type === 'part' && data.colorId) {
+                const color = COLOR_MAP[data.colorId];
+                if (color) {
+                    opts.colorHex = color.hex;
+                    opts.colorName = color.name;
+                    opts.isTransparent = color.name.toLowerCase().includes('transparent') || color.name.toLowerCase().includes('прозрачный');
+                }
+            }
+            
+            // Добавляем информацию о цвете для мультивыбора с деталями
+            if (type === 'multiselect' && data.selection.parts.length > 0 && data.selection.parts[0].colorId) {
+                const color = COLOR_MAP[data.selection.parts[0].colorId];
+                if (color) {
+                    opts.colorHex = color.hex;
+                    opts.colorName = color.name;
+                    opts.isTransparent = color.name.toLowerCase().includes('transparent') || color.name.toLowerCase().includes('прозрачный');
+                }
+            }
+            
             const imageFile = await createCompositePreviewImage(imageUrl, title, subtitle, opts);
             return imageFile;
         }
@@ -24885,7 +24951,7 @@ async function createCompositePreviewImage(imageUrl, title, subtitle, options = 
         const drawText = (text, x, y, maxWidth, font, color = '#ffffff', lh = 0) => {
             ctx.font = font; ctx.fillStyle = color;
             const words = String(text || '').split(' ');
-            let line = '', yPos = y, lineHeight = lh || (/700\s+48px/.test(font) ? 56 : 40);
+            let line = '', yPos = y, lineHeight = lh || (/700\s+48px/.test(font) ? 70 : 50);
             for (let n = 0; n < words.length; n++) {
                 const testLine = line + (line ? ' ' : '') + words[n];
                 if (ctx.measureText(testLine).width > maxWidth && n > 0) {
@@ -24899,54 +24965,65 @@ async function createCompositePreviewImage(imageUrl, title, subtitle, options = 
             if (line) ctx.fillText(line, x, yPos);
             return yPos + lineHeight;
         };
-        let nextY = drawText(title || 'LEGO Item', textX, pad, textW, '700 48px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif');
-        nextY = drawText(subtitle || 'Включает:', textX, nextY + 10, textW, '400 32px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', 'rgba(255,255,255,0.9)');
+        let nextY = drawText(title || 'Элемент LEGO', textX, pad, textW, '500 42px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif');
+        if (subtitle) {
+            nextY = drawText(subtitle, textX, nextY + 15, textW, '500 42px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', 'rgba(255,255,255,0.9)');
+        }
         // Цветная круглая иконка и название цвета (если передан цвет)
         if (options && options.colorHex) {
-            const circleY = nextY + 14;
-            const circleX = textX + 6 + 14;
+            const circleY = nextY + 20;
+            const circleX = textX + 6 + 20;
+            const circleRadius = 20;
             ctx.save();
             ctx.beginPath();
-            ctx.arc(circleX, circleY, 14, 0, Math.PI * 2);
+            ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
             ctx.closePath();
             ctx.clip();
+            // Сначала заливаем цвет
+            ctx.fillStyle = options.colorHex;
+            ctx.globalAlpha = options.isTransparent ? 0.4 : 1;
+            ctx.beginPath();
+            ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Затем для прозрачных цветов накладываем сетку поверх
             if (options.isTransparent) {
-                // Небольшая шахматка под прозрачные цвета
-                const s = 4;
-                for (let yy = circleY - 16; yy < circleY + 16; yy += s) {
-                    for (let xx = circleX - 16; xx < circleX + 16; xx += s) {
+                ctx.globalAlpha = 1; // Полная непрозрачность сетки
+                const s = 6; // Увеличиваем размер квадратов
+                for (let yy = circleY - circleRadius; yy < circleY + circleRadius; yy += s) {
+                    for (let xx = circleX - circleRadius; xx < circleX + circleRadius; xx += s) {
                         const on = ((xx + yy) / s) % 2 === 0;
-                        ctx.fillStyle = on ? '#cbd5e1' : '#94a3b8';
+                        ctx.fillStyle = on ? '#ffffff' : '#f1f5f9'; // Более контрастные цвета
                         ctx.fillRect(xx, yy, s, s);
                     }
                 }
             }
-            ctx.fillStyle = options.colorHex;
-            ctx.globalAlpha = 1;
-            ctx.beginPath();
-            ctx.arc(circleX, circleY, 14, 0, Math.PI * 2);
-            ctx.fill();
             ctx.restore();
             // Обводка круга
             ctx.strokeStyle = '#1f2937';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            ctx.arc(circleX, circleY, 14, 0, Math.PI * 2);
+            ctx.arc(circleX, circleY, circleRadius, 0, Math.PI * 2);
             ctx.stroke();
             // Подпись цвета
-            ctx.font = '400 24px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+            ctx.font = '500 42px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
             ctx.fillStyle = 'rgba(255,255,255,0.95)';
-            const colorLabel = options.colorName ? String(options.colorName) : 'Color';
-            ctx.fillText(colorLabel, circleX + 22, circleY - 12);
-            nextY = Math.max(nextY, circleY + 14);
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            const colorLabel = options.colorName ? String(options.colorName) : 'Цвет';
+            ctx.fillText(colorLabel, circleX + circleRadius + 12, circleY);
+            nextY = Math.max(nextY, circleY + circleRadius);
         }
         // Дополнительная мета-информация (например, количество)
         if (options && options.meta) {
-            nextY = drawText(String(options.meta), textX, nextY + 12, textW, '400 24px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', 'rgba(255,255,255,0.8)');
+            nextY = drawText(String(options.meta), textX, nextY + 15, textW, '400 28px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif', 'rgba(255,255,255,0.8)');
         }
         // Подпись сайта
         ctx.fillStyle = '#60a5fa';
         ctx.font = '500 24px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillText('LEGO Part Catalog', textX, height - pad - 60);
+        ctx.font = '400 18px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillStyle = 'rgba(96, 165, 250, 0.8)';
         ctx.fillText('zeka3535.github.io/LEGO-Part-Catalog', textX, height - pad - 32);
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
         if (!blob) return null;
@@ -24988,7 +25065,7 @@ async function createRasterPreviewImage(title, subtitle, options = {}) {
         const drawText = (text, x, y, maxWidth, font) => {
             ctx.font = font;
             const words = String(text).split(' ');
-            let line = '', yPos = y, lineHeight = /700\s+56px/.test(font) ? 64 : 44;
+            let line = '', yPos = y, lineHeight = /700\s+56px/.test(font) ? 80 : 50;
             for (let n = 0; n < words.length; n++) {
                 const testLine = line + (line ? ' ' : '') + words[n];
                 const metrics = ctx.measureText(testLine);
@@ -25003,14 +25080,17 @@ async function createRasterPreviewImage(title, subtitle, options = {}) {
             if (line) ctx.fillText(line, x, yPos);
             return yPos + lineHeight;
         };
-        let nextY = drawText(title || 'LEGO Item', padX, padY, maxTitleWidth, ctx.font);
+        let nextY = drawText(title || 'Элемент LEGO', padX, padY, maxTitleWidth, ctx.font);
         // Подзаголовок
         ctx.fillStyle = 'rgba(255,255,255,0.9)';
-        nextY = drawText(subtitle || 'Включает:', padX, nextY + 8, maxTitleWidth, '400 36px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif');
+        nextY = drawText(subtitle || 'Деталь из коллекции:', padX, nextY + 15, maxTitleWidth, '400 42px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif');
         // Нижняя подпись
         ctx.fillStyle = '#60a5fa';
         ctx.font = '500 28px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
-        ctx.fillText('zeka3535.github.io/LEGO-Part-Catalog', padX, height - 64);
+        ctx.fillText('LEGO Part Catalog', padX, height - 80);
+        ctx.font = '400 20px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        ctx.fillStyle = 'rgba(96, 165, 250, 0.8)';
+        ctx.fillText('zeka3535.github.io/LEGO-Part-Catalog', padX, height - 50);
 
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.92));
         if (!blob) return null;
@@ -36423,8 +36503,8 @@ function animateCloseButtonClick(button) {
             }
         }
         
-        // Проверка наличия сохраненных настроек камеры
-        function hasCameraSettings() {
+ // Проверка наличия сохраненных настроек камеры
+ function hasCameraSettings() {
             const datamatrixSettings = localStorage.getItem('datamatrix_camera_settings');
             const photoSettings = localStorage.getItem('photo_camera_settings');
             return !!(datamatrixSettings || photoSettings);
@@ -39733,4 +39813,7 @@ function animateCloseButtonClick(button) {
   </script>
 
 </body>
+
 </html>
+
+        
