@@ -12510,8 +12510,8 @@ async function showShareModal(options) {
             
             // Пытаемся поделиться
             try {
+                // Сначала пытаемся использовать navigator.share с файлами
                 if (navigator.share && shareData.files && shareData.files.length > 0) {
-                    // Проверяем поддержку файлов
                     if (navigator.canShare && navigator.canShare({ files: shareData.files })) {
                         await navigator.share(shareData);
                         closeModal(true);
@@ -12519,7 +12519,34 @@ async function showShareModal(options) {
                     }
                 }
                 
-                // Fallback: если navigator.share не поддерживается или не поддерживает файлы
+                // Если файлы не поддерживаются, пытаемся поделиться только текстом и ссылкой
+                if (navigator.share && (shareData.text || shareData.url)) {
+                    const textOnlyData = {
+                        title: shareData.title,
+                        text: shareData.text,
+                        url: shareData.url
+                    };
+                    
+                    if (navigator.canShare && navigator.canShare(textOnlyData)) {
+                        await navigator.share(textOnlyData);
+                        
+                        // Скачиваем файлы отдельно
+                        if (shareData.files && shareData.files.length > 0) {
+                            for (const file of shareData.files) {
+                                const link = document.createElement('a');
+                                link.href = URL.createObjectURL(file);
+                                link.download = file.name;
+                                link.click();
+                                URL.revokeObjectURL(link.href);
+                            }
+                        }
+                        
+                        closeModal(true);
+                        return;
+                    }
+                }
+                
+                // Fallback: если navigator.share не поддерживается
                 if (shareData.files && shareData.files.length > 0) {
                     // Скачиваем файлы
                     for (const file of shareData.files) {
@@ -12621,32 +12648,28 @@ async function getShareDefaultText(type, data) {
             return `Моя коллекция из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n\n` +
                    `Детали: ${counts.totalParts} шт.\n` +
                    `Наборы: ${counts.totalSets} шт.\n` +
-                   `Минифигурки: ${counts.totalMinifigs} шт.\n\n` +
-                   `Сайт: ${siteUrl}`;
+                   `Минифигурки: ${counts.totalMinifigs} шт.`;
                    
         case 'part':
             const part = PART_MAP[data.partId];
             const color = COLOR_MAP[data.colorId];
             return `${part?.name || 'Деталь'} (${data.partId})${color ? ` - ${color.name}` : ''}\n\n` +
                    `Количество: ${data.qty || 1}\n\n` +
-                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n` +
-                   `Сайт: ${siteUrl}`;
+                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
                    
         case 'set':
             const set = SET_MAP[data.setNum];
             return `${set?.name || 'Набор'} (#${data.setNum})\n\n` +
                    `${set?.num_parts ? `${set.num_parts} деталей` : ''}${set?.year ? ` • ${set.year} год` : ''}\n` +
                    `Количество: ${data.qty || 1}\n\n` +
-                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n` +
-                   `Сайт: ${siteUrl}`;
+                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
                    
         case 'minifig':
             const minifig = MINIFIG_MAP[data.figNum];
             return `${minifig?.name || 'Минифигурка'} (${data.figNum})\n\n` +
                    `${minifig?.num_parts ? `${minifig.num_parts} деталей` : ''}\n` +
                    `Количество: ${data.qty || 1}\n\n` +
-                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n` +
-                   `Сайт: ${siteUrl}`;
+                   `Из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
                    
         case 'multiselect':
             const totalSelected = data.selection.parts.length + data.selection.sets.length + data.selection.minifigs.length + data.selection.folders.length;
@@ -12660,11 +12683,10 @@ async function getShareDefaultText(type, data) {
             return `Мой подбор из LEGO Part Catalog\n` +
                    `Всего: ${totalSelected} элементов\n` +
                    `${itemsList}\n` +
-                   `LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\n` +
-                   `Сайт: ${siteUrl}`;
+                   `LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
                    
         default:
-            return `Элемент из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.\nСайт: ${siteUrl}`;
+            return `Элемент из LEGO Part Catalog — удобный каталог деталей, наборов и минифигурок.`;
     }
 }
 
