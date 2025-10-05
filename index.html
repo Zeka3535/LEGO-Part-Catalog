@@ -2156,6 +2156,13 @@
         letter-spacing: 0.025em;
     }
     
+    #db-version-text {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 400;
+        letter-spacing: 0.025em;
+        opacity: 0.7;
+    }
+    
     
     /* Анимация появления содержимого панели "О сайте" */
     #about-panel.collapse-panel p,
@@ -22218,6 +22225,16 @@ function renderSettingsModal() {
                                <li><strong>Фильтрация и сортировка</strong> - продвинутые инструменты поиска и организации</li>
                                <li><strong>Адаптивный дизайн</strong> - оптимизация для мобильных и десктопных устройств</li>
                            </ul>
+                           
+                           <!-- GitHub проекта -->
+                           <div class="pt-3 border-t border-gray-600/30">
+                               <div class="flex justify-center">
+                                   <a href="https://github.com/Zeka3535/LEGO-Part-Catalog" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-[12px] bg-gray-700 hover:bg-gray-600 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 hover:scale-105 active:scale-95">
+                                       <svg class="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 .5C5.73.5.98 5.24.98 11.5c0 4.85 3.15 8.96 7.52 10.41.55.1.75-.24.75-.53 0-.26-.01-1.13-.02-2.05-3.06.66-3.71-1.3-3.71-1.3-.5-1.26-1.22-1.6-1.22-1.6-1-.69.08-.68.08-.68 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.58 1.2 3.2.92.1-.71.38-1.2.69-1.48-2.44-.28-5-1.22-5-5.43 0-1.2.43-2.19 1.13-2.96-.11-.28-.49-1.41.11-2.94 0 0 .92-.29 3.02 1.13.88-.24 1.82-.36 2.76-.36.94 0 1.88.12 2.76.36 2.1-1.42 3.02-1.13 3.02-1.13.6 1.53.22 2.66.11 2.94.7.77 1.13 1.76 1.13 2.96 0 4.22-2.56 5.15-5 5.43.4.34.73 1.01.73 2.04 0 1.47-.01 2.65-.01 3.01 0 .29.2.64.75.53 4.37-1.45 7.52-5.56 7.52-10.41C23.02 5.24 18.27.5 12 .5z"/></svg>
+                                       <span class="font-medium text-sm">GitHub проекта</span>
+                                   </a>
+                               </div>
+                           </div>
                         </div>
                     </div>
                     
@@ -22301,20 +22318,18 @@ function renderSettingsModal() {
                                            </p>
                                        </div>
                                    </div>
+                                   
                         </div>
                     </div>
                     
-                    <!-- Кнопка GitHub в отдельной секции -->
+                    <!-- Информация о версии -->
                     <div class="pt-3 border-t border-gray-700/50 flex flex-col items-center justify-center gap-3 text-center">
-                        <a href="https://github.com/Zeka3535/LEGO-Part-Catalog" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-3 rounded-[18px] bg-gray-700 hover:bg-gray-600 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 hover:scale-105 active:scale-95">
-                            <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 .5C5.73.5.98 5.24.98 11.5c0 4.85 3.15 8.96 7.52 10.41.55.1.75-.24.75-.53 0-.26-.01-1.13-.02-2.05-3.06.66-3.71-1.3-3.71-1.3-.5-1.26-1.22-1.6-1.22-1.6-1-.69.08-.68.08-.68 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.58 1.2 3.2.92.1-.71.38-1.2.69-1.48-2.44-.28-5-1.22-5-5.43 0-1.2.43-2.19 1.13-2.96-.11-.28-.49-1.41.11-2.94 0 0 .92-.29 3.02 1.13.88-.24 1.82-.36 2.76-.36.94 0 1.88.12 2.76.36 2.1-1.42 3.02-1.13 3.02-1.13.6 1.53.22 2.66.11 2.94.7.77 1.13 1.76 1.13 2.96 0 4.22-2.56 5.15-5 5.43.4.34.73 1.01.73 2.04 0 1.47-.01 2.65-.01 3.01 0 .29.2.64.75.53 4.37-1.45 7.52-5.56 7.52-10.41C23.02 5.24 18.27.5 12 .5z"/></svg>
-                            <span class="font-semibold">GitHub проекта</span>
-                        </a>
-                        
-                        <!-- Информация о версии -->
-                        <div id="app-version-info" class="text-[10px] text-gray-400 mt-2">
+                        <div id="app-version-info" class="text-[10px] text-gray-400">
                             <div class="flex items-center justify-center gap-1.5">
                                 <span id="version-text">Загрузка версии...</span>
+                            </div>
+                            <div class="flex items-center justify-center gap-1.5 mt-1">
+                                <span id="db-version-text">Загрузка БД...</span>
                             </div>
                         </div>
                     </div>
@@ -22355,6 +22370,8 @@ function renderSettingsModal() {
     // Загружаем и отображаем информацию о версии
     setTimeout(async () => {
         const versionText = document.getElementById('version-text');
+        const dbVersionText = document.getElementById('db-version-text');
+        
         if (versionText) {
             try {
                 // Сначала проверяем, есть ли уже сохраненная информация о версии
@@ -22371,6 +22388,20 @@ function renderSettingsModal() {
                 }
             } catch (error) {
                 versionText.textContent = 'Ошибка загрузки версии';
+            }
+        }
+        
+        // Загружаем и отображаем информацию о дате базы данных
+        if (dbVersionText) {
+            try {
+                const dbInfo = await window.getDatabaseVersionInfo();
+                if (dbInfo) {
+                    dbVersionText.textContent = `База данных: ${dbInfo.formattedDate}`;
+                } else {
+                    dbVersionText.textContent = 'База данных: недоступна';
+                }
+            } catch (error) {
+                dbVersionText.textContent = 'База данных: ошибка загрузки';
             }
         }
     }, 100);
@@ -31929,6 +31960,44 @@ document.addEventListener("DOMContentLoaded", async () => {
                             return null;
                         } catch (error) {
                             console.error('Failed to get version info:', error);
+                            return null;
+                        }
+                    };
+                    
+                    // Функция для получения даты базы данных из parts_info.txt
+                    window.getDatabaseVersionInfo = async () => {
+                        try {
+                            const response = await fetch('./Data/inventory_parts_split/parts_info.txt');
+                            if (response.ok) {
+                                const text = await response.text();
+                                const lines = text.split('\n');
+                                
+                                // Ищем строку с исходным файлом
+                                for (const line of lines) {
+                                    if (line.includes('Исходный файл:') && line.includes('rebrickable_')) {
+                                        // Извлекаем дату из пути файла
+                                        const dateMatch = line.match(/rebrickable_(\d{4}-\d{2}-\d{2})/);
+                                        if (dateMatch) {
+                                            const dateStr = dateMatch[1];
+                                            // Форматируем дату в читаемый вид
+                                            const date = new Date(dateStr);
+                                            const formattedDate = date.toLocaleDateString('ru-RU', {
+                                                day: '2-digit',
+                                                month: '2-digit',
+                                                year: 'numeric'
+                                            });
+                                            return {
+                                                rawDate: dateStr,
+                                                formattedDate: formattedDate,
+                                                timestamp: date.getTime()
+                                            };
+                                        }
+                                    }
+                                }
+                            }
+                            return null;
+                        } catch (error) {
+                            console.error('Failed to get database version info:', error);
                             return null;
                         }
                     };
