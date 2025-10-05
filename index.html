@@ -2136,6 +2136,22 @@
         background: rgba(107, 114, 128, 0.8);
     }
     
+    /* Стили для отображения версии */
+    #app-version-info {
+        opacity: 0.8;
+        transition: opacity 0.2s ease;
+    }
+    
+    #app-version-info:hover {
+        opacity: 1;
+    }
+    
+    #version-text {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-weight: 500;
+        letter-spacing: 0.025em;
+    }
+    
     
     /* Анимация появления содержимого панели "О сайте" */
     #about-panel.collapse-panel p,
@@ -8715,7 +8731,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v46';
+const CACHE_NAME = 'lego-catalog-cache-v48';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -21902,6 +21918,15 @@ function renderSettingsModal() {
         // Скрываем указатель при открытии модального окна настроек (всегда, так как это основное взаимодействие)
         hideSidebarHint();
         modalManager.openModal('settings-modal-container', settingsModalEl);
+        
+        // Загружаем информацию о версии при первом открытии модалки
+        setTimeout(async () => {
+            try {
+                await window.getAppVersionInfo();
+            } catch (error) {
+                console.error('Failed to load version info:', error);
+            }
+        }, 500);
     }
     const {
         delConfirm: e,
@@ -22282,6 +22307,13 @@ function renderSettingsModal() {
                             <svg class="w-5 h-5" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 .5C5.73.5.98 5.24.98 11.5c0 4.85 3.15 8.96 7.52 10.41.55.1.75-.24.75-.53 0-.26-.01-1.13-.02-2.05-3.06.66-3.71-1.3-3.71-1.3-.5-1.26-1.22-1.6-1.22-1.6-1-.69.08-.68.08-.68 1.1.08 1.68 1.13 1.68 1.13.98 1.68 2.58 1.2 3.2.92.1-.71.38-1.2.69-1.48-2.44-.28-5-1.22-5-5.43 0-1.2.43-2.19 1.13-2.96-.11-.28-.49-1.41.11-2.94 0 0 .92-.29 3.02 1.13.88-.24 1.82-.36 2.76-.36.94 0 1.88.12 2.76.36 2.1-1.42 3.02-1.13 3.02-1.13.6 1.53.22 2.66.11 2.94.7.77 1.13 1.76 1.13 2.96 0 4.22-2.56 5.15-5 5.43.4.34.73 1.01.73 2.04 0 1.47-.01 2.65-.01 3.01 0 .29.2.64.75.53 4.37-1.45 7.52-5.56 7.52-10.41C23.02 5.24 18.27.5 12 .5z"/></svg>
                             <span class="font-semibold">GitHub проекта</span>
                         </a>
+                        
+                        <!-- Информация о версии -->
+                        <div id="app-version-info" class="text-[10px] text-gray-400 mt-2">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <span id="version-text">Загрузка версии...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -22316,6 +22348,29 @@ function renderSettingsModal() {
         }
         
     }, 0);
+    
+    // Загружаем и отображаем информацию о версии
+    setTimeout(async () => {
+        const versionText = document.getElementById('version-text');
+        if (versionText) {
+            try {
+                // Сначала проверяем, есть ли уже сохраненная информация о версии
+                if (window.appVersionInfo) {
+                    versionText.textContent = `Версия ${window.appVersionInfo.version} (${window.appVersionInfo.buildDate})`;
+                } else {
+                    // Запрашиваем информацию о версии из service worker
+                    const versionInfo = await window.getAppVersionInfo();
+                    if (versionInfo) {
+                        versionText.textContent = `Версия ${versionInfo.version} (${versionInfo.buildDate})`;
+                    } else {
+                        versionText.textContent = 'Версия недоступна';
+                    }
+                }
+            } catch (error) {
+                versionText.textContent = 'Ошибка загрузки версии';
+            }
+        }
+    }, 100);
     
     // Инициализируем состояние панели "Технологии"
     setTimeout(() => {
@@ -31587,7 +31642,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-md flex flex-col">
                     <!-- Заголовок -->
                     <div class="flex-shrink-0 p-4 border-b border-gray-700 text-center">
-                        <h2 class="text-xl font-bold text-white">Обновление приложения</h2>
+                        <h2 class="text-xl font-bold text-white">Доступно обновление</h2>
                     </div>
                     
                     <!-- Контент -->
@@ -31781,6 +31836,9 @@ document.addEventListener("DOMContentLoaded", async () => {
                     navigator.serviceWorker.addEventListener('message', event => {
                         if (event.data && event.data.type === 'RELOAD_PAGE') {
                             window.location.reload();
+                        } else if (event.data && event.data.type === 'VERSION_INFO_RESPONSE') {
+                            // Сохраняем информацию о версии
+                            window.appVersionInfo = event.data.data;
                         }
                     });
                     
@@ -31840,6 +31898,35 @@ document.addEventListener("DOMContentLoaded", async () => {
                         } catch (error) {
                             console.error('Failed to get cache info:', error);
                             return {};
+                        }
+                    };
+                    
+                    // Функция для получения информации о версии из service worker
+                    window.getAppVersionInfo = async () => {
+                        try {
+                            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                                const messageChannel = new MessageChannel();
+                                const promise = new Promise((resolve) => {
+                                    messageChannel.port1.onmessage = (event) => {
+                                        resolve(event.data);
+                                    };
+                                });
+                                
+                                navigator.serviceWorker.controller.postMessage(
+                                    { type: 'GET_VERSION_INFO' },
+                                    [messageChannel.port2]
+                                );
+                                
+                                const response = await promise;
+                                if (response && response.type === 'VERSION_INFO_RESPONSE') {
+                                    window.appVersionInfo = response.data;
+                                    return response.data;
+                                }
+                            }
+                            return null;
+                        } catch (error) {
+                            console.error('Failed to get version info:', error);
+                            return null;
                         }
                     };
                 })

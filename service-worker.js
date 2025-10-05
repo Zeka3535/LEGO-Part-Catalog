@@ -1,4 +1,9 @@
-const CACHE_NAME = 'lego-catalog-cache-v46';
+const CACHE_NAME = 'lego-catalog-cache-v48';
+const VERSION_INFO = {
+    version: 'v48',
+    buildDate: '05.10.2025',
+    buildTimestamp: new Date('2025-10-05').getTime()
+};
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
@@ -264,6 +269,12 @@ self.addEventListener('message', event => {
     } else if (event.data && event.data.type === 'REFRESH_API_CACHE') {
         // Принудительное обновление кэша API (цвета и инвентари)
         refreshApiCache();
+    } else if (event.data && event.data.type === 'GET_VERSION_INFO') {
+        // Отправляем информацию о версии обратно в основной поток
+        event.ports[0].postMessage({
+            type: 'VERSION_INFO_RESPONSE',
+            data: VERSION_INFO
+        });
     }
 });
 
