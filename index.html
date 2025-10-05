@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v50';
+    const CACHE_NAME = 'lego-catalog-cache-v51';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -31667,7 +31667,37 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
 
     // Функция для показа модального окна обновления
-    function showUpdateModal(newWorker) {
+    async function showUpdateModal(newWorker) {
+        // Получаем сохраненную информацию о текущей версии из localStorage
+        const currentVersionInfo = window.getStoredVersionInfo();
+        
+        // Получаем информацию о версии из нового service worker
+        let newVersionInfo = null;
+        try {
+            const messageChannel = new MessageChannel();
+            const promise = new Promise((resolve) => {
+                messageChannel.port1.onmessage = (event) => {
+                    resolve(event.data);
+                };
+            });
+            
+            newWorker.postMessage(
+                { type: 'GET_VERSION_INFO' },
+                [messageChannel.port2]
+            );
+            
+            const response = await promise;
+            if (response && response.type === 'VERSION_INFO_RESPONSE') {
+                newVersionInfo = response.data;
+            }
+        } catch (error) {
+            console.error('Failed to get new version info:', error);
+            // Используем сохраненную информацию о версии как fallback
+            if (window.newAppVersionInfo) {
+                newVersionInfo = window.newAppVersionInfo;
+            }
+        }
+        
         // Создаем модальное окно
         const modal = document.createElement('div');
         modal.id = 'update-modal';
@@ -31677,36 +31707,54 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <!-- Заголовок -->
                     <div class="flex-shrink-0 p-4 border-b border-gray-700 text-center">
                         <h2 class="text-xl font-bold text-white">Доступно обновление</h2>
+                        ${newVersionInfo ? `
+                            <div class="mt-2 text-sm text-gray-300">
+                                <span class="text-gray-400">Текущая версия:</span> 
+                                <span class="text-blue-400 font-medium">${currentVersionInfo?.version || 'неизвестно'}</span>
+                                <span class="text-gray-500 mx-2">→</span>
+                                <span class="text-gray-400">Новая версия:</span> 
+                                <span class="text-green-400 font-medium">${newVersionInfo.version}</span>
+                            </div>
+                            <div class="mt-1 text-xs text-gray-400">
+                                Дата сборки: ${newVersionInfo.buildDate}
+                            </div>
+                        ` : `
+                            <div class="mt-2 text-sm text-gray-300">
+                                <span class="text-gray-400">Доступно обновление приложения</span>
+                            </div>
+                        `}
                     </div>
                     
                     <!-- Контент -->
-                    <div class="flex-grow p-6 text-center">
+                    <div class="flex-grow p-6">
                         <!-- Иконка обновления -->
                         <div class="mb-6 flex justify-center">
                             ${I_Refresh('w-16 h-16 text-blue-400')}
                         </div>
                         
                         <!-- Список действий -->
-                        <div class="text-left mb-6">
-                            <h3 class="text-gray-200 font-semibold mb-4 text-lg">Что произойдет:</h3>
-                            <ul class="text-gray-300 space-y-3">
-                                <li class="flex items-center">
-                                    <span class="text-blue-400 mr-3">•</span>
-                                    Автоматическая очистка кэша
-                                </li>
-                                <li class="flex items-center">
-                                    <span class="text-blue-400 mr-3">•</span>
-                                    Обновление до новой версии
-                                </li>
-                                <li class="flex items-center">
-                                    <span class="text-blue-400 mr-3">•</span>
-                                    Перезагрузка страницы
-                                </li>
-                                <li class="flex items-center">
-                                    <span class="text-blue-400 mr-3">•</span>
-                                    Это займет несколько секунд
-                                </li>
-                            </ul>
+                        <div class="mb-6 flex justify-center">
+                            <div class="text-left max-w-sm">
+                                <h3 class="text-gray-200 font-semibold mb-4 text-lg text-center">Что произойдет:</h3>
+                                <ul class="text-gray-300 space-y-3">
+                                    <li class="flex items-center">
+                                        <span class="text-blue-400 mr-3">•</span>
+                                        Автоматическая очистка кэша
+                                    </li>
+                                    <li class="flex items-center">
+                                        <span class="text-blue-400 mr-3">•</span>
+                                        Обновление до новой версии
+                                    </li>
+                                    <li class="flex items-center">
+                                        <span class="text-blue-400 mr-3">•</span>
+                                        Перезагрузка страницы
+                                    </li>
+                                    <li class="flex items-center">
+                                        <span class="text-blue-400 mr-3">•</span>
+                                        Это займет несколько секунд
+                                    </li>
+                                </ul>
+                            </div>
                         </div>
                         
                         <!-- Обратный отсчет -->
@@ -31855,8 +31903,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 // Новый Service Worker готов, предлагаем пользователю обновить
                                 console.log('New service worker ready, prompting update');
+                                
+                                // Добавляем обработчик сообщений для нового worker
+                                newWorker.addEventListener('message', event => {
+                                    if (event.data && event.data.type === 'VERSION_INFO_RESPONSE') {
+                                        // Сохраняем информацию о версии для использования в модалке
+                                        window.newAppVersionInfo = event.data.data;
+                                    }
+                                });
+                                
                                 // Показываем красивое модальное окно обновления
-                                showUpdateModal(newWorker);
+                                showUpdateModal(newWorker).catch(error => {
+                                    console.error('Failed to show update modal:', error);
+                                });
                             }
                         });
                     });
@@ -31875,6 +31934,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                             window.appVersionInfo = event.data.data;
                         }
                     });
+                    
+                    // Автоматически получаем и сохраняем информацию о версии при загрузке
+                    setTimeout(async () => {
+                        try {
+                            await window.getAppVersionInfo();
+                        } catch (error) {
+                            console.error('Failed to get version info on load:', error);
+                        }
+                    }, 1000);
                     
                     // Добавляем функции управления кэшем
                     window.clearAppCache = async () => {
@@ -31954,12 +32022,31 @@ document.addEventListener("DOMContentLoaded", async () => {
                                 const response = await promise;
                                 if (response && response.type === 'VERSION_INFO_RESPONSE') {
                                     window.appVersionInfo = response.data;
+                                    
+                                    // Сохраняем информацию о версии в localStorage
+                                    try {
+                                        localStorage.setItem('appVersionInfo', JSON.stringify(response.data));
+                                    } catch (error) {
+                                        console.warn('Failed to save version info to localStorage:', error);
+                                    }
+                                    
                                     return response.data;
                                 }
                             }
                             return null;
                         } catch (error) {
                             console.error('Failed to get version info:', error);
+                            return null;
+                        }
+                    };
+                    
+                    // Функция для получения сохраненной версии из localStorage
+                    window.getStoredVersionInfo = () => {
+                        try {
+                            const stored = localStorage.getItem('appVersionInfo');
+                            return stored ? JSON.parse(stored) : null;
+                        } catch (error) {
+                            console.warn('Failed to get stored version info:', error);
                             return null;
                         }
                     };
