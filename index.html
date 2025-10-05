@@ -12315,17 +12315,20 @@ async function showShareModal(options) {
     const savedPreferences = JSON.parse(localStorage.getItem('shareModalPreferences') || '{}');
     let preferences = { ...defaultPreferences, ...savedPreferences };
     
-    // Умные рекомендации
-    const totalItems = (stats.parts || 0) + (stats.sets || 0) + (stats.minifigs || 0);
-    
-    // Если коллекция большая (>1000 элементов), предупреждаем о размере CSV
-    const isLargeCollection = totalItems > 1000;
-    
-    // Проверяем доступность изображения
-    const hasImage = await checkImageAvailability(type, data);
-    if (!hasImage) {
-        preferences.includeImage = false;
-    }
+        // Умные рекомендации
+        const totalItems = (stats.parts || 0) + (stats.sets || 0) + (stats.minifigs || 0);
+        
+        // Если коллекция большая (>1000 элементов), предупреждаем о размере CSV
+        const isLargeCollection = totalItems > 1000;
+        
+        // Для мультивыбора с несколькими элементами отключаем изображение
+        const isMultiSelectWithMultipleItems = type === 'multiselect' && totalItems > 1;
+        
+        // Проверяем доступность изображения
+        const hasImage = await checkImageAvailability(type, data);
+        if (!hasImage || isMultiSelectWithMultipleItems) {
+            preferences.includeImage = false;
+        }
     
     // Проверяем поддержку navigator.share
     const supportsFileSharing = navigator.share && navigator.canShare;
@@ -12375,12 +12378,12 @@ async function showShareModal(options) {
                                     <span class="text-sm text-gray-300 flex items-center gap-2">${I_Down('w-4 h-4 text-blue-400')} CSV файл (данные)</span>
                                     <button id="share-csv-toggle" class="toggle-switch ${preferences.includeCsv ? 'on' : ''}" aria-pressed="${preferences.includeCsv}"><span class="knob"></span></button>
                                 </div>
-                                ${type !== 'collection' ? `
-                                <div class="flex items-center justify-between gap-2">
-                                    <span class="text-sm text-gray-300 flex items-center gap-2 ${!hasImage ? 'opacity-50' : ''}">${I_Image('w-4 h-4 text-green-400')} Изображение (превью)${!hasImage ? ' (недоступно)' : ''}</span>
-                                    <button id="share-image-toggle" class="toggle-switch ${preferences.includeImage ? 'on' : ''}" aria-pressed="${preferences.includeImage}" ${!hasImage ? 'disabled' : ''}><span class="knob"></span></button>
-                                </div>
-                                ` : ''}
+                                    ${type !== 'collection' && !isMultiSelectWithMultipleItems ? `
+                                    <div class="flex items-center justify-between gap-2">
+                                        <span class="text-sm text-gray-300 flex items-center gap-2 ${!hasImage ? 'opacity-50' : ''}">${I_Image('w-4 h-4 text-green-400')} Изображение (превью)${!hasImage ? ' (недоступно)' : ''}</span>
+                                        <button id="share-image-toggle" class="toggle-switch ${preferences.includeImage ? 'on' : ''}" aria-pressed="${preferences.includeImage}" ${!hasImage ? 'disabled' : ''}><span class="knob"></span></button>
+                                    </div>
+                                    ` : ''}
                                 <div class="flex items-center justify-between gap-2">
                                     <span class="text-sm text-gray-300 flex items-center gap-2">${I_Text('w-4 h-4 text-yellow-400')} Текстовое описание</span>
                                     <button id="share-text-toggle" class="toggle-switch ${preferences.includeText ? 'on' : ''}" aria-pressed="${preferences.includeText}"><span class="knob"></span></button>
@@ -12413,6 +12416,18 @@ async function showShareModal(options) {
                                     <input type="radio" name="collection-filter" value="minifigs" ${preferences.collectionFilter === 'minifigs' ? 'checked' : ''} class="text-blue-600">
                                     <span class="text-sm text-gray-300">Только минифигурки</span>
                                 </label>
+                            </div>
+                        </div>
+                        ` : ''}
+
+                        <!-- Превью изображения -->
+                        ${!isMultiSelectWithMultipleItems ? `
+                        <div class="border-t border-gray-700/50 pt-4">
+                            <div id="share-preview-image" class="${preferences.includeImage ? '' : 'hidden'}">
+                                <label class="block text-sm text-gray-300 mb-2">Изображение для отправки:</label>
+                                <div class="bg-gray-700 rounded-[18px] p-3 text-center">
+                                    <div id="share-image-preview" class="text-gray-400 text-sm">Загрузка изображения...</div>
+                                </div>
                             </div>
                         </div>
                         ` : ''}
@@ -12463,7 +12478,7 @@ async function showShareModal(options) {
         
         // Тумблеры
         const toggles = ['csv', 'text', 'link'];
-        if (type !== 'collection') {
+        if (type !== 'collection' && !isMultiSelectWithMultipleItems) {
             toggles.push('image');
         }
         toggles.forEach(toggle => {
@@ -12479,11 +12494,14 @@ async function showShareModal(options) {
                         toggleBtn.setAttribute('aria-pressed', 'true');
                     }
                     
-                    // Показываем/скрываем соответствующие секции
-                    if (toggle === 'text') {
-                        const previewText = document.getElementById('share-preview-text');
-                        previewText.classList.toggle('hidden');
-                    }
+                // Показываем/скрываем соответствующие секции
+                if (toggle === 'image') {
+                    const previewImage = document.getElementById('share-preview-image');
+                    previewImage.classList.toggle('hidden');
+                } else if (toggle === 'text') {
+                    const previewText = document.getElementById('share-preview-text');
+                    previewText.classList.toggle('hidden');
+                }
                 });
             }
         });
@@ -12493,7 +12511,7 @@ async function showShareModal(options) {
             // Собираем текущие настройки
             const currentPreferences = {
                 includeCsv: document.getElementById('share-csv-toggle').classList.contains('on'),
-                includeImage: type !== 'collection' ? document.getElementById('share-image-toggle')?.classList.contains('on') || false : false,
+                includeImage: (type !== 'collection' && !isMultiSelectWithMultipleItems) ? (document.getElementById('share-image-toggle')?.classList.contains('on') || false) : false,
                 includeText: document.getElementById('share-text-toggle').classList.contains('on'),
                 includeLink: document.getElementById('share-link-toggle').classList.contains('on'),
                 collectionFilter: type === 'collection' ? document.querySelector('input[name="collection-filter"]:checked')?.value || 'all' : 'all'
@@ -12597,6 +12615,11 @@ async function showShareModal(options) {
 // Функция загрузки предпросмотра данных
 async function loadSharePreview(type, data, preferences) {
     try {
+        // Загружаем превью изображения
+        if (preferences.includeImage) {
+            await loadImagePreview(type, data);
+        }
+        
         // Загружаем текст по умолчанию
         if (preferences.includeText) {
             const defaultText = await getShareDefaultText(type, data);
@@ -12605,6 +12628,51 @@ async function loadSharePreview(type, data, preferences) {
         }
     } catch (error) {
         console.error('Ошибка загрузки предпросмотра:', error);
+    }
+}
+
+// Функция загрузки превью изображения
+async function loadImagePreview(type, data) {
+    try {
+        const previewContainer = document.getElementById('share-image-preview');
+        if (!previewContainer) return;
+        
+        // Показываем индикатор загрузки
+        previewContainer.innerHTML = '<div class="text-gray-400 text-sm">Генерация изображения...</div>';
+        
+        // Создаем изображение для превью
+        const imageFile = await createShareImage(type, data);
+        
+        if (imageFile) {
+            // Создаем URL для отображения
+            const imageUrl = URL.createObjectURL(imageFile);
+            
+            // Отображаем изображение
+            previewContainer.innerHTML = `
+                <img src="${imageUrl}" alt="Превью изображения" class="max-w-full h-32 object-contain mx-auto rounded-lg">
+                <div class="text-xs text-gray-400 mt-2">Размер: ${(imageFile.size / 1024).toFixed(1)} KB</div>
+            `;
+            
+            // Очищаем URL при закрытии модального окна
+            const modal = document.getElementById('share-modal');
+            if (modal) {
+                const observer = new MutationObserver(() => {
+                    if (!document.getElementById('share-modal')) {
+                        URL.revokeObjectURL(imageUrl);
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+        } else {
+            previewContainer.innerHTML = '<div class="text-gray-400 text-sm">Изображение недоступно</div>';
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки превью изображения:', error);
+        const previewContainer = document.getElementById('share-image-preview');
+        if (previewContainer) {
+            previewContainer.innerHTML = '<div class="text-red-400 text-sm">Ошибка загрузки изображения</div>';
+        }
     }
 }
 
