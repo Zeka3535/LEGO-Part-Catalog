@@ -8715,7 +8715,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v45';
+const CACHE_NAME = 'lego-catalog-cache-v46';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -30122,6 +30122,9 @@ document.addEventListener("click", async e => {
                     if (success) {
                         updateSettingsModalStatus("Кэш очищен!\nСтраница будет обновлена", "success");
                         
+                        // Отключаем защиту от перезагрузки для обновления страницы
+                        window.temporarilyDisableReloadProtection(5000); // 5 секунд для обновления после очистки кеша
+                        
                         // Через 1.5 секунды обновляем страницу
                         setTimeout(() => {
                             window.location.reload();
@@ -31533,9 +31536,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     // S.preventAccidentalExit уже инициализирован из localStorage при создании S
 
+    // Глобальная переменная для временного отключения защиты от перезагрузки
+    window.tempDisableReloadProtection = false;
+    
+    // Функция для временного отключения защиты от перезагрузки с автоматическим восстановлением
+    window.temporarilyDisableReloadProtection = (duration = 10000) => {
+        window.tempDisableReloadProtection = true;
+        console.log(`🔄 Защита от перезагрузки отключена на ${duration}ms`);
+        
+        // Автоматически восстанавливаем защиту через указанное время
+        setTimeout(() => {
+            window.tempDisableReloadProtection = false;
+            console.log('🔄 Защита от перезагрузки восстановлена');
+        }, duration);
+    };
+
     // Защита от случайной перезагрузки/закрытия вкладки
     window.addEventListener('beforeunload', (event) => {
         try {
+            // Проверяем, не отключена ли временно защита
+            if (window.tempDisableReloadProtection) {
+                console.log('🔄 Защита от перезагрузки временно отключена');
+                return;
+            }
+            
             if (!S || !S.preventAccidentalExit) return;
             // Сбрасываем случайное изображение минифигурки при закрытии/обновлении страницы
             resetRandomMinifigImage();
@@ -31647,6 +31671,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.log('🔄 Starting app update with cache clearing...');
         
         try {
+            // Отключаем защиту от перезагрузки для процесса обновления
+            window.temporarilyDisableReloadProtection(30000); // 30 секунд для обновления
+
             // Показываем индикатор обновления
             const updateIndicator = document.createElement('div');
             updateIndicator.id = 'update-indicator';

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lego-catalog-cache-v45';
+const CACHE_NAME = 'lego-catalog-cache-v46';
 
 // Keep precache minimal to avoid install failures due to missing files
 const PRECACHE_ASSETS = [
