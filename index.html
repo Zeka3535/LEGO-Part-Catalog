@@ -12425,7 +12425,7 @@ async function showShareModal(options) {
                         <div class="border-t border-gray-700/50 pt-4">
                             <div id="share-preview-image" class="${preferences.includeImage ? '' : 'hidden'}">
                                 <label class="block text-sm text-gray-300 mb-2">Изображение для отправки:</label>
-                                <div class="bg-gray-700 rounded-[18px] p-3 text-center">
+                                <div class="text-center px-2 py-1">
                                     <div id="share-image-preview" class="text-gray-400 text-sm">Загрузка изображения...</div>
                                 </div>
                             </div>
@@ -12649,8 +12649,7 @@ async function loadImagePreview(type, data) {
             
             // Отображаем изображение
             previewContainer.innerHTML = `
-                <img src="${imageUrl}" alt="Превью изображения" class="max-w-full h-32 object-contain mx-auto rounded-lg">
-                <div class="text-xs text-gray-400 mt-2">Размер: ${(imageFile.size / 1024).toFixed(1)} KB</div>
+                <img src="${imageUrl}" alt="Превью изображения" class="max-w-full max-h-40 sm:max-h-48 object-contain mx-auto rounded-[18px] p-2">
             `;
             
             // Очищаем URL при закрытии модального окна
@@ -24837,14 +24836,26 @@ async function createCompositePreviewImage(imageUrl, title, subtitle, options = 
         const canvas = document.createElement('canvas');
         canvas.width = width; canvas.height = height;
         const ctx = canvas.getContext('2d');
-        // Фон
+        // Фон с скругленными углами
         ctx.fillStyle = '#111827';
-        ctx.fillRect(0, 0, width, height);
+        const bgRadius = 36;
+        ctx.beginPath();
+        ctx.moveTo(bgRadius, 0);
+        ctx.lineTo(width - bgRadius, 0);
+        ctx.quadraticCurveTo(width, 0, width, bgRadius);
+        ctx.lineTo(width, height - bgRadius);
+        ctx.quadraticCurveTo(width, height, width - bgRadius, height);
+        ctx.lineTo(bgRadius, height);
+        ctx.quadraticCurveTo(0, height, 0, height - bgRadius);
+        ctx.lineTo(0, bgRadius);
+        ctx.quadraticCurveTo(0, 0, bgRadius, 0);
+        ctx.closePath();
+        ctx.fill();
         // Левая область под изображение
         const pad = 40;
         const imgArea = { x: pad, y: pad, w: Math.floor(width * 0.5) - Math.floor(pad * 1.2), h: height - pad * 2 };
         // Белая плашка с мягкими углами
-        const radius = 16;
+        const radius = 36;
         ctx.fillStyle = '#ffffff';
         ctx.beginPath();
         ctx.moveTo(imgArea.x - 8 + radius, imgArea.y - 8);
@@ -24953,9 +24964,21 @@ async function createRasterPreviewImage(title, subtitle, options = {}) {
         const canvas = document.createElement('canvas');
         canvas.width = width; canvas.height = height;
         const ctx = canvas.getContext('2d');
-        // Фон
+        // Фон с скругленными углами
         ctx.fillStyle = '#111827';
-        ctx.fillRect(0, 0, width, height);
+        const radius = 36;
+        ctx.beginPath();
+        ctx.moveTo(radius, 0);
+        ctx.lineTo(width - radius, 0);
+        ctx.quadraticCurveTo(width, 0, width, radius);
+        ctx.lineTo(width, height - radius);
+        ctx.quadraticCurveTo(width, height, width - radius, height);
+        ctx.lineTo(radius, height);
+        ctx.quadraticCurveTo(0, height, 0, height - radius);
+        ctx.lineTo(0, radius);
+        ctx.quadraticCurveTo(0, 0, radius, 0);
+        ctx.closePath();
+        ctx.fill();
         // Заголовок
         ctx.fillStyle = '#ffffff';
         ctx.font = '700 56px system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
