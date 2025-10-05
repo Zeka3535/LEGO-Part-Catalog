@@ -554,6 +554,7 @@
 .color-palette-container {
     max-height: 13rem; /* увеличено для зазора снизу, было 12rem (192px) */
     overflow-y: auto;
+    overflow-x: hidden; /* Обрезаем обводку кнопок по горизонтали */
     /* Добавляем отступ снизу для видимости скругленных углов и зазора от кружков */
     padding-bottom: 0.75rem; /* было 0.5rem */
     /* Обеспечиваем видимость скругленных углов */
@@ -589,11 +590,156 @@
     z-index: 20;
 }
 
+
 /* Ограничение палитры цветов на мобильных устройствах до 3 рядов (с небольшим зазором снизу) */
 @media (max-width: 768px) {
     .color-palette-container {
         max-height: 8rem; /* было 7.5rem; добавлен зазор снизу */
     }
+}
+
+/* Стили для list-вида палитры цветов */
+.color-palette-list-container {
+    max-height: 13rem;
+    overflow-y: auto;
+    overflow-x: hidden; /* Обрезаем обводку кнопок по горизонтали */
+    padding-bottom: 0.75rem;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+
+/* Стили для list-вида палитры цветов - кружочки работают как в обычной палитре */
+
+/* Ограничение list-вида палитры на мобильных устройствах */
+@media (max-width: 768px) {
+    .color-palette-list-container {
+        max-height: 8rem;
+    }
+}
+
+/* Стили для адаптивной сетки палитры цветов */
+.color-palette-grid {
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Оптимизация размера кнопок для малых устройств */
+@media (max-width: 640px) {
+    /* Адаптивная сетка с подстраиваемой шириной */
+    .color-palette-grid {
+        grid-template-columns: 1fr 1fr !important; /* Две колонки с подстраиваемой шириной */
+        gap: 0.25rem !important; /* Уменьшаем промежуток между колонками */
+    }
+    
+    /* Уменьшаем размер кружочков цветов в палитре */
+    .color-palette-inner button {
+        width: 1.5rem !important; /* 24px вместо 32px */
+        height: 1.5rem !important;
+        min-width: 1.5rem !important;
+        min-height: 1.5rem !important;
+    }
+    
+    /* Кружочки в list-виде имеют фиксированный размер */
+    .color-palette-list span {
+        width: 1.5rem !important; /* 24px вместо 32px */
+        height: 1.5rem !important;
+        min-width: 1.5rem !important;
+        min-height: 1.5rem !important;
+        flex-shrink: 0 !important; /* Кружок не сжимается */
+    }
+    
+    /* Уменьшаем отступы в палитре цветов */
+    .color-palette-inner {
+        gap: 0.5rem !important; /* 8px вместо 12px */
+        padding: 0.5rem !important; /* 8px вместо 12px */
+    }
+    
+    /* Уменьшаем отступы в list-виде палитры */
+    .color-palette-list {
+        padding: 0.5rem !important; /* 8px вместо 12px */
+    }
+    
+    .color-palette-list .grid {
+        gap: 0.375rem !important; /* 6px вместо 8px */
+    }
+    
+    /* Уменьшаем размер кнопок в list-виде */
+    .color-palette-list button {
+        padding: 0.375rem !important; /* 6px вместо 8px */
+        gap: 0.5rem !important; /* 8px вместо 12px */
+        min-width: 0 !important; /* Убираем минимальную ширину */
+        flex-shrink: 1 !important; /* Позволяем кнопкам сжиматься */
+        width: 100% !important; /* Кнопки занимают всю доступную ширину колонки */
+        box-sizing: border-box !important;
+    }
+    
+    /* Уменьшаем размер текста в list-виде с обрезкой */
+    .color-palette-list .text-sm {
+        font-size: 0.75rem !important; /* 12px вместо 14px */
+        overflow: hidden !important; /* Скрываем переполнение */
+        text-overflow: ellipsis !important; /* Добавляем три точки */
+        white-space: nowrap !important; /* Запрещаем перенос строк */
+        line-height: 1.2 !important; /* Компактная высота строки */
+        flex: 1 !important; /* Текст занимает оставшееся место */
+        min-width: 0 !important; /* Позволяем тексту сжиматься */
+        text-align: left !important; /* Выравнивание по левому краю */
+    }
+}
+
+/* Для средних экранов (640px - 768px) используем две колонки с подстраиваемой шириной */
+@media (min-width: 641px) and (max-width: 768px) {
+    .color-palette-list button {
+        min-width: 0 !important;
+        flex-shrink: 1 !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    .color-palette-list .text-sm {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        line-height: 1.3 !important;
+        flex: 1 !important; /* Текст занимает оставшееся место */
+        min-width: 0 !important; /* Позволяем тексту сжиматься */
+        text-align: left !important; /* Выравнивание по левому краю */
+    }
+}
+
+/* Базовые стили для кнопок и текста в палитре цветов */
+.color-palette-list button {
+    display: flex !important;
+    align-items: center !important; /* Вертикальное выравнивание элементов кнопки по центру */
+}
+
+/* Активное состояние кнопок (при нажатии) */
+.color-palette-list button:active {
+    border-color: #3b82f5 !important; /* Синяя обводка при нажатии */
+    transform: scale(0.98) !important; /* Легкое уменьшение при нажатии */
+}
+
+/* Активное состояние для малых устройств */
+@media (max-width: 640px) {
+    .color-palette-list button:active {
+        border-color: #3b82f5 !important; /* Синяя обводка при нажатии */
+        transform: scale(0.98) !important; /* Легкое уменьшение при нажатии */
+    }
+}
+
+.color-palette-list .text-sm {
+    text-align: left !important; /* Выравнивание по левому краю для всех размеров */
+    display: flex !important;
+    align-items: center !important; /* Вертикальное выравнивание по центру */
+}
+
+/* Стили для выбранного цвета в палитре */
+.color-palette-list button[data-color-id] span.border-blue-500 {
+    border-color: #3b82f5 !important; /* Принудительно синяя обводка */
+}
+
+.color-palette-inner button[data-color-id].border-blue-500 {
+    border-color: #3b82f5 !important; /* Принудительно синяя обводка */
 }
 
 /* Стили для индикаторов в палитре цветов */
@@ -1898,7 +2044,7 @@
     
     @media (max-width: 480px) {
         #settings-modal-content {
-            max-height: calc(100dvh - 0.5rem) !important;
+            max-height: calc(100dvh - 2.5rem) !important;
         }
     }
     
@@ -1912,7 +2058,7 @@
         
         @media (max-width: 480px) {
             #settings-modal-content {
-                max-height: 98vh !important;
+                max-height: 95vh !important;
             }
         }
         
@@ -8531,7 +8677,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
         return await fetchWithProxy(url, options, retryCount + 1);
     }
 }
-const CACHE_NAME = 'lego-catalog-cache-v40';
+const CACHE_NAME = 'lego-catalog-cache-v45';
 const COLOR_COLLAPSE_THRESHOLD = 18;
 let COLOR_MAP = {},
     PART_MAP = {},
@@ -8607,6 +8753,7 @@ const I_Tile = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" view
 const I_Win = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 12h18"></path><path d="M12 3v18"></path></svg>`;
 const I_Wheel = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="4"></circle></svg>`;
 const I_Minifig = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3"></circle><path d="M12 11v5"></path><path d="M9 22v-5h6v5"></path><path d="M9 11H5a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h4"></path><path d="M15 11h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-4"></path></svg>`;
+const I_Palette = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>`;
 const I_Bar = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h16"></path><path d="M4 12a2 2 0 1 0-4 0 2 2 0 0 0 4 0z"></path><path d="M20 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0z"></path></svg>`;
 const I_Arch = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V11c0-3.87 3.13-7 7-7s7 3.13 7 7v10"></path><path d="M5 21h14"></path></svg>`;
 
@@ -8641,7 +8788,6 @@ const I_Users = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" vie
 const I_Trophy = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21l-1 .5A3 3 0 0 1 5 15.5V14.66"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21l1 .5A3 3 0 0 0 19 15.5V14.66"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg>`;
 const I_Puzzle = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.439 13.269l-1.178-4.24a2.01 2.01 0 0 0-1.901-1.245H5.64a2.01 2.01 0 0 0-1.9 1.245l-1.179 4.24a2.01 2.01 0 0 0 1.9 2.563h12.72a2.01 2.01 0 0 0 1.9-2.563z"></path><path d="M8 12h8"></path><path d="M8 8h8"></path><path d="M8 16h8"></path><path d="M12 2v6"></path><path d="M12 18v4"></path></svg>`;
 const I_Package = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
-const I_Palette = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r=".5"></circle><circle cx="17.5" cy="10.5" r=".5"></circle><circle cx="8.5" cy="7.5" r=".5"></circle><circle cx="6.5" cy="12.5" r=".5"></circle><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path></svg>`;
 const I_Tags = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>`;
 const I_TrendingUp = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`;
 const I_Calculator = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`;
@@ -11989,6 +12135,7 @@ let S = {
     foldersEnabled: (localStorage.getItem('foldersEnabled') !== 'false'), // По умолчанию включено
     wishlistEnabled: (localStorage.getItem('wishlistEnabled') !== 'false'), // По умолчанию включено
     proxyEnabled: (localStorage.getItem('proxyEnabled') === 'true'), // По умолчанию прокси отключены
+    colorPaletteViewMode: (localStorage.getItem('colorPaletteViewMode') || 'grid'), // Режим отображения палитры цветов: 'grid' или 'list'
     wishlists: {}, // Списки желаний
     currentWishlist: null, // Текущий выбранный список
     wishlistModal: { open: false, wishlistId: null, wishlist: null }, // Модальное окно просмотра списка
@@ -14439,6 +14586,17 @@ function prepareYearData(analytics) {
 // Помощники: повышение насыщенности/яркости для тёмного фона
 function __hexToRgb(hex){const m=hex?.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);if(!m)return null;return{r:parseInt(m[1],16),g:parseInt(m[2],16),b:parseInt(m[3],16)}}
 function __rgbToHex(r,g,b){const h=v=>v.toString(16).padStart(2,'0');return `#${h(Math.max(0,Math.min(255,Math.round(r))))}${h(Math.max(0,Math.min(255,Math.round(g))))}${h(Math.max(0,Math.min(255,Math.round(b))))}`}
+function rgbToHex(rgbString) {
+    if (!rgbString) return '#000000';
+    const match = rgbString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (match) {
+        const r = parseInt(match[1]);
+        const g = parseInt(match[2]);
+        const b = parseInt(match[3]);
+        return __rgbToHex(r, g, b);
+    }
+    return rgbString; // Возвращаем как есть, если это уже hex
+}
 function __rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const max=Math.max(r,g,b),min=Math.min(r,g,b);let h=0,s=0,l=(max+min)/2;if(max!==min){const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break}h/=6}return{h,s,l}}
 function __hslToRgb(h,s,l){let r,g,b;if(s===0){r=g=b=l}else{const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p};const q=l<0.5?l*(1+s):l+s-l*s;const p=2*l-q;r=hue2rgb(p,q,h+1/3);g=hue2rgb(p,q,h);b=hue2rgb(p,q,h-1/3)}return{r:r*255,g:g*255,b:b*255}}
 // Делаем цвета более насыщенными, не повышая яркость (l оставляем как есть)
@@ -20297,7 +20455,6 @@ function renderSetModalDetailsView() {
             <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
                 <div class="space-y-6">
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-3">Детали</h3>
                         <div class="space-y-1 text-sm text-gray-400">
                             <p><span class="font-semibold text-gray-300">Название:</span> ${e.name}</p>
                             <p>ID: ${e.set_num}</p>
@@ -21096,7 +21253,6 @@ function renderModal() {
                 <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
                     <div>
                          <div class="modal-section-spacing">
-                            <h3 class="text-md font-semibold text-gray-300 modal-section-title">Деталь</h3>
                             <div class="space-y-1 text-sm text-gray-400">
                                 <p><span class="font-semibold text-gray-300">Название:</span> <span id="part-name">${e.name}</span></p>
                                 <p>ID: <span id="part-id">${e.id}</span></p>
@@ -21119,7 +21275,20 @@ function renderModal() {
                         </div>
                         
                          <div class="modal-section-spacing">
-                          <h3 class="text-md font-semibold text-gray-300 modal-section-title">Цвета</h3>
+                          <div class="flex items-center justify-between gap-3 mb-2">
+                            <h3 class="text-md font-semibold text-gray-300 text-center" style="margin-bottom: 0;">Цвета</h3>
+                            <div class="flex items-center gap-3">
+                              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/>
+                              </svg>
+                              <button data-action="toggle-color-palette-view" class="toggle-switch ${S.colorPaletteViewMode === 'list' ? 'on' : ''}" aria-pressed="${S.colorPaletteViewMode === 'list'}" title="Переключить вид палитры цветов">
+                                <span class="knob"></span>
+                              </button>
+                              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+                              </svg>
+                            </div>
+                          </div>
                            <div id="color-selector-container" class="min-h-[120px] sm:min-h-[120px] lg:min-h-[160px]">${renderColorSelector()}</div>
                          </div>
                          
@@ -21335,22 +21504,45 @@ function renderColorSelector() {
         return '<div class="text-center py-4">\n                        <p class="text-sm text-gray-400 mb-3">Нет информации о доступных цветах.</p>\n                        <button data-action="retry-fetch-colors" class="bg-blue-600 text-white font-bold py-1.5 px-4 rounded-[18px] hover:bg-blue-700 transition-colors text-sm">\n                            Попробовать снова\n                        </button>\n                    </div>';
     }
     
-    return `
+    // Проверяем режим отображения палитры
+    if (S.colorPaletteViewMode === 'list') {
+        // List-вид: простой список с иконкой цвета и названием в 2 колонки
+        return `
+            <div class="bg-gray-900/50 rounded-[18px]">
+                <div class="color-palette-list-container no-scrollbar">
+                    <div class="color-palette-list p-3">
+                        <div class="grid gap-2 color-palette-grid">
+                            ${sortColorIds(l,e.id).map(e=>{const o=COLOR_MAP[e];if(!o)return"";const l=S.coll[S.selPartId]&&S.coll[S.selPartId][e]>0;return`
+                                <button data-color-id="${e}" class="flex items-center gap-3 p-2 border border-gray-600 rounded-[18px] hover:border-gray-500 transition-colors duration-150">
+                                    <span class="w-8 h-8 rounded-full border-2 transition-all duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-lg ${o.isTransparent?"checkerboard":""} ${t===e?"border-blue-500":"border-gray-600 hover:border-gray-400"}" style="background-color: ${o.hex}; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.boxShadow='0 10px 15px -3px ${o.hex}40, 0 4px 6px -2px ${o.hex}30'" onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'">
+                                        ${l?`<div class="w-2 h-2 bg-white rounded-full ${o.isTransparent || o.hex === '#FFFFFF' || o.hex === '#fff' ? 'border border-black' : ''}"></div>`:""}
+                                    </span>
+                                    <span class="text-sm text-gray-200 truncate">${o.name}</span>
+                                </button>
+                            `}).join("")}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        // Grid-вид: текущий компактный вид с кружочками
+        return `
             <div class="bg-gray-900/50 rounded-[18px]">
                 <div class="relative color-palette-wrapper">
                     <div class="color-palette-container no-scrollbar">
                         <div class="flex flex-wrap justify-center gap-3 p-3 color-palette-inner">
                             ${sortColorIds(l,e.id).map(e=>{const o=COLOR_MAP[e];if(!o)return"";const l=S.coll[S.selPartId]&&S.coll[S.selPartId][e]>0;return`
-                <button data-color-id="${e}" title="${o.name}" class="w-8 h-8 rounded-full border-2 transition-transform duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-lg ${o.isTransparent?"checkerboard":""} ${t===e?"border-blue-500 scale-110":"border-gray-600 hover:border-gray-400"}" style="background-color: ${o.hex}; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.boxShadow='0 10px 15px -3px ${o.hex}40, 0 4px 6px -2px ${o.hex}30'" onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'">
+                <button data-color-id="${e}" title="${o.name}" class="w-8 h-8 rounded-full border-2 transition-all duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-lg ${o.isTransparent?"checkerboard":""} ${t===e?"border-blue-500":"border-gray-600 hover:border-gray-400"}" style="background-color: ${o.hex}; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.boxShadow='0 10px 15px -3px ${o.hex}40, 0 4px 6px -2px ${o.hex}30'" onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'">
                     ${l?`<div class="w-2 h-2 bg-white rounded-full ${o.isTransparent || o.hex === '#FFFFFF' || o.hex === '#fff' ? 'border border-black' : ''}"></div>`:""}
                 </button>
             `}).join("")}
                         </div>
                     </div>
-                    ${l.length>1.5*COLOR_COLLAPSE_THRESHOLD?'<div class="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-gray-900/50 to-transparent pointer-events-none color-palette-gradient"></div>':""}
                 </div>
             </div>
         `;
+    }
 }
 function renderModalControls() {
     const {
@@ -21711,7 +21903,7 @@ function renderSettingsModal() {
     const c = "error" === o ? "bg-red-900/50 text-red-300" : "success" === o ? "bg-green-900/50 text-green-300" : "bg-blue-900/50 text-blue-300";
     const enterClass = isFirstOpen ? 'modal-content-enter' : '';
     settingsModalEl.innerHTML = `
-             <div id="settings-modal-content" class="bg-gray-800 rounded-[18px] shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100dvh-2rem)] ${enterClass}">
+             <div id="settings-modal-content" class="bg-gray-800 rounded-[18px] shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100dvh-4rem)] ${enterClass}">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                      <h2 class="text-xl font-bold text-white">Настройки</h2>
                      <div id="import-export-status" class="px-2 py-1 text-xs rounded-[18px] ${t?c:'bg-transparent text-transparent'} text-center flex-shrink-0" style="${t?'':'display: none;'}">${t||''}</div>
@@ -21777,12 +21969,19 @@ function renderSettingsModal() {
                                 <button data-action="toggle-wishlist" class="toggle-switch ${S.wishlistEnabled? 'on' : ''}" aria-pressed="${S.wishlistEnabled}"><span class="knob"></span></button>
                             </div>
                             <div class="border-t border-gray-700/50 my-1"></div>
-                            <div class="text-xs text-gray-400">Отображение коллекции</div>
+                            <div class="text-xs text-gray-400">Отображение коллекции деталей</div>
                             <div class="flex items-center justify-between gap-2">
                                 <span class="text-sm text-gray-300 flex items-center gap-2">${I_Folder('w-4 h-4 text-green-400')} Группировка в папки</span>
                                 <button data-action="toggle-folders" class="toggle-switch ${S.foldersEnabled? 'on' : ''}" aria-pressed="${S.foldersEnabled}"><span class="knob"></span></button>
                             </div>
                             <p class="text-xs text-gray-400">Если включено, детали с более чем 3‑мя цветами будут сгруппированы в папки. Если выключено, все детали будут показаны отдельными карточками.</p>
+                            <div class="border-t border-gray-700/50 my-1"></div>
+                            <div class="text-xs text-gray-400">Отображение палитры цветов</div>
+                            <div class="flex items-center justify-between gap-2">
+                                <span class="text-sm text-gray-300 flex items-center gap-2">${I_Palette('w-4 h-4 text-purple-400')} Список цветов в деталях</span>
+                                <button data-action="toggle-color-palette-view" class="toggle-switch ${S.colorPaletteViewMode === 'list' ? 'on' : ''}" aria-pressed="${S.colorPaletteViewMode === 'list'}"><span class="knob"></span></button>
+                            </div>
+                            <p class="text-xs text-gray-400">Если включено, цвета будут показаны списком с названиями. Если выключено — компактной сеткой.</p>
                         </div>
                     </div>
                     <div>
@@ -22701,7 +22900,6 @@ function renderMinifigModalDetailsView() {
             <div class="lg:w-1/2 p-4 sm:p-6 flex flex-col">
                 <div class="space-y-6">
                     <div>
-                        <h3 class="text-md font-semibold text-gray-300 mb-3">Информация</h3>
                         <div class="space-y-1 text-sm text-gray-400">
                             <p><span class="font-semibold text-gray-300">Название:</span> ${e.name}</p>
                             <p>ID: ${e.set_num}</p>
@@ -29732,6 +29930,31 @@ document.addEventListener("click", async e => {
                 S.gridStale = true; updateUI();
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
                 return;
+            case "toggle-color-palette-view":
+                S.colorPaletteViewMode = S.colorPaletteViewMode === 'grid' ? 'list' : 'grid';
+                localStorage.setItem('colorPaletteViewMode', S.colorPaletteViewMode);
+                // Обновляем только тумблер, не трогая остальной контент
+                (function(){
+                    const btn = settingsModalEl.querySelector('[data-action="toggle-color-palette-view"]');
+                    if (btn) {
+                        if (S.colorPaletteViewMode === 'list') btn.classList.add('on'); else btn.classList.remove('on');
+                        btn.setAttribute('aria-pressed', String(S.colorPaletteViewMode === 'list'));
+                    }
+                })();
+                updateSettingsModalStatus(S.colorPaletteViewMode === 'list' ? "Список цветов\nвключен" : "Сетка цветов\nвключена", "success");
+                // Если открыта модалка детали - перерисовываем палитру цветов и обновляем тумблер
+                if (S.selPartId && !partModalEl.classList.contains('modal-hidden')) {
+                    updateModalPartially({ colors: true });
+                    // Обновляем тумблер в модалке детали
+                    const modalToggleBtn = partModalEl.querySelector('[data-action="toggle-color-palette-view"]');
+                    if (modalToggleBtn) {
+                        if (S.colorPaletteViewMode === 'list') modalToggleBtn.classList.add('on'); 
+                        else modalToggleBtn.classList.remove('on');
+                        modalToggleBtn.setAttribute('aria-pressed', String(S.colorPaletteViewMode === 'list'));
+                    }
+                }
+                setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
+                return;
             case "toggle-prevent-exit":
                 S.preventAccidentalExit = !S.preventAccidentalExit;
                 try { localStorage.setItem('preventAccidentalExit', String(S.preventAccidentalExit)); } catch {}
@@ -30190,6 +30413,39 @@ document.addEventListener("click", async e => {
                 break;
         }
     } else if (partModalEl?.contains(t)) {
+        // Обрабатываем data-action атрибуты в модалке детали
+        const actionElement = t.closest('[data-action]');
+        if (actionElement) {
+            switch (actionElement.dataset.action) {
+                case "toggle-color-palette-view":
+                    S.colorPaletteViewMode = S.colorPaletteViewMode === 'grid' ? 'list' : 'grid';
+                    localStorage.setItem('colorPaletteViewMode', S.colorPaletteViewMode);
+                    
+                    // Обновляем тумблер в модалке детали
+                    if (S.colorPaletteViewMode === 'list') {
+                        actionElement.classList.add('on');
+                    } else {
+                        actionElement.classList.remove('on');
+                    }
+                    actionElement.setAttribute('aria-pressed', String(S.colorPaletteViewMode === 'list'));
+                    
+                    // Обновляем палитру цветов
+                    updateModalPartially({ colors: true });
+                    
+                    // Обновляем тумблер в настройках, если открыты
+                    const settingsToggleBtn = settingsModalEl?.querySelector('[data-action="toggle-color-palette-view"]');
+                    if (settingsToggleBtn) {
+                        if (S.colorPaletteViewMode === 'list') {
+                            settingsToggleBtn.classList.add('on');
+                        } else {
+                            settingsToggleBtn.classList.remove('on');
+                        }
+                        settingsToggleBtn.setAttribute('aria-pressed', String(S.colorPaletteViewMode === 'list'));
+                    }
+                    return;
+            }
+        }
+        
         // Обрабатываем клик по кнопке селектора пользовательских вариаций
         if (t.id === "variation-select-button") {
             // Переключаем выпадающее меню
@@ -30335,15 +30591,29 @@ document.addEventListener("click", async e => {
                 // Обновляем только стиль кнопки выбранного цвета
                 const allColorButtons = colorContainer.querySelectorAll('button[data-color-id]');
                 allColorButtons.forEach(btn => {
-                    btn.classList.remove('border-blue-500', 'scale-110');
+                    btn.classList.remove('border-blue-500');
                     btn.classList.add('border-gray-600');
+                    // Убираем свечение для всех кнопок
+                    const colorSpan = btn.querySelector('span[style*="background-color"]') || btn;
+                    if (colorSpan && colorSpan.style) {
+                        colorSpan.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
+                    }
                 });
                 
                 // Выделяем выбранный цвет
                 const selectedButton = colorContainer.querySelector(`button[data-color-id="${S.partModal.selColorId}"]`);
                 if (selectedButton) {
                     selectedButton.classList.remove('border-gray-600');
-                    selectedButton.classList.add('border-blue-500', 'scale-110');
+                    selectedButton.classList.add('border-blue-500');
+                    // Добавляем свечение для выбранного цвета
+                    const colorSpan = selectedButton.querySelector('span[style*="background-color"]') || selectedButton;
+                    if (colorSpan && colorSpan.style) {
+                        const currentColor = colorSpan.style.backgroundColor;
+                        if (currentColor) {
+                            const hexColor = rgbToHex(currentColor);
+                            colorSpan.style.boxShadow = `0 10px 15px -3px ${hexColor}40, 0 4px 6px -2px ${hexColor}30`;
+                        }
+                    }
                 }
             }
             
