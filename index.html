@@ -717,19 +717,7 @@
     align-items: center !important; /* Вертикальное выравнивание элементов кнопки по центру */
 }
 
-/* Активное состояние кнопок (при нажатии) */
-.color-palette-list button:active {
-    border-color: #3b82f5 !important; /* Синяя обводка при нажатии */
-    transform: scale(0.98) !important; /* Легкое уменьшение при нажатии */
-}
-
-/* Активное состояние для малых устройств */
-@media (max-width: 640px) {
-    .color-palette-list button:active {
-        border-color: #3b82f5 !important; /* Синяя обводка при нажатии */
-        transform: scale(0.98) !important; /* Легкое уменьшение при нажатии */
-    }
-}
+/* Активное состояние кнопок (при нажатии) - полностью отключено */
 
 .color-palette-list .text-sm {
     text-align: left !important; /* Выравнивание по левому краю для всех размеров */
@@ -744,6 +732,13 @@
 
 .color-palette-inner button[data-color-id].border-blue-500 {
     border-color: #3b82f5 !important; /* Принудительно синяя обводка */
+}
+
+/* Дополнительные стили для выбранного цвета в режиме списка на мобильных устройствах */
+@media (max-width: 640px) {
+    .color-palette-list button.border-blue-500 {
+        border-color: #3b82f5 !important; /* Принудительно синяя обводка */
+    }
 }
 
 /* Стили для индикаторов в палитре цветов */
@@ -30058,6 +30053,13 @@ document.addEventListener("click", async e => {
             case "toggle-color-palette-view":
                 S.colorPaletteViewMode = S.colorPaletteViewMode === 'grid' ? 'list' : 'grid';
                 localStorage.setItem('colorPaletteViewMode', S.colorPaletteViewMode);
+                
+                // Сбрасываем состояние выбранного цвета при переключении режима
+                if (S.selPartId) {
+                    S.partModal.selColorId = null;
+                    S.partModal.qty = 0;
+                }
+                
                 // Обновляем только тумблер, не трогая остальной контент
                 (function(){
                     const btn = settingsModalEl.querySelector('[data-action="toggle-color-palette-view"]');
@@ -30069,7 +30071,7 @@ document.addEventListener("click", async e => {
                 updateSettingsModalStatus(S.colorPaletteViewMode === 'list' ? "Список цветов\nвключен" : "Сетка цветов\nвключена", "success");
                 // Если открыта модалка детали - перерисовываем палитру цветов и обновляем кнопку
                 if (S.selPartId && !partModalEl.classList.contains('modal-hidden')) {
-                    updateModalPartially({ colors: true });
+                    updateModalPartially({ colors: true, controls: true });
                     // Обновляем кнопку в модалке детали
                     const modalToggleBtn = partModalEl.querySelector('[data-action="toggle-color-palette-view"]');
                     if (modalToggleBtn) {
@@ -30556,6 +30558,10 @@ document.addEventListener("click", async e => {
                     S.colorPaletteViewMode = S.colorPaletteViewMode === 'grid' ? 'list' : 'grid';
                     localStorage.setItem('colorPaletteViewMode', S.colorPaletteViewMode);
                     
+                    // Сбрасываем состояние выбранного цвета при переключении режима
+                    S.partModal.selColorId = null;
+                    S.partModal.qty = 0;
+                    
                     // Обновляем кнопку в модалке детали
                     const modalBtn = actionElement;
                     const modalSvg = modalBtn.querySelector('svg path');
@@ -30569,8 +30575,8 @@ document.addEventListener("click", async e => {
                         modalText.textContent = 'Сетка';
                     }
                     
-                    // Обновляем палитру цветов
-                    updateModalPartially({ colors: true });
+                    // Обновляем палитру цветов и элементы управления
+                    updateModalPartially({ colors: true, controls: true });
                     
                     // Обновляем тумблер в настройках, если открыты
                     const settingsToggleBtn = settingsModalEl?.querySelector('[data-action="toggle-color-palette-view"]');
@@ -30728,11 +30734,17 @@ document.addEventListener("click", async e => {
             // Обновляем цвета без полной перерисовки, чтобы предотвратить скачки
             const colorContainer = document.getElementById("color-selector-container");
             if (colorContainer) {
-                // Обновляем только стиль кнопки выбранного цвета
+                // Сначала сбрасываем все кнопки
                 const allColorButtons = colorContainer.querySelectorAll('button[data-color-id]');
                 allColorButtons.forEach(btn => {
+                    // Убираем все классы выделения
                     btn.classList.remove('border-blue-500');
                     btn.classList.add('border-gray-600');
+                    
+                    // Сбрасываем inline стили
+                    btn.style.borderColor = '';
+                    btn.style.transform = '';
+                    
                     // Убираем свечение для всех кнопок
                     const colorSpan = btn.querySelector('span[style*="background-color"]') || btn;
                     if (colorSpan && colorSpan.style) {
@@ -30740,11 +30752,12 @@ document.addEventListener("click", async e => {
                     }
                 });
                 
-                // Выделяем выбранный цвет
+                // Затем выделяем только выбранный цвет
                 const selectedButton = colorContainer.querySelector(`button[data-color-id="${S.partModal.selColorId}"]`);
                 if (selectedButton) {
                     selectedButton.classList.remove('border-gray-600');
                     selectedButton.classList.add('border-blue-500');
+                    
                     // Добавляем свечение для выбранного цвета
                     const colorSpan = selectedButton.querySelector('span[style*="background-color"]') || selectedButton;
                     if (colorSpan && colorSpan.style) {
@@ -30754,6 +30767,12 @@ document.addEventListener("click", async e => {
                             colorSpan.style.boxShadow = `0 10px 15px -3px ${hexColor}40, 0 4px 6px -2px ${hexColor}30`;
                         }
                     }
+                    
+                    // Принудительно обновляем стили для мобильных устройств
+                    requestAnimationFrame(() => {
+                        selectedButton.style.borderColor = '#3b82f5';
+                        // Анимация поддергивания отключена
+                    });
                 }
             }
             
