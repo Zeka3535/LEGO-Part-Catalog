@@ -1733,6 +1733,44 @@
         box-shadow: 0 0 0 3px rgba(59,130,246,.45);
     }
     
+    /* Кнопка переключения типа палитры цветов */
+    .color-palette-toggle-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: #4b5563; /* gray-600 */
+        border: none;
+        border-radius: 18px; /* rounded-[18px] */
+        color: #f3f4f6; /* gray-100 */
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        outline: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .color-palette-toggle-btn:hover {
+        background: #6b7280; /* gray-500 */
+        color: #ffffff;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(107, 114, 128, 0.25);
+    }
+    
+    .color-palette-toggle-btn:active {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .color-palette-toggle-btn:focus-visible {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.45);
+    }
+    
+    .color-palette-toggle-btn svg {
+        flex-shrink: 0;
+        width: 14px;
+        height: 14px;
+    }
+    
     /* Дополнительные стили для переключателей в настройках */
     .settings-modal .toggle-switch,
     #settings-modal-container .toggle-switch {
@@ -21277,17 +21315,15 @@ function renderModal() {
                          <div class="modal-section-spacing">
                           <div class="flex items-center justify-between gap-3 mb-2">
                             <h3 class="text-md font-semibold text-gray-300 text-center" style="margin-bottom: 0;">Цвета</h3>
-                            <div class="flex items-center gap-3">
-                              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/>
+                            <button data-action="toggle-color-palette-view" class="color-palette-toggle-btn" title="Переключить вид палитры цветов">
+                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                ${S.colorPaletteViewMode === 'list' ? 
+                                  '<path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>' :
+                                  '<path d="M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z"/>'
+                                }
                               </svg>
-                              <button data-action="toggle-color-palette-view" class="toggle-switch ${S.colorPaletteViewMode === 'list' ? 'on' : ''}" aria-pressed="${S.colorPaletteViewMode === 'list'}" title="Переключить вид палитры цветов">
-                                <span class="knob"></span>
-                              </button>
-                              <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
-                              </svg>
-                            </div>
+                              <span class="text-sm">${S.colorPaletteViewMode === 'list' ? 'Список' : 'Сетка'}</span>
+                            </button>
                           </div>
                            <div id="color-selector-container" class="min-h-[120px] sm:min-h-[120px] lg:min-h-[160px]">${renderColorSelector()}</div>
                          </div>
@@ -29942,15 +29978,22 @@ document.addEventListener("click", async e => {
                     }
                 })();
                 updateSettingsModalStatus(S.colorPaletteViewMode === 'list' ? "Список цветов\nвключен" : "Сетка цветов\nвключена", "success");
-                // Если открыта модалка детали - перерисовываем палитру цветов и обновляем тумблер
+                // Если открыта модалка детали - перерисовываем палитру цветов и обновляем кнопку
                 if (S.selPartId && !partModalEl.classList.contains('modal-hidden')) {
                     updateModalPartially({ colors: true });
-                    // Обновляем тумблер в модалке детали
+                    // Обновляем кнопку в модалке детали
                     const modalToggleBtn = partModalEl.querySelector('[data-action="toggle-color-palette-view"]');
                     if (modalToggleBtn) {
-                        if (S.colorPaletteViewMode === 'list') modalToggleBtn.classList.add('on'); 
-                        else modalToggleBtn.classList.remove('on');
-                        modalToggleBtn.setAttribute('aria-pressed', String(S.colorPaletteViewMode === 'list'));
+                        const modalSvg = modalToggleBtn.querySelector('svg path');
+                        const modalText = modalToggleBtn.querySelector('span');
+                        
+                        if (S.colorPaletteViewMode === 'list') {
+                            modalSvg.setAttribute('d', 'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z');
+                            modalText.textContent = 'Список';
+                        } else {
+                            modalSvg.setAttribute('d', 'M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z');
+                            modalText.textContent = 'Сетка';
+                        }
                     }
                 }
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
@@ -30421,13 +30464,18 @@ document.addEventListener("click", async e => {
                     S.colorPaletteViewMode = S.colorPaletteViewMode === 'grid' ? 'list' : 'grid';
                     localStorage.setItem('colorPaletteViewMode', S.colorPaletteViewMode);
                     
-                    // Обновляем тумблер в модалке детали
+                    // Обновляем кнопку в модалке детали
+                    const modalBtn = actionElement;
+                    const modalSvg = modalBtn.querySelector('svg path');
+                    const modalText = modalBtn.querySelector('span');
+                    
                     if (S.colorPaletteViewMode === 'list') {
-                        actionElement.classList.add('on');
+                        modalSvg.setAttribute('d', 'M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z');
+                        modalText.textContent = 'Список';
                     } else {
-                        actionElement.classList.remove('on');
+                        modalSvg.setAttribute('d', 'M3 3h7v7H3V3zm0 11h7v7H3v-7zm11-11h7v7h-7V3zm0 11h7v7h-7v-7z');
+                        modalText.textContent = 'Сетка';
                     }
-                    actionElement.setAttribute('aria-pressed', String(S.colorPaletteViewMode === 'list'));
                     
                     // Обновляем палитру цветов
                     updateModalPartially({ colors: true });
