@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v56';
+    const CACHE_NAME = 'lego-catalog-cache-v57';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -3439,7 +3439,7 @@
     @media (max-width: 768px) {
         .zoom-controls {
             top: auto;
-            bottom: 40px;
+            bottom: 60px;
             right: auto;
             left: 50%;
             transform: translateX(-50%);
@@ -3580,6 +3580,99 @@
     .zoom-btn:disabled:hover {
         background: rgba(0, 0, 0, 0.7);
         transform: none;
+    }
+    
+    /* Стили для кнопок навигации изображений (в стиле кнопок зума) */
+    .image-nav-btn {
+        width: 32px;
+        height: 32px;
+        background: rgba(0, 0, 0, 0.8);
+        border: none;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    .image-nav-btn:hover {
+        background: rgba(0, 0, 0, 0.9);
+        transform: scale(1.05);
+    }
+    
+    .image-nav-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .image-nav-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .image-nav-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    /* Адаптивность для мобильных устройств */
+    @media (max-width: 768px) {
+        .image-nav-btn {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .image-nav-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        #image-viewer-navigation {
+            gap: 15px;
+        }
+        
+        #image-viewer-indicator {
+            font-size: 14px;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .image-nav-btn {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .image-nav-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        #image-viewer-navigation {
+            gap: 15px;
+        }
+        
+        #image-viewer-indicator {
+            font-size: 13px;
+        }
+        
+        .zoom-controls {
+            bottom: 80px;
+        }
+    }
+    
+    /* Стили для индикатора изображений */
+    #image-viewer-indicator {
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        min-width: 60px;
+        text-align: center;
     }
     
     
@@ -5473,6 +5566,28 @@ button[disabled]:hover {
       <div class="image-wrapper bg-white rounded-[18px] shadow-2xl overflow-hidden">
         <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out rounded-[18px]" loading="lazy" decoding="async">
       </div>
+      </div>
+      
+      <!-- Панель навигации под изображением -->
+      <div id="image-viewer-navigation" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center justify-center gap-4 opacity-0 pointer-events-none transition-all duration-300">
+        <!-- Кнопка предыдущего изображения -->
+        <button id="image-viewer-prev" class="image-nav-btn" title="Предыдущее изображение">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        
+        <!-- Индикатор текущего изображения -->
+        <div id="image-viewer-indicator" class="text-white text-sm font-medium">
+          <span id="current-image-index">1</span> / <span id="total-images">1</span>
+        </div>
+        
+        <!-- Кнопка следующего изображения -->
+        <button id="image-viewer-next" class="image-nav-btn" title="Следующее изображение">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+          </svg>
+        </button>
       </div>
     </div>
     <div class="zoom-controls">
@@ -15355,6 +15470,10 @@ const sidebarEl = document.getElementById('sidebar-container'),
     viewerImg = document.getElementById('fullscreen-image'),
     viewerCloseBtn = document.getElementById('image-viewer-close');
 
+// Глобальные переменные для галереи изображений
+let imageGallery = [];
+let currentImageIndex = 0;
+
 async function apiFetchPaginated(e) {
     let t = [];
     let o = 1;
@@ -25081,8 +25200,8 @@ function triggerSearch(e = !1) {
         searchRebrickableParts(S.q.trim());
     }
 }
-function openImageViewer(e) {
-    if (!e || e.includes("data:image/svg+xml")) return;
+function openImageViewer(imageUrl, gallery = null, initialIndex = 0) {
+    if (!imageUrl || imageUrl.includes("data:image/svg+xml")) return;
     
     // Скрываем указатель при открытии image viewer (всегда, так как это основное взаимодействие)
     hideSidebarHint();
@@ -25093,8 +25212,12 @@ function openImageViewer(e) {
         viewerEl._closeTimer = null;
     }
 
+    // Устанавливаем галерею изображений
+    imageGallery = gallery || [imageUrl];
+    currentImageIndex = Math.max(0, Math.min(initialIndex, imageGallery.length - 1));
+    
     // Устанавливаем изображение
-    viewerImg.setAttribute("src", e);
+    viewerImg.setAttribute("src", imageGallery[currentImageIndex]);
     viewerEl.classList.remove("zoomed", "zoom-mode");
     viewerImg.classList.remove("zoomed");
     
@@ -25128,6 +25251,9 @@ function openImageViewer(e) {
     
     // Инициализируем обработчики зума
     initializeZoomControls();
+    
+    // Инициализируем навигацию по изображениям
+    initializeImageNavigation();
 }
 function closeImageViewer() {
     // Сбрасываем изображение
@@ -25135,6 +25261,13 @@ function closeImageViewer() {
     
     // Сбрасываем состояние зума
     resetZoom();
+    
+    // Очищаем галерею
+    imageGallery = [];
+    currentImageIndex = 0;
+    
+    // Удаляем обработчик клавиатуры
+    document.removeEventListener('keydown', handleImageNavigationKeydown);
     
     // Закрываем через modalManager
     modalManager.closeModal('image-viewer-container');
@@ -25144,6 +25277,206 @@ function closeImageViewer() {
         viewerEl.classList.add('viewer-hidden');
         viewerEl.classList.remove('visible', 'zoom-mode');
     }
+}
+
+// Функция инициализации навигации по изображениям
+function initializeImageNavigation() {
+    const navigationPanel = document.getElementById('image-viewer-navigation');
+    const prevBtn = document.getElementById('image-viewer-prev');
+    const nextBtn = document.getElementById('image-viewer-next');
+    const indicator = document.getElementById('image-viewer-indicator');
+    const currentIndexSpan = document.getElementById('current-image-index');
+    const totalImagesSpan = document.getElementById('total-images');
+    
+    // Удаляем старые обработчики
+    if (prevBtn) {
+        prevBtn.onclick = null;
+        prevBtn.ontouchstart = null;
+    }
+    if (nextBtn) {
+        nextBtn.onclick = null;
+        nextBtn.ontouchstart = null;
+    }
+    
+    // Показываем/скрываем панель навигации в зависимости от количества изображений
+    const hasMultipleImages = imageGallery.length > 1;
+    
+    if (navigationPanel) {
+        navigationPanel.style.opacity = hasMultipleImages ? '1' : '0';
+        navigationPanel.style.pointerEvents = hasMultipleImages ? 'auto' : 'none';
+    }
+    
+    if (prevBtn) {
+        prevBtn.disabled = !hasMultipleImages || currentImageIndex === 0;
+    }
+    
+    if (nextBtn) {
+        nextBtn.disabled = !hasMultipleImages || currentImageIndex === imageGallery.length - 1;
+    }
+    
+    if (currentIndexSpan) {
+        currentIndexSpan.textContent = currentImageIndex + 1;
+    }
+    if (totalImagesSpan) {
+        totalImagesSpan.textContent = imageGallery.length;
+    }
+    
+    // Добавляем обработчики для кнопок
+    if (prevBtn && hasMultipleImages) {
+        prevBtn.onclick = () => navigateToImage('prev');
+        prevBtn.ontouchstart = (e) => {
+            e.preventDefault();
+            navigateToImage('prev');
+        };
+    }
+    
+    if (nextBtn && hasMultipleImages) {
+        nextBtn.onclick = () => navigateToImage('next');
+        nextBtn.ontouchstart = (e) => {
+            e.preventDefault();
+            navigateToImage('next');
+        };
+    }
+    
+    // Добавляем поддержку клавиатурной навигации (удаляем старый обработчик сначала)
+    document.removeEventListener('keydown', handleImageNavigationKeydown);
+    document.addEventListener('keydown', handleImageNavigationKeydown);
+    
+    // Добавляем поддержку жестов свайпа для мобильных устройств
+    setupImageSwipeNavigation();
+}
+
+// Функция навигации по изображениям
+function navigateToImage(direction) {
+    if (imageGallery.length <= 1) return;
+    
+    const prevIndex = currentImageIndex;
+    
+    if (direction === 'next') {
+        currentImageIndex = (currentImageIndex + 1) % imageGallery.length;
+    } else if (direction === 'prev') {
+        currentImageIndex = (currentImageIndex - 1 + imageGallery.length) % imageGallery.length;
+    }
+    
+    // Обновляем изображение с анимацией
+    updateImageWithAnimation(imageGallery[currentImageIndex]);
+    
+    // Обновляем состояние кнопок
+    updateNavigationButtons();
+    
+    // Обновляем индикатор
+    updateImageIndicator();
+}
+
+// Функция обновления изображения с анимацией
+function updateImageWithAnimation(newImageUrl) {
+    if (!viewerImg) return;
+    
+    // Добавляем эффект fade-out
+    viewerImg.style.transition = 'opacity 0.2s ease-out';
+    viewerImg.style.opacity = '0';
+    
+    setTimeout(() => {
+        // Меняем изображение
+        viewerImg.setAttribute("src", newImageUrl);
+        
+        // Сбрасываем зум при смене изображения
+        resetZoom();
+        
+        // Добавляем эффект fade-in
+        viewerImg.style.opacity = '1';
+        
+        // Убираем transition после анимации
+        setTimeout(() => {
+            viewerImg.style.transition = '';
+        }, 200);
+    }, 200);
+}
+
+// Функция обновления состояния кнопок навигации
+function updateNavigationButtons() {
+    const prevBtn = document.getElementById('image-viewer-prev');
+    const nextBtn = document.getElementById('image-viewer-next');
+    
+    if (prevBtn) {
+        prevBtn.disabled = currentImageIndex === 0;
+    }
+    if (nextBtn) {
+        nextBtn.disabled = currentImageIndex === imageGallery.length - 1;
+    }
+}
+
+// Функция обновления индикатора изображений
+function updateImageIndicator() {
+    const currentIndexSpan = document.getElementById('current-image-index');
+    if (currentIndexSpan) {
+        currentIndexSpan.textContent = currentImageIndex + 1;
+    }
+}
+
+// Функция обработки клавиатурной навигации
+function handleImageNavigationKeydown(e) {
+    // Проверяем, что image viewer открыт
+    if (!viewerEl || viewerEl.classList.contains('viewer-hidden')) return;
+    
+    if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateToImage('prev');
+    } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateToImage('next');
+    } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeImageViewer();
+    }
+}
+
+// Функция настройки жестов свайпа для мобильных устройств
+function setupImageSwipeNavigation() {
+    if (!viewerEl || imageGallery.length <= 1) return;
+    
+    let startX = 0, startY = 0, startT = 0;
+    const THRESH_X = 50; // Минимальное расстояние свайпа
+    const THRESH_Y = 100; // Максимальное вертикальное отклонение
+    const THRESH_MS = 500; // Максимальное время свайпа
+    
+    const onTouchStart = (e) => {
+        if (e.touches.length !== 1) return;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startT = Date.now();
+    };
+    
+    const onTouchEnd = (e) => {
+        if (e.touches.length > 0) return;
+        
+        const endX = e.changedTouches[0].clientX;
+        const endY = e.changedTouches[0].clientY;
+        const endT = Date.now();
+        
+        const deltaX = endX - startX;
+        const deltaY = Math.abs(endY - startY);
+        const deltaT = endT - startT;
+        
+        // Проверяем условия свайпа
+        if (deltaT <= THRESH_MS && Math.abs(deltaX) >= THRESH_X && deltaY <= THRESH_Y) {
+            if (deltaX > 0) {
+                // Свайп вправо - предыдущее изображение
+                navigateToImage('prev');
+            } else {
+                // Свайп влево - следующее изображение
+                navigateToImage('next');
+            }
+        }
+    };
+    
+    // Удаляем старые обработчики
+    viewerEl.removeEventListener('touchstart', onTouchStart, { passive: true });
+    viewerEl.removeEventListener('touchend', onTouchEnd, { passive: true });
+    
+    // Добавляем новые обработчики
+    viewerEl.addEventListener('touchstart', onTouchStart, { passive: true });
+    viewerEl.addEventListener('touchend', onTouchEnd, { passive: true });
 }
 
 // Переменные для состояния зума
@@ -28083,7 +28416,24 @@ document.addEventListener("click", async e => {
     }
     
     const o = t.closest('[data-action="view-image-fullscreen"]');
-    if (o?.dataset.imageUrl) return openImageViewer(o.dataset.imageUrl);
+    if (o?.dataset.imageUrl) {
+        // Определяем, есть ли галерея изображений
+        let gallery = null;
+        let initialIndex = 0;
+        
+        // Проверяем, находимся ли мы в модальном окне набора
+        if (S.selSetNum && S.setModal?.gallery?.length > 1) {
+            gallery = S.setModal.gallery;
+            initialIndex = S.setModal.galleryIndex || 0;
+        }
+        // Проверяем, находимся ли мы в модальном окне минифигурки
+        else if (S.selFigNum && S.minifigModal?.gallery?.length > 1) {
+            gallery = S.minifigModal.gallery;
+            initialIndex = S.minifigModal.galleryIndex || 0;
+        }
+        
+        return openImageViewer(o.dataset.imageUrl, gallery, initialIndex);
+    }
     
     
     
