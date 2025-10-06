@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v54';
+    const CACHE_NAME = 'lego-catalog-cache-v56';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -3304,6 +3304,59 @@
         
         will-change: transform;
         transform-style: preserve-3d;
+    }
+    
+    
+    /* Медиа-запросы для мобильных устройств - уменьшение размера картинки */
+    @media (max-width: 768px) {
+        #image-viewer-container > div {
+            padding: 2% !important;
+        }
+        
+        .image-canvas .image-wrapper {
+            max-width: 85% !important;
+            max-height: 85% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        #fullscreen-image {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        #image-viewer-container > div {
+            padding: 1% !important;
+        }
+        
+        .image-canvas .image-wrapper {
+            max-width: 80% !important;
+            max-height: 80% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        #fullscreen-image {
+            max-width: 100% !important;
+            max-height: 100% !important;
+            object-fit: contain !important;
+        }
+    }
+    
+    @media (max-width: 360px) {
+        #image-viewer-container > div {
+            padding: 0.5% !important;
+        }
+        
+        .image-canvas .image-wrapper {
+            max-width: 75% !important;
+            max-height: 75% !important;
+        }
     }
     
     
