@@ -34,12 +34,10 @@
     // Загружаем RemoteStorage только при необходимости
     window.loadRemoteStorage = async function() {
       if (window.remoteStorageAvailable) {
-        console.log('✅ RemoteStorage already loaded');
         return true;
       }
       
       try {
-        console.log('🔄 Loading RemoteStorage library...');
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/remotestoragejs/release/remotestorage.js';
         script.async = true;
@@ -54,7 +52,6 @@
           script.onload = () => {
             clearTimeout(timeout);
             window.remoteStorageAvailable = true;
-            console.log('✅ RemoteStorage library loaded successfully');
             resolve();
           };
           script.onerror = (error) => {
@@ -65,7 +62,6 @@
         
         return true;
       } catch (e) {
-        console.warn('⚠️ RemoteStorage not loaded, using fallback:', e);
         window.remoteStorageAvailable = false;
         return false;
       }
@@ -87,14 +83,12 @@
           script.onerror = reject;
         });
       } catch (e) {
-        console.warn('⚠️ ZXing not loaded');
       }
     };
     
     // Загружаем TensorFlow.js для AI поиска по фото
     window.loadTensorFlow = async function() {
       if (window.tensorflowAvailable) {
-        console.log('✅ TensorFlow.js already loaded');
         return true;
       }
       try {
@@ -105,14 +99,12 @@
         await new Promise((resolve, reject) => {
           script.onload = () => {
             window.tensorflowAvailable = true;
-            console.log('✅ TensorFlow.js loaded');
             resolve();
           };
           script.onerror = reject;
         });
         return true;
       } catch (e) {
-        console.warn('⚠️ TensorFlow.js not loaded');
         return false;
       }
     };
@@ -5726,20 +5718,11 @@ if (!DEBUG) {
 }
 
 // Проверяем, что скрипт выполняется
-console.log('🚀 СКРИПТ ЗАГРУЖЕН! DEBUG =', DEBUG);
 
-// Тестовая функция для проверки выполнения
-function testFunction() {
-    console.log('🧪 ТЕСТОВАЯ ФУНКЦИЯ ВЫЗВАНА!');
-    return true;
-}
 
-// Вызываем тестовую функцию
-testFunction();
 
 // Глобальные функции для поиска деталей
 window.searchPartInCatalog = function(partNumber, category = '', partName = '') {
-    console.log(`searchPartInCatalog вызвана с параметрами:`, { partNumber, category, partName });
     
     // Сохраняем данные для поиска
     window.searchData = {
@@ -5755,7 +5738,6 @@ window.searchPartInCatalog = function(partNumber, category = '', partName = '') 
 
 // Функция для открытия AI поиска
 window.openAISearch = function() {
-    console.log('Открываем AI поиск по фотографии');
     
     // Переключаемся на представление инструментов и AI поиск
     S.view = 'tools';
@@ -5777,7 +5759,6 @@ window.openAISearch = function() {
 
 // Модальное окно выбора типа поиска
 window.openSearchTypeSelectionModal = function() {
-    console.log('Открываем модальное окно выбора типа поиска');
     
     // Создаем модальное окно если его нет
     let modalEl = document.getElementById('search-type-selection-modal');
@@ -5894,7 +5875,6 @@ window.closeSearchTypeSelectionModal = function() {
 
 // Выбор типа поиска
 window.selectSearchType = function(type) {
-    console.log(`Выбран тип поиска: ${type}`);
     
     // Закрываем модальное окно выбора
     closeSearchTypeSelectionModal();
@@ -5940,7 +5920,6 @@ window.openPartsSearchModal = function() {
     const searchData = window.searchData || {};
     const searchQuery = searchData.partNumber || searchData.query || '';
     
-    console.log(`Открываем поиск деталей с запросом: ${searchQuery}`);
     
     // Используем существующую функцию поиска деталей
     openPartSearchModal(searchQuery);
@@ -5951,7 +5930,6 @@ window.openSetsSearchModal = function() {
     const searchData = window.searchData || {};
     const searchQuery = searchData.partName || searchData.query || '';
     
-    console.log(`Открываем поиск наборов с запросом: ${searchQuery}`);
     
     // Используем существующую функцию поиска наборов
     searchInSetsCatalogModal(searchQuery);
@@ -5962,7 +5940,6 @@ window.openMinifigsSearchModal = function() {
     const searchData = window.searchData || {};
     const searchQuery = searchData.partName || searchData.query || '';
     
-    console.log(`Открываем поиск минифигурок с запросом: ${searchQuery}`);
     
     // Используем существующую функцию поиска минифигурок
     searchInMinifigsCatalogModal(searchQuery);
@@ -5973,7 +5950,6 @@ window.openBoxSearchModal = function() {
     const searchData = window.searchData || {};
     const searchQuery = searchData.partNumber || searchData.query || '';
     
-    console.log(`Открываем поиск коробки набора с запросом: ${searchQuery}`);
     
     // Создаем модальное окно если его нет
     let modalEl = document.getElementById('box-search-modal');
@@ -5991,15 +5967,12 @@ window.openBoxSearchModal = function() {
     let searchResults = [];
     if (setData) {
         searchResults = [setData];
-        console.log(`Найден набор по ID: ${setId} - ${setData.name}`);
     } else {
-        console.log(`Набор с ID ${setId} не найден`);
     }
     
     // Ограничиваем количество результатов
     const limitedResults = searchResults.slice(0, 50);
     
-    console.log(`Найдено ${limitedResults.length} наборов по ID "${setId}"`);
     
     // Рендерим содержимое модального окна
     modalEl.innerHTML = `
@@ -6160,7 +6133,6 @@ window.openUniversalSearchModal = function(searchData = '') {
         searchData = { query: searchData, type: 'parts' };
     }
     
-    console.log(`Открываем единое окно поиска с данными:`, searchData);
     
     // Создаем модальное окно если его нет
     let modalEl = document.getElementById('universal-search-modal');
@@ -6242,7 +6214,6 @@ window.openUniversalSearchModal = function(searchData = '') {
     
     // Сохраняем данные поиска в глобальной переменной
     window.universalSearchData = searchData;
-    console.log('Сохранены данные поиска:', window.universalSearchData);
     
     // Показываем модальное окно
     modalEl.classList.remove('hidden');
@@ -6346,7 +6317,6 @@ window.switchSearchType = function(type) {
     
     // Обновляем поле поиска в зависимости от типа
     const searchInput = document.getElementById('universal-search-input');
-    console.log('Данные поиска при переключении:', window.universalSearchData);
     
     if (searchInput && window.universalSearchData) {
         let newQuery = '';
@@ -6355,29 +6325,24 @@ window.switchSearchType = function(type) {
             case 'parts':
                 // Для деталей используем ID
                 newQuery = window.universalSearchData.partId || window.universalSearchData.query || '';
-                console.log(`Для деталей: partId="${window.universalSearchData.partId}", query="${window.universalSearchData.query}"`);
                 break;
             case 'sets':
                 // Для наборов используем название
                 newQuery = window.universalSearchData.setName || window.universalSearchData.query || '';
-                console.log(`Для наборов: setName="${window.universalSearchData.setName}", query="${window.universalSearchData.query}"`);
                 break;
             case 'minifigs':
                 // Для минифигурок используем название
                 newQuery = window.universalSearchData.minifigName || window.universalSearchData.query || '';
-                console.log(`Для минифигурок: minifigName="${window.universalSearchData.minifigName}", query="${window.universalSearchData.query}"`);
                 break;
         }
         
         // Всегда обновляем поле поиска, даже если newQuery пустой
         searchInput.value = newQuery;
-        console.log(`Переключились на ${type}, установлен запрос: "${newQuery}"`);
         
         // Выполняем поиск с новым запросом
         performUniversalSearch();
     } else if (searchInput) {
         // Если нет данных поиска, просто выполняем поиск с текущим значением
-        console.log(`Переключились на ${type}, используем текущий запрос: "${searchInput.value}"`);
         performUniversalSearch();
     }
 }
@@ -6392,7 +6357,6 @@ window.performUniversalSearch = function() {
         return;
     }
     
-    console.log(`Выполняем поиск: "${searchTerm}" по типу: ${searchType}`);
     
     // Очищаем предыдущие результаты
     const resultsContainer = document.getElementById('universal-search-results');
@@ -6424,7 +6388,6 @@ function searchUniversalParts(searchTerm) {
     }
     
     const searchTermLower = searchTerm.toLowerCase().trim();
-    console.log(`Поиск деталей по ID: ${searchTerm}`);
     
     // Ищем детали только по точному или частичному совпадению ID
     let results = Object.values(PART_MAP).filter(part => {
@@ -6437,13 +6400,11 @@ function searchUniversalParts(searchTerm) {
     
     // Если результатов нет, пробуем поиск по числовой части ID
     if (results.length === 0) {
-        console.log(`Точный поиск не дал результатов, пробуем поиск по числовой части: ${searchTerm}`);
         
         // Извлекаем числовую часть из поискового запроса
         const numericPart = searchTerm.match(/^\d+/);
         if (numericPart) {
             const numericId = numericPart[0];
-            console.log(`Ищем детали, начинающиеся с цифр: ${numericId}`);
             
             results = Object.values(PART_MAP).filter(part => {
                 if (!part || !part.id) return false;
@@ -6453,7 +6414,6 @@ function searchUniversalParts(searchTerm) {
                 return partId.startsWith(numericId);
             });
             
-            console.log(`Найдено ${results.length} деталей по числовой части ${numericId}`);
         }
     }
     
@@ -6473,7 +6433,6 @@ function searchUniversalParts(searchTerm) {
         return aId.localeCompare(bId);
     });
     
-    console.log(`Найдено ${results.length} деталей по ID: ${searchTerm}`);
     displayUniversalResults(results, 'parts');
 }
 
@@ -6481,7 +6440,6 @@ function searchUniversalParts(searchTerm) {
 function searchUniversalSets(searchTerm) {
     // Используем ту же логику поиска, что и в модальном окне наборов
     const keywords = extractKeywords(searchTerm);
-    console.log(`Извлеченные ключевые слова:`, keywords);
     
     const searchResults = Object.values(SET_MAP).filter(set => {
         if (!set || !set.name) return false;
@@ -6523,7 +6481,6 @@ function searchUniversalSets(searchTerm) {
 function searchUniversalMinifigs(searchTerm) {
     // Используем ту же логику поиска, что и в модальном окне минифигурок
     const keywords = extractKeywords(searchTerm);
-    console.log(`Извлеченные ключевые слова:`, keywords);
     
     const searchResults = Object.values(MINIFIG_MAP).filter(minifig => {
         if (!minifig || !minifig.name) return false;
@@ -6836,12 +6793,9 @@ window.isStopWord = function(word) {
 
 // Поиск в каталоге наборов
 window.searchInSetsCatalog = async function(searchTerm) {
-    console.log(`Поиск наборов по контексту: ${searchTerm}`);
-    console.log(`SET_MAP содержит ${Object.keys(SET_MAP).length} наборов`);
     
     // Извлекаем ключевые слова из поискового запроса
     const keywords = extractKeywords(searchTerm);
-    console.log(`Извлеченные ключевые слова:`, keywords);
     
     if (keywords.length === 0) return [];
     
@@ -6947,16 +6901,13 @@ window.searchInSetsCatalog = async function(searchTerm) {
         return a.name.localeCompare(b.name);
     });
     
-    console.log(`Найдено ${searchResults.length} наборов по контексту "${searchTerm}"`);
     
     if (searchResults.length > 0) {
         // Переключаемся на представление наборов и показываем результаты
         S.view = 'sets';
         S.searchQuery = searchTerm;
         renderMainContent();
-        console.log(`Переключились на представление наборов, найдено ${searchResults.length} наборов`);
     } else {
-        console.log('Наборы не найдены');
         await showCustomAlert(`Наборы по контексту "${searchTerm}" не найдены`, {
             title: 'Поиск наборов',
             type: 'info'
@@ -6966,12 +6917,9 @@ window.searchInSetsCatalog = async function(searchTerm) {
 
 // Поиск в каталоге минифигурок
 window.searchInMinifigsCatalog = async function(searchTerm) {
-    console.log(`Поиск минифигурок по контексту: ${searchTerm}`);
-    console.log(`MINIFIG_MAP содержит ${Object.keys(MINIFIG_MAP).length} минифигурок`);
     
     // Извлекаем ключевые слова из поискового запроса
     const keywords = extractKeywords(searchTerm);
-    console.log(`Извлеченные ключевые слова:`, keywords);
     
     if (keywords.length === 0) return [];
     
@@ -7071,16 +7019,13 @@ window.searchInMinifigsCatalog = async function(searchTerm) {
         return a.name.localeCompare(b.name);
     });
     
-    console.log(`Найдено ${searchResults.length} минифигурок по контексту "${searchTerm}"`);
     
     if (searchResults.length > 0) {
         // Переключаемся на представление минифигурок и показываем результаты
         S.view = 'minifigs';
         S.searchQuery = searchTerm;
         renderMainContent();
-        console.log(`Переключились на представление минифигурок, найдено ${searchResults.length} минифигурок`);
     } else {
-        console.log('Минифигурки не найдены');
         await showCustomAlert(`Минифигурки по контексту "${searchTerm}" не найдены`, {
             title: 'Поиск минифигурок',
             type: 'info'
@@ -7090,7 +7035,6 @@ window.searchInMinifigsCatalog = async function(searchTerm) {
 
 // Поиск в каталоге наборов через модальное окно
 window.searchInSetsCatalogModal = function(searchTerm) {
-    console.log(`Поиск наборов в модальном окне: ${searchTerm}`);
     
     // Создаем модальное окно если его нет
     let modalEl = document.getElementById('sets-search-modal');
@@ -7103,7 +7047,6 @@ window.searchInSetsCatalogModal = function(searchTerm) {
     
     // Извлекаем ключевые слова из поискового запроса
     const keywords = extractKeywords(searchTerm);
-    console.log(`Извлеченные ключевые слова:`, keywords);
     
     // Ищем наборы по ключевым словам
     const searchResults = Object.values(SET_MAP).filter(set => {
@@ -7146,7 +7089,6 @@ window.searchInSetsCatalogModal = function(searchTerm) {
     // Ограничиваем количество результатов
     const limitedResults = searchResults.slice(0, 50);
     
-    console.log(`Найдено ${limitedResults.length} наборов по контексту "${searchTerm}"`);
     
     // Рендерим содержимое модального окна
     modalEl.innerHTML = `
@@ -7220,7 +7162,6 @@ window.searchInSetsCatalogModal = function(searchTerm) {
 
 // Поиск в каталоге минифигурок через модальное окно
 window.searchInMinifigsCatalogModal = function(searchTerm) {
-    console.log(`Поиск минифигурок в модальном окне: ${searchTerm}`);
     
     // Создаем модальное окно если его нет
     let modalEl = document.getElementById('minifigs-search-modal');
@@ -7233,7 +7174,6 @@ window.searchInMinifigsCatalogModal = function(searchTerm) {
     
     // Извлекаем ключевые слова из поискового запроса
     const keywords = extractKeywords(searchTerm);
-    console.log(`Извлеченные ключевые слова:`, keywords);
     
     // Ищем минифигурки по ключевым словам
     const searchResults = Object.values(MINIFIG_MAP).filter(minifig => {
@@ -7274,7 +7214,6 @@ window.searchInMinifigsCatalogModal = function(searchTerm) {
     // Ограничиваем количество результатов
     const limitedResults = searchResults.slice(0, 50);
     
-    console.log(`Найдено ${limitedResults.length} минифигурок по контексту "${searchTerm}"`);
     
     // Рендерим содержимое модального окна
     modalEl.innerHTML = `
@@ -7503,7 +7442,6 @@ window.setupSetsSearchModalHandlers = function() {
     
     // Настройка скролл-индикатора и перелистывания с задержкой
     setTimeout(() => {
-        console.log('Настройка скролла и перелистывания для наборов');
         setupSetsSearchScrollProgress();
         setupSetsSearchSwipe();
         
@@ -7737,9 +7675,7 @@ window.setupMinifigsSearchScrollProgress = function() {
 // Настройка перелистывания для поиска наборов
 window.setupSetsSearchSwipe = function() {
     const scrollContainer = document.getElementById('sets-search-results');
-    console.log('Настройка перелистывания для наборов:', { scrollContainer });
     if (!scrollContainer) {
-        console.log('Контейнер для перелистывания наборов не найден');
         return;
     }
     
@@ -7989,7 +7925,6 @@ window.performPartSearch = function(query) {
     
     // Если найдены результаты по точному ID, показываем их
     if (searchResults.length > 0) {
-        console.log(`Найдено ${searchResults.length} деталей по точному ID: ${query}`);
         displayPartSearchResults(searchResults, 'По ID');
         return;
     }
@@ -8002,7 +7937,6 @@ window.performPartSearch = function(query) {
     
     // Если найдены результаты по частичному ID, показываем их
     if (searchResults.length > 0) {
-        console.log(`Найдено ${searchResults.length} деталей по частичному ID: ${query}`);
         searchResults.sort((a, b) => a.name.localeCompare(b.name));
         displayPartSearchResults(searchResults, 'По частичному ID');
         return;
@@ -8010,13 +7944,11 @@ window.performPartSearch = function(query) {
     
     // Этап 3: Fallback поиск по числовой части ID
     if (searchResults.length === 0) {
-        console.log(`Поиск по ID не дал результатов, пробуем поиск по числовой части: ${query}`);
         
         // Извлекаем числовую часть из поискового запроса
         const numericPart = query.match(/^\d+/);
         if (numericPart) {
             const numericId = numericPart[0];
-            console.log(`Ищем детали, начинающиеся с цифр: ${numericId}`);
             
             searchResults = Object.values(PART_MAP).filter(part => {
                 if (!part || !part.name) return false;
@@ -8024,7 +7956,6 @@ window.performPartSearch = function(query) {
             });
             
             if (searchResults.length > 0) {
-                console.log(`Найдено ${searchResults.length} деталей по числовой части ${numericId}`);
                 searchResults.sort((a, b) => a.name.localeCompare(b.name));
                 displayPartSearchResults(searchResults, 'По числовой части ID');
                 return;
@@ -8033,7 +7964,6 @@ window.performPartSearch = function(query) {
     }
     
     // Этап 4: Поиск по названию среди всего каталога
-    console.log(`Поиск по ID не дал результатов, ищем по названию: ${query}`);
     searchResults = Object.values(PART_MAP).filter(part => {
         if (!part || !part.name) return false;
         return part.name.toLowerCase().includes(query.toLowerCase());
@@ -8059,7 +7989,6 @@ window.performPartSearch = function(query) {
     // Ограничиваем количество результатов для производительности
     if (searchResults.length > 50) {
         searchResults = searchResults.slice(0, 50);
-        console.log(`Ограничено до 50 результатов из ${searchResults.length} найденных`);
     }
     
     // Отображаем результаты
@@ -8163,7 +8092,6 @@ const inactivityTips = [
     "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
     "🔍 Умный поиск с автодополнением помогает быстро находить нужные элементы",
     "💾 Данные сохраняются локально в браузере для быстрой работы",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
     "🌐 Система прокси автоматически обходит блокировки API для стабильной работы",
     "📋 Переключайтесь между каталогом и коллекцией для разных задач",
     "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
@@ -8185,7 +8113,6 @@ const inactivityTips = [
     "🎯 Приоритетная загрузка критически важных ресурсов",
     "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
     "📊 Мониторинг кэша для оптимизации производительности",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
     "🔄 Автосохранение состояния происходит после каждого действия",
     "🔧 Настраиваемые стратегии кэширования для разных типов данных",
     "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
@@ -8216,7 +8143,6 @@ const inactivityTips = [
     "🤖 Сфотографируйте деталь, минифигурку или даже набор для автоматического распознавания через AI",
     "🔍 Продвинутая фильтрация и сортировка помогают быстро находить нужные элементы",
     "📱 Адаптивный дизайн обеспечивает удобство использования на любых устройствах",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы"
 ];
 const REBRICKABLE_API_URL = 'https://rebrickable.com/api/v3/lego';
 const REBRICKABLE_API_KEYS = ['20c78cc607d6059c8d2a61338d851590', '04a7405ad41f1dd484a562f6e0c57312', 'd93f5c0989f63afa9b1c29ef8ad66002', 'b4179c1b8bd3c022ec9fc0e713e96b77', 'd32527bc33b575b8825a0ba04ba4add5'];
@@ -8336,11 +8262,9 @@ async function testProxyAvailability(proxyUrl, timeout = 5000) {
 async function checkAllProxies(showDetails = false) {
     // Если прокси отключены в настройках, не проверяем их
     if (!S.proxyEnabled) {
-        console.log('🚫 Прокси отключены в настройках, пропускаем проверку');
         return false;
     }
     
-    console.log('🔍 Проверяем доступность прокси серверов...');
     // updateApiStatus('checking', 'Проверка прокси...', 'blue', showDetails);
     
     const testPromises = PROXY_CONFIG.proxies.map(async (proxy, index) => {
@@ -8350,10 +8274,8 @@ async function checkAllProxies(showDetails = false) {
         const result = await testProxyAvailability(proxy);
         
         if (result.working) {
-            console.log(`✅ Прокси ${index + 1} работает: ${proxy} (${result.responseTime}ms)`);
             return { proxy, index, responseTime: result.responseTime };
         } else {
-            console.log(`❌ Прокси ${index + 1} недоступен: ${proxy} (${result.error})`);
             return null;
         }
     });
@@ -8367,15 +8289,12 @@ async function checkAllProxies(showDetails = false) {
     PROXY_CONFIG.workingProxies = workingProxies.map(r => r.proxy);
     PROXY_CONFIG.lastProxyTest = Date.now();
     
-    console.log(`🎯 Найдено ${workingProxies.length} рабочих прокси из ${PROXY_CONFIG.proxies.length}`);
     
     if (workingProxies.length > 0) {
-        console.log(`🏆 Лучший прокси: ${workingProxies[0].proxy} (${workingProxies[0].responseTime}ms)`);
         // Обновляем индекс на лучший прокси
         PROXY_CONFIG.currentProxyIndex = workingProxies[0].index;
         // updateApiStatus('working', `${workingProxies.length} прокси`, 'green', showDetails);
     } else {
-        console.warn('⚠️ Нет доступных прокси серверов!');
         // updateApiStatus('error', 'Нет прокси', 'red', showDetails);
     }
     
@@ -8392,7 +8311,6 @@ let forceProxy = false;
 // Глобальный перехватчик CORS ошибок
 window.addEventListener('error', (event) => {
     if (event.message && event.message.includes('CORS')) {
-        console.log('🚫 Глобальная CORS ошибка обнаружена, включаем прокси');
         lastBlockedTime = Date.now();
         forceProxy = true;
     }
@@ -8401,7 +8319,6 @@ window.addEventListener('error', (event) => {
 // Перехватчик для unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
     if (event.reason && event.reason.message && event.reason.message.includes('CORS')) {
-        console.log('🚫 CORS ошибка в Promise, включаем прокси');
         lastBlockedTime = Date.now();
         forceProxy = true;
     }
@@ -8416,7 +8333,6 @@ function getApiKey() {
 // Функция для сброса к первому API ключу при успешном запросе
 function resetApiKeyOnSuccess() {
     if (currentApiKeyIndex !== 0) {
-        console.log('🔄 Сбрасываем индекс API ключа на первый');
         currentApiKeyIndex = 0;
     }
 }
@@ -8432,7 +8348,6 @@ function isApiBlocked(response, error) {
             error.message.includes('blocked by CORS policy') ||
             error.message.includes('ERR_BLOCKED_BY_CLIENT') ||
             error.message.includes('ERR_NETWORK_CHANGED')) {
-            console.log('🔍 Обнаружена блокировка по CORS/сети:', error.message);
             return true;
         }
         return false;
@@ -8450,19 +8365,16 @@ function isApiBlocked(response, error) {
             
             // Если есть Retry-After заголовок, это блокировка
             if (retryAfter && parseInt(retryAfter) > 0) {
-                console.log(`🔍 Обнаружена блокировка по Retry-After: ${retryAfter} секунд`);
                 return true;
             }
             
             // Если лимит запросов исчерпан
             if (xRateLimitRemaining === '0') {
-                console.log('🔍 Обнаружена блокировка: исчерпан лимит запросов');
                 return true;
             }
         }
         
         if (isBlocked) {
-            console.log(`🔍 Обнаружена блокировка по HTTP статусу: ${response.status}`);
         }
         return isBlocked;
     }
@@ -8474,13 +8386,11 @@ function isApiBlocked(response, error) {
 function shouldUseProxy() {
     // Если прокси отключены в настройках, не используем их
     if (!S.proxyEnabled) {
-        console.log('Прокси отключены в настройках');
         return false;
     }
     
     // Принудительное включение прокси
     if (forceProxy) {
-        console.log('Принудительное использование прокси включено');
         return true;
     }
     
@@ -8489,7 +8399,6 @@ function shouldUseProxy() {
     const shouldUse = timeSinceBlocked < 300000; // 5 минут
     
     if (shouldUse) {
-        console.log(`IP заблокирован, используем прокси. Время с блокировки: ${Math.round(timeSinceBlocked / 1000)}с`);
     }
     
     return shouldUse;
@@ -8507,31 +8416,24 @@ async function testDirectConnection() {
     };
     
     try {
-        console.log('🔍 Тестируем прямое подключение к API...');
         const response = await fetch(testUrl, testOptions);
         
         if (response.ok) {
-            console.log('✅ Прямое подключение восстановлено');
             lastBlockedTime = 0; // Сбрасываем время блокировки
             BLOCKED_IP_CACHE.clear(); // Очищаем кэш заблокированных IP
             return true;
         } else if (isApiBlocked(response)) {
             if (response.status === 401) {
-                console.log('❌ Прямое подключение заблокировано (401 - ошибка авторизации)');
             } else {
-                console.log('❌ Прямое подключение все еще заблокировано');
             }
             return false;
         } else {
-            console.log(`⚠️ Прямое подключение вернуло статус ${response.status}`);
             return false;
         }
     } catch (error) {
         if (isApiBlocked(null, error)) {
-            console.log('❌ Прямое подключение заблокировано (CORS/сеть)');
             return false;
         } else {
-            console.log('⚠️ Ошибка при тестировании прямого подключения:', error.message);
             return false;
         }
     }
@@ -8545,14 +8447,12 @@ function getNextProxy() {
         PROXY_CONFIG.currentProxyIndex = (PROXY_CONFIG.currentProxyIndex + 1) % PROXY_CONFIG.workingProxies.length;
         
         // Логируем выбор прокси для отладки
-        console.log(`🔄 Выбран рабочий прокси: ${proxy} (${PROXY_CONFIG.currentProxyIndex}/${PROXY_CONFIG.workingProxies.length})`);
         return proxy;
     }
     
     // Fallback на старую логику с улучшенной ротацией
     const availableProxies = PROXY_CONFIG.proxies.filter((_, index) => !FAILED_PROXIES.has(index));
     if (availableProxies.length === 0) {
-        console.warn('⚠️ Все прокси недоступны, сбрасываем кэш и используем первый');
         FAILED_PROXIES.clear();
         return PROXY_CONFIG.proxies[0];
     }
@@ -8561,7 +8461,6 @@ function getNextProxy() {
     const proxy = availableProxies[PROXY_CONFIG.currentProxyIndex % availableProxies.length];
     PROXY_CONFIG.currentProxyIndex = (PROXY_CONFIG.currentProxyIndex + 1) % availableProxies.length;
     
-    console.log(`🔄 Fallback прокси: ${proxy} (${PROXY_CONFIG.currentProxyIndex}/${availableProxies.length})`);
     return proxy;
 }
 
@@ -8570,13 +8469,11 @@ function markProxyAsFailed(proxyUrl) {
     if (index !== -1) {
         FAILED_PROXIES.add(index);
         PROXY_STATS.failedRequests++;
-        console.warn(`❌ Прокси ${proxyUrl} помечен как недоступный`);
         
         // Удаляем из списка рабочих прокси
         const workingIndex = PROXY_CONFIG.workingProxies.indexOf(proxyUrl);
         if (workingIndex !== -1) {
             PROXY_CONFIG.workingProxies.splice(workingIndex, 1);
-            console.log(`🗑️ Прокси удален из списка рабочих: ${proxyUrl}`);
         }
     }
 }
@@ -8638,48 +8535,39 @@ function buildProxyUrl(originalUrl, proxyUrl) {
 async function fetchWithProxy(url, options = {}, retryCount = 0) {
     // Если прокси отключены в настройках, не используем их
     if (!S.proxyEnabled) {
-        console.log('🚫 Прокси отключены в настройках, используем прямой запрос');
         return await fetch(url, options);
     }
     
     // Проверяем, нужно ли обновить список рабочих прокси
     const now = Date.now();
     if (now - PROXY_CONFIG.lastProxyTest > PROXY_CONFIG.proxyTestInterval) {
-        console.log('🔄 Обновляем список рабочих прокси...');
         checkAllProxies(false).catch(error => {
-            console.warn('⚠️ Ошибка при обновлении прокси:', error);
         });
     }
     
     // Периодически проверяем восстановление прямого подключения (каждые 2 минуты)
     if (lastBlockedTime > 0 && now - lastBlockedTime > 120000 && now - lastBlockedTime < 300000) {
-        console.log('🔄 Проверяем восстановление прямого подключения...');
         const directAvailable = await testDirectConnection();
         if (directAvailable) {
-            console.log('✅ Переключаемся обратно на прямые запросы');
             return await fetch(url, options);
         }
     }
     
     // Если превышено количество попыток, используем только прямой запрос
     if (retryCount >= PROXY_CONFIG.maxRetries) {
-        console.log('Превышено количество попыток, используем прямой запрос:', url);
         // updateApiStatus('error', 'Прямое подключение', 'red');
         return await fetch(url, options);
     }
 
     // Если принудительно включен прокси или IP заблокирован, сразу используем прокси
     if (shouldUseProxy()) {
-        console.log('🔄 Используем прокси (IP заблокирован или принудительно включен)');
     } else if (retryCount === 0) {
         // Если это первая попытка и IP не заблокирован, пробуем прямой запрос
         try {
-            console.log('Попытка прямого запроса:', url);
             const directResponse = await fetch(url, options);
             
             // Если запрос успешен, возвращаем результат
             if (directResponse.ok) {
-                console.log('✓ Прямой запрос успешен');
                 resetApiKeyOnSuccess(); // Сбрасываем API ключ на первый при успехе
                 // updateApiStatus('working', 'Прямое подключение', 'green', false);
                 return directResponse;
@@ -8688,9 +8576,7 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
             // Проверяем, заблокирован ли API
             if (isApiBlocked(directResponse)) {
                 if (directResponse.status === 401) {
-                    console.warn(`🚫 Ошибка авторизации (401) - возможно временная блокировка API ключа, переключаемся на прокси`);
                 } else {
-                    console.warn(`Прямой запрос заблокирован (${directResponse.status}), переключаемся на прокси`);
                 }
                 lastBlockedTime = Date.now();
                 BLOCKED_IP_CACHE.add(url);
@@ -8698,13 +8584,11 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
                 return await fetchWithProxy(url, options, retryCount + 1);
             } else {
                 // Для других ошибок (404, 500 и т.д.) возвращаем ответ как есть
-                console.log(`Прямой запрос вернул ${directResponse.status}, возвращаем ответ`);
                 return directResponse;
             }
         } catch (error) {
             // Проверяем, является ли это блокировкой
             if (isApiBlocked(null, error)) {
-                console.warn('Прямой запрос заблокирован (CORS/сеть), переключаемся на прокси:', error.message);
                 lastBlockedTime = Date.now();
                 BLOCKED_IP_CACHE.add(url);
                 // Переходим к прокси
@@ -8719,12 +8603,10 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
     // Если дошли сюда, значит нужен прокси
     const proxy = getNextProxy();
     if (!proxy) {
-        console.log('Прокси недоступны, используем прямой запрос:', url);
         return await fetch(url, options);
     }
 
     const proxyUrl = buildProxyUrl(url, proxy);
-    console.log(`Попытка ${retryCount + 1}: Используем прокси ${proxy} для ${url}`);
 
     try {
         const response = await fetch(proxyUrl, {
@@ -8753,14 +8635,11 @@ async function fetchWithProxy(url, options = {}, retryCount = 0) {
             }
         }
 
-        console.log('✓ Прокси запрос успешен');
         // Обновляем статистику успешного запроса
         updateProxyStats(proxy, true);
-        console.log(`✅ Успешный запрос через прокси: ${proxy}`);
         // updateApiStatus('working', 'Через прокси', 'blue', false);
         return response;
     } catch (error) {
-        console.warn(`❌ Ошибка с прокси ${proxy}:`, error.message);
         updateProxyStats(proxy, false);
         markProxyAsFailed(proxy);
         
@@ -8894,7 +8773,6 @@ class ModalManager {
     }
     
     openModal(modalId, modalElement) {
-        console.log(`ModalManager.openModal: Opening ${modalId}`);
         // Убираем класс modal-hidden или viewer-hidden
         modalElement.classList.remove('modal-hidden', 'viewer-hidden');
         
@@ -8912,7 +8790,6 @@ class ModalManager {
             zIndex = maxZIndex + 10; // Обычные модальные окна
         }
         
-        console.log(`ModalManager.openModal: Setting z-index ${zIndex} for ${modalId} (max was ${maxZIndex})`);
         modalElement.style.zIndex = zIndex.toString();
         
         // Добавляем в список открытых модальных окон
@@ -8955,7 +8832,6 @@ class ModalManager {
         // Блокируем прокрутку body
         document.body.classList.add('overflow-hidden');
         
-        console.log(`ModalManager.openModal: After opening ${modalId}, current z-indexes:`);
         this.debugZIndexes();
     }
     
@@ -9070,7 +8946,6 @@ class ModalManager {
     
     // Закрывает все открытые модальные окна
     closeAllModals() {
-        console.log(`ModalManager.closeAllModals: Closing ${this.openModals.length} modals`);
         
         // Создаем копию массива, чтобы избежать проблем при итерации
         const modalsToClose = [...this.openModals];
@@ -9087,7 +8962,6 @@ class ModalManager {
             document.body.classList.remove('overflow-hidden');
         }, modalsToClose.length * 50 + 200);
         
-        console.log('ModalManager.closeAllModals: All modals closing with animation');
     }
     
     getMaxZIndex() {
@@ -9096,19 +8970,12 @@ class ModalManager {
     }
     
     debugZIndexes() {
-        console.log('Current modal z-indexes:');
-        this.openModals.forEach(modal => {
-            console.log(`  ${modal.id}: ${modal.zIndex}`);
-        });
-        console.log(`Max z-index: ${this.getMaxZIndex()}`);
     }
     
     // Временно поднимает модальное окно на самый верх
     bringToFront(modalId) {
-        console.log(`ModalManager.bringToFront: Bringing ${modalId} to front`);
         const modalIndex = this.openModals.findIndex(modal => modal.id === modalId);
         if (modalIndex === -1) {
-            console.log(`ModalManager.bringToFront: Modal ${modalId} not found in openModals`);
             return;
         }
         
@@ -9120,14 +8987,12 @@ class ModalManager {
         // Устанавливаем z-index выше всех остальных
         const newZIndex = currentMaxZIndex + 20;
         modal.zIndex = newZIndex;
-        console.log(`ModalManager.bringToFront: Setting z-index ${newZIndex} for ${modalId} (was ${modal.element.style.zIndex})`);
         modal.element.style.zIndex = newZIndex.toString();
         
         // Перемещаем модальное окно в конец массива (последним открытым)
         this.openModals.splice(modalIndex, 1);
         this.openModals.push(modal);
         
-        console.log(`ModalManager.bringToFront: After bringing ${modalId} to front:`);
         this.debugZIndexes();
     }
 }
@@ -9170,7 +9035,6 @@ function saveRemoteStorageState(connected, account = null) {
         timestamp: new Date().toISOString()
     };
     localStorage.setItem(REMOTESTORAGE_KEYS.CONNECTION_STATE, JSON.stringify(state));
-    console.log('💾 RemoteStorage state saved:', state);
 }
 
 function loadRemoteStorageState() {
@@ -9178,18 +9042,15 @@ function loadRemoteStorageState() {
         const state = localStorage.getItem(REMOTESTORAGE_KEYS.CONNECTION_STATE);
         if (state) {
             const parsed = JSON.parse(state);
-            console.log('📂 RemoteStorage state loaded:', parsed);
             return parsed;
         }
     } catch (error) {
-        console.error('❌ Failed to load RemoteStorage state:', error);
     }
     return null;
 }
 
 function saveUserAccount(account) {
     localStorage.setItem(REMOTESTORAGE_KEYS.USER_ACCOUNT, account);
-    console.log('👤 User account saved:', account);
 }
 
 function loadUserAccount() {
@@ -9201,17 +9062,14 @@ async function saveCachedData(data) {
     if (data.collection) {
         if (data.collection.parts) {
             localStorage.setItem('legoCollection', JSON.stringify(data.collection.parts));
-            console.log('💾 Parts saved to localStorage:', Object.keys(data.collection.parts).length);
         }
         
         if (data.collection.sets) {
             localStorage.setItem('legoSetCollection', JSON.stringify(data.collection.sets));
-            console.log('💾 Sets saved to localStorage:', Object.keys(data.collection.sets).length);
         }
         
         if (data.collection.minifigs) {
             localStorage.setItem('legoMinifigCollection', JSON.stringify(data.collection.minifigs));
-            console.log('💾 Minifigs saved to localStorage:', Object.keys(data.collection.minifigs).length);
         }
     }
     
@@ -9219,12 +9077,10 @@ async function saveCachedData(data) {
     if (data.favorites) {
         if (data.favorites.categories) {
             localStorage.setItem('favoriteCategoryIds', JSON.stringify(data.favorites.categories));
-            console.log('💾 Favorite categories saved to localStorage:', data.favorites.categories.length);
         }
         
         if (data.favorites.themes) {
             localStorage.setItem('favoriteThemeIds', JSON.stringify(data.favorites.themes));
-            console.log('💾 Favorite themes saved to localStorage:', data.favorites.themes.length);
         }
     }
     
@@ -9234,7 +9090,6 @@ async function saveCachedData(data) {
         timestamp: new Date().toISOString()
     };
     localStorage.setItem(REMOTESTORAGE_KEYS.CACHED_DATA, JSON.stringify(cacheData));
-    console.log('💾 Data cached locally:', cacheData.timestamp);
     
     // Обновляем информацию о последней резервной копии
     await updateCloudBackupInfo();
@@ -9245,11 +9100,9 @@ function loadCachedData() {
         const cached = localStorage.getItem(REMOTESTORAGE_KEYS.CACHED_DATA);
         if (cached) {
             const parsed = JSON.parse(cached);
-            console.log('📂 Cached data loaded:', parsed.timestamp);
             return parsed.data;
         }
     } catch (error) {
-        console.error('❌ Failed to load cached data:', error);
     }
     return null;
 }
@@ -9938,11 +9791,7 @@ function renderScannerContent() {
                                     <span class="hidden sm:inline">Сбросить флаг</span>
                                     <span class="sm:hidden">Сброс</span>
                                 </button>
-                                <button id="test-minifig-scan" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-[18px] transition-colors text-sm sm:text-base">
-                                    <span>${I_Scanner('w-4 h-4')}</span>
-                                    <span class="hidden sm:inline">Тест минифигурки</span>
-                                    <span class="sm:hidden">Тест</span>
-                                </button> -->
+ -->
                             </div>
                         </div>
                     </details>
@@ -10381,17 +10230,8 @@ async function saveToCloud() {
         console.log('🔄 Loading state before save...');
         loadState();
         
-        // Отладочная информация
-        console.log('📊 S.coll keys:', Object.keys(S.coll).length);
-        console.log('📊 S.setColl keys:', Object.keys(S.setColl).length);
-        console.log('📊 S.minifigColl keys:', Object.keys(S.minifigColl).length);
-        console.log('📊 S.coll sample:', Object.keys(S.coll).slice(0, 3));
-        console.log('📊 S.setColl sample:', Object.keys(S.setColl).slice(0, 3));
-        console.log('📊 S.minifigColl sample:', Object.keys(S.minifigColl).slice(0, 3));
-        
         // Показываем подтверждение с количеством элементов
         const counts = getCollectionCounts();
-        console.log('📊 Collection counts:', counts);
         
         const confirmed = await showCustomConfirm(
             `Сохранить коллекцию в облако?\n\n` +
@@ -10735,7 +10575,7 @@ function initializeRemoteStorageWidget() {
         
         // Создаем клиент remoteStorage согласно документации
         cloudStorageClient = new RemoteStorage({
-            logging: 'warn',
+            logging: false,
             cache: false,
             // Отключаем автоматическое перенаправление для предотвращения циклических перезагрузок
             redirectUri: window.location.origin + window.location.pathname
@@ -10810,13 +10650,11 @@ function initializeRemoteStorageWidget() {
         
         // Обработчики событий согласно документации
         cloudStorageClient.on('ready', () => {
-            console.log('✅ RemoteStorage ready');
             cloudStorageConnected = true;
             updateCloudStorageStatus('Готово к работе', 'success');
         });
         
         cloudStorageClient.on('connected', () => {
-            console.log('✅ RemoteStorage connected');
             cloudStorageConnected = true;
             updateCloudStorageStatus('Подключено', 'success');
             
@@ -10919,12 +10757,10 @@ async function checkBackupFreshness() {
         // Проверяем кэш - не проверяем слишком часто
         const now = Date.now();
         if (now - lastBackupFreshnessCheck < BACKUP_FRESHNESS_CHECK_INTERVAL) {
-            console.log('📝 Backup freshness check too recent, skipping...');
             return false;
         }
         
         lastBackupFreshnessCheck = now;
-        console.log('🔄 Checking backup freshness...');
         
         // Создаем клиент для работы с данными
         const client = cloudStorageClient.scope('/lego-catalog/');
@@ -11301,7 +11137,6 @@ async function checkSavedCloudStorageState() {
         const savedAccount = loadUserAccount();
         
         if (savedState && savedState.connected && savedAccount) {
-            console.log('✅ Found saved cloud storage state for:', savedAccount);
             
             // Обновляем состояние без переподключения
             cloudStorageConnected = true;
@@ -11310,7 +11145,7 @@ async function checkSavedCloudStorageState() {
             // Инициализируем клиент только для работы с данными (без подключения)
             if (!cloudStorageClient) {
                 cloudStorageClient = new RemoteStorage({
-                    logging: 'warn',
+                    logging: false,
                     cache: false,
                     // Отключаем автоматическое перенаправление для предотвращения циклических перезагрузок
                     redirectUri: window.location.origin + window.location.pathname
@@ -11342,7 +11177,6 @@ async function checkSavedCloudStorageState() {
 // Функция настройки обработчиков событий RemoteStorage
 function setupRemoteStorageEventHandlers() {
     cloudStorageClient.on('ready', () => {
-        console.log('✅ RemoteStorage ready');
         cloudStorageConnected = true;
         isReconnecting = false; // Сбрасываем флаг переподключения
         
@@ -11375,7 +11209,6 @@ function setupRemoteStorageEventHandlers() {
     });
     
     cloudStorageClient.on('connected', () => {
-        console.log('✅ RemoteStorage connected');
         cloudStorageConnected = true;
         isReconnecting = false; // Сбрасываем флаг переподключения
         
@@ -11474,7 +11307,6 @@ function setupRemoteStorageEventHandlers() {
                 }
             });
         } catch (error) {
-            console.log('ℹ️ Some RemoteStorage events not supported:', error.message);
         }
     }
 }
@@ -11524,7 +11356,6 @@ function startPeriodicVersionsRefresh() {
             }
         }, VERSIONS_REFRESH_INTERVAL);
         
-        console.log('✅ Started periodic versions refresh');
     }
 }
 
@@ -11533,7 +11364,6 @@ function stopPeriodicVersionsRefresh() {
     if (periodicVersionsRefreshInterval) {
         clearInterval(periodicVersionsRefreshInterval);
         periodicVersionsRefreshInterval = null;
-        console.log('⏹️ Stopped periodic versions refresh');
     }
 }
 
@@ -13169,37 +12999,29 @@ function loadState() {
     // Сбрасываем случайное изображение минифигурки при загрузке состояния
     resetRandomMinifigImage();
     
-    console.log('🔄 Loading state from localStorage...');
     
     const e = localStorage.getItem('legoCollection');
-    console.log('📦 legoCollection in localStorage:', e ? 'exists' : 'missing', e ? `(${e.length} chars)` : '');
     if (e) try {
         const t = JSON.parse(e);
         "object" == typeof t && null !== t && (S.coll = t)
-        console.log('✅ Loaded parts collection:', Object.keys(S.coll).length, 'items');
     } catch (t) {
         console.error("Failed to parse lego collection from localStorage", t), S.coll = {}
     }
     const t = localStorage.getItem('legoSetCollection');
-    console.log('📦 legoSetCollection in localStorage:', t ? 'exists' : 'missing', t ? `(${t.length} chars)` : '');
     if (t) try {
         const e = JSON.parse(t);
         "object" == typeof e && null !== e && (S.setColl = e)
-        console.log('✅ Loaded sets collection:', Object.keys(S.setColl).length, 'items');
     } catch (e) {
         console.error("Failed to parse lego set collection from localStorage", e), S.setColl = {}
     }
     
 
     // Все данные будут загружены заново из CSV файлов
-    console.log('User collections and favorites loaded from localStorage');
     
     const o = localStorage.getItem('legoMinifigCollection');
-    console.log('📦 legoMinifigCollection in localStorage:', o ? 'exists' : 'missing', o ? `(${o.length} chars)` : '');
     if (o) try {
         const e = JSON.parse(o);
         "object" == typeof e && null !== e && (S.minifigColl = e)
-        console.log('✅ Loaded minifigs collection:', Object.keys(S.minifigColl).length, 'items');
     } catch (e) {
         console.error("Failed to parse lego minifig collection from localStorage", e), S.minifigColl = {}
     }
@@ -13220,7 +13042,6 @@ function loadState() {
     const wishlistsData = localStorage.getItem('wishlists');
     if (wishlistsData) try {
         S.wishlists = JSON.parse(wishlistsData);
-        console.log('✅ Loaded wishlists:', Object.keys(S.wishlists).length, 'lists');
     } catch (e) {
         console.error("Failed to parse wishlists from localStorage", e), S.wishlists = {}
     }
@@ -13233,16 +13054,13 @@ function loadState() {
     // Загружаем развернутые папки списков желаний
     S.expandedWishlists = []; // Инициализируем как пустой массив
     const expandedWishlistsData = localStorage.getItem('expandedWishlists');
-    console.log('📁 Raw expandedWishlistsData from localStorage:', expandedWishlistsData);
     
     if (expandedWishlistsData) try {
         S.expandedWishlists = JSON.parse(expandedWishlistsData);
-        console.log('✅ Loaded expanded wishlists:', S.expandedWishlists.length, 'folders:', S.expandedWishlists);
     } catch (e) {
         console.error("Failed to parse expandedWishlists from localStorage", e);
         S.expandedWishlists = [];
     }
-    console.log('📁 Final expandedWishlists after load:', S.expandedWishlists);
     
     // Добавляем функции для отладки
     window.clearExpandedWishlists = function() {
@@ -13284,7 +13102,6 @@ function saveState() {
     localStorage.setItem('currentWishlist', S.currentWishlist);
         
     // Все данные будут загружены заново из CSV файлов при каждом запуске
-    console.log('User collections and favorites saved to localStorage');
 }
 
 // Функции аналитики и определения редкости деталей
@@ -13384,399 +13201,6 @@ function pluralize(count, forms) {
     return forms[index];
 }
 
-// Тестовая функция для проверки логики редкости
-function testRarityLogic() {
-    console.log('🧪 Тестирование логики редкости минифигурок...');
-    
-    // Тестовые данные
-    const testMinifigs = [
-        {
-            name: 'VIP Exclusive Gold Minifigure',
-            set_num: 'VIP-001',
-            theme_id: 1,
-            year: 2010,
-            num_parts: 25,
-            minifig_img_url: 'test.jpg'
-        },
-        {
-            name: 'Collectible Minifigure Series 1',
-            set_num: 'COL-001',
-            theme_id: 2,
-            year: 2020,
-            num_parts: 5,
-            minifig_img_url: 'test.jpg'
-        },
-        {
-            name: 'Regular Minifigure',
-            set_num: 'REG-123',
-            theme_id: 3,
-            year: 2023,
-            num_parts: 3,
-            minifig_img_url: 'test.jpg'
-        },
-        {
-            name: 'Star Wars Darth Vader',
-            set_num: 'SW-456',
-            theme_id: 4,
-            year: 2015,
-            num_parts: 8,
-            minifig_img_url: 'test.jpg'
-        }
-    ];
-    
-    testMinifigs.forEach((minifig, index) => {
-        console.log(`\n🧪 Тест ${index + 1}: ${minifig.name}`);
-        
-        // Временно сохраняем оригинальную функцию
-        const originalCalculate = calculateMinifigRarity;
-        
-        // Создаем тестовую версию
-        function testCalculateMinifigRarity(testMinifig) {
-            let rarityScore = 0;
-            const debugInfo = {
-                name: testMinifig.name,
-                set_num: testMinifig.set_num,
-                theme_id: testMinifig.theme_id,
-                year: testMinifig.year,
-                num_parts: testMinifig.num_parts,
-                factors: {}
-            };
-            
-            // Фактор 1: Количество деталей
-            const numParts = testMinifig.num_parts || 0;
-            if (numParts > 0) {
-                if (numParts >= 20) {
-                    rarityScore += 30;
-                    debugInfo.factors.numParts = { score: 30, reason: 'Очень сложные (20+ деталей)' };
-                } else if (numParts >= 15) {
-                    rarityScore += 25;
-                    debugInfo.factors.numParts = { score: 25, reason: 'Сложные (15-19 деталей)' };
-                } else if (numParts >= 10) {
-                    rarityScore += 15;
-                    debugInfo.factors.numParts = { score: 15, reason: 'Средние (10-14 деталей)' };
-                } else if (numParts >= 5) {
-                    rarityScore += 5;
-                    debugInfo.factors.numParts = { score: 5, reason: 'Простые (5-9 деталей)' };
-                }
-            }
-            
-            // Фактор 2: Название
-            const minifigName = testMinifig.name || '';
-            if (minifigName.includes('VIP') || minifigName.includes('Promotional')) {
-                rarityScore += 35;
-                debugInfo.factors.name = { score: 35, reason: 'VIP/промо названия' };
-            } else if (minifigName.includes('Gold') || minifigName.includes('Silver')) {
-                rarityScore += 30;
-                debugInfo.factors.name = { score: 30, reason: 'Золотые/серебряные названия' };
-            } else if (minifigName.includes('Collectible') || minifigName.includes('Collector')) {
-                rarityScore += 25;
-                debugInfo.factors.name = { score: 25, reason: 'Коллекционные названия' };
-            } else {
-                debugInfo.factors.name = { score: 0, reason: 'Обычное название' };
-            }
-            
-            // Фактор 3: Год
-            const year = testMinifig.year || 0;
-            if (year > 0) {
-                const currentYear = new Date().getFullYear();
-                const age = currentYear - year;
-                if (age >= 20) {
-                    rarityScore += 20;
-                    debugInfo.factors.year = { score: 20, reason: `Очень старые (${age} лет)` };
-                } else if (age >= 15) {
-                    rarityScore += 15;
-                    debugInfo.factors.year = { score: 15, reason: `Старые (${age} лет)` };
-                } else if (age >= 10) {
-                    rarityScore += 10;
-                    debugInfo.factors.year = { score: 10, reason: `Средние (${age} лет)` };
-                } else if (age >= 5) {
-                    rarityScore += 5;
-                    debugInfo.factors.year = { score: 5, reason: `Новые (${age} лет)` };
-                }
-            }
-            
-            // Фактор 4: Тема (отключено)
-            debugInfo.factors.theme = { score: 0, reason: 'Тема не учитывается' };
-            
-            // Фактор 5: Номер серии
-            const setNum = testMinifig.set_num || '';
-            let setNumScore = 0;
-            if (setNum.includes('VIP') || setNum.includes('PROMO')) {
-                setNumScore += 35;
-            } else if (setNum.includes('COL') || setNum.includes('COLLECTIBLE')) {
-                setNumScore += 25;
-            } else if (setNum.includes('SW')) {
-                setNumScore += 10;
-            }
-            
-            // Специальные номера
-            if (setNum.match(/^(\d{3,4})$/)) {
-                const num = parseInt(setNum.match(/^(\d{3,4})$/)[1], 10);
-                if (num === 1 || num === 10 || num === 100 || num === 1000) {
-                    setNumScore += 25;
-                } else if (num === 2 || num === 20 || num === 200 || num === 2000) {
-                    setNumScore += 20;
-                }
-            }
-            
-            rarityScore += setNumScore;
-            debugInfo.factors.setNum = { score: setNumScore, reason: `Номер: ${setNum}` };
-            
-            // Определяем редкость
-            let rarity;
-            if (rarityScore >= 100) rarity = 'legendary';
-            else if (rarityScore >= 80) rarity = 'epic';
-            else if (rarityScore >= 60) rarity = 'rare';
-            else if (rarityScore >= 40) rarity = 'uncommon';
-            else rarity = 'common';
-            
-            debugInfo.totalScore = rarityScore;
-            debugInfo.rarity = rarity;
-            
-            return { rarity, debugInfo };
-        }
-        
-        const result = testCalculateMinifigRarity(minifig);
-    });
-    
-    console.log('\n✅ Тестирование завершено!');
-}
-
-// Функция для тестирования реальных минифигурок пользователя
-function testUserMinifigs() {
-    console.log('🧪 Тестирование реальных минифигурок пользователя...');
-    
-    // Данные из CSV пользователя
-    const userMinifigs = [
-        { id: 'fig-014293', name: 'Ahsoka Tano', parts: 4 },
-        { id: 'fig-014806', name: 'Arc Trooper Fives', parts: 7 },
-        { id: 'fig-012921', name: 'Astromech Droid, R4-P17, Light Blue Rectangles', parts: 4 },
-        { id: 'fig-015729', name: 'Astromech Droid, R5-D4, Dark Blue Center Panel', parts: 4 },
-        { id: 'fig-015705', name: 'Astronomer Kid', parts: 4 },
-        { id: 'fig-002330', name: 'Battle Droid, One Bent Arm, One Straight Arm', parts: 5 },
-        { id: 'fig-003867', name: 'Clone ARC Trooper / Elite Clone Trooper with Neck Bracket (Commander Hammer)', parts: 8 },
-        { id: 'fig-003866', name: 'Clone ARF Trooper / Elite Clone Trooper (Rancor Battalion)', parts: 4 },
-        { id: 'fig-014993', name: 'Clone Trooper, 501st Legion, White Arms', parts: 4 },
-        { id: 'fig-002506', name: 'Commando Droid', parts: 5 },
-        { id: 'fig-015710', name: 'Cupid', parts: 6 },
-        { id: 'fig-010514', name: 'Draco Malfoy, Closed Slytherin Robes with Crest, Short Legs', parts: 4 },
-        { id: 'fig-015004', name: 'Droideka / Destroyer Droid', parts: 30 },
-        { id: 'fig-015902', name: 'Gilderoy Lockhart, Light Bluish Gray Duelling Suit', parts: 5 },
-        { id: 'fig-010525', name: 'Grogu / The Child (Baby Yoda)', parts: 2 },
-        { id: 'fig-014647', name: 'Harpy', parts: 9 },
-        { id: 'fig-011589', name: 'Harry Potter, Gryffindor Robes Open, Short Legs (3626c Head)', parts: 4 },
-        { id: 'fig-015064', name: 'Imperial Praetorian Guard', parts: 4 },
-        { id: 'fig-015704', name: 'Jetpack Racer', parts: 5 },
-        { id: 'fig-015455', name: 'Leia - Ugly Christmas Sweater', parts: 4 },
-        { id: 'fig-015457', name: 'Luke Skywalker - Ugly Christmas Sweater', parts: 4 },
-        { id: 'fig-001061', name: 'Magician (CMF)', parts: 5 },
-        { id: 'fig-012924', name: 'Obi-Wan Kenobi - Reddish Brown Robe, Long Hair', parts: 4 },
-        { id: 'fig-015711', name: 'Pirate Quartermaster', parts: 5 },
-        { id: 'fig-015094', name: 'Professor Severus Snape, Long Robes over Black Vest', parts: 4 },
-        { id: 'fig-010827', name: 'Spider-Man, Printed Arms', parts: 3 },
-        { id: 'fig-002118', name: 'Steve', parts: 3 },
-        { id: 'fig-004063', name: 'Stormtrooper, Dark Azure Helmet Vents, Angry (Rebels)', parts: 4 },
-        { id: 'fig-014665', name: 'Super Battle Droid, Updated Version', parts: 4 },
-        { id: 'fig-012922', name: 'Taun We', parts: 3 },
-        { id: 'fig-015880', name: 'The Mandalorian / Din Djarin, Dark Brown Outfit, 87610pr0012 Helmet', parts: 5 },
-        { id: 'fig-005492', name: 'Venom with Open Mouth', parts: 3 }
-    ];
-    
-    // Тестируем каждую минифигурку
-    const results = userMinifigs.map(minifig => {
-        // Создаем тестовую минифигурку с данными из CSV
-        const testMinifig = {
-            name: minifig.name,
-            set_num: minifig.id,
-            theme_id: undefined, // Нет данных о теме
-            year: undefined, // Нет данных о годе
-            num_parts: minifig.parts,
-            minifig_img_url: 'test.jpg'
-        };
-        
-        // Рассчитываем редкость
-        let rarityScore = 0;
-        const debugInfo = {
-            name: testMinifig.name,
-            set_num: testMinifig.set_num,
-            theme_id: testMinifig.theme_id,
-            year: testMinifig.year,
-            num_parts: testMinifig.num_parts,
-            factors: {}
-        };
-        
-        // Фактор 1: Количество деталей
-        const numParts = testMinifig.num_parts || 0;
-        if (numParts > 0) {
-            if (numParts >= 20) {
-                rarityScore += 30;
-                debugInfo.factors.numParts = { score: 30, reason: 'Очень сложные (20+ деталей)' };
-            } else if (numParts >= 15) {
-                rarityScore += 25;
-                debugInfo.factors.numParts = { score: 25, reason: 'Сложные (15-19 деталей)' };
-            } else if (numParts >= 10) {
-                rarityScore += 15;
-                debugInfo.factors.numParts = { score: 15, reason: 'Средние (10-14 деталей)' };
-            } else if (numParts >= 5) {
-                rarityScore += 5;
-                debugInfo.factors.numParts = { score: 5, reason: 'Простые (5-9 деталей)' };
-            }
-        }
-        
-        // Фактор 2: Название
-        const minifigName = testMinifig.name || '';
-        if (minifigName.includes('VIP') || minifigName.includes('Promotional')) {
-            rarityScore += 35;
-            debugInfo.factors.name = { score: 35, reason: 'VIP/промо названия' };
-        } else if (minifigName.includes('Gold') || minifigName.includes('Silver')) {
-            rarityScore += 30;
-            debugInfo.factors.name = { score: 30, reason: 'Золотые/серебряные названия' };
-        } else if (minifigName.includes('Collectible') || minifigName.includes('Collector') || minifigName.includes('CMF')) {
-            rarityScore += 25;
-            debugInfo.factors.name = { score: 25, reason: 'Коллекционные названия' };
-        } else {
-            debugInfo.factors.name = { score: 0, reason: 'Обычное название' };
-        }
-        
-        // Фактор 3: Год (симулируем данные из связанных наборов)
-        // Для тестирования используем примерные годы на основе названий
-        let year = 0;
-        let yearSource = 'симуляция';
-        
-        // Симулируем годы на основе названий минифигурок
-        if (minifigName.includes('Clone') || minifigName.includes('Battle Droid') || minifigName.includes('Commando Droid')) {
-            year = 2008; // Старые Star Wars минифигурки
-        } else if (minifigName.includes('Harry Potter') || minifigName.includes('Draco') || minifigName.includes('Gilderoy') || minifigName.includes('Severus')) {
-            year = 2010; // Harry Potter минифигурки
-        } else if (minifigName.includes('Spider-Man') || minifigName.includes('Venom')) {
-            year = 2012; // Marvel минифигурки
-        } else if (minifigName.includes('Steve')) {
-            year = 2014; // Minecraft минифигурки
-        } else if (minifigName.includes('The Mandalorian') || minifigName.includes('Grogu')) {
-            year = 2020; // Новые Star Wars минифигурки
-        } else if (minifigName.includes('Christmas') || minifigName.includes('Ugly')) {
-            year = 2021; // Праздничные минифигурки
-        } else if (minifigName.includes('CMF') || minifigName.includes('Magician')) {
-            year = 2015; // Коллекционные минифигурки
-        } else {
-            year = 2018; // Остальные минифигурки
-        }
-        
-        if (year > 0) {
-            const currentYear = new Date().getFullYear();
-            const age = currentYear - year;
-            if (age >= 20) {
-                rarityScore += 20;
-                debugInfo.factors.year = { score: 20, reason: `Очень старые (${age} лет, ${yearSource})` };
-            } else if (age >= 15) {
-                rarityScore += 15;
-                debugInfo.factors.year = { score: 15, reason: `Старые (${age} лет, ${yearSource})` };
-            } else if (age >= 10) {
-                rarityScore += 10;
-                debugInfo.factors.year = { score: 10, reason: `Средние (${age} лет, ${yearSource})` };
-            } else if (age >= 5) {
-                rarityScore += 5;
-                debugInfo.factors.year = { score: 5, reason: `Новые (${age} лет, ${yearSource})` };
-            } else {
-                debugInfo.factors.year = { score: 0, reason: `Очень новые (${age} лет, ${yearSource})` };
-            }
-        } else {
-            debugInfo.factors.year = { score: 0, reason: 'Нет данных о годе' };
-        }
-        
-        // Фактор 4: Тема (отключено)
-        debugInfo.factors.theme = { score: 0, reason: 'Тема не учитывается' };
-        
-        // Фактор 5: Номер серии
-        const setNum = testMinifig.set_num || '';
-        let setNumScore = 0;
-        if (setNum.includes('VIP') || setNum.includes('PROMO')) {
-            setNumScore += 35;
-        } else if (setNum.includes('COL') || setNum.includes('COLLECTIBLE')) {
-            setNumScore += 25;
-        } else if (setNum.includes('SW')) {
-            setNumScore += 10;
-        }
-        
-        // Специальные номера
-        if (setNum.match(/^(\d{3,4})$/)) {
-            const num = parseInt(setNum.match(/^(\d{3,4})$/)[1], 10);
-            if (num === 1 || num === 10 || num === 100 || num === 1000) {
-                setNumScore += 25;
-            } else if (num === 2 || num === 20 || num === 200 || num === 2000) {
-                setNumScore += 20;
-            }
-        }
-        
-        rarityScore += setNumScore;
-        debugInfo.factors.setNum = { score: setNumScore, reason: `Номер: ${setNum}` };
-        
-        // Фактор 6: Коллекционные серии по названию
-        let nameScore = 0;
-        if (minifigName.includes('Collectible') || minifigName.includes('Collector')) {
-            nameScore += 25;
-        } else if (minifigName.includes('Series') || minifigName.includes('Serie')) {
-            nameScore += 20;
-        } else if (minifigName.includes('Blind') || minifigName.includes('Bag')) {
-            nameScore += 15;
-        } else if (minifigName.includes('Polybag') || minifigName.includes('Poly')) {
-            nameScore += 10;
-        }
-        
-        rarityScore += nameScore;
-        debugInfo.factors.nameSeries = { score: nameScore, reason: `Название: ${minifigName}` };
-        
-        // Фактор 7: Изображение
-        debugInfo.factors.image = { score: 0, reason: 'Есть изображение' };
-        
-        // Определяем редкость
-        let rarity;
-        if (rarityScore >= 100) rarity = 'legendary';
-        else if (rarityScore >= 80) rarity = 'epic';
-        else if (rarityScore >= 60) rarity = 'rare';
-        else if (rarityScore >= 40) rarity = 'uncommon';
-        else rarity = 'common';
-        
-        // Обновляем debugInfo с итоговым баллом
-        debugInfo.totalScore = rarityScore;
-        debugInfo.rarity = rarity;
-        
-        return {
-            id: minifig.id,
-            name: minifig.name,
-            parts: minifig.parts,
-            rarity: rarity,
-            score: rarityScore,
-            debugInfo: debugInfo
-        };
-    });
-    
-    // Сортируем по редкости и баллам
-    results.sort((a, b) => {
-        const rarityOrder = { 'legendary': 0, 'epic': 1, 'rare': 2, 'uncommon': 3, 'common': 4 };
-        const aOrder = rarityOrder[a.rarity] || 999;
-        const bOrder = rarityOrder[b.rarity] || 999;
-        if (aOrder !== bOrder) return aOrder - bOrder;
-        return b.score - a.score;
-    });
-    
-    results.forEach((minifig, index) => {
-        console.log(`${index + 1}. ${minifig.name} (${minifig.parts} деталей) - ${minifig.rarity} (${minifig.score} баллов)`);
-    });
-    
-    console.log('\n🔍 Детальный анализ топ-5:');
-    results.slice(0, 5).forEach((minifig, index) => {
-        console.log(`\n${index + 1}. ${minifig.name} (${minifig.parts} деталей):`);
-        console.log(`   Итоговый балл: ${minifig.score}`);
-        console.log(`   Редкость: ${minifig.rarity}`);
-        console.log('   Факторы:');
-        Object.entries(minifig.debugInfo.factors).forEach(([key, factor]) => {
-            console.log(`     ${key}: ${factor.score} баллов - ${factor.reason}`);
-        });
-    });
-    
-    return results;
-}
 
 // Функция для принудительного обновления аналитики
 function forceUpdateAnalytics() {
@@ -13802,8 +13226,6 @@ function checkAnalyticsState() {
 }
 
 // Добавляем тестовые функции в глобальную область для вызова из консоли
-window.testRarityLogic = testRarityLogic;
-window.testUserMinifigs = testUserMinifigs;
 window.forceUpdateAnalytics = forceUpdateAnalytics;
 window.checkAnalyticsState = checkAnalyticsState;
 
@@ -14141,20 +13563,6 @@ function calculateMinifigRarity(minifigNum) {
     debugInfo.totalScore = rarityScore;
     debugInfo.rarity = rarity;
     
-    // Логируем все минифигурки для отладки
-    console.log('🔍 Rarity calculation for minifig:', minifigNum, minifig.name);
-    console.log('🔍 Score breakdown:', {
-        numParts: debugInfo.factors.numParts?.score || 0,
-        name: debugInfo.factors.name?.score || 0,
-        year: debugInfo.factors.year?.score || 0,
-        theme: debugInfo.factors.theme?.score || 0,
-        setNum: debugInfo.factors.setNum?.score || 0,
-        nameSeries: debugInfo.factors.nameSeries?.score || 0,
-        relatedSets: debugInfo.factors.relatedSets?.score || 0,
-        image: debugInfo.factors.image?.score || 0,
-        total: debugInfo.totalScore,
-        rarity: debugInfo.rarity
-    });
     
     return rarity;
 }
@@ -19842,15 +19250,12 @@ function renderPartCard(e, t, o, l, a = 0) {
             // ИСПРАВЛЕНО: Теперь правильно использует part_img_url из inventory_parts.csv как основной источник изображения
     let d = e.part_img_url || e.rebrickable_img_url;
     
-    // Debug: Log image URL selection
-    console.log(`Part ${e.id} (${e.name}): part_img_url=${e.part_img_url}, rebrickable_img_url=${e.rebrickable_img_url}, selected=${d}`);
     
     // Пытаемся получить изображения конкретного цвета только если функция включена и доступна
     if (i && t && localStorage.getItem('disableColorSpecificImages') !== 'true') {
         const colorImage = PART_MAP[e.id]?.colorImages?.[t.id];
         if (colorImage && colorImage.startsWith('http')) {
             d = colorImage;
-            console.log(`Using color-specific image for part ${e.id} color ${t.id}: ${colorImage}`);
         }
     }
     
@@ -20070,7 +19475,6 @@ function groupCollectionPartsForDisplay(items) {
             });
             const colorList = Array.from(uniqueColors.values());
             if (colorList.length > 3 && S.foldersEnabled) {
-                console.log(`Creating folder for part ${g.part?.id} with ${colorList.length} colors, total qty: ${g.totalQty}`);
                 display.push({ type: 'folder', part: g.part, colors: colorList, totalQty: g.totalQty });
             } else {
                 // Для 1-3 цветов или если папки отключены - показываем отдельные карточки по каждому цвету
@@ -20112,7 +19516,6 @@ function groupCollectionPartsForDisplay(items) {
 // Визуализация папки (тайл размера карточки) с 4 миниатюрами первых цветов
 function renderCollectionFolderCard(part, colors) {
     try {
-        console.log(`Rendering folder card for part ${part?.id}:`, { part, colors, coll: S.coll?.[part?.id] });
         const groupId = getGroupId(part.id);
         const thumbs = (colors || []).slice(0,4);
         const thumbImgs = thumbs.map(ci => {
@@ -20290,18 +19693,14 @@ function renderMainContent() {
             // Инициализируем данные для деталей, если они не загружены
             if (!S.catGroups && !S.searchGroups && Object.keys(PART_MAP).length > 0) {
                 console.log('🔧 Initializing parts data for parts subview');
-                console.log('🔧 Current state - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups, 'window.searchStateReset:', window.searchStateReset);
-                
                 // Если есть поисковый запрос, ищем по нему
                 // НО только если мы не в процессе сброса состояния
                 if (S.q && S.q.trim() && !window.searchStateReset) {
-                    console.log('🔍 Searching parts for query:', S.q);
                     const searchResults = Object.values(PART_MAP).filter(part => 
                         part.name && part.name.toLowerCase().includes(S.q.toLowerCase()) ||
                         part.part_num && part.part_num.toLowerCase().includes(S.q.toLowerCase())
                     );
                     S.searchGroups = { 'search': searchResults };
-                    console.log('🔍 Search results for parts:', searchResults.length);
                 } else {
                     // Загружаем ВСЕ доступные детали (не только первые 100)
                     const allParts = Object.values(PART_MAP);
@@ -20447,7 +19846,6 @@ function renderMainContent() {
                 return renderPartCard(e, null, t, S.gridStale);
             }, a = "parts-grid";
         } else if ("sets" === S.subView) {
-            console.log('Sets subview, selFigNum:', S.selFigNum, 'q:', S.q, 'view:', S.view);
             
             // Инициализируем данные для наборов, если они не загружены
             if (!S.setRes && !S.searchSetRes && Object.keys(SET_MAP).length > 0) {
@@ -20471,13 +19869,11 @@ function renderMainContent() {
             
             // Автоматически сортируем все наборы по году (новые первыми) после инициализации
             if (S.setRes && Array.isArray(S.setRes)) {
-                console.log('📅 Sorting sets by year (newest first)');
                 S.setRes.sort((a, b) => {
                     const yearA = parseInt(a.year) || 0;
                     const yearB = parseInt(b.year) || 0;
                     return yearB - yearA; // Новые первыми
                 });
-                console.log('✅ Sets sorted by year, newest first');
             }
             
             if (S.searchSetRes && Array.isArray(S.searchSetRes)) {
@@ -20539,9 +19935,7 @@ function renderMainContent() {
                 t = S.q ? S.searchSetRes : S.setRes;
                 o = e => renderSetCard(e, S.gridStale);
                 l = S.q ? "По вашему запросу ничего не найдено." : "Выберите тему для просмотра наборов, или воспользуйтесь поиском";
-                console.log('Using default sets display');
             }
-            console.log('Final t value for sets:', t);
         } else {
             // Инициализируем данные для минифигурок, если они не загружены
             if (!S.minifigRes && !S.searchMinifigRes && Object.keys(MINIFIG_MAP).length > 0) {
@@ -20667,25 +20061,10 @@ function renderMainContent() {
             ` : '';
 
             // Каталог (sets/minifigs) рендерим как раньше, а для деталей в коллекции включаем группировку по имени
-            console.log('🔍 renderMainContent debug:', {
-                view: S.view,
-                subView: S.subView,
-                tType: typeof t,
-                tLength: t?.length,
-                tIsArray: Array.isArray(t),
-                toDisplay: S.toDisplay
-            });
             
             if (S.view === 'catalog' || S.subView !== 'parts') {
                 // Старое поведение сетки
                 // Рассчитываем лимит отображаемых элементов
-                console.log('📊 Setting hasMoreItems for non-parts view:', {
-                    tLength: t?.length || 0,
-                    toDisplay: S.toDisplay,
-                    t: t,
-                    subView: S.subView,
-                    view: S.view
-                });
                 
                 // Защита от null/undefined значений
                 if (!t || !Array.isArray(t)) {
@@ -20712,18 +20091,11 @@ function renderMainContent() {
                     }
                 }
                 
-                console.log('📊 Catalog view stats:', {
-                    hasMoreItems: S.hasMoreItems,
-                    totalItems: S.totalItems,
-                    loadedItems: S.loadedItems,
-                    toDisplay: S.toDisplay,
-                    subView: S.subView
-                });
                 
                 if (S.hasMoreItems) {
-                    console.log('✅ Will show more items button or auto-load');
+                    // Показываем кнопку "Показать еще" или включаем автозагрузку
                 } else {
-                    console.log('❌ No more items to load');
+                    // Больше элементов нет
                 }
                 
                 const shown = t ? t.slice(0, S.toDisplay) : [];
@@ -21162,15 +20534,12 @@ function renderMainContent() {
 }
 // Добавляем слушатель события прокрутки для автоматической загрузки дополнительных элементов
 function setupScrollListener() {
-    console.log('🔧 setupScrollListener called, mainEl:', mainEl);
     
     if (mainEl.hasAttribute('data-scroll-listener')) {
-        console.log('⚠️ Scroll listener already set up, skipping');
         return; // Уже настроено
     }
     
     mainEl.setAttribute('data-scroll-listener', 'true');
-    console.log('✅ Scroll listener attribute set');
     
     let scrollTimeout;
     let lastLoadTime = 0;
@@ -21184,18 +20553,12 @@ function setupScrollListener() {
         scrollTimeout = setTimeout(() => {
             // Автоматическая загрузка работает для каталога и коллекции
             if (S.view !== 'catalog' && S.view !== 'collection') {
-                console.log('📜 Scroll detected but not in catalog or collection view:', S.view);
                 return;
             }
             
             // Отладочная информация для деталей в каталоге и коллекции
             if (S.subView === 'parts') {
-                console.log('📜 Scroll detected in parts view:', {
-                    view: S.view,
-                    toDisplay: S.toDisplay,
-                    hasMoreItems: S.hasMoreItems,
-                    loading: S.loading
-                });
+                // Логирование отключено для производительности
             }
             
             const scrollTop = mainEl.scrollTop;
@@ -21213,26 +20576,10 @@ function setupScrollListener() {
             if ((isNearBottom || isFastScroll) && !S.loading && S.hasMoreItems) {
                 const now = Date.now();
                 if (now - lastLoadTime < minLoadInterval) {
-                    console.log('⏱️ Too soon to load more items, skipping');
                     return;
                 }
                 
                 lastLoadTime = now;
-                console.log('📜 Auto-loading more items on scroll...', {
-                    current: S.toDisplay,
-                    increment: S.increment,
-                    hasMore: S.hasMoreItems,
-                    scrollTop,
-                    scrollHeight,
-                    clientHeight,
-                    subView: S.subView,
-                    totalItems: S.totalItems,
-                    loadedItems: S.loadedItems,
-                    willShow: S.toDisplay + (S.increment * 2),
-                    isNearBottom,
-                    isFastScroll,
-                    scrollDelta
-                });
                 
                 // Проверяем, не превышаем ли мы общее количество элементов
                 if (S.totalItems && S.toDisplay >= S.totalItems) {
@@ -21263,25 +20610,10 @@ function setupScrollListener() {
                 // Устанавливаем флаг инкрементального обновления для оптимизации
                 window.isIncrementalUpdate = true;
                 
-                console.log('🔄 Calling updateUI from scroll listener, new toDisplay:', S.toDisplay);
-                console.log('🔄 Parts pagination after increment:', {
-                    toDisplay: S.toDisplay,
-                    totalItems: S.totalItems,
-                    hasMoreItems: S.hasMoreItems,
-                    subView: S.subView
-                });
                 updateUI();
             }
         }, 100); // Задержка 100ms для оптимизации
     }, { passive: true });
-    
-    console.log('✅ Scroll listener added successfully');
-    console.log('🔧 Scroll listener setup complete for:', {
-        view: S.view,
-        subView: S.subView,
-        toDisplay: S.toDisplay,
-        hasMoreItems: S.hasMoreItems
-    });
 }
 
 function renderSetCollectionControls() {
@@ -23421,7 +22753,6 @@ function renderSettingsModal() {
     
     // Автоматически проверяем сохраненное состояние облачного хранилища при открытии настроек
     if (loadUserAccount() && !cloudStorageConnected && window.remoteStorageAvailable) {
-        console.log('☁️ Settings opened, checking saved cloud storage state');
         setTimeout(() => {
             checkSavedCloudStorageState().then((connected) => {
                 if (connected) {
@@ -24071,12 +23402,10 @@ function updateUI() {
         return;
     }
     
-    console.log('🔄 updateUI called, view:', S.view, 'subView:', S.subView, 'loading:', S.loading);
     
     // Проверяем, продолжается ли загрузка
     const loadingContainer = document.getElementById('loading-container');
     if (loadingContainer && !loadingContainer.classList.contains('hidden')) {
-        console.log('📱 Loading container visible, rendering sidebar and header');
         // Все еще загружается, но рендерим боковую панель и заголовок для возможности навигации
         renderSidebar();
         renderHeader();
@@ -24103,17 +23432,9 @@ function updateUI() {
         return;
     }
     
-    console.log('Data loaded, proceeding with UI update');
-    console.log('PART_MAP size:', Object.keys(PART_MAP).length);
-    console.log('Sample parts with images:', Object.values(PART_MAP).slice(0, 3).map(p => ({
-        id: p.id,
-        name: p.name,
-        hasImage: !!(p.part_img_url || p.rebrickable_img_url)
-    })));
     
     // Проверяем и применяем глобальную сортировку, если она еще не была применена
     if (!window.globalSortingApplied) {
-        console.log('📅 Applying global sorting in updateUI...');
         
         // Сортируем все наборы по году (новые первыми)
         if (Object.keys(SET_MAP).length > 0) {
@@ -24124,24 +23445,20 @@ function updateUI() {
                 const yearB = parseInt(b.year) || 0;
                 return yearB - yearA; // Новые первыми
             });
-            console.log('✅ All sets sorted by year in updateUI');
         }
         
         // Сортируем все минифигурки по году (новые первыми)
         if (Object.keys(MINIFIG_MAP).length > 0) {
-            console.log('👤 Sorting all minifigs by year in updateUI...');
             const allMinifigs = Object.values(MINIFIG_MAP);
             allMinifigs.sort((a, b) => {
                 const yearA = parseInt(a.year) || 0;
                 const yearB = parseInt(b.year) || 0;
                 return yearB - yearA; // Новые первыми
             });
-            console.log('✅ All minifigs sorted by year in updateUI');
         }
         
         // Сортируем все детали по популярности (часто используемые первыми)
         if (Object.keys(PART_MAP).length > 0) {
-            console.log('🔧 Sorting all parts by popularity in updateUI...');
             const allParts = Object.values(PART_MAP);
             allParts.sort((a, b) => {
                 const popularityA = parseInt(a.num_sets) || 0;
@@ -24692,16 +24009,6 @@ function setupSearchButtonsVisibility() {
     const clearButton = document.getElementById('clear-search');
     const searchIcon = document.getElementById('search-icon');
     
-    console.log('🔍 setupSearchButtonsVisibility called:', {
-        searchButton: !!searchButton,
-        aiSearchButton: !!aiSearchButton,
-        clearButton: !!clearButton,
-        searchIcon: !!searchIcon,
-        S_q: S.q,
-        S_q_length: S.q ? S.q.length : 0,
-        S_view: S.view
-    });
-    
     if (searchButton && aiSearchButton && clearButton && searchIcon) {
         if (S.q && S.q.trim().length > 0) {
             // Показываем кнопку поиска и скрываем AI поиск и иконку поиска
@@ -24716,7 +24023,6 @@ function setupSearchButtonsVisibility() {
             searchIcon.style.display = 'none';
         } else {
             // Скрываем кнопку поиска и показываем AI поиск и иконку поиска
-            console.log('🔍 Hiding search button, showing AI search button and search icon');
             searchButton.classList.add('hidden');
             searchButton.style.display = 'none';
             aiSearchButton.classList.remove('hidden');
@@ -25625,55 +24931,6 @@ function importWishlist(wishlistId) {
     document.body.removeChild(input);
 }
 
-// Тестовая функция для проверки работы списков желаний
-window.testWishlist = function() {
-    console.log('🧪 Testing wishlist functionality...');
-    console.log('S.wishlistEnabled:', S.wishlistEnabled);
-    console.log('S.wishlists:', S.wishlists);
-    console.log('S.currentWishlist:', S.currentWishlist);
-    
-    // Тестируем создание списка
-    if (Object.keys(S.wishlists).length === 0) {
-        console.log('Creating test wishlist...');
-        createWishlist();
-    }
-    
-    const result = {
-        wishlistEnabled: S.wishlistEnabled,
-        wishlistsCount: Object.keys(S.wishlists).length,
-        currentWishlist: S.currentWishlist
-    };
-    
-    console.log('Current state after test:', result);
-    return result;
-}
-
-// Функция для быстрого тестирования добавления элемента
-window.testAddToWishlist = function() {
-    console.log('🧪 Testing add to wishlist...');
-    addToWishlist('set', '10210-1', null);
-    return 'Element added to wishlist';
-}
-
-// Функция для тестирования создания списка
-window.testCreateWishlist = function() {
-    console.log('🧪 Testing create wishlist directly...');
-    createWishlist();
-    return 'Create wishlist function called';
-}
-
-// Функция для тестирования клика по кнопке
-window.testClickHandler = function() {
-    console.log('🧪 Testing click handler...');
-    const btn = document.getElementById('create-wishlist');
-    if (btn) {
-        console.log('Button found:', btn);
-        btn.click();
-    } else {
-        console.log('Button not found!');
-    }
-    return 'Click test completed';
-}
 
 // Функция для проверки состояния
 window.checkWishlistState = function() {
@@ -28612,14 +27869,6 @@ document.addEventListener("click", async e => {
     const t = e.target;
     
     // Логируем все клики для отладки
-    console.log('🖱️ Click detected:', {
-        target: t,
-        id: t.id,
-        className: t.className,
-        tagName: t.tagName,
-        closestMoveLeft: t.closest('.move-left'),
-        closestMoveRight: t.closest('.move-right')
-    });
     
     // ПРИОРИТЕТНЫЕ ОБРАБОТЧИКИ - кнопки списка желаний (единый список)
     
@@ -29650,7 +28899,7 @@ document.addEventListener("click", async e => {
             // Инициализируем клиент RemoteStorage
             if (!cloudStorageClient) {
                 cloudStorageClient = new RemoteStorage({
-                    logging: 'warn',
+                    logging: false,
                     cache: false,
                     // Отключаем автоматическое перенаправление для предотвращения циклических перезагрузок
                     redirectUri: window.location.origin + window.location.pathname
@@ -30876,21 +30125,20 @@ document.addEventListener("click", async e => {
                 break;
             case "clear-all-data":
                 // Показываем предупреждение и запрашиваем подтверждение
-                updateSettingsModalStatus("⚠️ ВНИМАНИЕ!\nЭто удалит ВСЕ данные", "error");
+                updateSettingsModalStatus("ВНИМАНИЕ!\nЭто удалит ВСЕ данные", "error");
                 
                 // Ждем 2 секунды, затем показываем подтверждение
                 setTimeout(async () => {
                     const confirmed = await showCustomConfirm(
-                        "⚠️ КРИТИЧЕСКОЕ ПРЕДУПРЕЖДЕНИЕ ⚠️\n\n" +
                         "Вы собираетесь удалить ВСЕ данные приложения:\n" +
                         "• Всю коллекцию (детали, наборы, минифигурки)\n" +
                         "• Все настройки\n" +
                         "• Весь кэш\n" +
-                        "• Все сохраненные данные\n\n" +
+                        "• Все сохраненные данные.\n\n" +
                         "Это действие НЕОБРАТИМО!\n\n" +
                         "Нажмите ОК для подтверждения или Отмена для отмены.",
                         {
-                            title: 'Критическое предупреждение',
+                            title: 'ВНИМАНИЕ!',
                             type: 'danger',
                             confirmText: 'Удалить всё',
                             cancelText: 'Отмена'
@@ -31406,7 +30654,7 @@ document.addEventListener("click", async e => {
 }), document.addEventListener("keydown", e => {
     const activeElement = document.activeElement;
     
-        if ("Escape" === e.key) {
+    if ("Escape" === e.key) {
             if (viewerEl.classList.contains("viewer-hidden")) {
                 if (S.filterOpen) {
                     closeFilterModal();
@@ -31621,7 +30869,6 @@ async function initializeApp() {
     "🎲 Удерживайте кнопки 'Детали', 'Наборы' или 'Фигурки' 1 секунду для случайного элемента",
     "🔍 Умный поиск с автодополнением помогает быстро находить нужные элементы",
     "💾 Данные сохраняются локально в браузере для быстрой работы",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
     "🌐 Система прокси автоматически обходит блокировки API для стабильной работы",
     "📋 Переключайтесь между каталогом и коллекцией для разных задач",
     "🎨 Фильтруйте детали по цвету для точного подбора к вашей коллекции",
@@ -31643,7 +30890,6 @@ async function initializeApp() {
     "🎯 Приоритетная загрузка критически важных ресурсов",
     "🔍 Используйте поиск по названию для быстрого нахождения нужных деталей",
     "📊 Мониторинг кэша для оптимизации производительности",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы",
     "🔄 Автосохранение состояния происходит после каждого действия",
     "🔧 Настраиваемые стратегии кэширования для разных типов данных",
     "🔍 Поиск работает по частичному совпадению - не нужно вводить полное название",
@@ -31674,7 +30920,6 @@ async function initializeApp() {
     "🤖 Сфотографируйте деталь, минифигурку или даже набор для автоматического распознавания через AI",
     "🔍 Продвинутая фильтрация и сортировка помогают быстро находить нужные элементы",
     "📱 Адаптивный дизайн обеспечивает удобство использования на любых устройствах",
-    "💡 После обновления сайта обязательно очистите кэш в настройках сайта для корректной работы"
     ];
     
     console.log('LOADING_TIPS initialized with', window.LOADING_TIPS.length, 'tips');
@@ -31768,7 +31013,6 @@ async function initializeApp() {
         // Выбираем случайную подсказку из доступных
         const randomIndex = Math.floor(Math.random() * availableTips.length);
         const tip = availableTips[randomIndex];
-        console.log(`Random loading tip selected (excluding current and history): index ${randomIndex}, tip: ${tip}`);
         return tip;
     };
     
@@ -31998,18 +31242,14 @@ async function initializeApp() {
             }
         }, 3000);
         
-        console.log('Loading tip rotation started, interval ID:', window.loadingTipRotationInterval);
     };
     
     // Функция для остановки автоматической смены подсказок на экране загрузки
     window.stopLoadingTipRotation = function() {
         if (window.loadingTipRotationInterval) {
-            console.log('Stopping loading tip rotation, interval ID:', window.loadingTipRotationInterval);
             clearInterval(window.loadingTipRotationInterval);
             window.loadingTipRotationInterval = null;
-            console.log('Loading tip rotation stopped');
         } else {
-            console.log('No loading tip rotation interval to stop');
         }
     };
     
@@ -32046,7 +31286,6 @@ async function initializeApp() {
     updateUI();
 
     try {
-        console.log('Starting data loading from CSV...');
         
         // Запускаем мониторинг прогресса для предотвращения зависания
         const progressMonitor = setInterval(() => {
@@ -32203,12 +31442,10 @@ async function initializeApp() {
 }
 document.addEventListener("DOMContentLoaded", async () => {
     // Предварительная загрузка библиотек для быстрого доступа
-    console.log('🚀 Начинаем предварительную загрузку библиотек...');
     
     // Загружаем ZXing для DataMatrix сканера
     try {
         await window.loadZXing();
-        console.log('✅ ZXing загружен предварительно');
     } catch (e) {
         console.warn('⚠️ Ошибка предварительной загрузки ZXing:', e);
     }
@@ -32216,12 +31453,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Загружаем TensorFlow.js для AI поиска по фото
     try {
         await window.loadTensorFlow();
-        console.log('✅ TensorFlow.js загружен предварительно');
     } catch (e) {
         console.warn('⚠️ Ошибка предварительной загрузки TensorFlow.js:', e);
     }
     
-    console.log('🎉 Предварительная загрузка библиотек завершена');
     
     // Инициализируем drag-and-drop для списков желаний
     // Перетаскивание заменено на кнопки перемещения
@@ -32858,7 +32093,6 @@ async function loadDataFromCSV() {
         saveState();
         
         // Отладка: выводим статистику загруженных данных
-        console.log('CSV Data loaded successfully:');
         console.log('- Parts:', Object.keys(PART_MAP).length);
         console.log('- Sets:', Object.keys(SET_MAP).length);
         console.log('- Minifigs:', Object.keys(MINIFIG_MAP).length);
@@ -32867,35 +32101,29 @@ async function loadDataFromCSV() {
         console.log('- Themes:', Object.keys(THEME_MAP).length);
         
         // Глобальная сортировка всех данных после загрузки
-        console.log('📅 Starting global sorting of all data...');
         
         // Сортируем все наборы по году (новые первыми)
         if (Object.keys(SET_MAP).length > 0) {
-            console.log('📦 Sorting all sets by year (newest first)...');
             const allSets = Object.values(SET_MAP);
             allSets.sort((a, b) => {
                 const yearA = parseInt(a.year) || 0;
                 const yearB = parseInt(b.year) || 0;
                 return yearB - yearA; // Новые первыми
             });
-            console.log('✅ All sets sorted by year, newest first');
         }
         
         // Сортируем все минифигурки по году (новые первыми)
         if (Object.keys(MINIFIG_MAP).length > 0) {
-            console.log('👤 Sorting all minifigs by year (newest first)...');
             const allMinifigs = Object.values(MINIFIG_MAP);
             allMinifigs.sort((a, b) => {
                 const yearA = parseInt(a.year) || 0;
                 const yearB = parseInt(b.year) || 0;
                 return yearB - yearA; // Новые первыми
             });
-            console.log('✅ All minifigs sorted by year, newest first');
         }
         
         // Сортируем все детали по популярности (часто используемые первыми)
         if (Object.keys(PART_MAP).length > 0) {
-            console.log('🔧 Sorting all parts by popularity (most used first)...');
             const allParts = Object.values(PART_MAP);
             allParts.sort((a, b) => {
                 const popularityA = parseInt(a.num_sets) || 0;
@@ -32949,11 +32177,9 @@ async function loadDataFromCSV() {
             }
             
             // Глобальная сортировка данных из API
-            console.log('📅 Starting global sorting of API data...');
             
             // Сортируем все наборы по году (новые первыми)
             if (Object.keys(SET_MAP).length > 0) {
-                console.log('📦 Sorting all API sets by year (newest first)...');
                 const allSets = Object.values(SET_MAP);
                 allSets.sort((a, b) => {
                     const yearA = parseInt(a.year) || 0;
@@ -33223,7 +32449,6 @@ async function loadSetsFromCSV() {
                     }
                     
                     if (SET_MAP[set_num].num_parts && (SET_MAP[set_num].num_parts < 0 || SET_MAP[set_num].num_parts > 10000)) {
-                        console.warn('Invalid num_parts for set', set_num, ':', SET_MAP[set_num].num_parts);
                         SET_MAP[set_num].num_parts = null;
                     }
                 }
@@ -33269,7 +32494,6 @@ async function loadMinifigsFromCSV() {
                     
                     // Проверяем корректность данных
                     if (MINIFIG_MAP[fig_num].num_parts && (MINIFIG_MAP[fig_num].num_parts < 0 || MINIFIG_MAP[fig_num].num_parts > 100)) {
-                        console.warn('Invalid num_parts for minifig', fig_num, ':', MINIFIG_MAP[fig_num].num_parts);
                         MINIFIG_MAP[fig_num].num_parts = null;
                     }
                 }
@@ -34626,7 +33850,6 @@ function searchInCSVData(query, type = 'parts') {
                 const numericPart = searchTerm.match(/^\d+/);
                 if (numericPart) {
                     const numericId = numericPart[0];
-                    console.log(`Ищем детали, начинающиеся с цифр: ${numericId}`);
                     
                     Object.values(PART_MAP).forEach(part => {
                         if (part.id && part.id.toLowerCase().startsWith(numericId)) {
@@ -34638,7 +33861,6 @@ function searchInCSVData(query, type = 'parts') {
                         }
                     });
                     
-                    console.log(`Найдено ${results.length} деталей по числовой части ${numericId}`);
                 }
             }
             break;
@@ -35267,7 +34489,6 @@ async function fetchMissingImagesFromCSV() {
                     const imageUrl = `https://cdn.rebrickable.com/media/parts/${part.id}.jpg`;
                     part.part_img_url = imageUrl;
                     part.rebrickable_img_url = imageUrl; // Also set rebrickable_img_url
-                    console.log(`Generated image URL for part ${part.id}: ${imageUrl}`);
                 } else {
                     console.warn('Part without id:', part);
                 }
@@ -36096,28 +35317,20 @@ function animateCloseButtonClick(button) {
         // Отмечаем, что система инициализирована
         document.documentElement.setAttribute('data-inactivity-initialized', 'true');
         
-        console.log('✅ Система неактивности инициализирована');
     }
 
     // Инициализируем систему неактивности после загрузки страницы
-    console.log('🔧 Скрипт системы неактивности загружен');
-    console.log('🔧 document.readyState:', document.readyState);
-    console.log('🔧 Текущее время:', new Date().toLocaleTimeString());
     
     // Принудительная инициализация через 3 секунды
     setTimeout(() => {
-        console.log('🔧 Принудительная инициализация через 3 секунды');
         initInactivitySystem();
     }, 3000);
     
     if (document.readyState === 'loading') {
-        console.log('🔧 DOM еще загружается, ждем DOMContentLoaded');
         document.addEventListener('DOMContentLoaded', () => {
-            console.log('🔧 DOMContentLoaded сработал');
             initInactivitySystem();
         });
     } else {
-        console.log('🔧 DOM уже загружен, инициализируем сразу');
         initInactivitySystem();
     }
 
@@ -36142,20 +35355,6 @@ function animateCloseButtonClick(button) {
         console.log('❌ Прокси отключен, будет использоваться автоматическое определение');
     };
     
-    window.testProxy = async () => {
-        console.log('🧪 Тестируем прокси...');
-        const testUrl = `${REBRICKABLE_API_URL}/colors/?page=1&page_size=1`;
-        try {
-            const response = await fetchWithProxy(testUrl);
-            if (response.status === 401) {
-                console.log('🚫 Прокси работает, но API возвращает 401 (ошибка авторизации)');
-            } else {
-                console.log('✅ Прокси работает:', response.status);
-            }
-        } catch (error) {
-            console.error('❌ Прокси не работает:', error.message);
-        }
-    };
     
     window.checkProxies = async () => {
         if (!S.proxyEnabled) {
@@ -36183,128 +35382,6 @@ function animateCloseButtonClick(button) {
         console.log('🔄 Кэш прокси сброшен');
     };
     
-    // Функция для тестирования системы неактивности
-    window.testInactivitySystem = () => {
-        console.log('🧪 Тестируем систему неактивности...');
-        console.log('📊 Статус элементов:', {
-            overlay: !!inactivityOverlay,
-            tip: !!inactivityTip,
-            closeBtn: !!inactivityCloseBtn,
-            timer: !!inactivityTimer,
-            tipRotationTimer: !!tipRotationTimer,
-            currentTipIndex: typeof currentTipIndex !== 'undefined' ? currentTipIndex : 'не определена',
-            tipsArray: inactivityTips ? inactivityTips.length : 'не определена'
-        });
-        
-        if (inactivityOverlay && inactivityTip) {
-            console.log('✅ Элементы найдены, показываем тестовую подсказку');
-            inactivityTip.textContent = '🧪 Тестовая подсказка - система работает!';
-            inactivityOverlay.classList.remove('hidden');
-            inactivityOverlay.classList.add('show');
-            
-            // Автоматически скрываем через 3 секунды
-            setTimeout(() => {
-                inactivityOverlay.classList.remove('show');
-                setTimeout(() => {
-                    inactivityOverlay.classList.add('hidden');
-                }, 500);
-                console.log('✅ Тестовая подсказка скрыта');
-            }, 3000);
-        } else {
-            console.error('❌ Элементы системы неактивности не найдены');
-        }
-    };
-
-    // Функция для тестирования блокировки подсказок
-    window.testInactivityBlocking = () => {
-        console.log('🧪 Тестируем блокировку подсказок...');
-        console.log('📊 Текущие состояния:');
-        console.log('  - Загрузка сайта:', window._loadingProgressState ? `${window._loadingProgressState.current}%` : 'не определена');
-        console.log('  - Загрузка списка версий:', window.isLoadingBackupsList ? 'активна' : 'неактивна');
-        console.log('  - Камера DataMatrix запускается:', isCameraStarting ? 'да' : 'нет');
-        console.log('  - Камера DataMatrix активна:', currentStream ? 'да' : 'нет');
-        console.log('  - Камера поиска по фото запускается:', isPhotoCameraStarting ? 'да' : 'нет');
-        console.log('  - Камера поиска по фото активна:', photoSearchStream ? 'да' : 'нет');
-        console.log('  - Можно показывать подсказки:', canShowInactivityTip() ? 'да' : 'нет');
-        
-        if (canShowInactivityTip()) {
-            console.log('✅ Подсказки разрешены - можно тестировать');
-        } else {
-            console.log('🚫 Подсказки заблокированы - система работает корректно');
-        }
-    };
-    
-    // Функция для принудительного показа подсказки
-    window.showInactivityTip = () => {
-        if (typeof showRandomTip === 'function') {
-            showRandomTip();
-            console.log('✅ Подсказка показана принудительно');
-        } else {
-            console.error('❌ Функция showRandomTip не найдена');
-        }
-    };
-
-    // Функция для симуляции состояний камеры для тестирования
-    window.simulateCameraState = (state) => {
-        console.log(`🧪 Симулируем состояние камеры: ${state}`);
-        switch(state) {
-            case 'start':
-                isCameraStarting = true;
-                console.log('✅ isCameraStarting = true');
-                break;
-            case 'active':
-                isCameraStarting = false;
-                currentStream = { test: true }; // Симулируем активный поток
-                console.log('✅ Камера активна (currentStream установлен)');
-                break;
-            case 'stop':
-                isCameraStarting = false;
-                currentStream = null;
-                console.log('✅ Камера остановлена');
-                break;
-            case 'photo-start':
-                isPhotoCameraStarting = true;
-                console.log('✅ isPhotoCameraStarting = true');
-                break;
-            case 'photo-active':
-                isPhotoCameraStarting = false;
-                photoSearchStream = { test: true }; // Симулируем активный поток
-                console.log('✅ Камера поиска по фото активна');
-                break;
-            case 'photo-stop':
-                isPhotoCameraStarting = false;
-                photoSearchStream = null;
-                console.log('✅ Камера поиска по фото остановлена');
-                break;
-            default:
-                console.log('❌ Неизвестное состояние. Доступные: start, active, stop, photo-start, photo-active, photo-stop');
-                return;
-        }
-        
-        // Проверяем состояния неактивности
-        if (window.checkInactivityConditions) {
-            window.checkInactivityConditions();
-        }
-        
-        // Показываем текущий статус
-        window.testInactivityBlocking();
-    };
-    
-    // Функция для тестирования с коротким таймером (10 секунд)
-    window.testInactivityQuick = () => {
-        console.log('🧪 Тестируем систему неактивности с коротким таймером (10 сек)');
-        
-        if (inactivityTimer) {
-            clearTimeout(inactivityTimer);
-        }
-        
-        inactivityTimer = setTimeout(() => {
-            console.log('⏰ Тестовый таймер сработал, показываем подсказку');
-            showRandomTip();
-        }, 10000);
-        
-        console.log('✅ Тестовый таймер установлен на 10 секунд');
-    };
     
     // Функция для проверки статуса системы
     window.checkInactivityStatus = () => {
@@ -36354,7 +35431,6 @@ function animateCloseButtonClick(button) {
         })
             .then(response => {
                 if (response.ok) {
-                    console.log('✅ API доступен, прокси не нужен');
                 } else {
                     if (response.status === 401) {
                         console.log(`🚫 Ошибка авторизации (401) - возможно временная блокировка API ключа, включаем прокси`);
@@ -36381,7 +35457,6 @@ function animateCloseButtonClick(button) {
     console.log('  enableProxy() - принудительно включить прокси');
     console.log('  disableProxy() - отключить принудительный прокси');
     console.log('  simulateBlock() - имитировать блокировку IP');
-    console.log('  testProxy() - протестировать прокси');
     console.log('  resetProxyCache() - сбросить кэш прокси');
     console.log('  proxyStatus() - показать статус прокси');
 
@@ -37207,10 +36282,8 @@ function animateCloseButtonClick(button) {
             const captureBtn = document.getElementById('capture-photo');
             const refreshBtn = document.getElementById('refresh-cameras');
             const resetFlagBtn = document.getElementById('reset-camera-flag');
-            const testBtn = document.getElementById('test-scan');
             const forceBtn = document.getElementById('force-scan');
             const toggleBtn = document.getElementById('toggle-scan');
-            const testMinifigBtn = document.getElementById('test-minifig-scan');
             const clearResultsBtn = document.getElementById('clear-scan-results');
             const cameraSelect = document.getElementById('camera-select');
             const clearLogsBtn = document.getElementById('clear-logs');
@@ -37222,10 +36295,8 @@ function animateCloseButtonClick(button) {
             if (refreshBtn) refreshBtn.addEventListener('click', setupCameraSelect);
             if (resetFlagBtn) resetFlagBtn.addEventListener('click', resetCameraFlag);
             if (clearLogsBtn) clearLogsBtn.addEventListener('click', clearLogs);
-            if (testBtn) testBtn.addEventListener('click', testScanning);
             if (forceBtn) forceBtn.addEventListener('click', forceScanning);
             if (toggleBtn) toggleBtn.addEventListener('click', toggleScanning);
-            if (testMinifigBtn) testMinifigBtn.addEventListener('click', testMinifigScanning);
             if (clearResultsBtn) clearResultsBtn.addEventListener('click', clearScanResults);
             if (requestPermissionBtn) requestPermissionBtn.addEventListener('click', requestCameraPermission);
             
@@ -37503,11 +36574,9 @@ function animateCloseButtonClick(button) {
                     if (stopBtn) stopBtn.disabled = false;
                     if (captureBtn) captureBtn.disabled = false;
                     
-                    // Активировать тестовую кнопку и кнопку переключения сканирования
-                    const testBtn = document.getElementById('test-scan');
+                    // Активировать кнопки сканирования
                     const forceBtn = document.getElementById('force-scan');
                     const toggleBtn = document.getElementById('toggle-scan');
-                    if (testBtn) testBtn.disabled = false;
                     if (forceBtn) forceBtn.disabled = false;
                     if (toggleBtn) toggleBtn.disabled = false;
                     
@@ -37654,11 +36723,9 @@ function animateCloseButtonClick(button) {
             if (stopBtn) stopBtn.disabled = true;
             if (captureBtn) captureBtn.disabled = true;
             
-            // Деактивировать тестовую кнопку и кнопку переключения сканирования
-            const testBtn = document.getElementById('test-scan');
+            // Деактивировать кнопки сканирования
             const forceBtn = document.getElementById('force-scan');
             const toggleBtn = document.getElementById('toggle-scan');
-            if (testBtn) testBtn.disabled = true;
             if (forceBtn) forceBtn.disabled = true;
             if (toggleBtn) toggleBtn.disabled = true;
             
@@ -38121,59 +37188,6 @@ function animateCloseButtonClick(button) {
             }
         }
         
-        // Тестирование сканирования
-        async function testScanning() {
-            console.log('Тестирование сканирования...');
-            const video = document.getElementById('scanner-video');
-            if (!video || !scanner) {
-                await showCustomAlert('Сканер не инициализирован', {
-                    title: 'Ошибка сканера',
-                    type: 'error'
-                });
-                return;
-            }
-            
-            try {
-                // Для мобильных устройств используем специальные настройки
-                const hints = new Map();
-                hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-                    ZXing.BarcodeFormat.QR_CODE,
-                    ZXing.BarcodeFormat.DATA_MATRIX,
-                    ZXing.BarcodeFormat.CODE_128,
-                    ZXing.BarcodeFormat.CODE_39
-                ]);
-                hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-                
-                if (isMobile) {
-                    hints.set(ZXing.DecodeHintType.ALSO_INVERTED, true);
-                    hints.set(ZXing.DecodeHintType.PURE_BARCODE, false);
-                    console.log('Используем мобильные настройки для тестирования');
-                }
-                
-                scanner.decodeFromVideoElement(video, hints)
-                    .then(result => {
-                        console.log('Тест успешен, найден код:', result);
-                        handleScanResult(result);
-                    })
-                    .catch(async error => {
-                        if (!(error instanceof ZXing.NotFoundException)) {
-                            console.log('Тест не удался:', error.name, error.message);
-                            await showCustomAlert('Тест сканирования: ' + error.message, {
-                                title: 'Ошибка тестирования',
-                                type: 'error'
-                            });
-                        } else {
-                            console.log('Код не найден (это нормально для теста)');
-                        }
-                    });
-            } catch (error) {
-                console.error('Ошибка тестирования:', error);
-                await showCustomAlert('Ошибка тестирования: ' + error.message, {
-                    title: 'Ошибка тестирования',
-                    type: 'error'
-                });
-            }
-        }
         
         // Обработка результата сканирования
         function handleScanResult(result) {
@@ -38362,38 +37376,6 @@ function animateCloseButtonClick(button) {
             }
         }
         
-        // Тестирование сканирования минифигурки
-        async function testMinifigScanning() {
-            console.log('Тестирование сканирования минифигурки...');
-            
-            // Тестовый код из figtable.txt (6568967 -> 71050-9)
-            const testCode = '6568967';
-            
-            console.log('Тестовый код:', testCode);
-            console.log('FIG_CODE_MAP доступен:', !!window.FIG_CODE_MAP);
-            console.log('Количество записей в FIG_CODE_MAP:', window.FIG_CODE_MAP ? Object.keys(window.FIG_CODE_MAP).length : 0);
-            
-            if (window.FIG_CODE_MAP && Object.keys(window.FIG_CODE_MAP).length > 0) {
-                console.log('Примеры кодов в FIG_CODE_MAP:', Object.keys(window.FIG_CODE_MAP).slice(0, 5));
-                console.log('Поиск тестового кода:', window.FIG_CODE_MAP[testCode]);
-                
-                // Симулируем результат сканирования
-                const mockResult = {
-                    getText: () => testCode,
-                    getBarcodeFormat: () => 'DATA_MATRIX'
-                };
-                
-                addLog(`Тестирование с кодом: ${testCode}`, 'info');
-                handleScanResult(mockResult);
-            } else {
-                console.error('FIG_CODE_MAP не загружен или пуст');
-                addLog('Ошибка: FIG_CODE_MAP не загружен', 'error');
-                await showCustomAlert('Ошибка: Таблица минифигурок не загружена. Попробуйте обновить страницу.', {
-                    title: 'Ошибка данных',
-                    type: 'error'
-                });
-            }
-        }
         
         // Управление видимостью блока результатов сканирования
         function updateScanResultsVisibility() {
@@ -38868,9 +37850,6 @@ function animateCloseButtonClick(button) {
                 clearResultsBtn.addEventListener('click', clearPhotoSearchResults);
             }
             
-            if (testApiBtn) {
-                testApiBtn.addEventListener('click', testBrickognizeConnection);
-            }
             
             // Обработчики изменения настроек
             const cameraSelect = document.getElementById('photo-camera-select');
@@ -39534,33 +38513,7 @@ function animateCloseButtonClick(button) {
             // Показываем блок результатов
             updatePhotoSearchResultsVisibility();
         }
-        
-        // Демо результаты для тестирования
-        function displayDemoResults() {
-            const demoResults = {
-                predictions: [
-                    {
-                    part_num: '3001',
-                        part_name: 'Brick 2 x 4',
-                        color: 'Red',
-                        color_hex: '#B40000',
-                        confidence: 0.89
-                    },
-                    {
-                        part_num: '3003',
-                        part_name: 'Brick 2 x 2',
-                        color: 'Blue',
-                        color_hex: '#0D69AC',
-                        confidence: 0.76
-                    }
-                ]
-            };
-            
-            displayPhotoSearchResults(demoResults);
-        }
-        
-        
-        
+          
         // Управление видимостью блока результатов поиска по фото
         function updatePhotoSearchResultsVisibility() {
             // Находим блок результатов по заголовку "Результаты распознавания"
@@ -39594,51 +38547,6 @@ function animateCloseButtonClick(button) {
             updatePhotoSearchResultsVisibility();
         }
         
-        // Тест соединения с API
-        async function testBrickognizeConnection() {
-            const endpoint = document.getElementById('brickognize-endpoint')?.value || 'https://api.brickognize.com';
-            const apiKey = document.getElementById('brickognize-api-key')?.value;
-            
-            try {
-                const headers = {};
-                
-                if (apiKey) {
-                    headers['Authorization'] = `Bearer ${apiKey}`;
-                }
-                
-                // Пробуем разные endpoints для проверки доступности
-                const testEndpoints = [
-                    `${endpoint}/`,
-                    `${endpoint}/docs`,
-                    `${endpoint}/health`
-                ];
-                
-                let success = false;
-                for (const testUrl of testEndpoints) {
-                    try {
-                        const response = await fetch(testUrl, {
-                            method: 'GET',
-                            headers: headers
-                        });
-                        
-                        if (response.ok) {
-                            success = true;
-                            break;
-                        }
-                    } catch (e) {
-                        console.log(`Endpoint ${testUrl} недоступен:`, e.message);
-                    }
-                }
-                
-                if (success) {
-                } else {
-                    throw new Error('Все endpoints недоступны');
-                }
-                
-            } catch (error) {
-                console.error('Ошибка соединения с API:', error);
-            }
-        }
         
         
         
@@ -39763,7 +38671,6 @@ function animateCloseButtonClick(button) {
     // Ждем загрузки всех библиотек
     function initCloudBackup() {
         if (window.remoteStorageAvailable) {
-            console.log('🔧 Initializing RemoteStorage after library load...');
             // Не инициализируем сразу, только при нажатии кнопки
         } else {
             console.log('🔧 RemoteStorage not available, using fallback');
@@ -39813,7 +38720,4 @@ function animateCloseButtonClick(button) {
   </script>
 
 </body>
-
 </html>
-
-        
