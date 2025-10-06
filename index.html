@@ -132,47 +132,47 @@
   </script>
 
       <style>
-    /* Блокируем системное «растягивание» и pull-to-refresh */
+    
     html, body {
         overscroll-behavior-y: contain;
         overscroll-behavior-x: none;
     }
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        /* Защита от случайного масштабирования */
+        
         touch-action: manipulation;
         font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
     }
     
-    /* Класс для прокручиваемых контейнеров (отключает протекание жестов) */
+    
     .scrollable {
         overscroll-behavior: contain;
         touch-action: pan-y;
     }
     
-    /* Дополнительная защита от масштабирования на мобильных устройствах */
+    
     @media (max-width: 768px) {
         body {
             -webkit-touch-callout: none;
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* Используем современные viewport units для правильной высоты на мобильных */
+        
         html, body {
             height: 100%;
             margin: 0;
             padding: 0;
         }
         
-        /* Основной контейнер использует 100dvh (динамическая высота viewport) */
+        
         .lg\:ml-80.flex.flex-col.h-screen {
             height: 100dvh !important;
             min-height: 100dvh !important;
         }
         
-        /* Fallback для браузеров без поддержки dvh */
+        
         @supports not (height: 100dvh) {
             .lg\:ml-80.flex.flex-col.h-screen {
                 height: 100vh !important;
@@ -182,25 +182,25 @@
     }
     
     
-    /* Оптимизация производительности для крупных секций */
+    
     .content-section {
         content-visibility: auto;
         contain-intrinsic-size: 0 500px;
     }
     
-    /* Оптимизация для модальных окон */
+    
     .modal-content {
         content-visibility: auto;
         contain-intrinsic-size: 0 400px;
     }
     
-    /* Оптимизация для списков */
+    
     .list-container {
         content-visibility: auto;
         contain-intrinsic-size: 0 300px;
     }
     
-    /* Анимация для индикатора фокусировки */
+    
     @keyframes pulse {
         0% {
             transform: scale(1);
@@ -216,7 +216,7 @@
         }
     }
     
-    /* Стили для мобильных устройств */
+    
     @media (max-width: 768px) {
         .scanner-video {
             touch-action: none;
@@ -228,28 +228,28 @@
         }
     }
     
-    /* Стили для квадратной области сканирования */
+    
     #scanner-video {
-        /* Размеры теперь управляются через Tailwind классы */
+        
         object-fit: cover;
         border-radius: 18px;
     }
     
     #scanner-canvas {
-        /* Размеры теперь управляются через Tailwind классы */
+        
         border-radius: 18px;
     }
     
     #scanner-placeholder {
-        /* Размеры теперь управляются через Tailwind классы */
+        
         border-radius: 18px;
     }
     
-    /* Адаптивность для мобильных устройств - размеры управляются через Tailwind классы */
-    /* @media (max-width: 480px) - размеры теперь управляются через Tailwind классы w-64 h-64 sm:w-80 sm:h-80 */
     
-    /* Адаптивность для очень маленьких экранов - размеры управляются через Tailwind классы */
-    /* @media (max-width: 360px) - размеры теперь управляются через Tailwind классы w-64 h-64 sm:w-80 sm:h-80 */
+    
+    
+    
+    
     
     .no-scrollbar::-webkit-scrollbar {
         display: none;
@@ -266,20 +266,20 @@
         display: none;
     }
     
-    /* Стили для кнопок поиска и AI камеры - делаем круглыми */
+    
     #search-button,
     #ai-search-button {
-        height: 40px; /* Фиксированная высота кнопок */
+        height: 40px; 
         min-height: 40px;
-        width: 40px; /* Делаем кнопки круглыми */
+        width: 40px; 
         min-width: 40px;
-        border-radius: 50%; /* Делаем кнопки круглыми */
+        border-radius: 50%; 
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0; /* Предотвращаем сжатие */
-        padding: 0; /* Убираем внутренние отступы */
-        background-color: #4b5563; /* bg-gray-600 */
+        flex-shrink: 0; 
+        padding: 0; 
+        background-color: #4b5563; 
         border: none;
         transition: all 0.2s ease;
         cursor: pointer;
@@ -287,7 +287,7 @@
     
     #search-button:hover,
     #ai-search-button:hover {
-        background-color: #6b7280; /* bg-gray-500 */
+        background-color: #6b7280; 
         transform: scale(1.05);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
@@ -297,26 +297,26 @@
         transform: scale(0.95);
     }
     
-    /* Стили для кнопки фильтров - делаем круглой */
+    
     #filter-button {
         height: 40px;
         min-height: 40px;
         width: 40px;
         min-width: 40px;
-        border-radius: 50%; /* Делаем кнопку круглой */
+        border-radius: 50%; 
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0; /* Предотвращаем сжатие */
-        padding: 0; /* Убираем внутренние отступы */
-        background-color: #4b5563; /* bg-gray-600 */
+        flex-shrink: 0; 
+        padding: 0; 
+        background-color: #4b5563; 
         border: none;
         transition: all 0.2s ease;
         cursor: pointer;
     }
     
     #filter-button:hover {
-        background-color: #6b7280; /* bg-gray-500 */
+        background-color: #6b7280; 
         transform: scale(1.05);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
@@ -325,7 +325,7 @@
         transform: scale(0.95);
     }
     
-    /* Принудительное скрытие кнопок */
+    
     #search-button.hidden,
     #ai-search-button.hidden,
     #clear-search.hidden,
@@ -333,7 +333,7 @@
         display: none !important;
     }
     
-    /* Стили для иконки поиска */
+    
     #search-icon {
         height: 40px;
         min-height: 40px;
@@ -342,104 +342,104 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        pointer-events: none; /* Не перехватывает клики */
+        pointer-events: none; 
     }
     
     #clear-search {
         height: 40px;
         min-height: 40px;
-        width: 40px; /* Ширина кнопки очистки */
+        width: 40px; 
         min-width: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0; /* Предотвращаем сжатие */
+        flex-shrink: 0; 
         right: 0;
         top: 0;
         bottom: 0;
     }
     
-    /* Выравниваем высоту поля поиска с кнопками */
+    
     #search-input {
-        height: 40px; /* Такая же высота как у кнопок */
+        height: 40px; 
         min-height: 40px;
         box-sizing: border-box;
-        padding-top: 0.5rem; /* 8px */
-        padding-bottom: 0.5rem; /* 8px */
+        padding-top: 0.5rem; 
+        padding-bottom: 0.5rem; 
     }
     
-    /* Дополнительные стили для лучшего выравнивания панели поиска */
+    
     .flex.items-center.space-x-2.w-full.max-w-sm {
-        align-items: center; /* Возвращаем center вместо stretch */
+        align-items: center; 
     }
     
-    /* Скругленные углы для разделительной линии в карточках */
+    
     .card-image-container {
         border-bottom-left-radius: 18px;
         border-bottom-right-radius: 18px;
     }
     
-    /* Скругленные углы для информационного блока в карточках */
+    
     .card-info-container {
         border-top-left-radius: 0.5rem;
         border-top-right-radius: 0.5rem;
     }
     
-    /* Адаптивная сетка для папок деталей */
+    
     .folder-grid {
         display: grid;
         gap: 1rem;
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
     
-    /* На малых устройствах (до 640px) - минимум 2 карточки в ширину */
+    
     @media (max-width: 640px) {
         .folder-grid {
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         }
     }
     
-    /* Улучшенная типографика */
+    
     h1, h2, h3, h4, h5, h6 {
         line-height: 1.2;
     }
     
-    /* Улучшенный текст в карточках */
+    
     .card-title {
         line-height: 1.3;
     }
     
-    /* Улучшенная читаемость для длинного текста */
+    
     p, span, div {
         line-height: 1.5;
         text-rendering: optimizeLegibility;
     }
     
-    /* Специальные стили для заголовка */
+    
     .main-title {
         line-height: 1.1;
     }
     
-    /* Моноширинный шрифт для технических данных */
+    
     .font-mono, code, pre {
         font-weight: 500;
         letter-spacing: 0.025em;
     }
     
-    /* Улучшенная читаемость для длинного текста */
+    
     p, span, div {
         line-height: 1.5;
         text-rendering: optimizeLegibility;
     }
     
-    /* Специальные стили для заголовка */
+    
     .main-title {
         font-weight: 800;
         letter-spacing: -0.05em;
         line-height: 1.1;
     }
     
-    /* На очень малых устройствах (до 480px) - минимум 2 карточки в ширину */
+    
     @media (max-width: 480px) {
         .folder-grid {
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -448,70 +448,70 @@
     
 
     
-    /* Адаптивная сетка для основного контента деталей */
+    
     .parts-grid {
         display: grid;
         gap: 1rem;
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
     
-    /* На малых устройствах (до 640px) - минимум 2 карточки в ширину */
+    
     @media (max-width: 640px) {
         .parts-grid {
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         }
     }
     
-    /* На очень малых устройствах (до 480px) - минимум 2 карточки в ширину */
+    
     @media (max-width: 480px) {
         .parts-grid {
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         }
     }
     
-    /* Адаптивная сетка для наборов и минифигурок */
+    
     .sets-minifigs-grid {
         display: grid;
         gap: 1rem;
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
     }
     
-    /* На малых устройствах (до 640px) - минимум 2 карточки в ширину */
+    
     @media (max-width: 640px) {
         .sets-minifigs-grid {
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
         }
     }
     
-    /* На очень малых устройствах (до 480px) - минимум 2 карточки в ширину */
+    
     @media (max-width: 480px) {
         .sets-minifigs-grid {
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         }
     }
     
-    /* Адаптивные стили для информации о карточках */
+    
     .card-info-text {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
     
-    /* На малых устройствах делаем текст еще более компактным */
+    
     @media (max-width: 480px) {
         .card-info-text {
             font-size: 0.65rem;
         }
     }
     
-    /* Адаптивные стили для заголовков карточек */
+    
 .card-title {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-/* Автоматический перенос текста для заголовков модальных окон */
+
 .truncate {
     white-space: normal;
     word-wrap: break-word;
@@ -520,14 +520,14 @@
     overflow-wrap: break-word;
 }
 
-/* На малых устройствах делаем заголовки более компактными */
+
 @media (max-width: 480px) {
     .card-title {
         font-size: 0.75rem;
         line-height: 1.2;
     }
     
-    /* На мобильных устройствах заголовки модальных окон переносятся автоматически */
+    
     .truncate {
         white-space: normal;
         word-wrap: break-word;
@@ -536,7 +536,7 @@
     }
 }
 
-/* На средних экранах (планшеты) заголовки переносятся автоматически */
+
 @media (min-width: 481px) and (max-width: 768px) {
     .truncate {
         white-space: normal;
@@ -546,144 +546,144 @@
     }
 }
 
-/* Палитра цветов в модальном окне детали */
+
 .color-palette-container {
-    max-height: 13rem; /* увеличено для зазора снизу, было 12rem (192px) */
+    max-height: 13rem; 
     overflow-y: auto;
-    overflow-x: hidden; /* Обрезаем обводку кнопок по горизонтали */
-    /* Добавляем отступ снизу для видимости скругленных углов и зазора от кружков */
-    padding-bottom: 0.75rem; /* было 0.5rem */
-    /* Обеспечиваем видимость скругленных углов */
+    overflow-x: hidden; 
+    
+    padding-bottom: 0.75rem; 
+    
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
 }
 
-/* Скругление нижних углов блока палитры */
+
 .color-palette-wrapper {
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
-    /* Клип содержимого, чтобы кружки не выходили за край при прокрутке */
+    
     overflow: hidden;
 }
 
-/* Скругление нижних углов контейнера с прокруткой */
+
 .color-palette-container {
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
 }
 
-/* Скругление нижних углов внутреннего контейнера с цветами */
+
 .color-palette-inner {
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
 }
 
-/* Стили для градиента прокрутки */
+
 .color-palette-gradient {
     border-bottom-left-radius: 18px;
     border-bottom-right-radius: 18px;
-    /* Градиент всегда поверх элементов палитры */
+    
     z-index: 20;
 }
 
 
-/* Ограничение палитры цветов на мобильных устройствах до 3 рядов (с небольшим зазором снизу) */
+
 @media (max-width: 768px) {
     .color-palette-container {
-        max-height: 8rem; /* было 7.5rem; добавлен зазор снизу */
+        max-height: 8rem; 
     }
 }
 
-/* Стили для list-вида палитры цветов */
+
 .color-palette-list-container {
     max-height: 13rem;
     overflow-y: auto;
-    overflow-x: hidden; /* Обрезаем обводку кнопок по горизонтали */
+    overflow-x: hidden; 
     padding-bottom: 0.75rem;
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
 }
 
-/* Стили для list-вида палитры цветов - кружочки работают как в обычной палитре */
 
-/* Ограничение list-вида палитры на мобильных устройствах */
+
+
 @media (max-width: 768px) {
     .color-palette-list-container {
         max-height: 8rem;
     }
 }
 
-/* Стили для адаптивной сетки палитры цветов */
+
 .color-palette-grid {
     grid-template-columns: 1fr 1fr;
     width: 100%;
     box-sizing: border-box;
 }
 
-/* Оптимизация размера кнопок для малых устройств */
+
 @media (max-width: 640px) {
-    /* Адаптивная сетка с подстраиваемой шириной */
+    
     .color-palette-grid {
-        grid-template-columns: 1fr 1fr !important; /* Две колонки с подстраиваемой шириной */
-        gap: 0.25rem !important; /* Уменьшаем промежуток между колонками */
+        grid-template-columns: 1fr 1fr !important; 
+        gap: 0.25rem !important; 
     }
     
-    /* Уменьшаем размер кружочков цветов в палитре */
+    
     .color-palette-inner button {
-        width: 1.5rem !important; /* 24px вместо 32px */
+        width: 1.5rem !important; 
         height: 1.5rem !important;
         min-width: 1.5rem !important;
         min-height: 1.5rem !important;
     }
     
-    /* Кружочки в list-виде имеют фиксированный размер */
+    
     .color-palette-list span {
-        width: 1.5rem !important; /* 24px вместо 32px */
+        width: 1.5rem !important; 
         height: 1.5rem !important;
         min-width: 1.5rem !important;
         min-height: 1.5rem !important;
-        flex-shrink: 0 !important; /* Кружок не сжимается */
+        flex-shrink: 0 !important; 
     }
     
-    /* Уменьшаем отступы в палитре цветов */
+    
     .color-palette-inner {
-        gap: 0.5rem !important; /* 8px вместо 12px */
-        padding: 0.5rem !important; /* 8px вместо 12px */
+        gap: 0.5rem !important; 
+        padding: 0.5rem !important; 
     }
     
-    /* Уменьшаем отступы в list-виде палитры */
+    
     .color-palette-list {
-        padding: 0.5rem !important; /* 8px вместо 12px */
+        padding: 0.5rem !important; 
     }
     
     .color-palette-list .grid {
-        gap: 0.375rem !important; /* 6px вместо 8px */
+        gap: 0.375rem !important; 
     }
     
-    /* Уменьшаем размер кнопок в list-виде */
+    
     .color-palette-list button {
-        padding: 0.375rem !important; /* 6px вместо 8px */
-        gap: 0.5rem !important; /* 8px вместо 12px */
-        min-width: 0 !important; /* Убираем минимальную ширину */
-        flex-shrink: 1 !important; /* Позволяем кнопкам сжиматься */
-        width: 100% !important; /* Кнопки занимают всю доступную ширину колонки */
+        padding: 0.375rem !important; 
+        gap: 0.5rem !important; 
+        min-width: 0 !important; 
+        flex-shrink: 1 !important; 
+        width: 100% !important; 
         box-sizing: border-box !important;
     }
     
-    /* Уменьшаем размер текста в list-виде с обрезкой */
+    
     .color-palette-list .text-sm {
-        font-size: 0.75rem !important; /* 12px вместо 14px */
-        overflow: hidden !important; /* Скрываем переполнение */
-        text-overflow: ellipsis !important; /* Добавляем три точки */
-        white-space: nowrap !important; /* Запрещаем перенос строк */
-        line-height: 1.2 !important; /* Компактная высота строки */
-        flex: 1 !important; /* Текст занимает оставшееся место */
-        min-width: 0 !important; /* Позволяем тексту сжиматься */
-        text-align: left !important; /* Выравнивание по левому краю */
+        font-size: 0.75rem !important; 
+        overflow: hidden !important; 
+        text-overflow: ellipsis !important; 
+        white-space: nowrap !important; 
+        line-height: 1.2 !important; 
+        flex: 1 !important; 
+        min-width: 0 !important; 
+        text-align: left !important; 
     }
 }
 
-/* Для средних экранов (640px - 768px) используем две колонки с подстраиваемой шириной */
+
 @media (min-width: 641px) and (max-width: 768px) {
     .color-palette-list button {
         min-width: 0 !important;
@@ -697,43 +697,43 @@
         text-overflow: ellipsis !important;
         white-space: nowrap !important;
         line-height: 1.3 !important;
-        flex: 1 !important; /* Текст занимает оставшееся место */
-        min-width: 0 !important; /* Позволяем тексту сжиматься */
-        text-align: left !important; /* Выравнивание по левому краю */
+        flex: 1 !important; 
+        min-width: 0 !important; 
+        text-align: left !important; 
     }
 }
 
-/* Базовые стили для кнопок и текста в палитре цветов */
+
 .color-palette-list button {
     display: flex !important;
-    align-items: center !important; /* Вертикальное выравнивание элементов кнопки по центру */
+    align-items: center !important; 
 }
 
-/* Активное состояние кнопок (при нажатии) - полностью отключено */
+
 
 .color-palette-list .text-sm {
-    text-align: left !important; /* Выравнивание по левому краю для всех размеров */
+    text-align: left !important; 
     display: flex !important;
-    align-items: center !important; /* Вертикальное выравнивание по центру */
+    align-items: center !important; 
 }
 
-/* Стили для выбранного цвета в палитре */
+
 .color-palette-list button[data-color-id] span.border-blue-500 {
-    border-color: #3b82f5 !important; /* Принудительно синяя обводка */
+    border-color: #3b82f5 !important; 
 }
 
 .color-palette-inner button[data-color-id].border-blue-500 {
-    border-color: #3b82f5 !important; /* Принудительно синяя обводка */
+    border-color: #3b82f5 !important; 
 }
 
-/* Дополнительные стили для выбранного цвета в режиме списка на мобильных устройствах */
+
 @media (max-width: 640px) {
     .color-palette-list button.border-blue-500 {
-        border-color: #3b82f5 !important; /* Принудительно синяя обводка */
+        border-color: #3b82f5 !important; 
     }
 }
 
-/* Стили для индикаторов в палитре цветов */
+
 .indicator-white {
     width: 0.5rem;
     height: 0.5rem;
@@ -750,12 +750,12 @@
     box-shadow: 0 0 0 1px black;
 }
 
-/* Стили для градиентного заголовка */
+
 .bg-gradient-to-r {
     background: linear-gradient(to right, var(--tw-gradient-stops));
 }
 
-/* Стили для drag-and-drop в списках желаний */
+
 .wishlist-item {
     transition: all 0.2s ease-out;
 }
@@ -782,7 +782,7 @@
     background-color: rgba(245, 158, 11, 0.05) !important;
 }
 
-/* Кнопки перемещения элементов - теперь в верхней части карточки */
+
 .wishlist-move-buttons {
     display: flex;
     flex-direction: row;
@@ -796,7 +796,7 @@
     opacity: 1;
 }
 
-/* Всегда показываем кнопки на мобильных устройствах */
+
 @media (max-width: 768px) {
     .wishlist-move-buttons {
         opacity: 1;
@@ -806,7 +806,7 @@
 .wishlist-move-btn {
     width: 24px;
     height: 24px;
-    border: 1px solid rgba(55, 65, 81, 0.5); /* border-gray-700/50 */
+    border: 1px solid rgba(55, 65, 81, 0.5); 
     border-radius: 18px;
     background: rgba(17, 24, 39, 0.4);
     color: rgba(255, 255, 255, 0.8);
@@ -826,7 +826,7 @@
     color: white;
     transform: scale(1.05);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    border-color: rgba(75, 85, 99, 0.7); /* border-gray-600/70 */
+    border-color: rgba(75, 85, 99, 0.7); 
 }
 
 .wishlist-move-btn:disabled {
@@ -834,7 +834,7 @@
     cursor: not-allowed;
     transform: none;
     background: rgba(17, 24, 39, 0.2);
-    border-color: rgba(55, 65, 81, 0.2); /* border-gray-700/20 */
+    border-color: rgba(55, 65, 81, 0.2); 
 }
 
 .wishlist-move-btn:disabled:hover {
@@ -842,14 +842,14 @@
     color: rgba(255, 255, 255, 0.3);
     transform: none;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    border-color: rgba(55, 65, 81, 0.2); /* border-gray-700/20 */
+    border-color: rgba(55, 65, 81, 0.2); 
 }
 
 .wishlist-move-btn.opacity-50 {
     opacity: 0.5;
 }
 
-/* Улучшенные hover эффекты для кнопок */
+
 .wishlist-item .remove-from-wishlist {
     transition: all 0.2s ease-out;
 }
@@ -859,7 +859,7 @@
     transform: scale(1.1);
 }
 
-/* Дополнительные стили для единого списка желаний */
+
 @keyframes wishlistItemAppear {
     from {
         opacity: 0;
@@ -875,7 +875,7 @@
     animation: wishlistItemAppear 0.4s ease-out;
 }
 
-/* Стили для пустого состояния списка желаний */
+
 .wishlist-empty-state {
     background: linear-gradient(135deg, rgba(55, 65, 81, 0.3), rgba(75, 85, 99, 0.2));
     border: 2px dashed rgba(156, 163, 175, 0.4);
@@ -888,18 +888,18 @@
     background: linear-gradient(135deg, rgba(234, 179, 8, 0.1), rgba(251, 191, 36, 0.05));
 }
 
-/* Плавная анимация для всех карточек */
+
 .wishlist-item {
     transition: all 0.3s ease;
 }
 
-/* Hover эффекты как в коллекции */
+
 .wishlist-item:hover {
     transform: translateY(-6px) scale(1.03) !important;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Отключаем hover эффекты на мобильных устройствах */
+
 @media (max-width: 768px) {
     .wishlist-item:hover {
         transform: none !important;
@@ -907,7 +907,7 @@
     }
 }
 
-/* Максимально плавная анимация перемещения карточек */
+
 @keyframes moveUp {
     0% { 
         transform: translateY(0) scale(1);
@@ -944,7 +944,7 @@
     }
 }
 
-/* Максимально плавная анимация для карточек, которые сдвигаются в сторону */
+
 @keyframes slideLeft {
     0% { 
         transform: translateX(0) scale(1);
@@ -981,16 +981,16 @@
     }
 }
 
-/* Анимации перемещения отключены - мгновенная перестановка */
 
-/* Дополнительные брейкпоинты для лучшей адаптивности */
+
+
 @media (min-width: 475px) {
     .xs\:grid-cols-2 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-/* Стили карточек списка желаний - современный дизайн */
+
 .wishlist-item {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     backdrop-filter: blur(10px);
@@ -1002,7 +1002,7 @@
     border-color: rgba(156, 163, 175, 0.3) !important;
 }
 
-/* Отключаем hover эффекты на мобильных устройствах */
+
 @media (max-width: 768px) {
     .wishlist-item:hover {
         transform: none !important;
@@ -1010,7 +1010,7 @@
     }
 }
 
-/* Стили для иконки типа */
+
 .wishlist-item .absolute:first-child {
     transition: transform 0.2s ease;
 }
@@ -1019,7 +1019,7 @@
     transform: scale(1.05);
 }
 
-/* Стили для кнопки удаления */
+
 .wishlist-item button[data-action="remove-from-wishlist"] {
     transition: all 0.2s ease;
     backdrop-filter: blur(4px);
@@ -1029,49 +1029,49 @@
     transform: scale(1.05);
 }
 
-/* Кнопка удаления всегда видна на малых устройствах */
+
 @media (max-width: 768px) {
     .wishlist-item button[data-action="remove-from-wishlist"] {
         opacity: 1 !important;
     }
 }
 
-/* Стили для кнопок перемещения */
+
 .wishlist-move-btn {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(4px);
-    border: 1px solid rgba(55, 65, 81, 0.5); /* border-gray-700/50 */
+    border: 1px solid rgba(55, 65, 81, 0.5); 
 }
 
 .wishlist-move-btn:hover:not(:disabled) {
     transform: scale(1.1);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    border-color: rgba(75, 85, 99, 0.7); /* border-gray-600/70 */
+    border-color: rgba(75, 85, 99, 0.7); 
 }
 
 .wishlist-move-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: none !important;
-    border-color: rgba(55, 65, 81, 0.2); /* border-gray-700/20 */
+    border-color: rgba(55, 65, 81, 0.2); 
 }
 
 
-/* Улучшенные стили для кнопки экспорта */
+
 .export-wishlist {
     min-width: 32px;
     min-height: 32px;
     flex-shrink: 0;
 }
 
-/* Улучшенные стили для кнопки импорта */
+
 .import-wishlist {
     min-width: 32px;
     min-height: 32px;
     flex-shrink: 0;
 }
 
-/* Адаптивные стили для кнопки экспорта */
+
 @media (max-width: 640px) {
     .export-wishlist {
         padding: 0.375rem 0.5rem;
@@ -1085,7 +1085,7 @@
     }
 }
 
-/* Адаптивные стили для кнопки импорта */
+
 @media (max-width: 640px) {
     .import-wishlist {
         padding: 0.375rem 0.5rem;
@@ -1113,7 +1113,7 @@
     }
 }
 
-/* Улучшенные hover эффекты */
+
 .export-wishlist:hover {
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
@@ -1134,7 +1134,7 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Отключаем hover эффекты на мобильных устройствах */
+
 @media (max-width: 768px) {
     .wishlist-item:hover {
         transform: none !important;
@@ -1164,24 +1164,24 @@
     color: transparent;
 }
 
-/* Отступы между блоками в модальном окне детали */
+
 .modal-section-spacing {
-    margin-bottom: 1.5rem; /* 24px */
+    margin-bottom: 1.5rem; 
 }
 
-/* Отступы в заголовках секций */
+
 .modal-section-title {
-    margin-bottom: 0.75rem; /* 12px */
+    margin-bottom: 0.75rem; 
 }
     
-    /* Исправляем layout на малых экранах */
+    
     @media (max-width: 640px) {
         .flex.justify-between.items-center.gap-4 {
             gap: 1rem !important;
         }
     }
     
-    /* Обеспечиваем одинаковую высоту для всех элементов в панели поиска */
+    
     #search-input,
     #search-button,
     #ai-search-button,
@@ -1189,43 +1189,43 @@
         box-sizing: border-box;
     }
     
-    /* Сохраняем стандартное расстояние между полем поиска и кнопками */
+    
     .flex.items-center.space-x-2 > * + * {
-        margin-left: 0.5rem !important; /* 8px - стандартное расстояние space-x-2 */
+        margin-left: 0.5rem !important; 
     }
     
-    /* Увеличиваем ширину поля поиска на малых устройствах */
+    
     @media (max-width: 640px) {
-        /* Убираем ограничение max-w-sm на малых экранах */
+        
         .flex.items-center.space-x-2.w-full.max-w-sm {
             max-width: none !important;
             width: 100% !important;
         }
         
-        /* Увеличиваем поле поиска */
+        
         .flex.items-center.space-x-2.w-full.max-w-sm .relative.flex-grow {
             flex-grow: 1 !important;
             min-width: 0 !important;
         }
         
-        /* Сохраняем стандартное расстояние между элементами на малых экранах */
+        
         .flex.items-center.space-x-2 > * + * {
             margin-left: 0.5rem !important;
         }
         
-        /* Исправляем отступы кнопки sidebar-toggle на малых экранах */
+        
         .sidebar-toggle-btn {
-            margin-left: -0.5rem !important; /* Перемещаем ближе к левому краю */
+            margin-left: -0.5rem !important; 
             margin-right: 1rem !important;
         }
         
-        /* Убираем лишние отступы у заголовка */
+        
         .flex.items-center h1 {
             margin-left: 0 !important;
         }
     }
     
-    /* Адаптивный размер текста для поля поиска на малых экранах */
+    
     @media (max-width: 640px) {
         #search-input {
             font-size: 13px;
@@ -1238,7 +1238,7 @@
         }
     }
     
-    /* Медиа-запрос для мобильных устройств */
+    
     @media (max-width: 640px) {
         #search-button,
         #ai-search-button {
@@ -1264,9 +1264,9 @@
             min-width: 36px;
         }
         
-        /* Увеличиваем правый отступ поля ввода для кнопки очистки */
+        
         #search-input {
-            padding-right: 2.5rem; /* 40px - достаточно места для кнопки очистки */
+            padding-right: 2.5rem; 
         }
     }
     
@@ -1291,7 +1291,7 @@
         pointer-events: none !important;
     }
     
-    /* Стили для кнопок закрытия модальных окон */
+    
     .modal-close-btn {
         position: relative;
         width: 32px;
@@ -1329,7 +1329,7 @@
         transform: scale(1.1);
     }
     
-    /* Специальный стиль для кнопки закрытия боковой панели */
+    
     .modal-close-btn.lg\:hidden {
         background: transparent;
         color: #6b7280;
@@ -1356,14 +1356,14 @@
         transform: none;
     }
     
-    /* Скрываем кнопку закрытия боковой панели на больших экранах */
+    
     @media (min-width: 1024px) {
         .modal-close-btn.lg\:hidden {
             display: none !important;
         }
     }
     
-    /* Стили для кнопки открытия боковой панели */
+    
     .sidebar-toggle-btn {
         position: relative;
         width: 48px;
@@ -1377,7 +1377,7 @@
         transition: color 0.2s ease;
         cursor: pointer;
         margin-right: 1rem;
-        margin-left: -0.5rem; /* Перемещаем ближе к левому краю */
+        margin-left: -0.5rem; 
         border-radius: 18px;
         padding: 12px;
     }
@@ -1410,17 +1410,17 @@
         background: rgba(107, 114, 128, 0.1);
     }
     
-    /* Анимации для кнопок закрытия */
+    
     .modal-close-btn:not(.lg\:hidden) {
         animation: buttonAppear 0.4s ease-out;
     }
-    /* В модалках отключаем повторный запуск анимации при обновлениях */
+    
     #minifig-modal-content .modal-close-btn:not(.animate-once),
     #set-modal-content .modal-close-btn {
         animation: none !important;
     }
     
-    /* Полностью отключаем анимацию для кнопки закрытия модалки набора */
+    
     #set-modal-close {
         animation: none !important;
     }
@@ -1444,7 +1444,7 @@
         }
     }
     
-    /* Пульсация для кнопки sidebar-toggle при первом показе */
+    
     .sidebar-toggle-btn.pulse {
         animation: buttonPulse 1s ease-in-out infinite;
     }
@@ -1504,9 +1504,9 @@
         }
     }
     
-    /* Убрали @keyframes для backdrop, теперь используем transition */
     
-    /* Стили для указателя sidebar-toggle */
+    
+    
     .sidebar-hint {
         position: fixed;
         top: 50%;
@@ -1668,19 +1668,19 @@
         transform: scale(0.95);
     }
     
-    /* Скрываем указатель на больших экранах */
+    
     @media (min-width: 1024px) {
         .sidebar-hint {
             display: none !important;
         }
     }
-    /* Тумблеры (анимированный слайдер) */
+    
     .toggle-switch {
         position: relative;
         width: 42px;
         height: 22px;
         border-radius: 9999px;
-        background: #374151; /* gray-700 - более темный для лучшего контраста */
+        background: #374151; 
         box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 4px rgba(0, 0, 0, 0.2);
         transition: all .2s ease;
         outline: none;
@@ -1701,13 +1701,13 @@
         top: 2px; left: 2px;
         width: 18px; height: 18px;
         border-radius: 9999px;
-        background: #f3f4f6; /* gray-100 - более мягкий белый */
+        background: #f3f4f6; 
         box-shadow: 0 2px 6px rgba(0,0,0,.4);
         transition: all .2s ease;
     }
     
     .toggle-switch.on { 
-        background: #2563eb; /* blue-600 - основной цвет сайта */
+        background: #2563eb; 
         box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 4px rgba(37, 99, 235, 0.3), 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
     
@@ -1724,16 +1724,16 @@
         box-shadow: 0 0 0 3px rgba(59,130,246,.45);
     }
     
-    /* Кнопка переключения типа палитры цветов */
+    
     .color-palette-toggle-btn {
         display: flex;
         align-items: center;
         gap: 6px;
         padding: 4px 10px;
-        background: #4b5563; /* gray-600 */
+        background: #4b5563; 
         border: none;
-        border-radius: 18px; /* rounded-[18px] */
-        color: #f3f4f6; /* gray-100 */
+        border-radius: 18px; 
+        color: #f3f4f6; 
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
@@ -1743,7 +1743,7 @@
     }
     
     .color-palette-toggle-btn:hover {
-        background: #6b7280; /* gray-500 */
+        background: #6b7280; 
         color: #ffffff;
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(107, 114, 128, 0.25);
     }
@@ -1762,7 +1762,7 @@
         height: 14px;
     }
     
-    /* Дополнительные стили для переключателей в настройках */
+    
     .settings-modal .toggle-switch,
     #settings-modal-container .toggle-switch {
         box-shadow: inset 0 0 0 2px rgba(255,255,255,0.1), 0 2px 4px rgba(0, 0, 0, 0.2) !important;
@@ -1783,7 +1783,7 @@
         box-shadow: inset 0 0 0 2px rgba(255,255,255,0.15), 0 4px 8px rgba(37, 99, 235, 0.4), 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
     }
     
-    /* Стабилизация модального окна настроек */
+    
     #settings-modal-container {
         transform: none !important;
         transition: none !important;
@@ -1795,14 +1795,14 @@
         animation: none !important;
     }
     
-    /* Стабилизация кнопки закрытия */
+    
     #settings-modal-close {
         transform: none !important;
         transition: none !important;
         animation: none !important;
     }
     
-    /* Стабилизация контейнера статуса */
+    
     #import-export-status {
         min-height: auto !important;
         transition: none !important;
@@ -1817,7 +1817,7 @@
         font-size: 12px !important;
     }
     
-    /* Стили для сообщений об ошибках */
+    
     #import-export-status.bg-red-900\/50 {
         border: 2px solid rgba(239, 68, 68, 0.8) !important;
         box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3) !important;
@@ -1830,7 +1830,7 @@
         font-size: 9px !important;
     }
     
-    /* Стили для сообщений об успехе */
+    
     #import-export-status.bg-green-900\/50 {
         border: 2px solid rgba(34, 197, 94, 0.8) !important;
         box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3) !important;
@@ -1843,7 +1843,7 @@
         font-size: 10px !important;
     }
     
-    /* Стили для информационных сообщений */
+    
     #import-export-status.bg-blue-900\/50 {
         border: 2px solid rgba(59, 130, 246, 0.8) !important;
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
@@ -1856,14 +1856,14 @@
         font-size: 10px !important;
     }
     
-    /* Предотвращение подпрыгивания при изменении содержимого */
+    
     #settings-modal-scroll {
         transform: none !important;
         transition: none !important;
         animation: none !important;
     }
     
-    /* Отключение всех анимаций для модального окна настроек */
+    
     #settings-modal-container *,
     #settings-modal-container *::before,
     #settings-modal-container *::after {
@@ -1872,7 +1872,7 @@
         transform: none !important;
     }
     
-    /* Исключение для переключателей - им нужны анимации */
+    
     #settings-modal-container .toggle-switch,
     #settings-modal-container .toggle-switch * {
         animation: none !important;
@@ -1888,7 +1888,7 @@
         transform: translateX(20px) !important;
     }
     
-    /* Стили для переключателя типов поиска */
+    
     .search-type-btn {
         transition: all 0.2s ease;
     }
@@ -1906,7 +1906,7 @@
         background-color: #1d4ed8;
     }
     
-    /* Анимация панели мультивыбора */
+    
     @keyframes msSlideFadeIn {
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
@@ -1922,26 +1922,26 @@
     }
     
     
-    /* Базовые стили для контейнера деталей минифигурок */
+    
     .minifig-parts-container {
         overflow: hidden;
         background-color: transparent;
     }
     
     
-    /* Статичный фон для раскрытого состояния - только для не анимирующихся контейнеров */
+    
     .minifig-parts-container.expanded {
-        background-color: rgba(55, 65, 81, 0.4); /* bg-gray-700/40 */
+        background-color: rgba(55, 65, 81, 0.4); 
     }
     
-    /* Убираем анимацию для скрытых контейнеров */
+    
     .minifig-parts-container.hidden {
         animation: none !important;
         background-color: transparent !important;
     }
     
     
-    /* Модальные окна - ВАЖНО: не отключать! */
+    
     #modal-container,
     #filter-modal-container,
     #set-modal-container,
@@ -1979,21 +1979,21 @@
         pointer-events: auto;
     }
     
-    /* Анимация сворачивания/разворачивания панелей */
+    
     .collapse-panel {
         overflow: hidden !important;
         max-height: 0 !important;
         opacity: 0 !important;
-        padding: 0 !important; /* убираем паддинги, чтобы не было лишнего отступа в свернутом состоянии */
+        padding: 0 !important; 
         transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.2s ease !important;
     }
     .collapse-panel.open {
-        max-height: 5000px !important; /* достаточная высота для контента */
+        max-height: 5000px !important; 
         opacity: 1 !important;
-        padding: 0.75rem !important; /* соответствие классу p-3 */
+        padding: 0.75rem !important; 
     }
     
-    /* Более специфичные селекторы для панели статистики */
+    
     #settings-stats-panel.collapse-panel {
         overflow: hidden !important;
         max-height: 0 !important;
@@ -2007,7 +2007,7 @@
         padding: 0.75rem !important;
     }
     
-    /* Стили для панели технологий */
+    
     #technologies-panel.collapse-panel {
         overflow: hidden !important;
         max-height: 0 !important;
@@ -2023,7 +2023,7 @@
     }
     
     
-    /* Анимация появления содержимого панели технологий */
+    
     #technologies-panel.collapse-panel > div {
         transition: opacity 0.2s ease, transform 0.2s ease;
         transform: translateY(5px);
@@ -2035,14 +2035,14 @@
         opacity: 1;
     }
     
-    /* Задержка для секций панели технологий */
-    #technologies-panel.collapse-panel.open > div:nth-child(1) { transition-delay: 0.1s; } /* Описание */
-    #technologies-panel.collapse-panel.open > div:nth-child(2) { transition-delay: 0.15s; } /* Камера */
-    #technologies-panel.collapse-panel.open > div:nth-child(3) { transition-delay: 0.2s; } /* AI */
-    #technologies-panel.collapse-panel.open > div:nth-child(4) { transition-delay: 0.25s; } /* API */
-    #technologies-panel.collapse-panel.open > div:nth-child(5) { transition-delay: 0.3s; } /* Дополнительно */
     
-    /* Стили для панели "О сайте" с улучшенной анимацией */
+    #technologies-panel.collapse-panel.open > div:nth-child(1) { transition-delay: 0.1s; } 
+    #technologies-panel.collapse-panel.open > div:nth-child(2) { transition-delay: 0.15s; } 
+    #technologies-panel.collapse-panel.open > div:nth-child(3) { transition-delay: 0.2s; } 
+    #technologies-panel.collapse-panel.open > div:nth-child(4) { transition-delay: 0.25s; } 
+    #technologies-panel.collapse-panel.open > div:nth-child(5) { transition-delay: 0.3s; } 
+    
+    
     #about-panel.collapse-panel {
         overflow: hidden !important;
         max-height: 0 !important;
@@ -2064,7 +2064,7 @@
         transform: translateY(0) !important;
     }
     
-    /* Увеличенная высота контейнера настроек на мобильных устройствах */
+    
     @media (max-width: 768px) {
         #settings-modal-content {
             max-height: calc(100dvh - 1rem) !important;
@@ -2077,7 +2077,7 @@
         }
     }
     
-    /* Fallback для браузеров без поддержки dvh */
+    
     @supports not (height: 100dvh) {
         @media (max-width: 768px) {
             #settings-modal-content {
@@ -2091,7 +2091,7 @@
             }
         }
         
-        /* Fallback для всех модальных окон */
+        
         #filter-modal-content,
         #camera-modal-content,
         #photo-camera-modal-content {
@@ -2099,7 +2099,7 @@
         }
     }
     
-    /* Дополнительные стили для лучшего отображения панели технологий */
+    
     #technologies-panel.collapse-panel.open {
         max-height: none !important;
         opacity: 1 !important;
@@ -2108,7 +2108,7 @@
         margin-bottom: 1rem !important;
     }
     
-    /* Стили для скроллбара контейнера настроек */
+    
     #settings-modal-scroll::-webkit-scrollbar {
         width: 8px;
     }
@@ -2127,7 +2127,7 @@
         background: rgba(107, 114, 128, 0.8);
     }
     
-    /* Стили для скроллбара textarea в модальном окне "Поделиться" */
+    
     #share-text-content::-webkit-scrollbar {
         width: 6px;
     }
@@ -2135,25 +2135,25 @@
     #share-text-content::-webkit-scrollbar-track {
         background: rgba(55, 65, 81, 0.3);
         border-radius: 3px;
-        margin: 12px 0; /* Отступы сверху и снизу для скругленных углов */
+        margin: 12px 0; 
     }
     
     #share-text-content::-webkit-scrollbar-thumb {
         background: rgba(107, 114, 128, 0.6);
         border-radius: 3px;
-        min-height: 20px; /* Минимальная высота ползунка */
+        min-height: 20px; 
     }
     
     #share-text-content::-webkit-scrollbar-thumb:hover {
         background: rgba(107, 114, 128, 0.8);
     }
     
-    /* Дополнительные отступы для textarea чтобы скроллбар не касался краев */
+    
     #share-text-content {
-        padding-right: 8px; /* Дополнительный отступ справа для скроллбара */
+        padding-right: 8px; 
     }
     
-    /* Стили для отображения версии */
+    
     #app-version-info {
         opacity: 0.8;
         transition: opacity 0.2s ease;
@@ -2177,7 +2177,7 @@
     }
     
     
-    /* Анимация появления содержимого панели "О сайте" */
+    
     #about-panel.collapse-panel p,
     #about-panel.collapse-panel ul,
     #about-panel.collapse-panel li {
@@ -2193,7 +2193,7 @@
         opacity: 1;
     }
     
-    /* Задержка для элементов списка */
+    
     #about-panel.collapse-panel.open li:nth-child(1) { transition-delay: 0.1s; }
     #about-panel.collapse-panel.open li:nth-child(2) { transition-delay: 0.15s; }
     #about-panel.collapse-panel.open li:nth-child(3) { transition-delay: 0.2s; }
@@ -2203,7 +2203,7 @@
     #about-panel.collapse-panel.open li:nth-child(7) { transition-delay: 0.4s; }
     #about-panel.collapse-panel.open li:nth-child(8) { transition-delay: 0.45s; }
     
-    /* Анимация для кнопки "О сайте" */
+    
     button[data-action="toggle-about"] {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: 18px;
@@ -2219,7 +2219,7 @@
         transform: translateX(1px) scale(0.98);
     }
     
-    /* Анимация для кнопки "Технологии" */
+    
     button[data-action="toggle-technologies"] {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: 18px;
@@ -2235,7 +2235,7 @@
         transform: translateX(1px) scale(0.98);
     }
     
-    /* Анимация для кнопки "Статистика загрузки" */
+    
     button[data-action="toggle-settings-stats"] {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: 18px;
@@ -2251,7 +2251,7 @@
         transform: translateX(1px) scale(0.98);
     }
     
-    /* Уменьшенные отступы между кнопками в настройках */
+    
     .settings-button-container {
         margin-bottom: 0.5rem !important;
     }
@@ -2260,7 +2260,7 @@
         margin-top: 0.5rem !important;
     }
     
-    /* Анимация для настроек камеры в DataMatrix и AI камере */
+    
     details.group {
         overflow: hidden;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2270,7 +2270,7 @@
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    /* Анимация содержимого details */
+    
     details.group > div {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         transform: translateY(-10px);
@@ -2285,7 +2285,7 @@
         max-height: 1000px;
     }
     
-    /* Анимация для элементов внутри настроек камеры */
+    
     details.group[open] > div > div {
         transition: opacity 0.2s ease, transform 0.2s ease;
         transform: translateY(5px);
@@ -2300,7 +2300,7 @@
         opacity: 1;
     }
     
-    /* Улучшенная анимация шеврона в details */
+    
     details.group summary .text-gray-400 {
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
@@ -2309,7 +2309,7 @@
         transform: rotate(180deg);
     }
     
-    /* Улучшенная анимация для шевронов в модалке настроек */
+    
     #about-chevron,
     #technologies-chevron,
     #settings-stats-chevron,
@@ -2324,28 +2324,28 @@
         transform: rotate(180deg) !important;
     }
     
-    /* Анимации кнопок в боковом меню */
+    
     #sidebar-container button {
         transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
     }
-    /* hover/active без подъёма/скейла — цвет меняется через transition-colors */
     
-    /* Предотвращаем подёргивание кнопок навигации */
+    
+    
     button[data-view] {
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
         transform: translateZ(0);
         -webkit-transform: translateZ(0);
-        /* Оптимизируем переходы */
+        
         transition: all 0.2s ease-in-out;
     }
     #sidebar-container button:focus-visible {
         outline: none;
         box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
     }
-    /* Легкая анимация для иконок избранного в боковом меню */
+    
     #sidebar-container [data-action="toggle-favorite-theme"],
     #sidebar-container [data-action="toggle-favorite-category"] {
         transition: transform 0.15s ease;
@@ -2355,7 +2355,7 @@
         transform: scale(0.9);
     }
 
-    /* Анимации боковой панели */
+    
     #sidebar-container {
         transition: transform 0.25s ease-in-out;
         will-change: transform;
@@ -2364,12 +2364,12 @@
         transition: opacity 0.2s ease-in-out;
     }
     
-    /* Кнопочный вид элементов списков в боковом меню для лучшей читаемости */
+    
     #sidebar-container nav ul li > button {
-        background-color: rgba(55, 65, 81, 0.20); /* bg-gray-700/20 */
-        border: 1px solid rgba(75, 85, 99, 0.50); /* border-gray-700/50 */
+        background-color: rgba(55, 65, 81, 0.20); 
+        border: 1px solid rgba(75, 85, 99, 0.50); 
         box-shadow: 0 1px 1px rgba(0,0,0,0.20);
-        border-radius: 18px; /* rounded-[18px] */
+        border-radius: 18px; 
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -2379,20 +2379,20 @@
     #sidebar-container nav ul li > button > span.truncate { align-self: center; display: inline-flex; align-items: center; }
     #sidebar-container nav ul li > button > div { align-items: center; }
     #sidebar-container nav ul li > button:hover {
-        background-color: rgba(55, 65, 81, 0.40); /* bg-gray-700/40 */
+        background-color: rgba(55, 65, 81, 0.40); 
         box-shadow: 0 2px 4px rgba(0,0,0,0.25);
     }
-    /* Левая полоса для активных пунктов ТОЛЬКО в списках под верхними кнопками */
+    
     #sidebar-scroll-container button { overflow: hidden; transition: box-shadow .38s cubic-bezier(0.22, 1, 0.36, 1); }
-    /* Отключаем прежние псевдоэлементы и переходим на inset-тень */
+    
     #sidebar-scroll-container button::before,
     #sidebar-scroll-container button::after { content: none !important; }
 
-    /* Активный пункт: тонкая яркая грань и мягкое внутреннее свечение слева */
+    
     #sidebar-scroll-container button[class*="bg-blue-600"] {
         box-shadow:
-            inset 2px 0 0 rgba(147,197,253,0.78),          /* тоньше и слегка прозрачная грань */
-            inset 14px 0 24px -14px rgba(59,130,246,0.28); /* мягкое левое свечение */
+            inset 2px 0 0 rgba(147,197,253,0.78),          
+            inset 14px 0 24px -14px rgba(59,130,246,0.28); 
         animation: sidebarActiveIn .38s cubic-bezier(0.22, 1, 0.36, 1) both;
     }
 
@@ -2408,19 +2408,19 @@
                 inset 14px 0 24px -14px rgba(59,130,246,0.28);
         }
     }
-    /* Отключаем свечение для кнопок "Все" */
+    
     #sidebar-scroll-container button[data-action="show-all-collection-items"],
     #sidebar-scroll-container button[data-action="show-all-items-sets"],
     #sidebar-scroll-container button[data-action="show-all-items-parts"] {
         box-shadow: none !important;
     }
-    /* Отключаем свечение для кнопок избранного */
+    
     #sidebar-scroll-container #sidebar-fav-list button { box-shadow: none !important; }
-    /* Лёгкая зебра для монотонных списков (только для верхнего уровня) */
+    
     #sidebar-container nav > ul > li:nth-child(odd) > button {
-        background-color: rgba(55, 65, 81, 0.16); /* немного светлее */
+        background-color: rgba(55, 65, 81, 0.16); 
     }
-    /* Кебаб-меню: плавное появление/закрытие без подпрыгиваний элементов */
+    
     .overflow-menu {
         transform-origin: top right;
         transition: opacity 0.14s ease, transform 0.14s ease;
@@ -2434,12 +2434,12 @@
         pointer-events: auto;
     }
     
-    /* Полноэкранный просмотр изображений */
+    
     #image-viewer-container {
         cursor: default;
     }
     
-    /* Стилизованные чекбоксы и радиокнопки */
+    
     input[type="checkbox"],
     input[type="radio"] {
         appearance: none;
@@ -2447,14 +2447,14 @@
         -moz-appearance: none;
         width: 18px;
         height: 18px;
-        border: 2px solid #4b5563; /* border-gray-600 */
+        border: 2px solid #4b5563; 
         border-radius: 18px;
-        background-color: #1f2937; /* bg-gray-800 */
+        background-color: #1f2937; 
         cursor: pointer;
         position: relative;
         transition: all 0.2s ease;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        /* Исправляем выравнивание по вертикали */
+        
         vertical-align: middle;
         margin: 0;
         flex-shrink: 0;
@@ -2466,23 +2466,23 @@
     
     input[type="checkbox"]:hover,
     input[type="radio"]:hover {
-        border-color: #6b7280; /* border-gray-500 */
-        background-color: #374151; /* bg-gray-700 */
+        border-color: #6b7280; 
+        background-color: #374151; 
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(59, 130, 246, 0.1);
         transform: translateY(-1px);
     }
     
     input[type="checkbox"]:checked,
     input[type="radio"]:checked {
-        border-color: #2563eb; /* border-blue-600 */
-        background-color: #2563eb; /* bg-blue-600 */
+        border-color: #2563eb; 
+        background-color: #2563eb; 
         box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 0 0 3px rgba(37, 99, 235, 0.1);
     }
     
     input[type="checkbox"]:checked:hover,
     input[type="radio"]:checked:hover {
-        background-color: #1d4ed8; /* bg-blue-700 */
-        border-color: #1d4ed8; /* border-blue-700 */
+        background-color: #1d4ed8; 
+        border-color: #1d4ed8; 
         box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 0 0 3px rgba(37, 99, 235, 0.15);
         transform: translateY(-1px);
     }
@@ -2497,11 +2497,11 @@
     input[type="radio"]:disabled {
         opacity: 0.5;
         cursor: not-allowed;
-        background-color: #374151; /* bg-gray-700 */
-        border-color: #6b7280; /* border-gray-500 */
+        background-color: #374151; 
+        border-color: #6b7280; 
     }
     
-    /* Иконка для чекбокса */
+    
     input[type="checkbox"]:checked::after {
         content: '';
         position: absolute;
@@ -2515,7 +2515,7 @@
         animation: checkmark 0.2s ease-in-out;
     }
     
-    /* Иконка для радиокнопки */
+    
     input[type="radio"]:checked::after {
         content: '';
         position: absolute;
@@ -2528,7 +2528,7 @@
         animation: radioDot 0.2s ease-in-out;
     }
     
-    /* Анимации для иконок */
+    
     @keyframes checkmark {
         from {
             opacity: 0;
@@ -2551,7 +2551,7 @@
         }
     }
     
-    /* Дополнительные стили для выравнивания радиокнопок в фильтрах */
+    
     label:has(input[type="radio"]),
     label:has(input[type="checkbox"]) {
         display: flex;
@@ -2565,13 +2565,13 @@
         align-self: center;
     }
     
-    /* Стили для элементов в карточках */
     
-    /* Счётчики количества в карточках */
+    
+    
     .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
         box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2) !important;
         transition: all 0.2s ease !important;
-        /* animation: pulse 2s infinite !important; */ /* ОТКЛЮЧЕНО: моргание индикаторов */
+         
     }
     
     .set-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
@@ -2581,12 +2581,12 @@
         transform: scale(1.05) !important;
     }
     
-    /* Дополнительные стили для счётчиков в карточках наборов и минифигурок */
+    
     .set-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
     .minifig-card .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
         box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2) !important;
         transition: all 0.2s ease !important;
-        /* animation: pulse 2s infinite !important; */ /* ОТКЛЮЧЕНО: моргание индикаторов */
+         
     }
     
     .set-card:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full,
@@ -2595,7 +2595,7 @@
         transform: scale(1.05) !important;
     }
     
-    /* Кнопки выбора (корзина) в карточках */
+    
     button[data-action="toggle-select"] {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
         transition: all 0.2s ease !important;
@@ -2611,7 +2611,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
     }
     
-    /* Дополнительные стили для кнопок корзины в карточках наборов и минифигурок */
+    
     .set-card button[data-action="toggle-select"],
     .minifig-card button[data-action="toggle-select"] {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
@@ -2630,7 +2630,7 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
     }
     
-    /* Цветовые кружки в карточках деталей */
+    
     .w-4.h-4.rounded-full.border {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
         transition: all 0.2s ease !important;
@@ -2641,23 +2641,14 @@
         transform: scale(1.1) !important;
     }
     
-    /* Анимация пульсации для счетчиков - ОТКЛЮЧЕНА */
-    /*
-    @keyframes pulse {
-        0%, 100% {
-            box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2);
-        }
-        50% {
-            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.4), 0 4px 8px rgba(37, 99, 235, 0.3);
-        }
-    }
-    */
     
-    /* Счетчики в папках и других специальных случаях */
+    
+    
+    
     .part-card[data-folder="true"] .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
         box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2) !important;
         transition: all 0.2s ease !important;
-        /* animation: pulse 2s infinite !important; */ /* ОТКЛЮЧЕНО: моргание индикаторов */
+         
     }
     
     .part-card[data-folder="true"]:hover .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
@@ -2665,7 +2656,7 @@
         transform: scale(1.05) !important;
     }
     
-    /* Улучшенные стили для всех карточек */
+    
     .set-card,
     .minifig-card,
     .part-card {
@@ -2680,7 +2671,7 @@
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Дополнительные стили для карточек наборов и минифигурок */
+    
     .set-card,
     .minifig-card {
         transition: all 0.3s ease !important;
@@ -2693,7 +2684,7 @@
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Цветовые кружки в модальных окнах и фильтрах */
+    
     .modal-content .w-6.h-6.rounded-full.border,
     .filter-modal .w-6.h-6.rounded-full.border,
     .w-8.h-8.rounded-full.border-2 {
@@ -2708,7 +2699,7 @@
         transform: scale(1.05);
     }
     
-    /* Цветовые кружки в палитре цветов */
+    
     .color-palette-inner button,
     .color-palette-inner span {
         transition: all 0.2s ease;
@@ -2719,7 +2710,7 @@
         transform: scale(1.1);
     }
     
-    /* Кнопки удаления в карточках */
+    
     button[data-action="delete-from-collection"],
     button[data-action="delete-set-from-collection"],
     button[data-action="delete-minifig-from-collection"] {
@@ -2741,34 +2732,34 @@
         box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2) !important;
     }
     
-    /* Тени для белых контейнеров картинок в карточках */
+    
     .card-image-container .bg-white {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Тени для белых контейнеров картинок в модальных окнах */
+    
     .modal-content .bg-white[class*="rounded-"],
     [id*="modal"] .bg-white[class*="rounded-"] {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Тени для белых контейнеров в инвентарях */
+    
     .inventory-container .bg-white[class*="rounded-"],
     .collection-container .bg-white[class*="rounded-"] {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Общие тени для всех белых контейнеров с картинками */
+    
     .bg-white[class*="rounded-"] {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
     }
     
-    /* Стили для белых контейнеров с картинками - убираем скругление у изображений в модалках */
+    
     .bg-white[class*="rounded-"] img {
         border-radius: 0;
     }
     
-    /* Дополнительные тени для специфических модальных окон */
+    
     #set-modal-container .bg-white[class*="rounded-"],
     #minifig-modal-container .bg-white[class*="rounded-"],
     #modal-container .bg-white[class*="rounded-"],
@@ -2792,69 +2783,69 @@
     
     #fullscreen-image.zoomed {
         cursor: default;
-        /* Убираем transform, так как он теперь на обертке */
+        
         max-width: 90%;
         max-height: 90%;
         object-fit: contain;
     }
     
-    /* Контейнер для изображения с отступами */
+    
     #image-viewer-container > div {
         transition: padding 0.3s ease-out;
-        /* Убираем лишние отступы */
+        
         padding: 0;
     }
     
-    /* Стили для обертки изображения */
+    
     .image-wrapper {
         border-radius: 18px;
         overflow: hidden;
     }
     
-    /* Дополнительные стили для скругления картинки в полноэкранном просмотре */
+    
     .image-wrapper img {
         border-radius: 18px;
     }
     
-    /* Стили для поля поиска в боковой панели */
+    
     #sidebar-search {
-        min-width: 0; /* Предотвращаем переполнение */
-        flex-shrink: 1; /* Позволяем сжиматься */
-        padding-right: 2.5rem; /* 40px - достаточно места для кнопки очистки */
+        min-width: 0; 
+        flex-shrink: 1; 
+        padding-right: 2.5rem; 
     }
     
-    /* Стили для иконок в поле поиска боковой панели */
+    
     #sidebar-search-icon,
     #sidebar-search-clear {
         position: absolute;
         top: 0;
         right: 0;
         bottom: 0;
-        width: 40px; /* Ширина кнопки очистки */
+        width: 40px; 
         min-width: 40px;
         height: 40px;
         min-height: 40px;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0; /* Предотвращаем сжатие */
-        z-index: 10; /* Обеспечиваем правильное наложение */
+        flex-shrink: 0; 
+        z-index: 10; 
         cursor: pointer;
     }
     
-    /* Стили для кнопки очистки поиска */
+    
     #sidebar-search-clear {
         background-color: transparent;
         border: none;
     }
     
-    /* Стили для иконки поиска */
+    
     #sidebar-search-icon {
         background-color: transparent;
         border: none;
     }
     
-    /* Адаптивные стили для поля поиска в боковой панели на мобильных устройствах */
+    
     @media (max-width: 640px) {
         #sidebar-search-icon,
         #sidebar-search-clear {
@@ -2865,7 +2856,7 @@
         }
         
         #sidebar-search {
-            padding-right: 2.25rem; /* 36px - достаточно места для кнопки очистки на мобильных */
+            padding-right: 2.25rem; 
         }
     }
     
@@ -2874,93 +2865,93 @@
         padding: 5% !important;
     }
     
-    /* Центрируем обертку в контейнере */
+    
     #image-viewer-container {
         display: flex;
         align-items: center;
         justify-content: center;
-        /* Убираем лишние отступы */
+        
         padding: 0;
-        /* Предотвращаем растягивание содержимого */
+        
         align-content: center;
-        /* Улучшенное центрирование */
+        
         text-align: center;
-        /* Предотвращаем горизонтальное скроллирование */
+        
         overflow: hidden;
     }
     
-    /* Дополнительные стили для скругленных краев */
+    
     .image-wrapper {
-        /* Обертка точно по размеру содержимого */
+        
         display: inline-block;
-        /* Предотвращаем растягивание */
+        
         width: fit-content;
         height: fit-content;
-        /* Скругленные края */
+        
         border-radius: 18px;
-        /* Тень */
+        
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-        /* Переходы */
+        
         transition: all 0.3s ease-out;
-        /* Отступы для фона */
+        
         padding: 8px;
-        /* Простой белый фон без шахматки */
+        
         background-color: white;
-        /* Убираем лишние ограничения */
+        
         max-width: none;
         max-height: none;
-        /* Улучшенное позиционирование */
+        
         position: relative;
-        /* Центрируем содержимое */
+        
         text-align: center;
-        /* Обрезаем содержимое по внутренним закругленным углам */
+        
         overflow: hidden;
     }
 
-    /* Чуть более крупные скругления на десктопах */
+    
     @media (min-width: 1024px) {
         .image-wrapper {
             border-radius: 18px;
         }
     }
     
-    /* При увеличении улучшаем тень и масштабируем обертку */
+    
     .image-wrapper.zoomed {
         box-shadow: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
         transform: scale(1.5);
         transition: transform 0.3s ease-out;
-        /* Увеличиваем отступы при масштабировании */
+        
         padding: 12px;
-        /* Центрируем увеличение относительно центра обертки */
+        
         transform-origin: center;
-        /* Сохраняем точный размер */
+        
         width: fit-content;
         height: fit-content;
-        /* Предотвращаем смещение */
+        
         position: relative;
     }
     
     #fullscreen-image {
-        /* Изображение помещается в экран */
+        
         max-width: 90vw;
         max-height: 90vh;
         width: auto;
         height: auto;
-        /* Улучшенное качество рендеринга */
+        
         image-rendering: -webkit-optimize-contrast;
         image-rendering: crisp-edges;
-        /* Добавляем border-radius для скругления углов */
+        
         border-radius: 18px;
-        /* Объект-фит для правильного масштабирования */
+        
         object-fit: contain;
-        /* Предотвращаем влияние на размер обертки */
+        
         flex-shrink: 0;
-        /* Центрируем изображение в обертке */
+        
         display: block;
         margin: 0 auto;
     }
     
-    /* Гарантируем, что модальные окна всегда поверх */
+    
     #modal-container,
     #set-modal-container,
     #minifig-modal-container,
@@ -2970,14 +2961,14 @@
     #photo-camera-selection-modal {
         z-index: 50 !important;
         pointer-events: auto !important;
-        overflow: hidden; /* Клипуем содержимое при анимации скрытия */
+        overflow: hidden; 
     }
-    /* Модалка деталей должна быть поверх инвентарей наборов/минифигурок */
-    #modal-container { z-index: 60 !important; }
-    /* Модалка набора должна быть поверх связанных наборов */
-    /* z-index управляется ModalManager */
     
-    /* Прогресс прокрутки (вертикальный индикатор) */
+    #modal-container { z-index: 60 !important; }
+    
+    
+    
+    
     #scroll-progress {
         position: fixed;
         right: 2px;
@@ -2999,17 +2990,17 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 48px; /* размер маркера */
+        height: 48px; 
         background: linear-gradient(180deg, #60a5fa, #3b82f6);
         box-shadow: 0 0 10px rgba(59,130,246,.35);
         border-radius: inherit;
         transform: translateY(0);
     }
-    /* Индикатор в модальном окне набора */
+    
     #set-scroll-progress {
         position: absolute;
         right: 2px;
-        top: 12px; /* будет скорректирован скриптом под высоту шапки модалки */
+        top: 12px; 
         bottom: 12px;
         width: 5px;
         background: rgba(255,255,255,0.08);
@@ -3034,11 +3025,11 @@
         transform: translateY(0);
     }
 
-    /* Индикатор в модальном окне минифигурки */
+    
     #minifig-scroll-progress {
         position: absolute;
         right: 2px;
-        top: 12px; /* будет скорректирован скриптом под высоту шапки модалки */
+        top: 12px; 
         bottom: 12px;
         width: 5px;
         background: rgba(255,255,255,0.08);
@@ -3056,18 +3047,18 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 48px; /* размер маркера */
+        height: 48px; 
         background: linear-gradient(180deg, #60a5fa, #3b82f6);
         box-shadow: 0 0 10px rgba(59,130,246,.35);
         border-radius: inherit;
         transform: translateY(0);
     }
 
-    /* Индикатор в модальном окне связанных наборов */
+    
     #related-sets-scroll-progress {
         position: absolute;
         right: 2px;
-        top: 12px; /* будет скорректирован скриптом под высоту шапки модалки */
+        top: 12px; 
         bottom: 12px;
         width: 5px;
         background: rgba(255,255,255,0.08);
@@ -3091,7 +3082,7 @@
         border-radius: inherit;
         transform: translateY(0);
     }
-    /* Индикатор в модальном окне цветов детали */
+    
     #colors-scroll-progress {
         position: absolute;
         right: 2px;
@@ -3120,7 +3111,7 @@
         transform: translateY(0);
     }
     
-    /* Индикатор в модальном окне поиска деталей */
+    
     #part-search-scroll-progress {
         position: absolute;
         right: 2px;
@@ -3148,7 +3139,7 @@
         transform: translateY(0);
     }
     
-    /* Индикаторы в модальных окнах поиска наборов и минифигурок */
+    
     #sets-search-scroll-progress, #minifigs-search-scroll-progress {
         position: absolute;
         right: 2px;
@@ -3179,7 +3170,7 @@
         transform: translateY(0);
     }
     
-    /* Индикатор в модальном окне сканера камеры */
+    
     #photo-camera-scroll-progress {
         position: absolute;
         right: 2px;
@@ -3210,7 +3201,7 @@
         transform: translateY(0);
     }
     
-    /* Индикатор в модальном окне сканера DataMatrix */
+    
     #camera-scroll-progress {
         position: absolute;
         right: 2px;
@@ -3240,25 +3231,25 @@
         border-radius: inherit;
         transform: translateY(0);
     }
-    /* Image viewer должен быть поверх модальных окон */
+    
     #image-viewer-container.visible {
         pointer-events: auto !important;
         opacity: 1 !important;
     }
     
-    /* Скрытый image viewer не должен блокировать клики */
+    
     #image-viewer-container.viewer-hidden {
         z-index: -1 !important;
         pointer-events: none !important;
         opacity: 0 !important;
     }
     
-    /* Кнопка закрытия всегда поверх и кликабельна */
+    
     #image-viewer-close {
         pointer-events: auto !important;
     }
     
-    /* Контейнер-полотно для изображения */
+    
     .image-canvas {
         position: relative;
         width: 100%;
@@ -3271,7 +3262,7 @@
         transform-style: preserve-3d;
     }
     
-    /* Стили для зума и перетаскивания изображения */
+    
     #image-viewer-container.zoom-mode {
         cursor: grab;
     }
@@ -3283,7 +3274,7 @@
     #image-viewer-container.zoom-mode .image-canvas {
         cursor: grab;
         transition: transform 0.2s ease-out;
-        /* Улучшенная производительность для полотна */
+        
         will-change: transform;
         transform-style: preserve-3d;
     }
@@ -3295,13 +3286,13 @@
     #image-viewer-container.zoom-mode .image-canvas.dragging {
         cursor: grabbing;
         transition: none;
-        /* Отключаем все переходы при перетаскивании полотна */
+        
         will-change: transform;
         transform-style: preserve-3d;
     }
     
     .image-canvas .image-wrapper {
-        /* Базовые стили для изображения в полотне */
+        
         max-width: 90%;
         max-height: 90%;
         width: auto;
@@ -3310,12 +3301,12 @@
     
     #image-viewer-container.zoom-mode .image-wrapper {
         transition: transform 0.2s ease-out;
-        /* Улучшенная производительность для изображения */
+        
         will-change: transform;
         transform-style: preserve-3d;
     }
     
-    /* Отключаем двойное нажатие на сенсорных экранах */
+    
     @media (hover: none) and (pointer: coarse) {
         #image-viewer-container {
             touch-action: manipulation;
@@ -3325,16 +3316,16 @@
             touch-action: manipulation;
         }
         
-        /* Блокировка touch событий для заблокированных кнопок на мобильных */
+        
         .zoom-btn:disabled {
             pointer-events: none;
             touch-action: none;
             -webkit-touch-callout: none;
-            /* Скрываем заблокированные кнопки на мобильных */
+            
             display: none !important;
         }
         
-        /* Центрируем доступные кнопки на мобильных */
+        
         .zoom-controls {
             justify-content: center !important;
             left: 50% !important;
@@ -3342,7 +3333,7 @@
             transform: translateX(-50%) !important;
         }
         
-        /* Улучшенная отзывчивость кнопок на сенсорных устройствах */
+        
         .zoom-btn {
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
@@ -3352,7 +3343,7 @@
             -ms-user-select: none;
         }
         
-        /* Увеличиваем область касания для кнопок на мобильных */
+        
         .zoom-btn::before {
             content: '';
             position: absolute;
@@ -3364,7 +3355,7 @@
         }
     }
     
-    /* Кнопки управления зумом */
+    
     .zoom-controls {
         position: absolute;
         top: 60px;
@@ -3391,7 +3382,7 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     
-    /* На мобильных устройствах кнопки внизу по центру */
+    
     @media (max-width: 768px) {
         .zoom-controls {
             top: auto;
@@ -3406,14 +3397,14 @@
         .zoom-btn {
             width: 50px;
             height: 50px;
-            /* Улучшенные стили для мобильных */
+            
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
             user-select: none;
             -webkit-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
-            /* Предотвращаем случайные срабатывания */
+            
             pointer-events: auto;
             position: relative;
             z-index: 10;
@@ -3434,7 +3425,7 @@
             background: rgba(255, 255, 255, 0.1) !important;
         }
         
-        /* Дополнительная защита от случайных касаний */
+        
         .zoom-controls {
             pointer-events: auto;
             z-index: 100;
@@ -3454,10 +3445,10 @@
         opacity: 0.5;
         cursor: not-allowed;
         pointer-events: none;
-        /* На десктопе показываем заблокированные кнопки с пониженной прозрачностью */
+        
     }
     
-    /* Стили для кнопок в процессе обработки */
+    
     .zoom-btn[data-processing="true"] {
         opacity: 0.7;
         pointer-events: none;
@@ -3465,13 +3456,13 @@
         transition: all 0.1s ease;
     }
     
-    /* На мобильных устройствах скрываем заблокированные кнопки */
+    
     @media (max-width: 768px) {
         .zoom-btn:disabled {
             display: none !important;
         }
         
-        /* Отключаем двойное нажатие и одиночный клик на мобильных устройствах */
+        
         .viewer,
         .viewer *,
         .image-canvas,
@@ -3486,18 +3477,18 @@
             pointer-events: auto !important;
         }
         
-        /* Блокируем одиночный клик для картинки на мобильных, но оставляем перетаскивание */
+        
         .fullscreen-image {
             pointer-events: none !important;
         }
         
-        /* Разрешаем события только для кнопок зума */
+        
         .zoom-controls,
         .zoom-controls * {
             pointer-events: auto !important;
         }
         
-        /* Дополнительная защита от двойного нажатия */
+        
         .viewer * {
             touch-action: manipulation !important;
             -webkit-tap-highlight-color: transparent !important;
@@ -3519,7 +3510,7 @@
         height: 16px;
     }
     
-    /* Увеличенные иконки на мобильных */
+    
     @media (max-width: 768px) {
         .zoom-btn svg {
             width: 24px;
@@ -3538,7 +3529,7 @@
         transform: none;
     }
     
-    /* Принудительно восстанавливаем pointer-events для модальных окон */
+    
     #modal-container:not(.modal-hidden),
     #set-modal-container:not(.modal-hidden),
     #minifig-modal-container:not(.modal-hidden),
@@ -3559,27 +3550,27 @@
         animation: scaleOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards;
     }
 
-    /* Клип контента и корректное происхождение трансформации при анимациях модалок */
+    
     #modal-content,
     #set-modal-content,
     #minifig-modal-content,
     #filter-modal-content,
     #settings-modal-content {
-        overflow: hidden;            /* чтобы содержимое не выходило за скругления */
+        overflow: hidden;            
         will-change: transform, opacity;
-        contain: paint;              /* изоляция слоя для предотвращения артефактов */
+        contain: paint;              
     }
     .modal-content-enter,
     .modal-content-leave {
         transform-origin: center;
     }
     .modal-content-leave {
-        box-shadow: none !important; /* убираем тень при скрытии, чтобы не выпирала */
+        box-shadow: none !important; 
     }
     
-    /* Компактные стили модальных окон на малых экранах (без перестройки UI) */
+    
     @media (max-width: 480px), (max-height: 700px) {
-        /* Компактные размеры самого контейнера модалки */
+        
         #modal-content,
         #set-modal-content,
         #minifig-modal-content {
@@ -3589,7 +3580,7 @@
             border-radius: 18px;
         }
         
-        /* Fallback для браузеров без поддержки dvh */
+        
         @supports not (height: 100dvh) {
             #modal-content,
             #set-modal-content,
@@ -3603,7 +3594,7 @@
         }
         
 
-        /* Компактная шапка модалки */
+        
         #modal-content > div:first-child,
         #set-modal-content > div:first-child,
         #minifig-modal-content > div:first-child {
@@ -3616,7 +3607,7 @@
             line-height: 1.2 !important;
         }
 
-        /* Кнопка закрытия чуть меньше */
+        
         .modal-close-btn {
             width: 28px;
             height: 28px;
@@ -3626,7 +3617,7 @@
             height: 14px;
         }
 
-        /* Контент модалки детали: уменьшаем картинку и паддинги */
+        
         #modal-content #modal-image-container {
             width: 9rem;
             height: 9rem;
@@ -3638,7 +3629,7 @@
             padding: 0.75rem !important;
         }
 
-        /* Универсально уменьшаем отступы и промежутки внутри модалок */
+        
         #set-modal-content .p-4,
         #minifig-modal-content .p-4,
         #modal-content .p-4 {
@@ -3661,7 +3652,7 @@
             margin-bottom: 0.5rem;
         }
 
-        /* Палитра цветов – компактный вид */
+        
         #color-selector-container {
             min-height: 96px !important;
         }
@@ -3670,7 +3661,7 @@
             height: 1.75rem !important;
         }
 
-        /* Элементы списков инвентаря/минифигурок – компактные превью и текст */
+        
         #set-modal-content .w-12.h-12,
         #minifig-modal-content .w-12.h-12 {
             width: 2.5rem !important;
@@ -3694,7 +3685,7 @@
             font-size: 0.9rem !important;
         }
 
-        /* Индикаторы прокрутки – чуть уже на мобильных */
+        
         #set-scroll-progress,
         #minifig-scroll-progress {
             right: 1px;
@@ -3702,11 +3693,11 @@
         }
     }
     
-    /* Плавный переход размытия фона теперь управляется через transition выше */
     
-    /* Image viewer также использует плавный переход размытия через transition выше */
     
-    /* Transition для backdrop-filter управляется выше, анимации для контента остаются */
+    
+    
+    
     
     .part-card.animate-in,
     .set-card.animate-in,
@@ -3715,7 +3706,7 @@
         animation: fadeInUp 0.1s ease-out forwards;
     }
 
-/* Анимации для всех экранов - МИНИМАЛЬНЫЕ */
+
 .part-card.animate-in,.set-card.animate-in,.minifig-card.animate-in {
     animation-duration: 0.1s;
     animation-timing-function: ease-out;
@@ -3723,7 +3714,7 @@
     animation-fill-mode: forwards;
 }
 
-/* Кнопки галереи: полное отключение анимаций/смещений при нажатии */
+
 .set-gallery-btn {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
@@ -3733,25 +3724,25 @@
     transform: translateY(-50%) !important;
     transition: none !important;
 }
-/* Отключение любых наследованных transforms на нажатие */
+
 .set-gallery-btn *, .set-gallery-btn svg { pointer-events: none; }
 
-/* Малые устройства: скрываем кнопки перелистывания (оставляем свайпы и точки) */
+
 @media (max-width: 640px) {
     .set-gallery-btn,
     #set-modal-content [data-action="set-gallery-prev"],
     #set-modal-content [data-action="set-gallery-next"],
-    /* Кнопки галереи минифигурок скрываем на малых экранах */
+    
     #minifig-modal-content [data-action="minifig-gallery-prev"],
     #minifig-modal-content [data-action="minifig-gallery-next"],
-    /* Кнопки переключения вариаций детали скрываем на малых экранах */
+    
     #modal-content [data-action="part-variant-prev"],
     #modal-content [data-action="part-variant-next"] {
         display: none !important;
     }
 }
 
-/* Анимация для первой загрузки страницы - МИНИМАЛЬНАЯ */
+
 @keyframes pageLoad {
     from {
         opacity: 0;
@@ -3763,7 +3754,7 @@
     }
 }
 
-/* Анимация для полосы загрузки */
+
 @keyframes progressShimmer {
     0% {
         background-position: -200% 0;
@@ -3773,7 +3764,7 @@
     }
 }
 
-/* Многострочные заголовки для мобильных устройств */
+
 @media (max-width: 768px) {
     .modal-title-multiline {
         white-space: normal !important;
@@ -3789,13 +3780,13 @@
         hyphens: auto !important;
     }
     
-    /* Компактный заголовок для модального окна поиска деталей */
+    
     #part-search-title {
         font-size: 1rem !important;
         line-height: 1.25 !important;
     }
     
-    /* Защита кнопки закрытия от сжатия */
+    
     #close-part-search-modal {
         flex-shrink: 0 !important;
         min-width: 2rem !important;
@@ -3805,7 +3796,7 @@
     }
 }
 
-/* Общая защита кнопок закрытия модальных окон от сжатия */
+
 .modal-close-btn {
     flex-shrink: 0 !important;
     min-width: 2rem !important;
@@ -3828,15 +3819,15 @@
     animation: pageLoad 0.1s ease-out forwards;
 }
 
-/* ВРЕМЕННО ОТКЛЮЧЕНО: Анимации при открытой боковой панели */
+
 .sidebar-open-large .part-card.animate-in,
 .sidebar-open-large .set-card.animate-in,
 .sidebar-open-large .minifig-card.animate-in {
-    /* animation-duration: 0.2s; */
+    
     opacity: 1 !important;
     transform: none !important;
 }
-/* Анимации при переключении вкладок */
+
 body.tab-switching .part-card,
 body.tab-switching .set-card,
 body.tab-switching .minifig-card {
@@ -3845,7 +3836,7 @@ body.tab-switching .minifig-card {
     transform: none !important;
 }
 
-/* Предотвращаем подёргивание кнопок навигации при переключении вкладок */
+
 body.tab-switching button[data-view] {
     transition: none !important;
     transform: translateZ(0) !important;
@@ -3853,44 +3844,44 @@ body.tab-switching button[data-view] {
     -webkit-backface-visibility: hidden !important;
 }
 
-/* ВРЕМЕННО ОТКЛЮЧЕНО: Анимация для результатов поиска и фильтрации */
+
 .search-results .part-card,
 .search-results .set-card,
 .search-results .minifig-card {
-    /* animation-duration: 0.25s; */
+    
     opacity: 1 !important;
     transform: none !important;
 }
 
-/* ВРЕМЕННО ОТКЛЮЧЕНО: Анимация для пустых результатов */
+
 .empty-results {
-    /* animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards; */
+    
     opacity: 1 !important;
     transform: none !important;
 }
 
-/* ВРЕМЕННО ОТКЛЮЧЕНО: Анимация при изменении размера экрана */
+
 @media (max-width: 768px) {
     .part-card.animate-in,
     .set-card.animate-in,
     .minifig-card.animate-in {
-        /* animation-duration: 0.3s; */
+        
         opacity: 1 !important;
         transform: none !important;
     }
 }
 
-/* ВРЕМЕННО ОТКЛЮЧЕНО: Анимация для мобильных устройств */
+
 @media (max-width: 480px) {
     .part-card.animate-in,
     .set-card.animate-in,
     .minifig-card.animate-in {
-        /* animation-duration: 0.25s; */
+        
         opacity: 1 !important;
         transform: none !important;
     }
     
-    /* Отключаем hover эффекты только на мобильных устройствах */
+    
     .part-card:hover,
     .set-card:hover,
     .minifig-card:hover {
@@ -3898,7 +3889,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Определяем breakpoint xs для очень малых устройств */
+
 @media (max-width: 480px) {
     .xs\:hidden {
         display: none !important;
@@ -3909,18 +3900,18 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* ВРЕМЕННО ОТКЛЮЧЕНО: Производительность карточек */
+
 .part-card img,
 .set-card img,
 .minifig-card img {
-    /* will-change: transform; */
-    /* backface-visibility: hidden; */
-    /* transform: translateZ(0); */
-    /* transition: opacity 0.3s ease-in-out; */
+    
+    
+    
+    
     opacity: 1 !important;
 }
 
-/* ВРЕМЕННО ОТКЛЮЧЕНО: Анимация загрузки изображений */
+
 .part-card img[loading],
 .set-card img[loading],
 .minifig-card img[loading] {
@@ -3933,7 +3924,7 @@ body.tab-switching button[data-view] {
     opacity: 1 !important;
 }
 
-/* Эффекты для карточек: базовые переходы для hover-анимации */
+
 .part-card,
 .set-card,
 .minifig-card {
@@ -3941,7 +3932,7 @@ body.tab-switching button[data-view] {
     will-change: transform;
 }
 
-/* Легкое поднятие карточки при наведении */
+
 .part-card:hover,
 .set-card:hover,
 .minifig-card:hover {
@@ -3949,7 +3940,7 @@ body.tab-switching button[data-view] {
     box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.15), 0 15px 15px -5px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* Форсируем hover-поднятие на десктопах, если не идет активная навигация */
+
 @media (pointer: fine) and (min-width: 769px) {
     body:not(.scrolling):not(.resizing):not(.tab-switching):not(.searching):not(.filtering):not(.sorting) .part-card:hover,
     body:not(.scrolling):not(.resizing):not(.tab-switching):not(.searching):not(.filtering):not(.sorting) .set-card:hover,
@@ -3959,14 +3950,14 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Отключение анимаций при прокрутке для предотвращения моргания */
+
 @media (prefers-reduced-motion: reduce), (max-height: 800px) {
     .part-card.animate-in,
     .set-card.animate-in,
     .minifig-card.animate-in {
         animation: none !important;
         opacity: 1 !important;
-        /* Сохраняем hover эффекты даже при отключении анимаций */
+        
     }
     
     .part-card:not(.animate-in),
@@ -3974,36 +3965,36 @@ body.tab-switching button[data-view] {
     .minifig-card:not(.animate-in) {
         animation: none !important;
         opacity: 1 !important;
-        /* Сохраняем hover эффекты даже при отключении анимаций */
+        
     }
 }
 
-/* Отключение анимаций при быстрой прокрутке */
+
 .scrolling .part-card,
 .scrolling .set-card,
 .scrolling .minifig-card {
     animation: none !important;
     opacity: 1 !important;
-    /* Сохраняем hover эффекты даже при прокрутке */
+    
 }
 
-/* Анимация для новых карточек при загрузке - ОТКЛЮЧЕНА */
+
 .part-card:not(.animate-in),
 .set-card:not(.animate-in),
 .minifig-card:not(.animate-in) {
     opacity: 1 !important;
-    /* Сохраняем hover эффекты даже при отключении анимаций */
+    
     animation: none !important;
 }
 
-/* Анимация для кнопки "Показать еще" - ОПТИМИЗИРОВАННАЯ */
+
 #load-more-button-catalog,
 #load-more-button-collection {
     transition: all 0.2s ease-out;
     transform: translateY(0);
 }
 
-/* Анимация для изменения состояния коллекции - МИНИМАЛЬНАЯ */
+
 .part-card[data-collection-change="added"],
 .set-card[data-collection-change="added"],
 .minifig-card[data-collection-change="added"] {
@@ -4011,7 +4002,7 @@ body.tab-switching button[data-view] {
     will-change: box-shadow, transform, opacity;
 }
 
-/* Мягкое появление при добавлении через класс */
+
 .part-card.collection-added,
 .set-card.collection-added,
 .minifig-card.collection-added {
@@ -4047,7 +4038,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для состояний загрузки и ошибок - ОПТИМИЗИРОВАННАЯ */
+
 .loading-state {
     animation: loadingPulse 1.5s ease-in-out infinite;
 }
@@ -4055,7 +4046,7 @@ body.tab-switching button[data-view] {
     animation: errorShake 0.5s ease-in-out;
 }
 
-/* Анимация для изменения фильтров - ОТКЛЮЧЕНА */
+
 .filter-change .part-card,
 .filter-change .set-card,
 .filter-change .minifig-card {
@@ -4075,27 +4066,16 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения сортировки - МИНИМАЛЬНАЯ */
+
 .sort-change .part-card,
 .sort-change .set-card,
 .sort-change .minifig-card {
     animation: sortChange 0.05s ease-out forwards;
 }
 
-/*
-@keyframes sortChange {
-    from {
-        opacity: 0;
-        transform: translateX(-0.05rem) scale(0.999);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения представления - ОТКЛЮЧЕНА */
+
+
 .view-change .part-card,
 .view-change .set-card,
 .view-change .minifig-card {
@@ -4104,20 +4084,9 @@ body.tab-switching button[data-view] {
     transform: none !important;
 }
 
-/*
-@keyframes viewChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.05rem) scale(0.999);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения подпредставления - ОТКЛЮЧЕНА */
+
+
 .subview-change .part-card,
 .subview-change .set-card,
 .subview-change .minifig-card {
@@ -4126,115 +4095,49 @@ body.tab-switching button[data-view] {
     transform: none !important;
 }
 
-/*
-@keyframes subviewChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.4rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения категории или темы - МИНИМАЛЬНАЯ */
+
+
 .category-change .part-card,
 .theme-change .set-card {
     animation: categoryChange 0.05s ease-out forwards;
 }
 
-/*
-@keyframes categoryChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.3rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения цвета - МИНИМАЛЬНАЯ */
+
+
 .color-change .part-card {
     animation: colorChange 0.05s ease-out forwards;
 }
 
-/*
-@keyframes colorChange {
-    from {
-        opacity: 0;
-        transform: scale(0.98);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения года или количества деталей - МИНИМАЛЬНАЯ */
+
+
 .year-change .set-card,
 .parts-change .set-card {
     animation: yearPartsChange 0.05s ease-out forwards;
 }
 
-/*
-@keyframes yearPartsChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.3rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения популярности - МИНИМАЛЬНАЯ */
+
+
 .popularity-change .part-card,
 .popularity-change .set-card {
     animation: popularityChange 0.05s ease-out forwards;
 }
 
-/*
-@keyframes popularityChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.4rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения количества элементов - МИНИМАЛЬНАЯ */
+
+
 .quantity-change .part-card,
 .quantity-change .set-card,
 .quantity-change .minifig-card {
     animation: quantityChange 0.05s ease-out forwards;
 }
 
-/*
-@keyframes quantityChange {
-    from {
-        opacity: 0;
-        transform: scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения поискового запроса - ОТКЛЮЧЕНА */
+
+
 .search-change .part-card,
 .search-change .set-card,
 .search-change .minifig-card {
@@ -4243,40 +4146,18 @@ body.tab-switching button[data-view] {
     transform: none !important;
 }
 
-/*
-@keyframes searchChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.4rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения избранного - МИНИМАЛЬНАЯ */
+
+
 .favorite-change .part-card,
 .favorite-change .set-card,
 .favorite-change .minifig-card {
     animation: favoriteChange 0.05s ease-out forwards;
 }
 
-/*
-@keyframes favoriteChange {
-    from {
-        opacity: 0;
-        transform: scale(0.97);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения настроек - ОПТИМИЗИРОВАННАЯ */
+
+
 .settings-change .part-card,
 .settings-change .set-card,
 .settings-change .minifig-card {
@@ -4294,182 +4175,94 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения языка - ОПТИМИЗИРОВАННАЯ */
+
 .language-change .part-card,
 .language-change .set-card,
 .language-change .minifig-card {
     animation: languageChange 0.2s ease-out forwards;
 }
 
-/*
-@keyframes languageChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.4rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-    /* Анимация для изменения темы (светлая/темная) - ОПТИМИЗИРОВАННАЯ */
+
+    
 .theme-switch .part-card,
 .theme-switch .set-card,
 .theme-switch .minifig-card {
     animation: themeSwitch 0.3s ease-out forwards;
 }
 
-/* Подложка для раскрывающихся списков */
+
 .sidebar-dropdown {
-    background: rgba(55, 65, 81, 0.3); /* bg-gray-700/30 */
+    background: rgba(55, 65, 81, 0.3); 
     border-radius: 12px;
     margin: 4px 0;
     padding: 2px;
     backdrop-filter: blur(4px);
-    border: 1px solid rgba(75, 85, 99, 0.2); /* border-gray-600/20 */
+    border: 1px solid rgba(75, 85, 99, 0.2); 
 }
 
 .sidebar-dropdown ul {
-    background: rgba(31, 41, 55, 0.4); /* bg-gray-800/40 */
+    background: rgba(31, 41, 55, 0.4); 
     border-radius: 8px;
     padding: 4px;
     margin: 0;
 }
 
-/*
-@keyframes themeSwitch {
-    from {
-        opacity: 0;
-        transform: translateY(0.5rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения размера шрифта - ОПТИМИЗИРОВАННАЯ */
+
+
 .font-size-change .part-card,
 .font-size-change .set-card,
 .font-size-change .minifig-card {
     animation: fontSizeChange 0.2s ease-out forwards;
 }
 
-/*
-@keyframes fontSizeChange {
-    from {
-        opacity: 0;
-        transform: scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-*/
-/* Анимация для изменения сетки - ОПТИМИЗИРОВАННАЯ */
+
+
 .grid-change .part-card,
 .grid-change .set-card,
 .grid-change .minifig-card {
     animation: gridChange 0.2s ease-out forwards;
 }
 
-/*
-@keyframes gridChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.4rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения порядка сортировки - ОПТИМИЗИРОВАННАЯ */
+
+
 .order-change .part-card,
 .order-change .set-card,
 .order-change .minifig-card {
     animation: orderChange 0.2s ease-out forwards;
 }
 
-/*
-@keyframes orderChange {
-    from {
-        opacity: 0;
-        transform: translateX(0.5rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения пагинации - ОПТИМИЗИРОВАННАЯ */
+
+
 .pagination-change .part-card,
 .pagination-change .set-card,
 .pagination-change .minifig-card {
     animation: paginationChange 0.2s ease-out forwards;
 }
-/*
-@keyframes paginationChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.4rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения экспорта - ОПТИМИЗИРОВАННАЯ */
+
+
 .export-change .part-card,
 .export-change .set-card,
 .export-change .minifig-card {
     animation: exportChange 0.2s ease-out forwards;
 }
 
-/*
-@keyframes exportChange {
-    from {
-        opacity: 0;
-        transform: scale(0.98);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения импорта - ОПТИМИЗИРОВАННАЯ */
+
+
 .import-change .part-card,
 .import-change .set-card,
 .import-change .minifig-card {
     animation: importChange 0.2s ease-out forwards;
 }
 
-/*
-@keyframes importChange {
-    from {
-        opacity: 0;
-        transform: translateY(0.5rem) scale(0.99);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
-*/
 
-/* Анимация для изменения синхронизации - ОПТИМИЗИРОВАННАЯ */
+
+
 .sync-change .part-card,
 .sync-change .set-card,
 .sync-change .minifig-card {
@@ -4487,7 +4280,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения резервного копирования - ОПТИМИЗИРОВАННАЯ */
+
 .backup-change .part-card,
 .backup-change .set-card,
 .backup-change .minifig-card {
@@ -4505,7 +4298,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения восстановления - ОПТИМИЗИРОВАННАЯ */
+
 .restore-change .part-card,
 .restore-change .set-card,
 .restore-change .minifig-card {
@@ -4523,7 +4316,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения очистки - ОПТИМИЗИРОВАННАЯ */
+
 .clear-change .part-card,
 .clear-change .set-card,
 .clear-change .minifig-card {
@@ -4541,7 +4334,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения сброса - ОПТИМИЗИРОВАННАЯ */
+
 .reset-change .part-card,
 .reset-change .set-card,
 .reset-change .minifig-card {
@@ -4559,7 +4352,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения обновления - ОПТИМИЗИРОВАННАЯ */
+
 .update-change .part-card,
 .update-change .set-card,
 .update-change .minifig-card {
@@ -4577,7 +4370,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения перезагрузки - ОПТИМИЗИРОВАННАЯ */
+
 .reload-change .part-card,
 .reload-change .set-card,
 .reload-change .minifig-card {
@@ -4595,7 +4388,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения перезапуска - ОПТИМИЗИРОВАННАЯ */
+
 .restart-change .part-card,
 .restart-change .set-card,
 .restart-change .minifig-card {
@@ -4613,7 +4406,7 @@ body.tab-switching button[data-view] {
     }
 }
 
-/* Анимация для изменения завершения */
+
 .finish-change .part-card,
 .finish-change .set-card,
 .finish-change .minifig-card {
@@ -4660,9 +4453,9 @@ body.tab-switching button[data-view] {
     box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.2);
 }
 
-/* Hover эффекты для карточек уже определены в базовых стилях выше */
 
-/* Стили для кастомного выпадающего списка вариаций */
+
+
 #variation-select-button {
     max-width: 100% !important;
     width: 100% !important;
@@ -4719,16 +4512,16 @@ body.tab-switching button[data-view] {
     left: 0 !important;
     right: 0 !important;
     margin-top: 4px !important;
-    /* Отключаем системный скролл */
+    
     overscroll-behavior: contain !important;
     -webkit-overflow-scrolling: touch !important;
     scrollbar-width: thin !important;
     scrollbar-color: #6B7280 #374151 !important;
-    /* Отступы для скроллбара */
+    
     padding: 8px 6px 8px 0 !important;
 }
 
-/* Кастомный скроллбар для выпадающего списка - принудительное применение */
+
 #variation-dropdown::-webkit-scrollbar {
     width: 4px !important;
     height: 4px !important;
@@ -4758,7 +4551,7 @@ body.tab-switching button[data-view] {
     background: transparent !important;
 }
 
-/* Дополнительные стили для принудительного применения */
+
 div#variation-dropdown::-webkit-scrollbar {
     width: 4px !important;
 }
@@ -4769,7 +4562,7 @@ div#variation-dropdown::-webkit-scrollbar-thumb {
     margin: 8px 0 !important;
 }
 
-/* Дополнительные стили для принудительного применения скроллбара */
+
 #variation-dropdown {
     scrollbar-width: thin !important;
     scrollbar-color: #6B7280 transparent !important;
@@ -4807,7 +4600,7 @@ div#variation-dropdown::-webkit-scrollbar-thumb {
     background-color: #2563EB !important;
 }
 
-/* Стили для контейнера */
+
 .variation-select-container {
     position: relative !important;
     width: 100% !important;
@@ -4815,7 +4608,7 @@ div#variation-dropdown::-webkit-scrollbar-thumb {
     overflow: visible !important;
 }
 
-/* Стили для неактивных кнопок */
+
 button[disabled] {
     opacity: 0.5 !important;
     cursor: not-allowed !important;
@@ -4827,18 +4620,18 @@ button[disabled]:hover {
     transform: none !important;
 }
 
-/* Убираем стандартную стрелку браузера */
+
 .variation-select-container::after {
     display: none !important;
 }
 
-/* Для мобильных устройств */
+
 @media (max-width: 768px) {
     #variation-select-button {
-        font-size: 16px; /* Предотвращает зум на iOS */
+        font-size: 16px; 
     }
     
-    /* Компактный скроллбар для мобильных устройств */
+    
     #variation-dropdown::-webkit-scrollbar {
         width: 3px !important;
         height: 3px !important;
@@ -4865,64 +4658,55 @@ button[disabled]:hover {
     }
 }
     
-    /* Loading indicator styles */
+    
     #loading-container {
         transition: opacity 0.5s ease-out;
-        min-height: 400px; /* Фиксированная минимальная высота */
+        min-height: 400px; 
         display: flex;
         flex-direction: column;
         justify-content: center;
     }
     
-    /* Фиксируем высоту контейнера деталей для предотвращения моргания */
-    /* #loading-details {
-        min-height: 3rem; 
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        white-space: pre-line; 
-        line-height: 1.4; 
-        padding: 0.5rem 0; 
-    } */
     
-    /* Фиксируем высоту статуса */
+    
+    
+    
     #loading-status {
-        min-height: 1.5rem; /* Фиксированная высота для статуса */
+        min-height: 1.5rem; 
         display: flex;
         align-items: center;
         justify-content: center;
     }
     
-    /* Фиксируем высоту подсказок */
+    
     .tip-container {
-        min-height: 2rem; /* Фиксированная высота для подсказок */
+        min-height: 2rem; 
         display: flex;
         align-items: center;
         justify-content: center;
     }
     
-    /* Фиксируем высоту контейнера прогресса */
+    
     .loading-progress-container {
-        min-height: 2rem; /* Фиксированная высота для полосы прогресса */
+        min-height: 2rem; 
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 1rem 0;
     }
     
-    /* Предотвращаем смещение элементов при изменении текста */
+    
     .loading-content > * {
-        transition: none; /* Отключаем анимации для стабильности */
+        transition: none; 
     }
     
-    /* Дополнительная стабилизация для предотвращения моргания */
+    
     #loading-container .text-center > * {
         transition: none !important;
         will-change: auto;
     }
     
-    /* Фиксируем высоту заголовка */
+    
     h2 {
         margin: 0 0 0.5rem 0;
         min-height: 2rem;
@@ -4931,11 +4715,8 @@ button[disabled]:hover {
         justify-content: center;
     }
     
-    /* Фиксируем позицию лоадера */
-    /* .loader {
-        position: relative;
-        margin: 0 auto 1rem auto;
-    } */
+    
+    
     
     #loading-container.hidden {
         opacity: 0;
@@ -4944,15 +4725,15 @@ button[disabled]:hover {
     
     .loading-step {
         opacity: 1;
-        /* animation: fadeInUp 0.3s ease-out forwards; */
+        
     }
     
-    /* .loading-step:nth-child(1) { animation-delay: 0.1s; } */
-    /* .loading-step:nth-child(2) { animation-delay: 0.2s; } */
-    /* .loading-step:nth-child(3) { animation-delay: 0.3s; } */
-    /* .loading-step:nth-child(4) { animation-delay: 0.4s; } */
     
-    /* Анимации для подсказок */
+    
+    
+    
+    
+    
     .tip-container {
         position: relative;
         overflow: hidden;
@@ -4964,7 +4745,7 @@ button[disabled]:hover {
         transform: translateY(0);
         opacity: 1;
     }
-    /* Карточка подсказки на экране загрузки */
+    
     .tip-card {
         display: inline-flex;
         align-items: center;
@@ -4974,7 +4755,7 @@ button[disabled]:hover {
         border: 1px solid rgba(59,130,246,0.25);
         border-radius: 18px;
         box-shadow: 0 6px 18px rgba(0,0,0,0.25), inset 0 0 0 1px rgba(255,255,255,0.04);
-        color: #93c5fd; /* text-blue-300 */
+        color: #93c5fd; 
         backdrop-filter: blur(4px);
     }
     .tip-icon {
@@ -4990,7 +4771,7 @@ button[disabled]:hover {
     .tip-line {
         font-size: 0.8rem;
         line-height: 1.2rem;
-        color: #bfdbfe; /* text-blue-200 */
+        color: #bfdbfe; 
     }
     
     .tip-text.fade-out {
@@ -5008,7 +4789,7 @@ button[disabled]:hover {
         opacity: 1;
     }
     
-    /* Анимация появления подсказки */
+    
     @keyframes tipSlideIn {
         0% {
             transform: translateY(30px);
@@ -5020,7 +4801,7 @@ button[disabled]:hover {
         }
     }
     
-    /* Анимация исчезновения подсказки */
+    
     @keyframes tipSlideOut {
         0% {
             transform: translateY(0);
@@ -5032,7 +4813,7 @@ button[disabled]:hover {
         }
     }
     
-    /* Анимация пульсации для привлечения внимания */
+    
     @keyframes tipPulse {
         0%, 100% {
             transform: scale(1);
@@ -5044,7 +4825,7 @@ button[disabled]:hover {
     
     .tip-text.pulse { animation: none !important; }
 
-    /* Стили для системы неактивности */
+    
     .inactivity-overlay {
         position: fixed;
         top: 0;
@@ -5157,7 +4938,7 @@ button[disabled]:hover {
         }
     }
 
-    /* Размытие основного контента при неактивности */
+    
     body.inactive #main-content,
     body.inactive #sidebar-container,
     body.inactive #header-container {
@@ -5165,13 +4946,13 @@ button[disabled]:hover {
         transition: filter 0.5s ease-in-out;
     }
 
-    /* Оверлей неактивности всегда остается четким */
+    
     .inactivity-overlay {
         filter: blur(0) !important;
     }
 
 
-    /* Стили для кнопки "Поднять на верх" - точно как у кнопок в меню настроек */
+    
     #scroll-to-top-btn:not(.opacity-0) {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
         transition: all 0.15s ease !important;
@@ -5185,7 +4966,7 @@ button[disabled]:hover {
         transform: scale(0.98) !important;
     }
     
-    /* Стили для автодополнения */
+    
     #autocomplete-dropdown {
         position: absolute;
         top: calc(100% + 4px);
@@ -5202,7 +4983,7 @@ button[disabled]:hover {
         display: none;
     }
     
-    /* Скрываем скроллбары для автодополнения */
+    
     #autocomplete-dropdown::-webkit-scrollbar {
         display: none;
     }
@@ -5321,7 +5102,7 @@ button[disabled]:hover {
         font-weight: 400;
     }
     
-    /* Анимации для дашборда */
+    
     .animate-dashboardIn {
         animation: dashboardIn 0.6s ease-out;
     }
@@ -5352,7 +5133,7 @@ button[disabled]:hover {
         }
     }
     
-    /* Стили для круговых диаграмм */
+    
     .pie-chart-container {
         background: linear-gradient(135deg, rgba(31, 41, 55, 0.1) 0%, rgba(17, 24, 39, 0.1) 100%);
         border-radius: 18px;
@@ -5360,9 +5141,9 @@ button[disabled]:hover {
         backdrop-filter: blur(8px);
     }
     
-    /* Убираем тени с SVG */
     
-    /* Стили для кнопок дашборда с цветным свечением */
+    
+    
     .group:hover {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
                     0 4px 6px -2px rgba(0, 0, 0, 0.05),
@@ -5380,10 +5161,10 @@ button[disabled]:hover {
         transform-origin: center;
     }
     
-    /* hover без эффектов — по требованию отключены */
+    
     .pie-sector-group:hover { outline: none; }
     
-    /* Улучшенные стили и анимации для круговых диаграмм (донат-сегменты) */
+    
     .pie-chart-svg { overflow: visible; }
     .pie-base-ring { opacity: 0.25; }
     .pie-segment { pointer-events: none; }
@@ -5403,17 +5184,17 @@ button[disabled]:hover {
         }
     }
     
-    /* Стили для кнопок выбора в списке желаний */
+    
     .wishlist-item-checkbox.selected {
         background-color: rgba(59, 130, 246, 0.7) !important;
         color: white !important;
     }
     
-    /* Стили для новой структуры карточки списка желаний */
+    
     .wishlist-image-container {
         position: relative;
         width: 100%;
-        height: 10rem; /* 160px */
+        height: 10rem; 
         background: linear-gradient(135deg, #374151, #1f2937);
         display: flex;
         align-items: center;
@@ -5509,7 +5290,7 @@ button[disabled]:hover {
         gap: 0.25rem;
     }
     
-    /* Дополнительные стили для малых устройств */
+    
     @media (max-width: 640px) {
         .wishlist-item {
             min-width: 0;
@@ -5517,7 +5298,7 @@ button[disabled]:hover {
         }
         
         .wishlist-image-container {
-            height: 8rem; /* 128px на малых устройствах */
+            height: 8rem; 
         }
         
         .wishlist-item-checkbox {
@@ -5532,7 +5313,7 @@ button[disabled]:hover {
             margin: 0 auto !important;
         }
         
-        /* Стили для карточек каталога на мобильных устройствах */
+        
         .part-card,
         .set-card,
         .minifig-card {
@@ -5541,14 +5322,14 @@ button[disabled]:hover {
             overflow: hidden;
         }
         
-        /* Обеспечиваем правильное отображение карточек на краю экрана */
+        
         .part-card .card-image-container,
         .set-card .card-image-container,
         .minifig-card .card-image-container {
             overflow: hidden;
         }
         
-        /* Кнопки в карточках каталога всегда видны на мобильных */
+        
         .part-card button,
         .set-card button,
         .minifig-card button {
@@ -5556,30 +5337,30 @@ button[disabled]:hover {
         }
     }
     
-    /* Глобальный сброс hover-состояний на малых устройствах после нажатия */
+    
     @media (max-width: 768px), (hover: none), (pointer: coarse) {
-        /* Когда на <body> висит класс no-hover — принудительно убираем визуальные эффекты :hover */
+        
         body.no-hover :hover,
         body.no-hover .group:hover,
         body.no-hover .group:hover * {
             transform: none !important;
         }
         
-        /* Скрываем иконку лупы в модальных окнах на малых экранах */
+        
         #modal-content [data-action="view-image-fullscreen"] .group-hover\:opacity-100,
         #set-modal-content [data-action="view-image-fullscreen"] .group-hover\:opacity-100,
         #minifig-modal-content [data-action="view-image-fullscreen"] .group-hover\:opacity-100 {
             display: none !important;
         }
         
-        /* Убираем hover эффекты на изображениях в модальных окнах на малых экранах */
+        
         #modal-content [data-action="view-image-fullscreen"]:hover .group-hover\:opacity-100,
         #set-modal-content [data-action="view-image-fullscreen"]:hover .group-hover\:opacity-100,
         #minifig-modal-content [data-action="view-image-fullscreen"]:hover .group-hover\:opacity-100 {
             opacity: 0 !important;
         }
         
-        /* Отключаем hover для карточек */
+        
         .part-card:hover,
         .set-card:hover,
         .minifig-card:hover,
@@ -5590,7 +5371,7 @@ button[disabled]:hover {
   
     }
 
-    /* Отключаем margin-top только для блока настроек */
+    
     .flex-shrink-0.mt-4.border-t.border-gray-700.pt-4.space-y-4 {
         margin-top: 0.5 !important;
     }
@@ -5607,7 +5388,7 @@ button[disabled]:hover {
       
       <div id="loading-container" class="flex flex-col items-center justify-center h-full p-8">
         <div class="text-center">
-          <!-- <div class="loader mx-auto mb-4"></div> -->
+          
           <h2 class="text-2xl font-bold text-gray-200 mb-2">Загрузка каталога</h2>
           <p id="loading-status" class="text-gray-400 mb-4">Подготовка к загрузке...</p>
           <div class="loading-progress-container">
@@ -5615,7 +5396,7 @@ button[disabled]:hover {
               <div id="loading-progress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
             </div>
           </div>
-          <!-- <div id="loading-details" class="text-sm text-gray-500"></div> -->
+          
           <div class="tip-container max-w-md mx-auto mt-4">
             <div id="loading-tip" class="tip-text text-xs text-white"></div>
           </div>
@@ -5634,7 +5415,7 @@ button[disabled]:hover {
   <input type="file" id="import-csv-input" class="hidden" accept=".csv">
   <div id="image-viewer-container" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center viewer-hidden">
     <div class="relative w-full h-full flex items-center justify-center p-[5%]">
-      <!-- Контейнер-полотно для перемещения -->
+      
       <div id="image-canvas" class="image-canvas">
       <div class="image-wrapper bg-white rounded-[18px] shadow-2xl overflow-hidden">
         <img id="fullscreen-image" src="" alt="Полноэкранный просмотр" class="w-full h-full object-contain transition-all duration-300 ease-out rounded-[18px]" loading="lazy" decoding="async">
@@ -5673,7 +5454,7 @@ button[disabled]:hover {
     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7"></path></svg>
   </button>
 
-  <!-- Система неактивности с подсказками -->
+  
   <div id="inactivity-overlay" class="inactivity-overlay hidden">
       <div class="inactivity-content">
           <div class="inactivity-icon">💡</div>
@@ -5774,7 +5555,7 @@ window.openSearchTypeSelectionModal = function() {
     // Создаем содержимое модального окна
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-5xl max-h-[95vh] flex flex-col">
-            <!-- Заголовок -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4 modal-title-multiline" title="Выберите тип поиска: ${searchData.partName || searchData.query}">Выберите тип поиска: ${(searchData.partName || searchData.query).length > 30 ? (searchData.partName || searchData.query).substring(0, 30) + '...' : (searchData.partName || searchData.query)}</h2>
                 <button id="close-search-type-selection-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
@@ -5782,7 +5563,7 @@ window.openSearchTypeSelectionModal = function() {
                 </button>
             </div>
             
-            <!-- Информация о найденном элементе -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700">
                 <div class="bg-gray-700/50 rounded-[18px] p-4">
                     <div class="text-center">
@@ -5793,7 +5574,7 @@ window.openSearchTypeSelectionModal = function() {
                 </div>
             </div>
             
-            <!-- Кнопки выбора типа -->
+            
             <div class="flex-1 p-4 overflow-y-auto">
                 <div class="space-y-3">
                     <button 
@@ -5977,7 +5758,7 @@ window.openBoxSearchModal = function() {
     // Рендерим содержимое модального окна
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-            <!-- Заголовок -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
                 <h2 class="text-lg lg:text-xl font-bold text-white truncate flex-1 min-w-0" id="box-search-title">Поиск коробки набора</h2>
                 <button id="close-box-search-modal" class="modal-close-btn flex-shrink-0 w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full" title="Закрыть">
@@ -5985,7 +5766,7 @@ window.openBoxSearchModal = function() {
                 </button>
             </div>
             
-            <!-- Поле ввода для редактирования поискового запроса -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700">
                 <div class="flex items-center gap-3">
                     <label for="box-search-input" class="text-sm font-medium text-gray-300 whitespace-nowrap">ID набора:</label>
@@ -6018,7 +5799,7 @@ window.openBoxSearchModal = function() {
                 </div>
             </div>
             
-            <!-- Результаты поиска -->
+            
             <div class="flex-1 overflow-y-auto p-4">
                 ${limitedResults.length > 0 ? `
                     <div class="sets-minifigs-grid">
@@ -6146,7 +5927,7 @@ window.openUniversalSearchModal = function(searchData = '') {
     // Создаем содержимое модального окна
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-            <!-- Заголовок -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                 <h2 class="text-xl lg:text-2xl font-bold text-white truncate pr-4 modal-title-multiline" title="Универсальный поиск: ${searchData.query}">Универсальный поиск: ${searchData.query.length > 30 ? searchData.query.substring(0, 30) + '...' : searchData.query}</h2>
                 <button id="close-universal-search-modal" class="modal-close-btn flex-shrink-0" title="Закрыть">
@@ -6154,7 +5935,7 @@ window.openUniversalSearchModal = function(searchData = '') {
                 </button>
             </div>
             
-            <!-- Поле поиска и переключатель -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700 space-y-4">
                 <div class="flex items-center space-x-4">
                     <div class="flex-1">
@@ -6174,7 +5955,7 @@ window.openUniversalSearchModal = function(searchData = '') {
                     </button>
                 </div>
                 
-                <!-- Переключатель типов -->
+                
                 <div class="flex space-x-1 bg-gray-700 rounded-[18px] p-1">
                     <button 
                         onclick="switchSearchType('parts')" 
@@ -6200,7 +5981,7 @@ window.openUniversalSearchModal = function(searchData = '') {
                 </div>
             </div>
             
-            <!-- Результаты поиска -->
+            
             <div class="flex-1 overflow-hidden relative" style="min-height: 500px;">
                 <div id="universal-search-scroll-progress"><div class="bar"></div></div>
                 <div id="universal-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 200px);">
@@ -7093,7 +6874,7 @@ window.searchInSetsCatalogModal = function(searchTerm) {
     // Рендерим содержимое модального окна
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-            <!-- Заголовок -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
                 <h2 class="text-lg lg:text-xl font-bold text-white truncate flex-1 min-w-0" id="sets-search-title">Поиск наборов</h2>
                 <button id="close-sets-search-modal" class="modal-close-btn flex-shrink-0 w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full" title="Закрыть">
@@ -7101,7 +6882,7 @@ window.searchInSetsCatalogModal = function(searchTerm) {
                 </button>
             </div>
             
-            <!-- Поле ввода для редактирования поискового запроса -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700">
                 <div class="flex items-center gap-3">
                     <label for="sets-search-input" class="text-sm font-medium text-gray-300 whitespace-nowrap">Название:</label>
@@ -7134,7 +6915,7 @@ window.searchInSetsCatalogModal = function(searchTerm) {
                 </div>
             </div>
             
-            <!-- Результаты поиска -->
+            
             <div class="flex-1 overflow-hidden relative" style="min-height: 500px;">
                 <div id="sets-search-scroll-progress"><div class="bar"></div></div>
                 <div id="sets-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 200px);">
@@ -7218,7 +6999,7 @@ window.searchInMinifigsCatalogModal = function(searchTerm) {
     // Рендерим содержимое модального окна
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-            <!-- Заголовок -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
                 <h2 class="text-lg lg:text-xl font-bold text-white truncate flex-1 min-w-0" id="minifigs-search-title">Поиск минифигурок</h2>
                 <button id="close-minifigs-search-modal" class="modal-close-btn flex-shrink-0 w-8 h-8 min-w-[2rem] min-h-[2rem] rounded-full" title="Закрыть">
@@ -7226,7 +7007,7 @@ window.searchInMinifigsCatalogModal = function(searchTerm) {
                 </button>
             </div>
             
-            <!-- Поле ввода для редактирования поискового запроса -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700">
                 <div class="flex items-center gap-3">
                     <label for="minifigs-search-input" class="text-sm font-medium text-gray-300 whitespace-nowrap">Название:</label>
@@ -7259,7 +7040,7 @@ window.searchInMinifigsCatalogModal = function(searchTerm) {
                 </div>
             </div>
             
-            <!-- Результаты поиска -->
+            
             <div class="flex-1 overflow-hidden relative" style="min-height: 500px;">
                 <div id="minifigs-search-scroll-progress"><div class="bar"></div></div>
                 <div id="minifigs-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 200px);">
@@ -7299,7 +7080,7 @@ window.openPartSearchModal = function(partNumber) {
     // Рендерим содержимое модального окна
     modalEl.innerHTML = `
         <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-6xl max-h-[90vh] flex flex-col">
-            <!-- Заголовок -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
                 <h2 class="text-lg lg:text-xl font-bold text-white truncate flex-1 min-w-0" id="part-search-title">Поиск деталей</h2>
                 <button id="close-part-search-modal" class="modal-close-btn flex-shrink-0 w-8 h-8 min-w-[2rem] min-h-[2rem]" title="Закрыть">
@@ -7307,7 +7088,7 @@ window.openPartSearchModal = function(partNumber) {
                 </button>
             </div>
             
-            <!-- Поле ввода для редактирования поискового запроса -->
+            
             <div class="flex-shrink-0 p-4 border-b border-gray-700">
                 <div class="flex items-center gap-3">
                     <label for="part-search-input" class="text-sm font-medium text-gray-300 whitespace-nowrap">ID детали:</label>
@@ -7340,7 +7121,7 @@ window.openPartSearchModal = function(partNumber) {
                 </div>
             </div>
             
-            <!-- Результаты поиска -->
+            
             <div class="flex-1 overflow-hidden relative">
                 <div id="part-search-scroll-progress"><div class="bar"></div></div>
                 <div id="part-search-results" class="h-full overflow-y-auto no-scrollbar p-4" style="max-height: calc(90vh - 200px);">
@@ -9330,7 +9111,7 @@ function renderCloudBackupContent() {
     
     return `
         <div class="min-h-full p-4 sm:p-6 lg:p-8">
-            <!-- Заголовок и описание -->
+            
             <div class="text-center mb-6 sm:mb-8">
                 <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-200 mb-2 sm:mb-3">Резервное копирование в облако</h2>
                 <p class="text-gray-400 text-sm sm:text-base lg:text-lg max-w-2xl mx-auto px-4">
@@ -9338,9 +9119,9 @@ function renderCloudBackupContent() {
                 </p>
             </div>
 
-            <!-- Основной контент -->
+            
             <div class="max-w-4xl mx-auto space-y-6">
-                <!-- Статус подключения -->
+                
                 <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-[18px] border border-gray-600/40 p-3 sm:p-5 shadow-lg">
                     <div class="flex items-center justify-between">
                         <div class="flex items-center min-w-0 flex-1">
@@ -9367,7 +9148,7 @@ function renderCloudBackupContent() {
                         ` : ''}
                     </div>
                     
-                    <!-- Кнопка переподключения (показывается при ошибке авторизации) -->
+                    
                     <div id="reconnect-container" class="hidden mt-3 sm:mt-4">
                         <button id="reconnect-cloud-storage" class="w-full flex items-center justify-center px-2 py-1.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold rounded-[18px] transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25">
                             <span class="mr-1 sm:mr-2">${I_Link('w-4 h-4')}</span>
@@ -9376,7 +9157,7 @@ function renderCloudBackupContent() {
                     </div>
                 </div>
 
-                <!-- Основные действия -->
+                
                 <div class="${connectionState.showMainActions ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2' : 'flex justify-center'} gap-3 sm:gap-4">
                     ${connectionState.showConnectButton ? `
                         <button id="connect-cloud-storage" class="group flex items-center justify-center px-6 py-4 sm:px-8 sm:py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-[18px] transition-all duration-200 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105">
@@ -9405,10 +9186,10 @@ function renderCloudBackupContent() {
                     ` : ''}
                 </div>
 
-                <!-- Контейнер для виджета подключения -->
+                
                 <div id="cloud-backup-widget-container" class="hidden"></div>
                 
-                <!-- Управление версиями резервных копий -->
+                
                 ${connectionState.showVersionsBlock ? `
                     <div class="bg-gradient-to-br from-gray-800/60 to-gray-900/60 rounded-[18px] sm:rounded-[18px] border border-gray-600/40 p-3 sm:p-5 lg:p-6 shadow-xl">
                         <div class="flex items-center justify-between mb-4 sm:mb-6">
@@ -9438,7 +9219,7 @@ function renderCloudBackupContent() {
                     </div>
                 ` : ''}
                 
-                <!-- Кнопка инструкции -->
+                
                 <div class="flex justify-center">
                     <button id="toggle-instruction" class="group flex items-center px-6 py-3 bg-gradient-to-r from-gray-700/60 to-gray-800/60 rounded-[18px] border border-gray-600/50 hover:border-gray-500/50 transition-all duration-200">
                         <span class="mr-3 text-cyan-400">${I_Info('w-5 h-5')}</span>
@@ -9449,7 +9230,7 @@ function renderCloudBackupContent() {
                     </button>
                 </div>
                 
-                <!-- Сворачиваемая инструкция -->
+                
                 <div id="instruction-content" class="hidden bg-gray-800/50 rounded-[18px] border border-gray-700/50 p-4 sm:p-6">
                     <div class="space-y-4 text-sm text-gray-400">
                         <div class="space-y-3">
@@ -9522,7 +9303,7 @@ function renderWishlistContent() {
     
     return `
         <div class="min-h-full p-2 sm:p-4 md:p-6 lg:p-8">
-            <!-- Заголовок и описание -->
+            
             <div class="text-center mb-4 sm:mb-6 md:mb-8">
                 <h2 class="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-gray-200 mb-1 sm:mb-2 md:mb-3">Список желаний</h2>
                 <p class="text-gray-400 text-xs sm:text-sm md:text-base lg:text-lg max-w-2xl mx-auto px-2 sm:px-4">
@@ -9530,13 +9311,13 @@ function renderWishlistContent() {
                 </p>
             </div>
 
-            <!-- Основной контент -->
+            
             <div class="max-w-7xl mx-auto space-y-3 sm:space-y-4 md:space-y-6 px-2 sm:px-4">
-                <!-- Заголовок списка и статистика -->
+                
                 <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-[18px] sm:rounded-[18px] border border-gray-600/40 p-3 sm:p-4 md:p-6 shadow-lg">
-                    <!-- Мобильная версия (стек) -->
+                    
                     <div class="block sm:hidden space-y-3">
-                        <!-- Заголовок и иконка -->
+                        
                         <div class="flex items-start gap-3">
                             <div class="p-2 bg-yellow-500/20 rounded-[18px] flex-shrink-0 mt-0.5">
                                 <span class="text-yellow-400">${I_Star('w-4 h-4')}</span>
@@ -9549,7 +9330,7 @@ function renderWishlistContent() {
                             </div>
                         </div>
                         
-                        <!-- Статистика и кнопка экспорта -->
+                        
                         <div class="flex items-center justify-between">
                             <div class="flex flex-col gap-1">
                                 <span class="text-sm text-orange-400 font-semibold">
@@ -9572,7 +9353,7 @@ function renderWishlistContent() {
                         </div>
                     </div>
                     
-                    <!-- Десктопная версия (горизонтальная) -->
+                    
                     <div class="hidden sm:flex sm:items-center justify-between gap-4">
                         <div class="flex items-center min-w-0 flex-1">
                             <div class="p-2 md:p-3 bg-yellow-500/20 rounded-[18px] mr-4 md:mr-6 flex-shrink-0">
@@ -9606,7 +9387,7 @@ function renderWishlistContent() {
                     </div>
                 </div>
 
-                <!-- Сетка элементов -->
+                
                 <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-[18px] sm:rounded-[18px] border border-gray-600/30 p-3 sm:p-4 md:p-6 shadow-lg">
                     ${itemsCount === 0 ? `
                         <div class="wishlist-drop-zone wishlist-empty-state text-center py-12 sm:py-16 md:py-20" data-wishlist-id="${singleWishlistId}">
@@ -9655,16 +9436,16 @@ function renderWishlistContent() {
 function renderScannerContent() {
     return `
         <div class="min-h-full p-3 sm:p-4 md:p-6 lg:p-8">
-            <!-- Заголовок -->
+            
             <div class="text-center mb-6 sm:mb-8">
                 <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Сканер минифигурок</h1>
                 <p class="text-gray-400 text-sm sm:text-base">Для поиска отсканируйте DataMatrix код (квадратный) на коробке минифигурки. Предварительно закройте обычный штрихкод пальцем</p>
             </div>
 
-            <!-- Основной контент -->
+            
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
-                <!-- Область сканирования -->
+                
                 <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-[18px] border border-gray-600/30 p-6 sm:p-8 md:p-10 lg:p-12 shadow-xl">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="p-2 bg-green-600/20 rounded-[18px]">
@@ -9686,16 +9467,16 @@ function renderScannerContent() {
                             </div>
                             <div id="scanner-overlay" class="absolute inset-0 pointer-events-none hidden">
                                 <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80">
-                                    <!-- Зеленая рамка с отступом внутрь -->
+                                    
                                     <div class="absolute inset-6 border-2 border-green-400 rounded-[18px] transition-all duration-300">
-                                        <!-- Угловые маркеры -->
+                                        
                                         <div class="absolute top-16 left-16 w-6 h-6 border-t-2 border-l-2 border-green-400"></div>
                                         <div class="absolute top-16 right-16 w-6 h-6 border-t-2 border-r-2 border-green-400"></div>
                                         <div class="absolute bottom-16 left-16 w-6 h-6 border-b-2 border-l-2 border-green-400"></div>
                                         <div class="absolute bottom-16 right-16 w-6 h-6 border-b-2 border-r-2 border-green-400"></div>
                                     </div>
                                     
-                                    <!-- Статус сканирования -->
+                                    
                                     <div id="scan-status" class="absolute top-4 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-green-600 text-white text-xs rounded-full font-medium hidden">
                                         Сканирование...
                                     </div>
@@ -9705,7 +9486,7 @@ function renderScannerContent() {
                     </div>
                 </div>
 
-                <!-- Результаты сканирования -->
+                
                 <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-[18px] border border-gray-600/30 p-4 sm:p-6 shadow-xl">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
@@ -9726,7 +9507,7 @@ function renderScannerContent() {
                     </div>
                 </div>
 
-                <!-- Настройки камеры -->
+                
                 <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-[18px] border border-gray-600/40 hover:shadow-blue-500/20 hover:shadow-2xl transition-all duration-300">
                     <details class="group" style="box-shadow: none !important;">
                         <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer rounded-t-xl" style="box-shadow: none !important;">
@@ -9786,46 +9567,18 @@ function renderScannerContent() {
                                     </div>
                                 </div>
                             </div>
-                                <!-- <button id="reset-camera-flag" class="flex items-center gap-2 px-3 sm:px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-[18px] transition-colors text-sm sm:text-base">
-                                    <span>${I_Refresh('w-4 h-4')}</span>
-                                    <span class="hidden sm:inline">Сбросить флаг</span>
-                                    <span class="sm:hidden">Сброс</span>
-                                </button>
- -->
+                                
                             </div>
                         </div>
                     </details>
                 </div>
                 
-                <!-- Консольные логи для отладки (свернутые) -->
-                <!-- <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-[18px] border border-gray-600/40 shadow-xl">
-                    <details class="group">
-                        <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer hover:bg-gray-700/30 transition-colors rounded-t-xl">
-                            <div class="flex items-center gap-3">
-                                <div class="p-2 bg-gray-600/20 rounded-[18px]">
-                                    ${I_Info('w-5 h-5 text-gray-400')}
-                                </div>
-                                <h3 class="text-lg font-semibold text-gray-200">Консольные логи</h3>
-                            </div>
-                            <span class="text-gray-400 group-open:rotate-180 transition-transform">${I_ChevronDown('w-5 h-5')}</span>
-                        </summary>
-                        <div class="px-4 sm:px-6 pb-4 sm:pb-6">
-                            <div class="flex items-center justify-between mb-3">
-                                <p class="text-sm text-gray-400">Отладочная информация</p>
-                                <button id="clear-logs" class="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors">
-                                    Очистить
-                                </button>
-                            </div>
-                            <div id="console-logs" class="bg-gray-900 rounded-[18px] p-3 h-32 sm:h-48 overflow-y-auto text-xs font-mono text-gray-300 border border-gray-700">
-                                <div class="text-gray-500">Логи появятся здесь...</div>
-                            </div>
-                        </div>
-                    </details>
-                </div> -->
+                
+                
             </div>
         </div>
 
-        <!-- Модальное окно выбора камеры -->
+        
         <div id="camera-selection-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden">
             <div id="camera-modal-content" class="bg-gray-800 rounded-[18px] shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100dvh-2rem)] transition-all duration-300 relative">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
@@ -9885,16 +9638,16 @@ function renderScannerContent() {
 function renderPhotoSearchContent() {
     return `
         <div class="min-h-full p-3 sm:p-4 md:p-6 lg:p-8">
-            <!-- Заголовок -->
+            
             <div class="text-center mb-6 sm:mb-8">
                 <h1 class="text-2xl sm:text-3xl font-bold text-white mb-2">Поиск по фото</h1>
                 <p class="text-gray-400 text-sm sm:text-base">Сфотографируйте деталь, коробку набора или минифигурку для автоматического AI распознавания</p>
             </div>
 
-            <!-- Основной контент -->
+            
             <div class="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
-                <!-- Область захвата фото -->
+                
                 <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-[18px] border border-gray-600/30 p-6 sm:p-8 md:p-10 lg:p-12 shadow-xl">
                     <div class="flex items-center gap-3 mb-4">
                         <div class="p-2 bg-blue-600/20 rounded-[18px]">
@@ -9916,16 +9669,16 @@ function renderPhotoSearchContent() {
                             </div>
                             <div id="photo-search-overlay" class="absolute inset-0 pointer-events-none hidden">
                                 <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 sm:w-80 sm:h-80">
-                                    <!-- Синяя рамка с отступом внутрь -->
+                                    
                                     <div class="absolute inset-6 border-2 border-blue-400 rounded-[18px] transition-all duration-300">
-                                        <!-- Угловые маркеры -->
+                                        
                                         <div class="absolute top-16 left-16 w-6 h-6 border-t-2 border-l-2 border-blue-400"></div>
                                         <div class="absolute top-16 right-16 w-6 h-6 border-t-2 border-r-2 border-blue-400"></div>
                                         <div class="absolute bottom-16 left-16 w-6 h-6 border-b-2 border-l-2 border-blue-400"></div>
                                         <div class="absolute bottom-16 right-16 w-6 h-6 border-b-2 border-r-2 border-blue-400"></div>
                                     </div>
                                     
-                                    <!-- Статус захвата -->
+                                    
                                     <div id="photo-capture-status" class="absolute top-4 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs rounded-full font-medium hidden">
                                         Захват фото...
                                     </div>
@@ -9933,7 +9686,7 @@ function renderPhotoSearchContent() {
                             </div>
                         </div>
                     </div>
-                    <!-- Кнопка захвата фото -->
+                    
                     <div class="flex justify-center mt-4">
                         <button id="capture-photo" class="flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-[18px] transition-colors text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed" disabled>
                             <span>${I_Camera('w-5 h-5')}</span>
@@ -9942,7 +9695,7 @@ function renderPhotoSearchContent() {
                     </div>
                 </div>
 
-                <!-- Результаты распознавания -->
+                
                 <div class="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-[18px] border border-gray-600/30 p-4 sm:p-6 shadow-xl" style="display: none;">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center gap-3">
@@ -9959,7 +9712,7 @@ function renderPhotoSearchContent() {
                     </div>
                 </div>
 
-                <!-- Настройки камеры -->
+                
                 <div class="bg-gradient-to-r from-gray-800/60 to-gray-900/60 rounded-[18px] border border-gray-600/40 hover:shadow-blue-500/20 hover:shadow-2xl transition-all duration-300">
                     <details class="group" style="box-shadow: none !important;">
                         <summary class="flex items-center justify-between p-4 sm:p-6 cursor-pointer rounded-t-xl" style="box-shadow: none !important;">
@@ -10026,7 +9779,7 @@ function renderPhotoSearchContent() {
             </div>
         </div>
 
-        <!-- Модальное окно выбора камеры для поиска по фото -->
+        
         <div id="photo-camera-selection-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center modal-hidden">
             <div id="photo-camera-modal-content" class="bg-gray-800 rounded-[18px] shadow-xl w-[calc(100%-2rem)] max-w-md flex flex-col max-h-[calc(100dvh-2rem)] transition-all duration-300 relative">
                 <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center gap-4">
@@ -10168,39 +9921,39 @@ function renderWishlistItemCard(item, wishlistId) {
     return `
         <div class="wishlist-item relative bg-gradient-to-br from-gray-800 to-gray-900 rounded-[18px] overflow-hidden group cursor-pointer border border-gray-700/50 shadow-lg hover:shadow-xl transition-all duration-300" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" data-action="open-item-modal" data-item-type="${itemType}" data-item-id-value="${item.id.split(':')[1]}">
             
-            <!-- Контейнер изображения с фиксированными размерами -->
+            
             <div class="wishlist-image-container relative w-full h-40 bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center p-3">
-                <!-- Внутренний контейнер изображения -->
+                
                 <div class="wishlist-image-inner relative w-full h-full bg-white rounded-[18px] flex items-center justify-center overflow-hidden shadow-inner">
-                    <!-- Изображение -->
+                    
                     <img src="${itemImage || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0zMiAxNkMyMy4xNjM0IDE2IDE2IDIzLjE2MzQgMTYgMzJDMTYgNDAuODM2NiAyMy4xNjM0IDQ4IDMyIDQ4QzQwLjgzNjYgNDggNDggNDAuODM2NiA0OCAzMkM0OCAyMy4xNjM0IDQwLjgzNjYgMTYgMzIgMTZaIiBmaWxsPSIjNkI3MjgwIi8+CjxwYXRoIGQ9Ik0yNCAyOEgyNEMyMi44OTU1IDI4IDIyIDI4Ljg5NTQgMjIgMzBWMzRIMjZWMzBDMjYgMjguODk1NCAyNS4xMDQ2IDI4IDI0IDI4WiIgZmlsbD0iIzZCNzI4MCIvPgo8cGF0aCBkPSJNMzIgMjhIMzJDMzAuODk1NCAyOCAzMCAyOC44OTU0IDMwIDMwVjM0SDM0VjMwQzM0IDI4Ljg5NTQgMzMuMTA0NiAyOCAzMiAyOFoiIGZpbGw9IiM2QjcyODAiLz4KPHBhdGggZD0iTTI0IDM2SDQwQzQxLjEwNDYgMzYgNDIgMzYuODk1NCA0MiAzOFY0MEg0MlY0MkM0MiA0My4xMDQ2IDQxLjEwNDYgNDQgNDAgNDRIMjRDMjIuODk1NCA0NCAyMiA0My4xMDQ2IDIyIDQyVjQwSDIyVjM4QzIyIDM2Ljg5NTQgMjIuODk1NCAzNiAyNCAzNloiIGZpbGw9IiM2QjcyODAiLz4KPC9zdmc+'}" alt="${itemName}" class="w-full h-full object-contain pointer-events-none" loading="lazy">
                     
-                    <!-- Иконка типа в левом верхнем углу -->
+                    
                     <div class="wishlist-type-icon absolute top-2 left-2 z-20">
                         ${typeIcons[itemType] ? typeIcons[itemType]('w-4 h-4') : ''}
                     </div>
                     
-                    <!-- Кнопка выбора в правом верхнем углу -->
+                    
                     <button class="wishlist-item-checkbox absolute top-2 right-2 z-30 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md opacity-100 transition-all duration-150 p-1" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" title="Выбрать элемент">
                         ${I_Circle('w-3 h-3')}
                     </button>
                     
-                    <!-- Кнопка удаления в правом нижнем углу -->
+                    
                     <button aria-label="Удалить ${itemName}" data-action="remove-from-wishlist" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" class="absolute bottom-2 right-2 z-20 bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full shadow-lg hover:shadow-red-500/25 opacity-0 group-hover:opacity-100 transition-all duration-200" title="Удалить из списка желаний">
                         ${I_Trash("w-4 h-4")}
                     </button>
                 </div>
             </div>
             
-            <!-- Информационная секция -->
+            
             <div class="wishlist-info-section p-4 space-y-3">
-                <!-- Заголовок и ID -->
+                
                 <div class="wishlist-title-section space-y-1">
                     <h3 class="text-sm font-semibold text-white truncate pointer-events-none">${itemName}</h3>
                     <p class="text-xs text-gray-400 pointer-events-none font-mono">${item.id.replace(/^(set|minifig|part):/, '')}</p>
                 </div>
                 
-                <!-- Цвет и кнопки управления -->
+                
                 <div class="wishlist-controls flex items-center justify-between">
                     ${itemColor ? `
                         <div class="wishlist-color-info flex items-center gap-2 px-2 py-1 bg-gray-700/50 rounded-[18px] border border-gray-600/50">
@@ -10209,7 +9962,7 @@ function renderWishlistItemCard(item, wishlistId) {
                         </div>
                     ` : '<div class="wishlist-color-placeholder"></div>'}
                     
-                    <!-- Кнопки перемещения -->
+                    
                     <div class="wishlist-move-buttons flex flex-row gap-1">
                         <button class="wishlist-move-btn move-left" data-item-id="${item.id}" data-wishlist-id="${wishlistId}" title="Переместить влево" ${isFirst ? 'disabled' : ''}>
                             ${I_ChevronLeft('w-4 h-4')}
@@ -10601,7 +10354,7 @@ function initializeRemoteStorageWidget() {
                 </div>
                 
                 <div class="space-y-6">
-                    <!-- Информация о провайдере -->
+                    
                     <div class="p-4 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-600/40 rounded-[18px] shadow-lg">
                         <div class="flex items-center justify-center">
                             <span class="text-green-400 mr-3">${I_Info('w-5 h-5')}</span>
@@ -11992,12 +11745,12 @@ async function showCustomAlert(message, options = {}) {
         modal.innerHTML = `
             <div class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true">
                 <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-md flex flex-col">
-                    <!-- Заголовок -->
+                    
                     <div class="flex-shrink-0 p-4 border-b border-gray-700 text-center">
                         <h2 class="text-xl font-bold text-white">${title}</h2>
                     </div>
                     
-                    <!-- Контент -->
+                    
                     <div class="flex-grow p-6">
                         ${icon ? `
                             <div class="mb-4 flex justify-center">
@@ -12010,7 +11763,7 @@ async function showCustomAlert(message, options = {}) {
                         </div>
                     </div>
                     
-                    <!-- Кнопка -->
+                    
                     <div class="flex-shrink-0 p-4 border-t border-gray-700">
                         <button id="alert-ok-btn" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-[18px] transition-colors font-medium shadow-lg hover:shadow-blue-500/25 focus:outline-none">
                             OK
@@ -12060,7 +11813,7 @@ async function showCustomConfirm(message, options = {}) {
         modal.innerHTML = `
             <div class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true">
                 <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-md flex flex-col">
-                    <!-- Заголовок -->
+                    
                     <div class="flex-shrink-0 p-4 border-b border-gray-700 text-center">
                         <h2 class="text-xl font-bold text-white">${title}</h2>
                         ${description ? `
@@ -12070,7 +11823,7 @@ async function showCustomConfirm(message, options = {}) {
                         ` : ''}
                     </div>
                     
-                    <!-- Контент -->
+                    
                     <div class="flex-grow p-6">
                         ${icon ? `
                             <div class="mb-4 flex justify-center">
@@ -12083,7 +11836,7 @@ async function showCustomConfirm(message, options = {}) {
                         </div>
                     </div>
                     
-                    <!-- Кнопки -->
+                    
                     <div class="flex-shrink-0 p-4 border-t border-gray-700 flex gap-3">
                         <button id="confirm-cancel-btn" class="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-[18px] transition-colors font-medium focus:outline-none">
                             ${cancelText}
@@ -12169,15 +11922,15 @@ async function showShareModal(options) {
         modal.innerHTML = `
             <div class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true">
                 <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-md flex flex-col max-h-[calc(100dvh-2rem)]">
-                    <!-- Заголовок -->
+                    
                     <div class="flex-shrink-0 p-4 border-b border-gray-700 flex justify-between items-center">
                         <h2 class="text-xl font-bold text-white">Поделиться ${title}</h2>
                         <button id="share-modal-close" class="modal-close-btn" title="Закрыть модальное окно">${I_X("w-4 h-4")}</button>
                     </div>
                     
-                    <!-- Контент -->
+                    
                     <div class="flex-grow p-4 overflow-y-auto no-scrollbar space-y-4">
-                        <!-- Предупреждения -->
+                        
                         ${isLargeCollection ? `
                         <div class="bg-yellow-900/20 border border-yellow-600/30 rounded-[18px] p-3">
                             <div class="flex items-center gap-2 text-yellow-300 text-sm">
@@ -12200,7 +11953,7 @@ async function showShareModal(options) {
                         </div>
                         ` : ''}
 
-                        <!-- Чекбоксы опций -->
+                        
                         <div>
                             <h3 class="text-sm font-semibold text-white mb-3">Что включить:</h3>
                             <div class="space-y-3">
@@ -12225,7 +11978,7 @@ async function showShareModal(options) {
                             </div>
                         </div>
 
-                        <!-- Дополнительные опции для коллекции -->
+                        
                         ${type === 'collection' ? `
                         <div class="border-t border-gray-700/50 pt-4">
                             <h3 class="text-sm font-semibold text-white mb-3">Дополнительно:</h3>
@@ -12250,7 +12003,7 @@ async function showShareModal(options) {
                         </div>
                         ` : ''}
 
-                        <!-- Превью изображения -->
+                        
                         ${!isMultiSelectWithMultipleItems ? `
                         <div class="border-t border-gray-700/50 pt-4">
                             <div id="share-preview-image" class="${preferences.includeImage ? '' : 'hidden'}">
@@ -12262,7 +12015,7 @@ async function showShareModal(options) {
                         </div>
                         ` : ''}
 
-                        <!-- Редактирование текста -->
+                        
                         <div class="border-t border-gray-700/50 pt-4">
                             <div id="share-preview-text" class="${preferences.includeText ? '' : 'hidden'}">
                                 <label class="block text-sm text-gray-300 mb-2">Описание:</label>
@@ -12270,7 +12023,7 @@ async function showShareModal(options) {
                             </div>
                         </div>
 
-                        <!-- Статистика -->
+                        
                         <div class="border-t border-gray-700/50 pt-4">
                             <h3 class="text-sm font-semibold text-white mb-2">Статистика:</h3>
                             <div class="text-sm text-gray-300 space-y-1">
@@ -12281,7 +12034,7 @@ async function showShareModal(options) {
                         </div>
                     </div>
                     
-                    <!-- Кнопки действий -->
+                    
                     <div class="flex-shrink-0 p-4 border-t border-gray-700 flex gap-3">
                         <button id="share-cancel-btn" class="flex-1 px-4 py-3 bg-gray-600 hover:bg-gray-700 text-white rounded-[18px] transition-colors font-medium focus:outline-none">
                             Отмена
@@ -14456,7 +14209,7 @@ function renderAnalyticsContent(analytics) {
     return `
         <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
             ${subViewTabs}
-            <!-- Общая статистика -->
+            
             <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 sm:gap-3 xl:gap-6">
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-[18px] p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
@@ -14502,11 +14255,11 @@ function renderAnalyticsContent(analytics) {
                 </div>
             </div>
 
-            <!-- Основной контент в две колонки на больших экранах -->
+            
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 xl:gap-8">
-                <!-- Левая колонка -->
+                
                 <div class="space-y-4 sm:space-y-6">
-                    <!-- Редкие детали -->
+                    
                     <div class="bg-gray-800 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                             <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-yellow-400">${I_Star('w-full h-full')}</div>
@@ -14518,7 +14271,7 @@ function renderAnalyticsContent(analytics) {
                         </div>
                     </div>
 
-                    <!-- Топ редких деталей -->
+                    
                     ${analytics.topRareParts.length > 0 ? `
                         <div class="bg-gray-800 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8">
                             <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
@@ -14533,9 +14286,9 @@ function renderAnalyticsContent(analytics) {
                     ` : ''}
                 </div>
 
-                <!-- Правая колонка -->
+                
                 <div class="space-y-4 sm:space-y-6">
-                    <!-- Статистика по цветам -->
+                    
                     <div class="bg-gray-800 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                             <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-purple-400">${I_Theme('w-full h-full')}</div>
@@ -14547,7 +14300,7 @@ function renderAnalyticsContent(analytics) {
                         </div>
                     </div>
 
-                    <!-- Статистика по категориям -->
+                    
                     <div class="bg-gray-800 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                             <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-orange-400">${I_Package('w-full h-full')}</div>
@@ -14615,7 +14368,7 @@ function renderSetsAnalytics(analytics, subViewTabs) {
     return `
         <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
             ${subViewTabs}
-            <!-- Общая статистика наборов -->
+            
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-3 xl:gap-6">
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-[18px] p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
@@ -14647,11 +14400,11 @@ function renderSetsAnalytics(analytics, subViewTabs) {
                 </div>
             </div>
 
-            <!-- Основной контент в две колонки -->
+            
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 xl:gap-8">
-                <!-- Левая колонка -->
+                
                 <div class="space-y-4 sm:space-y-6">
-                    <!-- Топ темы наборов -->
+                    
                     <div class="bg-gray-800 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                             <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-purple-400">${I_Tags('w-full h-full')}</div>
@@ -14664,9 +14417,9 @@ function renderSetsAnalytics(analytics, subViewTabs) {
                     </div>
                 </div>
 
-                <!-- Правая колонка -->
+                
                 <div class="space-y-4 sm:space-y-6">
-                    <!-- Топ наборы по количеству деталей -->
+                    
                     <div class="bg-gray-800 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8">
                         <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                             <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-orange-400">${I_Brick('w-full h-full')}</div>
@@ -14752,7 +14505,7 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
     return `
         <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
             ${subViewTabs}
-            <!-- Общая статистика минифигурок -->
+            
             <div class="grid grid-cols-1 gap-1.5 sm:gap-3 xl:gap-6">
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-[18px] p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
@@ -14763,7 +14516,7 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
                 </div>
             </div>
 
-            <!-- Топ минифигурки по количеству -->
+            
             <div class="bg-gray-800 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                     <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-blue-400">${I_Users('w-full h-full')}</div>
@@ -14775,7 +14528,7 @@ function renderMinifigsAnalytics(analytics, subViewTabs) {
                 </div>
             </div>
 
-            <!-- Топ минифигурки по редкости -->
+            
             <div class="bg-gray-800 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                     <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-yellow-400">${I_Star('w-full h-full')}</div>
@@ -14824,7 +14577,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
         <div class="p-3 sm:p-4 lg:p-6 xl:p-8 space-y-4 sm:space-y-6 xl:space-y-8">
             ${subViewTabs}
             
-            <!-- Общая статистика -->
+            
             <div class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-1.5 sm:gap-3 xl:gap-6">
                 <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-[18px] p-2 sm:p-3 xl:p-6 text-center transition-all duration-200">
                     <div class="flex items-center justify-center mb-2">
@@ -14870,7 +14623,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
                 </div>
             </div>
             
-            <!-- График по годам выпуска -->
+            
             <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                     <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-blue-400">${I_Calendar('w-full h-full')}</div>
@@ -14894,7 +14647,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
                 </div>
             </div>
 
-            <!-- График по темам (круговая диаграмма) -->
+            
             <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                     <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-purple-400">${I_TrendingUp('w-full h-full')}</div>
@@ -14922,7 +14675,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
             </div>
 
 
-            <!-- График по категориям деталей -->
+            
             <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                     <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-purple-400">${I_Puzzle('w-full h-full')}</div>
@@ -14949,7 +14702,7 @@ function renderDashboardAnalytics(analytics, subViewTabs) {
                 </div>
             </div>
 
-            <!-- График по размерам наборов -->
+            
             <div class="bg-gray-700/20 hover:bg-gray-700/40 border border-gray-600/20 hover:border-gray-600/40 rounded-[18px] p-3 sm:p-4 lg:p-6 xl:p-8 transition-all duration-200">
                 <h3 class="text-lg sm:text-xl xl:text-2xl font-bold text-white mb-3 sm:mb-4 xl:mb-6 flex items-center gap-2">
                     <div class="w-6 h-6 sm:w-8 sm:h-8 xl:w-10 xl:h-10 text-green-400">${I_Package('w-full h-full')}</div>
@@ -15447,23 +15200,23 @@ function renderLineChart(data) {
                     </linearGradient>
                 </defs>
                 
-                <!-- Сетка -->
+                
                 <g>
                     ${gridLines}
                     ${verticalGridLines}
                 </g>
                 
-                <!-- Оси -->
+                
                 <line x1="${padding.left}" y1="${height - padding.bottom}" x2="${width - padding.right}" y2="${height - padding.bottom}" stroke="#6b7280" stroke-width="2" />
                 <line x1="${padding.left}" y1="${padding.top}" x2="${padding.left}" y2="${height - padding.bottom}" stroke="#6b7280" stroke-width="2" />
                 
-                <!-- Область под линией -->
+                
                 <polygon 
                     points="${padding.left},${padding.top + chartHeight} ${points} ${width - padding.right},${padding.top + chartHeight}" 
                     fill="url(#${gradientId})"
                 />
                 
-                <!-- Линия -->
+                
                 <polyline 
                     points="${points}" 
                     fill="none" 
@@ -15474,16 +15227,16 @@ function renderLineChart(data) {
                     class="hover:stroke-blue-400 transition-colors duration-200"
                 />
                 
-                <!-- Точки на линии -->
+                
                 ${circles}
                 
-                <!-- Подписи осей -->
+                
                 <g>
                     ${yAxisLabels}
                     ${xAxisLabels}
                 </g>
                 
-                <!-- Заголовки осей -->
+                
                 <text x="${width / 2}" y="${height - 2}" text-anchor="middle" class="text-xs fill-gray-300 font-medium" font-family="system-ui, sans-serif">Год выпуска</text>
                 <text x="15" y="${height / 2}" text-anchor="middle" class="text-xs fill-gray-300 font-medium" font-family="system-ui, sans-serif" transform="rotate(-90, 15, ${height / 2})">Количество наборов</text>
             </svg>
@@ -17833,7 +17586,7 @@ function applySetGalleryImageToDom() {
         // Обновляем только состояния кнопок (DOM минимально)
         updateSetGalleryButtonsState();
         updateSetGalleryDots();
-    } catch (_) { /* no-op */ }
+    } catch (_) {  }
 }
 
 async function tryAdvanceSetGalleryNext() {
@@ -17931,7 +17684,7 @@ function updateSetGalleryButtonsState() {
         }
         dis(prevBtn, canPrev && hasExtras);
         dis(nextBtn, canNext && hasExtras);
-    } catch (_) { /* no-op */ }
+    } catch (_) {  }
 }
 
 function updateSetGalleryDots() {
@@ -17982,7 +17735,7 @@ function updateSetGalleryDots() {
             dotsWrap._visibleOnce = true;
         }
         dotsWrap.innerHTML = rowsHtml;
-    } catch (_) { /* no-op */ }
+    } catch (_) {  }
 }
 
 function initSetImageGallery(setNum) {
@@ -18022,7 +17775,7 @@ function initSetImageGallery(setNum) {
         }
         // Обновляем DOM-картинку и кнопки
         setTimeout(applySetGalleryImageToDom, 0);
-    } catch (_) { /* no-op */ }
+    } catch (_) {  }
 }
 
 
@@ -18923,7 +18676,7 @@ function renderSidebar() {
         </div>
         
         ${S.view === "tools" ? `
-        <!-- Кнопка настроек внизу только для аналитики -->
+        
         <div class="flex-shrink-0 mt-4 border-t border-gray-700 pt-4">
             <button id="settings-button" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-600 hover:bg-gray-500 text-white shadow-lg hover:shadow-gray-500/25" title="Открыть настройки приложения, управление коллекцией и импорт/экспорт данных">
                 ${I_Settings("w-5 h-5 mr-2 text-gray-300")} Настройки
@@ -19082,7 +18835,7 @@ function renderHeader() {
                             ${I_Search("w-5 h-5")}
                         </div>
                         <div id="autocomplete-dropdown">
-                            <!-- Предложения автодополнения будут добавлены здесь -->
+                            
                         </div>
                     </div>
                      <button id="search-button" class="px-3 bg-blue-600 text-white rounded-[18px] hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0 hidden" aria-label="Поиск" title="Выполнить поиск ${searchContext}">
@@ -20006,7 +19759,7 @@ function renderMainContent() {
                             </div>
                         </div>
                         
-                        <!-- Превью-картинка минифигурки -->
+                        
                         <div class="flex items-center gap-3">
                             <div class="w-16 h-16 bg-white rounded-[18px] flex items-center justify-center overflow-hidden shadow-md cursor-pointer hover:shadow-lg transition-shadow relative group" 
                                  data-action="open-minifig-preview" 
@@ -20017,7 +19770,7 @@ function renderMainContent() {
                                      class="w-full h-full object-contain"
                                      onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHZpZXdCb3g9IjAgMCA2NCA2NCIgZmlsbD0ibm9uZSIgeG1zbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjY0IiBoZWlnaHQ9IjY0IiBmaWxsPSIjMzc0MTUxIi8+CjxwYXRoIGQ9Ik0zMiAxNkMyMy4xNjM0IDE2IDE2IDIzLjE2MzQgMTYgMzJDMTYgNDAuODM2NiAyMy4xNjM0IDQ4IDMyIDQ4QzQwLjgzNjYgNDggNDggNDAuODM2NiA0OCAzMkM0OCAyMy4xNjM0IDQwLjgzNjYgMTYgMzIgMTZaIiBmaWxsPSIjNkI3MjgwIi8+CjxwYXRoIGQ9Ik0yNCAyOEgyNEMyMi44OTU1IDI4IDIyIDI4Ljg5NTQgMjIgMzBWMzRIMjZWMzBDMjYgMjguODk1NCAyNS4xMDQ2IDI4IDI0IDI4WiIgZmlsbD0iIzZCNzI4MCIvPgo8cGF0aCBkPSJNMzIgMjhIMzJDMzAuODk1NCAyOCAzMCAyOC44OTU0IDMwIDMwVjM0SDM0VjMwQzM0IDI4Ljg5NTQgMzMuMTA0NiAyOCAzMiAyOFoiIGZpbGw9IiM2QjcyODAiLz4KPHBhdGggZD0iTTI0IDM2SDQwQzQxLjEwNDYgMzYgNDIgMzYuODk1NCA0MiAzOFY0MEg0MlY0MkM0MiA0My4xMDQ2IDQxLjEwNDYgNDQgNDAgNDRIMjRDMjIuODk1NCA0NCAyMiA0My4xMDQ2IDIyIDQyVjQwSDIyVjM4QzIyIDM2Ljg5NTQgMjIuODk1NCAzNiAyNCAzNloiIGZpbGw9IiM2QjcyODAiLz4KPC9zdmc+'">
                                 
-                                <!-- Иконка лупы при наведении -->
+                                
                                 <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
                                     <svg class="w-6 h-6 text-white drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -20328,7 +20081,7 @@ function renderMainContent() {
                             return `
                                 <div class="part-folder-group-container" style="grid-column: 1 / -1;">
                                     <div class="border-2 border-blue-500 rounded-[18px] p-6 shadow-2xl shadow-blue-500/30 bg-blue-50/10 backdrop-blur-sm relative">
-                                        <!-- Кнопка закрытия папки в правом верхнем углу контейнера -->
+                                        
                                         <button data-action="close-folder" data-part-id="${d.part.id}" class="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full w-6 h-6 flex items-center justify-center z-20 shadow-lg hover:shadow-red-500/25 transition-all duration-200 hover:scale-110" title="Закрыть папку">
                                             ${I_X('w-4 h-4')}
                                         </button>
@@ -20624,7 +20377,7 @@ function renderSetCollectionControls() {
     return `
             <div class="bg-gray-700/50 rounded-[18px] p-3 sm:p-4 md:p-3 lg:p-4 xl:p-5">
                 <div class="space-y-3 sm:space-y-4 md:space-y-3 lg:space-y-4">
-                    <!-- Header -->
+                    
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3">
                         <h3 class="text-sm sm:text-base md:text-base lg:text-lg font-semibold text-white flex items-center justify-between w-full gap-2 sm:gap-3">
                             <div class="flex items-center gap-2 sm:gap-3">
@@ -20638,9 +20391,9 @@ function renderSetCollectionControls() {
                         </h3>
                     </div>
                     
-                    <!-- Controls -->
+                    
                     <div class="flex flex-col gap-3 sm:gap-4">
-                        <!-- Quantity Controls -->
+                        
                         <div class="flex items-center justify-center gap-2 sm:gap-3">
                             <button data-action="decrease-set-qty"
                                 class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${e > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -20662,9 +20415,9 @@ function renderSetCollectionControls() {
                             </button>
                         </div>
 
-                        <!-- Action Buttons Row -->
+                        
                         <div class="flex gap-2 sm:gap-3">
-                            <!-- Update Button -->
+                            
                             <button data-action="update-set-collection"
                                 class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-2 sm:px-3 md:px-3 lg:px-4 rounded-[18px] hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-xs sm:text-sm md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px] flex-1">
                                 ${t>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
@@ -20672,7 +20425,7 @@ function renderSetCollectionControls() {
                                 <span class="sm:hidden">${t>0 ? "Обновить" : (e > 1 ? "Добавить "+e : "Добавить")}</span>
                             </button>
 
-                            <!-- Delete Button -->
+                            
                             ${t>0?`
                                 <button data-action="delete-from-set-collection-modal"
                                     class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-1.5 sm:px-2 md:px-2 lg:px-3 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[48px] sm:min-h-[52px] flex-3"
@@ -20685,11 +20438,11 @@ function renderSetCollectionControls() {
                         </div>
                     </div>
                     
-                    <!-- Info Text -->
+                    
                     <div class="text-xs text-gray-400 text-center leading-relaxed px-2 sm:px-4">
                         <div class="flex items-center justify-center gap-2 mb-2 sm:hidden">
                             <button id="toggle-set-info" data-action="toggle-set-info" class="flex items-center gap-1 text-blue-400 hover:text-blue-300 transition-colors">
-                                <!-- Иконка информации (SVG) -->
+                                
                                 <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                                     <circle cx="12" cy="12" r="9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path d="M12 8h.01" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -20967,7 +20720,7 @@ function setupSetImageSwipe() {
         container.addEventListener('touchstart', onTouchStart, { passive: true });
         container.addEventListener('touchmove', onTouchMove, { passive: false });
         container.addEventListener('touchend', onTouchEnd, { passive: false });
-    } catch (_) { /* no-op */ }
+    } catch (_) {  }
 }
 
 function setupMinifigImageSwipe() {
@@ -21222,7 +20975,7 @@ function performSwipeTransition(direction) {
             } catch(_) { container._animating = false; }
         };
         if (ghost.complete) startAnim(); else ghost.onload = startAnim;
-    } catch(_) { /* no-op */ }
+    } catch(_) {  }
 }
 
 // Прогресс прокрутки в модалке минифигурки
@@ -21889,7 +21642,7 @@ function renderModalControls() {
     return `
             <div class="bg-gray-700/50 rounded-[18px] p-3 sm:p-4 md:p-3 lg:p-4 xl:p-5">
                 <div class="space-y-3 sm:space-y-4 md:space-y-3 lg:space-y-4">
-                    <!-- Header -->
+                    
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3">
                         <h3 class="text-sm sm:text-base md:text-base lg:text-lg font-semibold text-white flex items-center justify-between w-full gap-2 sm:gap-3">
                             <div class="flex items-center gap-2 sm:gap-3">
@@ -21902,9 +21655,9 @@ function renderModalControls() {
                         </h3>
                     </div>
                     
-                    <!-- Controls -->
+                    
                     <div class="flex flex-col gap-3 sm:gap-4">
-                        <!-- Quantity Controls -->
+                        
                         <div class="flex items-center justify-center gap-2 sm:gap-3">
                             <button data-action="decrease-qty"
                                 class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -21926,9 +21679,9 @@ function renderModalControls() {
                             </button>
                         </div>
 
-                        <!-- Action Buttons Row -->
+                        
                         <div class="flex gap-2 sm:gap-3">
-                            <!-- Update Button -->
+                            
                             <button id="modal-update-collection-btn" data-action="update-collection"
                                 class="flex items-center justify-center gap-2 sm:gap-3 ${o ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed'} text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-3 sm:px-4 md:px-4 lg:px-5 rounded-[18px] transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px] flex-1"
                                 ${!o ? 'disabled' : ''}>
@@ -21937,7 +21690,7 @@ function renderModalControls() {
                                 <span class="sm:hidden">${!o ? "Выберите цвет" : (l>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить"))}</span>
                             </button>
 
-                            <!-- Delete Button -->
+                            
                             ${l>0?`
                                 <button data-action="delete-from-collection-modal"
                                     class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-2 sm:px-3 md:px-3 lg:px-4 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[48px] sm:min-h-[52px] flex-3"
@@ -21950,7 +21703,7 @@ function renderModalControls() {
                         </div>
                     </div>
                     
-                    <!-- Info Text -->
+                    
                     <div class="text-xs text-gray-400 text-center leading-relaxed px-2 sm:px-4">
                         ${!o ? 
                             "Выберите цвет детали для управления коллекцией" :
@@ -22268,7 +22021,7 @@ function renderSettingsModal() {
                                 </button>
                             </div>
                             <div id="cloud-backup-info" class="mt-2">
-                                <!-- Информация о последней резервной копии будет загружена динамически -->
+                                
                             </div>
                         </div>
                     </div>
@@ -22494,12 +22247,12 @@ function renderSettingsModal() {
                                <li><strong>Продвинутое кэширование</strong> - offline режим и быстрая загрузка</li>
                                <li><strong>Сканер DataMatrix</strong> - распознавание камерой DataMatrix кодов серий минифигурок</li>
                                <li><strong>AI распознавание по фото</strong> - поиск деталей, коробок наборов и минифигурок по фотографиям</li>
-                               <!-- <li><strong>Списки желаний</strong> - создание и управление списками желаемых элементов</li> -->
+                               
                                <li><strong>Фильтрация и сортировка</strong> - продвинутые инструменты поиска и организации</li>
                                <li><strong>Адаптивный дизайн</strong> - оптимизация для мобильных и десктопных устройств</li>
                            </ul>
                            
-                           <!-- GitHub проекта -->
+                           
                            <div class="pt-3 border-t border-gray-600/30">
                                <div class="flex justify-center">
                                    <a href="https://github.com/Zeka3535/LEGO-Part-Catalog" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3 py-2 rounded-[12px] bg-gray-700 hover:bg-gray-600 text-white transition-all duration-150 shadow-lg hover:shadow-gray-500/25 hover:scale-105 active:scale-95">
@@ -22511,7 +22264,7 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     
-                    <!-- Отдельная секция для технологий -->
+                    
                     <div class="settings-button-container">
                         <button data-action="toggle-technologies" class="w-full flex items-center justify-between text-left text-md font-semibold text-gray-300 mb-2">
                             <span>Технологии</span>
@@ -22520,7 +22273,7 @@ function renderSettingsModal() {
                         <div id="technologies-panel" class="bg-gray-800/60 border border-gray-700/50 rounded-[18px] space-y-3 text-sm collapse-panel">
                                    <p class="text-xs text-gray-400">Информация о библиотеках и API, используемых в приложении</p>
                                    
-                                   <!-- Камера и сканирование -->
+                                   
                                    <div class="space-y-2">
                                        <h4 class="text-sm font-medium text-gray-300 flex items-center gap-2">
                                            ${I_Camera('w-4 h-4 text-blue-400')} Камера и сканирование
@@ -22538,7 +22291,7 @@ function renderSettingsModal() {
                                        </div>
                                    </div>
                                    
-                                   <!-- AI распознавание -->
+                                   
                                    <div class="space-y-2">
                                        <h4 class="text-sm font-medium text-gray-300 flex items-center gap-2">
                                            ${I_Tech('w-4 h-4 text-purple-400')} AI распознавание
@@ -22556,7 +22309,7 @@ function renderSettingsModal() {
                                        </div>
                                    </div>
                                    
-                                   <!-- API и данные -->
+                                   
                                    <div class="space-y-2">
                                        <h4 class="text-sm font-medium text-gray-300 flex items-center gap-2">
                                            ${I_Cloud('w-4 h-4 text-cyan-400')} API и данные
@@ -22577,7 +22330,7 @@ function renderSettingsModal() {
                                        </div>
                                    </div>
                                    
-                                   <!-- Дополнительные технологии -->
+                                   
                                    <div class="space-y-2">
                                        <h4 class="text-sm font-medium text-gray-300 flex items-center gap-2">
                                            ${I_Toolbox('w-4 h-4 text-green-400')} Дополнительно
@@ -22595,7 +22348,7 @@ function renderSettingsModal() {
                         </div>
                     </div>
                     
-                    <!-- Информация о версии -->
+                    
                     <div class="pt-3 border-t border-gray-700/50 flex flex-col items-center justify-center gap-3 text-center">
                         <div id="app-version-info" class="text-[10px] text-gray-400">
                             <div class="flex items-center justify-center gap-1.5">
@@ -23177,7 +22930,7 @@ function renderMinifigModalDetailsView() {
     const l = `
         <div class="bg-gray-700/50 rounded-[18px] p-3 sm:p-4 md:p-3 lg:p-4 xl:p-5">
             <div class="space-y-3 sm:space-y-4 md:space-y-3 lg:space-y-4">
-                <!-- Header -->
+                
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-3">
                     <h3 class="text-sm sm:text-base md:text-base lg:text-lg font-semibold text-white flex items-center justify-between w-full gap-2 sm:gap-3">
                         <div class="flex items-center gap-2 sm:gap-3">
@@ -23191,9 +22944,9 @@ function renderMinifigModalDetailsView() {
                     </h3>
                 </div>
                 
-                <!-- Controls -->
+                
                 <div class="flex flex-col gap-3 sm:gap-4">
-                    <!-- Quantity Controls -->
+                    
                     <div class="flex items-center justify-center gap-2 sm:gap-3">
                         <button data-action="decrease-minifig-qty"
                             class="p-2 sm:p-2.5 md:p-2 lg:p-2.5 rounded-full ${t > 0 ? 'bg-gray-600 hover:bg-gray-500 shadow-lg hover:shadow-gray-500/25' : 'bg-gray-700 cursor-not-allowed'} text-white transition-all duration-150 touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -23214,9 +22967,9 @@ function renderMinifigModalDetailsView() {
                         </button>
                     </div>
 
-                    <!-- Action Buttons Row -->
+                    
                     <div class="flex gap-2 sm:gap-3">
-                        <!-- Update Button -->
+                        
                         <button data-action="update-minifig-collection"
                             class="flex items-center justify-center gap-2 sm:gap-3 bg-blue-600 text-white font-bold py-3 sm:py-3.5 md:py-3 lg:py-3.5 px-3 sm:px-4 md:px-4 lg:px-5 rounded-[18px] hover:bg-blue-700 transition-all duration-150 shadow-lg hover:shadow-blue-500/25 touch-manipulation text-sm sm:text-base md:text-sm lg:text-base min-h-[48px] sm:min-h-[52px] flex-1">
                             ${o>0 ? I_Refresh("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5") : I_Plus("w-4 h-4 sm:w-5 sm:h-5 md:w-4 md:h-4 lg:w-5 lg:h-5")}
@@ -23224,7 +22977,7 @@ function renderMinifigModalDetailsView() {
                             <span class="sm:hidden">${o>0 ? "Обновить" : (t > 1 ? "Добавить "+t : "Добавить")}</span>
                         </button>
 
-                        <!-- Delete Button -->
+                        
                         ${o>0?`
                             <button data-action="delete-from-minifig-collection-modal"
                                 class="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm md:text-sm lg:text-base bg-red-600 hover:bg-red-700 text-white rounded-[18px] py-2 sm:py-2.5 md:py-2 lg:py-2.5 px-2 sm:px-3 md:px-3 lg:px-4 transition-all duration-150 shadow-lg hover:shadow-red-500/25 touch-manipulation min-h-[48px] sm:min-h-[52px] flex-3"
@@ -23237,7 +22990,7 @@ function renderMinifigModalDetailsView() {
                     </div>
                 </div>
                 
-                <!-- Info Text -->
+                
                 <div class="text-xs text-gray-400 text-center leading-relaxed px-2 sm:px-4">
                     ${o>0 ? 
                         (t > 1 ? 
@@ -24961,7 +24714,7 @@ function renderWishlistModal() {
     
     return `
         <div class="bg-gray-800 rounded-[18px] shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
-            <!-- Заголовок -->
+            
             <div class="flex items-center justify-between p-6 border-b border-gray-700">
                 <div>
                     <h2 class="text-2xl font-bold text-white">${wishlist.name}</h2>
@@ -24976,7 +24729,7 @@ function renderWishlistModal() {
                 </button>
             </div>
             
-            <!-- Содержимое -->
+            
             <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
                 ${items.length === 0 ? `
                     <div class="text-center py-12">
@@ -25017,7 +24770,7 @@ function renderWishlistModal() {
                 `}
             </div>
             
-            <!-- Подвал -->
+            
             <div class="flex items-center justify-between p-6 border-t border-gray-700 bg-gray-750">
                 <div class="flex space-x-2">
                     <button id="export-wishlist-from-modal" 
@@ -31583,7 +31336,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         modal.innerHTML = `
             <div class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true">
                 <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-md flex flex-col">
-                    <!-- Заголовок -->
+                    
                     <div class="flex-shrink-0 p-4 border-b border-gray-700 text-center">
                         <h2 class="text-xl font-bold text-white">Доступно обновление</h2>
                         ${newVersionInfo ? `
@@ -31604,14 +31357,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                         `}
                     </div>
                     
-                    <!-- Контент -->
+                    
                     <div class="flex-grow p-6">
-                        <!-- Иконка обновления -->
+                        
                         <div class="mb-6 flex justify-center">
                             ${I_Refresh('w-16 h-16 text-blue-400')}
                         </div>
                         
-                        <!-- Список действий -->
+                        
                         <div class="mb-6 flex justify-center">
                             <div class="text-left max-w-sm">
                                 <h3 class="text-gray-200 font-semibold mb-4 text-lg text-center">Что произойдет:</h3>
@@ -31636,14 +31389,14 @@ document.addEventListener("DOMContentLoaded", async () => {
                             </div>
                         </div>
                         
-                        <!-- Обратный отсчет -->
+                        
                         <div class="mb-4 text-center">
                             <div class="text-gray-300 text-sm mb-2">Автоматическое обновление через:</div>
                             <div id="countdown-timer" class="text-3xl font-bold text-blue-400">10</div>
                         </div>
                     </div>
                     
-                    <!-- Кнопка -->
+                    
                     <div class="flex-shrink-0 p-4 border-t border-gray-700">
                         <button id="update-now-btn" class="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-[18px] transition-colors font-medium shadow-lg hover:shadow-blue-500/25 focus:outline-none">
                             Обновить сейчас
@@ -38576,7 +38329,7 @@ function animateCloseButtonClick(button) {
         
   </script>
   
-  <!-- Указатель для sidebar-toggle на малых устройствах -->
+  
   <div id="sidebar-hint" class="sidebar-hint hidden">
       <button class="sidebar-hint-close" id="sidebar-hint-close" title="Закрыть подсказку">×</button>
       <div class="sidebar-hint-icon">📱</div>
