@@ -5191,15 +5191,15 @@ button[disabled]:hover {
     }
     
     .autocomplete-item-icon.part {
-        background: linear-gradient(135deg, #10b981, #059669);
-        color: white;
-        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
-    }
-    
-    .autocomplete-item-icon.set {
         background: linear-gradient(135deg, #3b82f6, #1d4ed8);
         color: white;
         box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+    
+    .autocomplete-item-icon.set {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
     }
     
     .autocomplete-item-icon.minifig {
@@ -22324,6 +22324,18 @@ function renderSettingsModal() {
                                 <button data-action="toggle-proxy-enabled" class="toggle-switch ${S.proxyEnabled? 'on' : ''}" aria-pressed="${S.proxyEnabled}"><span class="knob"></span></button>
                             </div>
                             <p class="text-xs text-gray-400">Если включено, прокси серверы будут использоваться для обхода блокировок API. Рекомендуется включить, если прямые запросы к API блокируются.</p>
+                            
+                            ${S.proxyEnabled ? `
+                            <div class="border-t border-gray-700/50 pt-3 mt-3">
+                                <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
+                                    <div class="flex items-center text-gray-300 text-xs">
+                                        <div class="w-2 h-2 rounded-full bg-orange-500 mr-2"></div>
+                                        Рабочих прокси:
+                                    </div>
+                                    <div class="text-white font-semibold text-xs">${PROXY_CONFIG.workingProxies.length}/${PROXY_CONFIG.proxies.length}</div>
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
                     <div class="settings-button-container">
@@ -22348,45 +22360,38 @@ function renderSettingsModal() {
                                         </div>
                                         <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                                             <div class="flex items-center text-gray-300 text-xs">
-                                                <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                                                <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
                                                 Категории:
                                             </div>
                                             <div class="text-white font-semibold text-xs">${stats.categories}</div>
                                         </div>
                                         <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                                             <div class="flex items-center text-gray-300 text-xs">
-                                                <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                                                <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
                                                 Темы:
                                             </div>
                                             <div class="text-white font-semibold text-xs">${stats.themes}</div>
                                         </div>
                                         <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                                             <div class="flex items-center text-gray-300 text-xs">
-                                                <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                                                <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
                                                 Детали:
                                             </div>
                                             <div class="text-white font-semibold text-xs">${stats.parts}</div>
                                         </div>
                                         <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                                             <div class="flex items-center text-gray-300 text-xs">
-                                                <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                                                <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
                                                 Наборы:
                                             </div>
                                             <div class="text-white font-semibold text-xs">${stats.sets}</div>
                                         </div>
                                         <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                                             <div class="flex items-center text-gray-300 text-xs">
-                                                <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
+                                                <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
                                                 Минифигурки:
                                             </div>
                                             <div class="text-white font-semibold text-xs">${stats.minifigs}</div>
-                                        </div>
-                                        <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
-                                            <div class="flex items-center text-gray-300 text-xs">
-                                                <div class="w-2 h-2 rounded-full bg-cyan-500 mr-2"></div>
-                                                Рабочих прокси:
-                                            </div>
-                                            <div class="text-white font-semibold text-xs">${PROXY_CONFIG.workingProxies.length}/${PROXY_CONFIG.proxies.length}</div>
                                         </div>
                                     </div>
                                 `;
@@ -30160,14 +30165,8 @@ document.addEventListener("click", async e => {
             case "toggle-proxy-enabled":
                 S.proxyEnabled = !S.proxyEnabled;
                 try { localStorage.setItem('proxyEnabled', String(S.proxyEnabled)); } catch {}
-                // Обновляем только тумблер без полной перерисовки
-                (function(){
-                    const btn = settingsModalEl.querySelector('[data-action="toggle-proxy-enabled"]');
-                    if (btn) {
-                        if (S.proxyEnabled) btn.classList.add('on'); else btn.classList.remove('on');
-                        btn.setAttribute('aria-pressed', String(S.proxyEnabled));
-                    }
-                })();
+                // Перерисовываем модальное окно настроек для обновления статистики прокси
+                renderSettingsModal();
                 updateSettingsModalStatus(S.proxyEnabled ? "Прокси включены" : "Прокси отключены", "success");
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 2000);
                 return;
@@ -33388,35 +33387,35 @@ function refreshSettingsStatsPanel() {
             </div>
             <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                 <div class="flex items-center text-gray-300 text-xs">
-                    <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
+                    <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
                     Категории:
                 </div>
                 <div class="text-white font-semibold text-xs">${stats.categories}</div>
             </div>
             <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                 <div class="flex items-center text-gray-300 text-xs">
-                    <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
+                    <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
                     Темы:
                 </div>
                 <div class="text-white font-semibold text-xs">${stats.themes}</div>
             </div>
             <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                 <div class="flex items-center text-gray-300 text-xs">
-                    <div class="w-2 h-2 rounded-full bg-yellow-500 mr-2"></div>
+                    <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
                     Детали:
                 </div>
                 <div class="text-white font-semibold text-xs">${stats.parts}</div>
             </div>
             <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                 <div class="flex items-center text-gray-300 text-xs">
-                    <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
+                    <div class="w-2 h-2 rounded-full bg-green-500 mr-2"></div>
                     Наборы:
                 </div>
                 <div class="text-white font-semibold text-xs">${stats.sets}</div>
             </div>
             <div class="flex items-center justify-between py-1 px-2 rounded bg-gray-800/50">
                 <div class="flex items-center text-gray-300 text-xs">
-                    <div class="w-2 h-2 rounded-full bg-pink-500 mr-2"></div>
+                    <div class="w-2 h-2 rounded-full bg-purple-500 mr-2"></div>
                     Минифигурки:
                 </div>
                 <div class="text-white font-semibold text-xs">${stats.minifigs}</div>
