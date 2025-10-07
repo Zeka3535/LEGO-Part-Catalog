@@ -25391,13 +25391,22 @@ function updateImageWithAnimation(newImageUrl) {
 function updateNavigationButtons() {
     const prevBtn = document.getElementById('image-viewer-prev');
     const nextBtn = document.getElementById('image-viewer-next');
+    const navigationPanel = document.getElementById('image-viewer-navigation');
+    
+    // Скрываем навигацию при зуме
+    const isZoomed = zoomState.scale > 1;
+    
+    if (navigationPanel) {
+        navigationPanel.style.opacity = (imageGallery.length > 1 && !isZoomed) ? '1' : '0';
+        navigationPanel.style.pointerEvents = (imageGallery.length > 1 && !isZoomed) ? 'auto' : 'none';
+    }
     
     // Кнопки всегда активны при наличии нескольких изображений (циклическая навигация)
     if (prevBtn) {
-        prevBtn.disabled = imageGallery.length <= 1;
+        prevBtn.disabled = imageGallery.length <= 1 || isZoomed;
     }
     if (nextBtn) {
-        nextBtn.disabled = imageGallery.length <= 1;
+        nextBtn.disabled = imageGallery.length <= 1 || isZoomed;
     }
 }
 
@@ -25437,6 +25446,8 @@ function setupImageSwipeNavigation() {
     
     const onTouchStart = (e) => {
         if (e.touches.length !== 1) return;
+        // Проверяем, не увеличен ли зум
+        if (zoomState.scale > 1) return;
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
         startT = Date.now();
@@ -25444,6 +25455,8 @@ function setupImageSwipeNavigation() {
     
     const onTouchEnd = (e) => {
         if (e.touches.length > 0) return;
+        // Проверяем, не увеличен ли зум
+        if (zoomState.scale > 1) return;
         
         const endX = e.changedTouches[0].clientX;
         const endY = e.changedTouches[0].clientY;
@@ -25469,9 +25482,28 @@ function setupImageSwipeNavigation() {
     viewerEl.removeEventListener('touchstart', onTouchStart, { passive: true });
     viewerEl.removeEventListener('touchend', onTouchEnd, { passive: true });
     
-    // Добавляем новые обработчики
+    // Добавляем обработчики на контейнер просмотра
     viewerEl.addEventListener('touchstart', onTouchStart, { passive: true });
     viewerEl.addEventListener('touchend', onTouchEnd, { passive: true });
+    
+    // Добавляем обработчики на само изображение
+    if (viewerImg) {
+        viewerImg.removeEventListener('touchstart', onTouchStart, { passive: true });
+        viewerImg.removeEventListener('touchend', onTouchEnd, { passive: true });
+        
+        viewerImg.addEventListener('touchstart', onTouchStart, { passive: true });
+        viewerImg.addEventListener('touchend', onTouchEnd, { passive: true });
+    }
+    
+    // Добавляем обработчики на белый контейнер изображения
+    const imageWrapper = viewerEl.querySelector('.image-wrapper');
+    if (imageWrapper) {
+        imageWrapper.removeEventListener('touchstart', onTouchStart, { passive: true });
+        imageWrapper.removeEventListener('touchend', onTouchEnd, { passive: true });
+        
+        imageWrapper.addEventListener('touchstart', onTouchStart, { passive: true });
+        imageWrapper.addEventListener('touchend', onTouchEnd, { passive: true });
+    }
 }
 
 // Переменные для состояния зума
@@ -25522,6 +25554,7 @@ function resetZoom() {
     }
     
     updateZoomButtons();
+    updateNavigationButtons();
 }
 
 // Функция применения зума
@@ -25536,6 +25569,9 @@ function applyZoom() {
         // Применяем перемещение к полотну
         imageCanvas.style.transform = `translate(${zoomState.viewportX}px, ${zoomState.viewportY}px)`;
     }
+    
+    // Обновляем состояние навигации при изменении зума
+    updateNavigationButtons();
 }
 
 // Функция увеличения зума
