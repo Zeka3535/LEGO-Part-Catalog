@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v60';
+    const CACHE_NAME = 'lego-catalog-cache-v61';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -136,6 +136,27 @@
     html, body {
         overscroll-behavior-y: contain;
         overscroll-behavior-x: none;
+    }
+    
+    /* Предотвращение автоматического поворота экрана */
+    @media screen and (orientation: landscape) {
+        body {
+            transform: rotate(0deg);
+        }
+    }
+    
+    /* Принудительная портретная ориентация для мобильных устройств */
+    @media screen and (max-width: 768px) {
+        html {
+            -webkit-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+        }
+        
+        body {
+            -webkit-transform: rotate(0deg);
+            -ms-transform: rotate(0deg);
+            transform: rotate(0deg);
+        }
     }
     body {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -31784,6 +31805,26 @@ async function initializeApp() {
     }, 3000); // Ждем 3 секунды после завершения загрузки данных
 }
 document.addEventListener("DOMContentLoaded", async () => {
+    // Предотвращение автоматического поворота экрана в PWA
+    if (window.matchMedia('(orientation: landscape)').matches) {
+        console.log('Обнаружена альбомная ориентация - принудительно переключаем в портретную');
+        document.body.style.transform = 'rotate(0deg)';
+        document.body.style.width = '100vw';
+        document.body.style.height = '100vh';
+    }
+    
+    // Добавляем обработчик для предотвращения поворота экрана
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            if (window.matchMedia('(orientation: landscape)').matches) {
+                console.log('Попытка поворота в альбомную ориентацию - предотвращаем');
+                document.body.style.transform = 'rotate(0deg)';
+                document.body.style.width = '100vw';
+                document.body.style.height = '100vh';
+            }
+        }, 100);
+    });
+    
     // Предварительная загрузка библиотек для быстрого доступа
     
     // Загружаем ZXing для DataMatrix сканера
@@ -36171,6 +36212,16 @@ function animateCloseButtonClick(button) {
         function handleOrientationChange() {
             if (isMobile) {
                 console.log('Изменение ориентации экрана');
+                
+                // Предотвращаем поворот экрана в PWA
+                if (window.matchMedia('(orientation: landscape)').matches) {
+                    console.log('Попытка поворота в альбомную ориентацию - предотвращаем');
+                    // Принудительно возвращаем портретную ориентацию
+                    document.body.style.transform = 'rotate(0deg)';
+                    document.body.style.width = '100vw';
+                    document.body.style.height = '100vh';
+                }
+                
                 // Небольшая задержка для стабилизации
                 setTimeout(() => {
                     // Перезапускаем камеру если она активна
