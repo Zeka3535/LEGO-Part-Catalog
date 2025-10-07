@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v59';
+    const CACHE_NAME = 'lego-catalog-cache-v60';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -12335,7 +12335,7 @@ async function showShareModal(options) {
 
                         
                         <div class="border-t border-gray-700/50 pt-4">
-                            <div id="share-preview-text" class="${preferences.includeText ? '' : 'hidden'}">
+                            <div id="share-preview-text" class="">
                                 <label class="block text-sm text-gray-300 mb-2">Описание:</label>
                                 <textarea id="share-text-content" class="w-full h-32 pl-4 pr-3 py-3 pb-4 bg-gray-700 border border-gray-600 rounded-[18px] text-white text-sm resize-none focus:outline-none focus:border-blue-500 overflow-y-auto leading-relaxed" placeholder="Введите описание..."></textarea>
                             </div>
@@ -12400,8 +12400,9 @@ async function showShareModal(options) {
                     const previewImage = document.getElementById('share-preview-image');
                     previewImage.classList.toggle('hidden');
                 } else if (toggle === 'text') {
-                    const previewText = document.getElementById('share-preview-text');
-                    previewText.classList.toggle('hidden');
+                    // Поле текста всегда видимо, переключатель только влияет на передачу текста
+                    // const previewText = document.getElementById('share-preview-text');
+                    // previewText.classList.toggle('hidden');
                 }
                 });
             }
@@ -12522,11 +12523,9 @@ async function loadSharePreview(type, data, preferences) {
         }
         
         // Загружаем текст по умолчанию
-        if (preferences.includeText) {
-            const defaultText = await getShareDefaultText(type, data);
-            const textArea = document.getElementById('share-text-content');
-            textArea.value = defaultText;
-        }
+        const defaultText = await getShareDefaultText(type, data);
+        const textArea = document.getElementById('share-text-content');
+        textArea.value = defaultText;
     } catch (error) {
         console.error('Ошибка загрузки предпросмотра:', error);
     }
@@ -12682,7 +12681,7 @@ async function getShareDefaultText(type, data) {
 async function prepareShareData(type, data, preferences, textContent) {
     const shareData = {
         title: 'LEGO Part Catalog',
-        text: preferences.includeText ? textContent : '',
+        text: textContent || '', // Всегда передаем текст, если он есть
         url: preferences.includeLink ? 'https://zeka3535.github.io/LEGO-Part-Catalog/' : '',
         files: []
     };

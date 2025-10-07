@@ -1,6 +1,6 @@
-const CACHE_NAME = 'lego-catalog-cache-v59';
+const CACHE_NAME = 'lego-catalog-cache-v60';
 const VERSION_INFO = {
-    version: 'v59',
+    version: 'v60',
     buildDate: '07.10.2025',
     buildTimestamp: new Date('2025-10-07').getTime()
 };
