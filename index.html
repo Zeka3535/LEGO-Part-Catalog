@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v58';
+    const CACHE_NAME = 'lego-catalog-cache-v59';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -2965,9 +2965,7 @@
     }
     
     #modal-container { z-index: 60 !important; }
-    
-    
-    
+
     
     #scroll-progress {
         position: fixed;
@@ -12032,6 +12030,164 @@ async function showCustomConfirm(message, options = {}) {
                 document.removeEventListener('keydown', handleKeydown);
             } else if (e.key === 'Enter') {
                 closeModal(true);
+                document.removeEventListener('keydown', handleKeydown);
+            }
+        };
+        document.addEventListener('keydown', handleKeydown);
+    });
+}
+
+// Функция показа модального окна удаления коллекции
+async function showDeleteModal() {
+    const partsCount = Object.values(S.coll).reduce((sum, part) => sum + Object.values(part).reduce((partSum, qty) => partSum + qty, 0), 0);
+    const setsCount = Object.keys(S.setColl).length;
+    const minifigsCount = Object.keys(S.minifigColl).length;
+    const totalCount = partsCount + setsCount + minifigsCount;
+    
+    return new Promise((resolve) => {
+        const modal = document.createElement('div');
+        modal.id = 'delete-collection-modal';
+        modal.innerHTML = `
+            <div class="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-sm z-[10000] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+                <div class="bg-gray-800 rounded-[18px] shadow-xl w-full max-w-lg flex flex-col">
+                    
+                    <div class="flex-shrink-0 p-4 border-b border-gray-700 text-center">
+                        <div class="flex justify-center mb-3">
+                            <div class="w-12 h-12 bg-red-900/30 rounded-full flex items-center justify-center">
+                                ${I_Trash("w-6 h-6 text-red-400")}
+                            </div>
+                        </div>
+                        <h2 class="text-xl font-bold text-white mb-1">Управление коллекцией</h2>
+                        <p class="text-gray-300 text-xs">Выберите что удалить из вашей коллекции</p>
+                    </div>
+                    
+                    <div class="flex-grow p-4">
+                        <div class="space-y-3">
+                            <!-- Статистика коллекции -->
+                            <div class="bg-gray-700/50 rounded-[12px] p-3 mb-4">
+                                <h3 class="text-xs font-semibold text-gray-300 mb-2 text-center">Текущая коллекция</h3>
+                                <div class="grid grid-cols-3 gap-2 text-center">
+                                    <div class="bg-blue-900/20 rounded-[8px] p-2">
+                                        <div class="text-lg font-bold text-blue-300">${partsCount}</div>
+                                        <div class="text-xs text-gray-400">Деталей</div>
+                                    </div>
+                                    <div class="bg-green-900/20 rounded-[8px] p-2">
+                                        <div class="text-lg font-bold text-green-300">${setsCount}</div>
+                                        <div class="text-xs text-gray-400">Наборов</div>
+                                    </div>
+                                    <div class="bg-purple-900/20 rounded-[8px] p-2">
+                                        <div class="text-lg font-bold text-purple-300">${minifigsCount}</div>
+                                        <div class="text-xs text-gray-400">Минифигурок</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Кнопки удаления -->
+                            <div class="space-y-2">
+                                ${partsCount > 0 ? `
+                                <button id="delete-parts-btn" class="w-full flex items-center p-3 bg-red-900/20 border border-red-600/30 rounded-[12px] hover:bg-red-900/30 transition-colors">
+                                    <div class="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center mr-3">
+                                        ${I_Trash("w-4 h-4 text-red-400")}
+                                    </div>
+                                    <div class="text-left flex-grow">
+                                        <div class="font-semibold text-white text-sm">Удалить все детали</div>
+                                        <div class="text-xs text-gray-400">${partsCount} элементов</div>
+                                    </div>
+                                </button>
+                                ` : ''}
+                                
+                                ${setsCount > 0 ? `
+                                <button id="delete-sets-btn" class="w-full flex items-center p-3 bg-red-900/20 border border-red-600/30 rounded-[12px] hover:bg-red-900/30 transition-colors">
+                                    <div class="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center mr-3">
+                                        ${I_Trash("w-4 h-4 text-red-400")}
+                                    </div>
+                                    <div class="text-left flex-grow">
+                                        <div class="font-semibold text-white text-sm">Удалить все наборы</div>
+                                        <div class="text-xs text-gray-400">${setsCount} элементов</div>
+                                    </div>
+                                </button>
+                                ` : ''}
+                                
+                                ${minifigsCount > 0 ? `
+                                <button id="delete-minifigs-btn" class="w-full flex items-center p-3 bg-red-900/20 border border-red-600/30 rounded-[12px] hover:bg-red-900/30 transition-colors">
+                                    <div class="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center mr-3">
+                                        ${I_Trash("w-4 h-4 text-red-400")}
+                                    </div>
+                                    <div class="text-left flex-grow">
+                                        <div class="font-semibold text-white text-sm">Удалить все минифигурки</div>
+                                        <div class="text-xs text-gray-400">${minifigsCount} элементов</div>
+                                    </div>
+                                </button>
+                                ` : ''}
+                                
+                                ${totalCount > 0 ? `
+                                <div class="border-t border-gray-600/50 my-3"></div>
+                                <button id="delete-all-btn" class="w-full flex items-center p-3 bg-red-900/40 border-2 border-red-600/50 rounded-[12px] hover:bg-red-900/50 transition-colors">
+                                    <div class="w-8 h-8 bg-red-600/30 rounded-full flex items-center justify-center mr-3">
+                                        ${I_Trash("w-4 h-4 text-red-300")}
+                                    </div>
+                                    <div class="text-left flex-grow">
+                                        <div class="font-semibold text-white text-sm">Удалить ВСЁ</div>
+                                        <div class="text-xs text-red-300">Вся коллекция (${totalCount} элементов)</div>
+                                    </div>
+                                </button>
+                                ` : ''}
+                                
+                                ${totalCount === 0 ? `
+                                <div class="text-center py-6">
+                                    <div class="w-12 h-12 bg-gray-700/50 rounded-full flex items-center justify-center mx-auto mb-3">
+                                        ${I_Trash("w-6 h-6 text-gray-500")}
+                                    </div>
+                                    <div class="text-gray-400 text-xs">Коллекция пуста</div>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-shrink-0 p-4 border-t border-gray-700">
+                        <button id="delete-modal-cancel-btn" class="w-full px-4 py-2.5 bg-gray-600 hover:bg-gray-700 text-white rounded-[12px] transition-colors font-medium focus:outline-none text-sm">
+                            Отмена
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        const cancelBtn = document.getElementById('delete-modal-cancel-btn');
+        const partsBtn = document.getElementById('delete-parts-btn');
+        const setsBtn = document.getElementById('delete-sets-btn');
+        const minifigsBtn = document.getElementById('delete-minifigs-btn');
+        const allBtn = document.getElementById('delete-all-btn');
+        
+        cancelBtn.focus();
+        
+        const closeModal = (result) => {
+            modal.remove();
+            resolve(result);
+        };
+        
+        cancelBtn.addEventListener('click', () => closeModal(null));
+        
+        if (partsBtn) {
+            partsBtn.addEventListener('click', () => closeModal('parts'));
+        }
+        if (setsBtn) {
+            setsBtn.addEventListener('click', () => closeModal('sets'));
+        }
+        if (minifigsBtn) {
+            minifigsBtn.addEventListener('click', () => closeModal('minifigs'));
+        }
+        if (allBtn) {
+            allBtn.addEventListener('click', () => closeModal('all'));
+        }
+        
+        // Закрытие по Escape
+        const handleKeydown = (e) => {
+            if (e.key === 'Escape') {
+                closeModal(null);
                 document.removeEventListener('keydown', handleKeydown);
             }
         };
@@ -22131,38 +22287,9 @@ function renderSettingsModal() {
         }, 500);
     }
     const {
-        delConfirm: e,
         status: t,
         statusType: o
-    } = S.settingsModal, l = Object.values(S.coll).reduce((e, t) => e + Object.keys(t).length, 0);
-    const a = Object.keys(S.setColl).length;
-    const i = Object.keys(S.minifigColl).length;
-    let n = "";
-    n = "parts" === e ? `
-                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
-                <div class="flex gap-2">
-                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
-                    <button data-action="confirm-delete-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление</button>
-                </div>` : "all" === e ? `
-                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо и удалит ВСЕ данные в коллекции</p>
-                <div class="flex gap-2">
-                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
-                    <button data-action="confirm-delete-all" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-red-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление ВСЕГО</button>
-                </div>` : `<button data-action="delete-all-parts" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25 ${0===l?"opacity-50 cursor-not-allowed":""}" ${0===l?"disabled":""}" title="Удалить все детали из коллекции (действие необратимо)">Удалить все детали</button>`;
-    let r = "";
-    r = "sets" === e ? `
-                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
-                <div class="flex gap-2">
-                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
-                    <button data-action="confirm-delete-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление</button>
-                </div>` : `<button data-action="delete-all-sets" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25 ${0===a?"opacity-50 cursor-not-allowed":""}" ${0===a?"disabled":""}" title="Удалить все наборы из коллекции (действие необратимо)">Удалить все наборы</button>`;
-    let s = "";
-    s = "minifigs" === e ? `
-                <p class="text-yellow-300 text-sm text-center mb-2">Вы уверены? Это действие необратимо</p>
-                <div class="flex gap-2">
-                    <button data-action="cancel-delete" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white">Отмена</button>
-                    <button data-action="confirm-delete-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">Подтвердить удаление</button>
-                </div>` : `<button data-action="delete-all-minifigs" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25 ${0===i?"opacity-50 cursor-not-allowed":""}" ${0===i?"disabled":""}" title="Удалить все минифигурки из коллекции (действие необратимо)">Удалить все минифигурки</button>`;
+    } = S.settingsModal;
     const c = "error" === o ? "bg-red-900/50 text-red-300" : "success" === o ? "bg-green-900/50 text-green-300" : "bg-blue-900/50 text-blue-300";
     const enterClass = isFirstOpen ? 'modal-content-enter' : '';
     settingsModalEl.innerHTML = `
@@ -22260,22 +22387,6 @@ function renderSettingsModal() {
                     <div>
                         <h3 class="text-md font-semibold text-white mb-2 pl-0">Обслуживание и данные</h3>
                         <div class="bg-gray-800/60 border border-gray-700/50 rounded-[18px] p-3 space-y-3">
-                            <div class="text-xs text-gray-400">Очистка коллекции</div>
-                            <div class="bg-red-900/20 border border-red-600/30 rounded-[18px] p-3 space-y-3">
-                               ${"all" !== e ? `<button data-action=\"delete-all-data\" class=\"w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white mb-3 shadow-lg hover:shadow-red-500/25\">
-                                   ${I_Trash("w-5 h-5 mr-2")} Удалить всё
-                               </button>` : ""}
-                               ${"all"===e ? `
-                                   <div class=\"p-3\">
-                                       <p class=\"text-yellow-300 text-sm text-center mb-2\">Вы уверены? Это действие необратимо и удалит ВСЕ данные в коллекции</p>
-                                       <div class=\"flex gap-2\">
-                                           <button data-action=\"cancel-delete\" class=\"w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-gray-600 text-white\">Отмена</button>
-                                           <button data-action=\"confirm-delete-all\" class=\"w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25\">Подтвердить удаление ВСЕГО</button>
-                                       </div>
-                                   </div>
-                               ` : `${n}${r}${s}`}
-                            </div>
-                            <div class="border-t border-gray-700/50 my-1"></div>
                             <div class="text-xs text-gray-400">Управление кэшем</div>
                             <div class="space-y-3">
                                 <p class="text-xs text-gray-400">Управление кэшем приложения для улучшения производительности и освобождения места</p>
@@ -22305,12 +22416,21 @@ function renderSettingsModal() {
                                 <div id="camera-settings-status" class="text-xs text-gray-400"></div>
                             </div>
                             <div class="border-t border-gray-700/50 my-1"></div>
-                            <div class="text-xs text-gray-400">Полная очистка данных</div>
+                            <div class="text-xs text-gray-400">Очистка данных</div>
                             <div class="bg-red-900/20 border border-red-600/30 rounded-[18px] p-3 space-y-3">
-                                <p class="text-xs text-red-300">ОПАСНО: Удаляет ВСЕ данные сохранённые в приложении</p>
-                                <div class="flex gap-3">
+                                
+                                <div class="space-y-2">
+                                    <button data-action="open-delete-modal" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
+                                        ${I_Trash("w-5 h-5 mr-2")} Управление коллекцией
+                                    </button>
+                                    <p class="text-xs text-gray-400 text-center">Выберите что удалить из коллекции</p>
+                                </div>
+                                
+                                <div class="border-t border-gray-600/30 my-2"></div>
+                                
+                                <div class="space-y-2">
                                     <button data-action="clear-all-data" class="w-full flex items-center justify-center px-3 py-2 text-sm font-semibold rounded-[18px] transition-colors duration-150 bg-gray-700 hover:bg-red-600 text-white shadow-lg hover:shadow-red-500/25">
-                                        ${I_Trash("w-5 h-5 mr-2")} Удалить все данные
+                                        ${I_Trash("w-5 h-5 mr-2")} Удалить все данные сайта
                                     </button>
                                 </div>
                             </div>
@@ -30186,32 +30306,71 @@ document.addEventListener("click", async e => {
                 setTimeout(()=>{ if (S.settingsOpen) { clearSettingsModalStatus(); } }, 1500);
                 return;
 
-            case "delete-all-parts":
-                S.settingsModal.delConfirm = "parts", renderSettingsModal();
-                break;
-            case "delete-all-sets":
-                S.settingsModal.delConfirm = "sets", renderSettingsModal();
-                break;
-            case "delete-all-minifigs":
-                S.settingsModal.delConfirm = "minifigs", renderSettingsModal();
-                break;
-            case "delete-all-data":
-                S.settingsModal.delConfirm = "all", renderSettingsModal();
-                break;
-            case "cancel-delete":
-                S.settingsModal.delConfirm = null, renderSettingsModal();
-                break;
-            case "confirm-delete-parts":
-                S.coll = {}, saveState(), S.settingsModal.delConfirm = null, renderSettingsModal(), updateUI();
-                break;
-            case "confirm-delete-sets":
-                S.setColl = {}, saveState(), S.settingsModal.delConfirm = null, renderSettingsModal(), updateUI();
-                break;
-            case "confirm-delete-minifigs":
-                S.minifigColl = {}, saveState(), S.settingsModal.delConfirm = null, renderSettingsModal(), updateUI();
-                break;
-            case "confirm-delete-all":
-                S.coll = {}, S.setColl = {}, S.minifigColl = {}, saveState(), S.settingsModal.delConfirm = null, renderSettingsModal(), updateUI();
+            case "open-delete-modal":
+                // Открываем модальное окно удаления коллекции
+                showDeleteModal().then(async (action) => {
+                    if (!action) return; // Пользователь отменил
+                    
+                    // Показываем подтверждение в зависимости от выбранного действия
+                    let confirmMessage = '';
+                    let confirmTitle = '';
+                    
+                    switch (action) {
+                        case 'parts':
+                            const partsCount = Object.values(S.coll).reduce((sum, part) => sum + Object.values(part).reduce((partSum, qty) => partSum + qty, 0), 0);
+                            confirmMessage = `Вы уверены, что хотите удалить ВСЕ детали из коллекции?\n\nЭто действие удалит ${partsCount} элементов и необратимо!`;
+                            confirmTitle = 'Удаление всех деталей';
+                            break;
+                        case 'sets':
+                            const setsCount = Object.keys(S.setColl).length;
+                            confirmMessage = `Вы уверены, что хотите удалить ВСЕ наборы из коллекции?\n\nЭто действие удалит ${setsCount} элементов и необратимо!`;
+                            confirmTitle = 'Удаление всех наборов';
+                            break;
+                        case 'minifigs':
+                            const minifigsCount = Object.keys(S.minifigColl).length;
+                            confirmMessage = `Вы уверены, что хотите удалить ВСЕ минифигурки из коллекции?\n\nЭто действие удалит ${minifigsCount} элементов и необратимо!`;
+                            confirmTitle = 'Удаление всех минифигурок';
+                            break;
+                        case 'all':
+                            const totalCount = Object.values(S.coll).reduce((sum, part) => sum + Object.values(part).reduce((partSum, qty) => partSum + qty, 0), 0) + 
+                                            Object.keys(S.setColl).length + 
+                                            Object.keys(S.minifigColl).length;
+                            confirmMessage = `ВНИМАНИЕ! Вы собираетесь удалить ВСЮ коллекцию!\n\nЭто удалит ${totalCount} элементов:\n• Все детали\n• Все наборы\n• Все минифигурки\n\nЭто действие НЕОБРАТИМО!`;
+                            confirmTitle = 'Удаление всей коллекции';
+                            break;
+                    }
+                    
+                    const confirmed = await showCustomConfirm(confirmMessage, {
+                        title: confirmTitle,
+                        type: 'danger',
+                        confirmText: 'Удалить',
+                        cancelText: 'Отмена'
+                    });
+                    
+                    if (confirmed) {
+                        // Выполняем удаление
+                        switch (action) {
+                            case 'parts':
+                                S.coll = {};
+                                break;
+                            case 'sets':
+                                S.setColl = {};
+                                break;
+                            case 'minifigs':
+                                S.minifigColl = {};
+                                break;
+                            case 'all':
+                                S.coll = {};
+                                S.setColl = {};
+                                S.minifigColl = {};
+                                break;
+                        }
+                        
+                        saveState();
+                        updateUI();
+                        updateSettingsModalStatus("Коллекция очищена", "success");
+                    }
+                });
                 break;
             case "refresh-minifig-data":
                 updateSettingsModalStatus("Обновление данных\nминифигурок", "info");
@@ -30321,8 +30480,7 @@ document.addEventListener("click", async e => {
                         "• Все настройки\n" +
                         "• Весь кэш\n" +
                         "• Все сохраненные данные.\n\n" +
-                        "Это действие НЕОБРАТИМО!\n\n" +
-                        "Нажмите ОК для подтверждения или Отмена для отмены.",
+                        "Это действие НЕОБРАТИМО!\n\n",
                         {
                             title: 'ВНИМАНИЕ!',
                             type: 'danger',
