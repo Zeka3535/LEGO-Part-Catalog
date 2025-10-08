@@ -12,7 +12,7 @@
   "orientation": "portrait",
   "background_color": "#1f2937",
   "theme_color": "#1f2937",
-  "version": "1.0.62",
+  "version": "1.0.64",
   "categories": ["productivity", "education", "utilities"],
   "icons": [
     {
@@ -43,12 +43,7 @@
       "type": "image/png"
     }
   ],
-  "shortcuts": [
-    { "name": "Детали", "short_name": "Детали", "url": "./#parts" },
-    { "name": "Наборы", "short_name": "Наборы", "url": "./#sets" },
-    { "name": "Минифигурки", "short_name": "Минифиг", "url": "./#minifigs" },
-    { "name": "AI камера", "short_name": "AI камера", "url": "./#aicamera" }
-  ],
+
   "screenshots": [
     { "src": "ogimage.png", "type": "image/png", "sizes": "1200x630", "form_factor": "wide" }
   ],
