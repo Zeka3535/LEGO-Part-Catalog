@@ -11,7 +11,7 @@
   "display_override": ["standalone", "browser"],
   "orientation": "any",
   "background_color": "#1f2937",
-  "theme_color": "##1f2937",
+  "theme_color": "#1f2937",
   "categories": ["productivity", "education", "utilities"],
   "icons": [
     {
