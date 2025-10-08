@@ -12,6 +12,7 @@
   "orientation": "portrait",
   "background_color": "#1f2937",
   "theme_color": "#1f2937",
+  "version": "1.0.62",
   "categories": ["productivity", "education", "utilities"],
   "icons": [
     {
