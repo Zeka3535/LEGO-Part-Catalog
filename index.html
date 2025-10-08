@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v61';
+    const CACHE_NAME = 'lego-catalog-cache-v62';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -8706,16 +8706,102 @@ const I_Tags = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" view
 const I_TrendingUp = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`;
 const I_Calculator = (c) => `<svg xmlns="http://www.w3.org/2000/svg" class="${c}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg>`;
 
+// Функции для управления цветом статус-бара PWA
+function setStatusBarColor(color) {
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+        // Добавляем более плавный переход цвета для естественного эффекта
+        themeColorMeta.style.transition = 'content 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+        themeColorMeta.setAttribute('content', color);
+    }
+}
+
+function getOriginalStatusBarColor() {
+    return '#1f2937'; // Исходный цвет из мета-тега
+}
+
+// Функция для создания промежуточного цвета между исходным и целевым
+function createIntermediateColor(startColor, endColor, progress) {
+    // Простая функция для смешивания цветов
+    const hexToRgb = (hex) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    };
+    
+    const rgbToHex = (r, g, b) => {
+        return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    };
+    
+    const startRgb = hexToRgb(startColor);
+    const endRgb = hexToRgb(endColor);
+    
+    if (!startRgb || !endRgb) return endColor;
+    
+    const r = Math.round(startRgb.r + (endRgb.r - startRgb.r) * progress);
+    const g = Math.round(startRgb.g + (endRgb.g - startRgb.g) * progress);
+    const b = Math.round(startRgb.b + (endRgb.b - startRgb.b) * progress);
+    
+    return rgbToHex(r, g, b);
+}
+
+function getModalStatusBarColor(modalId) {
+    const originalColor = getOriginalStatusBarColor();
+    
+    // Цвета, которые гармонично сочетаются с затемненным фоном модальных окон
+    if (modalId === 'image-viewer-container') {
+        // Для просмотра изображений создаем более темный цвет (ближе к черному)
+        return createIntermediateColor(originalColor, '#000000', 0.85);
+    } else if (modalId.includes('modal')) {
+        // Для обычных модальных окон создаем промежуточный цвет (плавный переход)
+        return createIntermediateColor(originalColor, '#000000', 0.7);
+    }
+    return createIntermediateColor(originalColor, '#000000', 0.7); // По умолчанию
+}
+
+// Функция для тестирования изменения цвета статус-бара
+function testStatusBarColorChange() {
+    console.log('Тестирование плавного изменения цвета статус-бара...');
+    const originalColor = getOriginalStatusBarColor();
+    console.log('Исходный цвет:', originalColor);
+    
+    // Тестируем плавный переход к затемненному цвету
+    const modalColor = getModalStatusBarColor('modal-container');
+    console.log('Цвет для модальных окон:', modalColor);
+    
+    setStatusBarColor(modalColor);
+    console.log('Установлен затемненный цвет');
+    
+    // Возвращаем исходный цвет через 3 секунды
+    setTimeout(() => {
+        setStatusBarColor(originalColor);
+        console.log('Восстановлен исходный цвет');
+    }, 3000);
+}
+
 // Класс для управления модальными окнами
 class ModalManager {
     constructor() {
         this.openModals = [];
         this.baseZIndex = 200; // Увеличиваем базовый z-index
+        this.originalStatusBarColor = getOriginalStatusBarColor();
     }
     
     openModal(modalId, modalElement) {
         // Убираем класс modal-hidden или viewer-hidden
         modalElement.classList.remove('modal-hidden', 'viewer-hidden');
+        
+        // Изменяем цвет статус-бара при открытии модального окна
+        if (this.openModals.length === 0) {
+            // При открытии первого модального окна
+            setStatusBarColor(getModalStatusBarColor(modalId));
+        } else if (modalId === 'image-viewer-container') {
+            // При открытии просмотра изображений поверх других модальных окон
+            setStatusBarColor(getModalStatusBarColor(modalId));
+        }
         
         // Находим максимальный z-index среди всех открытых модальных окон
         let maxZIndex = this.baseZIndex;
@@ -8829,6 +8915,14 @@ class ModalManager {
                 // Убираем overflow-hidden только если нет других открытых модальных окон
                 if (this.openModals.length === 0) {
                     document.body.classList.remove('overflow-hidden');
+                    // Восстанавливаем исходный цвет статус-бара при закрытии последнего модального окна
+                    setStatusBarColor(this.originalStatusBarColor);
+                } else if (modalId === 'image-viewer-container') {
+                    // При закрытии просмотра изображений восстанавливаем цвет предыдущего модального окна
+                    const previousModal = this.openModals[this.openModals.length - 1];
+                    if (previousModal) {
+                        setStatusBarColor(getModalStatusBarColor(previousModal.id));
+                    }
                 }
             }, 200); // Время анимации закрытия
         } else {
@@ -8865,6 +8959,14 @@ class ModalManager {
             
             if (this.openModals.length === 0) {
                 document.body.classList.remove('overflow-hidden');
+                // Восстанавливаем исходный цвет статус-бара при закрытии последнего модального окна
+                setStatusBarColor(this.originalStatusBarColor);
+            } else if (modalId === 'image-viewer-container') {
+                // При закрытии просмотра изображений восстанавливаем цвет предыдущего модального окна
+                const previousModal = this.openModals[this.openModals.length - 1];
+                if (previousModal) {
+                    setStatusBarColor(getModalStatusBarColor(previousModal.id));
+                }
             }
         }
     }
@@ -8901,6 +9003,8 @@ class ModalManager {
         // Убираем overflow-hidden после небольшой задержки
         setTimeout(() => {
             document.body.classList.remove('overflow-hidden');
+            // Восстанавливаем исходный цвет статус-бара при закрытии всех модальных окон
+            setStatusBarColor(this.originalStatusBarColor);
         }, modalsToClose.length * 50 + 200);
         
     }
