@@ -1,6 +1,6 @@
-const CACHE_NAME = 'lego-catalog-cache-v66';
+const CACHE_NAME = 'lego-catalog-cache-v61';
 const VERSION_INFO = {
-    version: 'v66',
+    version: 'v61',
     buildDate: '08.10.2025',
     buildTimestamp: new Date('2025-10-08').getTime()
 };
@@ -207,6 +207,14 @@ self.addEventListener('fetch', event => {
     }
 });
 
+// Handle background sync for offline actions
+// Removed background sync handler (unused)
+
+// Handle push notifications (if needed in the future)
+// Removed push handler (unused)
+
+// Handle notification clicks
+// Removed notification click handler (unused)
 
 // Handle messages from main thread
 self.addEventListener('message', event => {
@@ -223,21 +231,6 @@ self.addEventListener('controllerchange', () => {
             client.postMessage({ type: 'RELOAD_PAGE' });
         });
     });
-});
-
-// Handle PWA updates
-self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'FORCE_PWA_UPDATE') {
-        // Принудительное обновление PWA
-        self.clients.matchAll().then(clients => {
-            clients.forEach(client => {
-                client.postMessage({ 
-                    type: 'FORCE_PWA_RELOAD',
-                    version: VERSION_INFO.version 
-                });
-            });
-        });
-    }
 });
 
 // Function to force refresh minifig images cache

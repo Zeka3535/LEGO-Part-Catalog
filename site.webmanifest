@@ -9,10 +9,9 @@
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "browser"],
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#1f2937",
-  "theme_color": "#1f2937",
-  "version": "1.0.66",
+  "theme_color": "##1f2937",
   "categories": ["productivity", "education", "utilities"],
   "icons": [
     {
@@ -43,7 +42,6 @@
       "type": "image/png"
     }
   ],
-
   "screenshots": [
     { "src": "ogimage.png", "type": "image/png", "sizes": "1200x630", "form_factor": "wide" }
   ],
