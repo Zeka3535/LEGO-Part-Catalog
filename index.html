@@ -10,8 +10,8 @@
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="manifest" href="site.webmanifest">
   <link rel="shortcut icon" href="favicon.ico">
-  <meta name="msapplication-TileColor" content="#1a202c">
-  <meta name="theme-color" content="#1a202c">
+  <meta name="msapplication-TileColor" content="#1f2937">
+  <meta name="theme-color" content="#1f2937">
 
   <meta property="og:title" content="LEGO Catalog">
   <meta property="og:description" content="Современное веб-приложение для каталогизации вашей личной коллекции LEGO. Включает детали, наборы и минифигурки в едином удобном интерфейсе.">
@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v61';
+    const CACHE_NAME = 'lego-catalog-cache-v63';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -436,13 +436,7 @@
         
         border-radius: 18px;
     }
-    
-    
-    
-    
-    
-    
-    
+        
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
@@ -32290,7 +32284,11 @@ document.addEventListener("DOMContentLoaded", async () => {
                                     </li>
                                     <li class="flex items-center">
                                         <span class="text-blue-400 mr-3">•</span>
-                                        Обновление до новой версии
+                                        Обновление сервис-воркера
+                                    </li>
+                                    <li class="flex items-center">
+                                        <span class="text-blue-400 mr-3">•</span>
+                                        ${window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true ? 'Обновление PWA приложения' : 'Обновление веб-приложения'}
                                     </li>
                                     <li class="flex items-center">
                                         <span class="text-blue-400 mr-3">•</span>
@@ -32404,11 +32402,43 @@ document.addEventListener("DOMContentLoaded", async () => {
             
             updateProgress(80, 'Применение обновления...');
             
+            // Принудительное обновление PWA приложения
+            try {
+                // Проверяем, запущено ли приложение как PWA
+                if (window.matchMedia('(display-mode: standalone)').matches || 
+                    window.navigator.standalone === true) {
+                    console.log('🔄 PWA detected, forcing app update...');
+                    updateProgress(90, 'Обновление PWA...');
+                    
+                    // Принудительно обновляем манифест
+                    const manifestLink = document.querySelector('link[rel="manifest"]');
+                    if (manifestLink) {
+                        const newManifestUrl = manifestLink.href + '?v=' + Date.now();
+                        manifestLink.href = newManifestUrl;
+                    }
+                    
+                    // Обновляем мета-теги для принудительного обновления
+                    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+                    if (themeColorMeta) {
+                        themeColorMeta.content = themeColorMeta.content;
+                    }
+                }
+            } catch (pwaError) {
+                console.warn('⚠️ PWA update failed, but continuing with normal update:', pwaError);
+            }
+            
             // Небольшая задержка перед перезагрузкой для завершения очистки кэша
             setTimeout(() => {
                 updateProgress(100, 'Перезагрузка...');
                 setTimeout(() => {
-                    window.location.reload();
+                    // Принудительная перезагрузка для PWA
+                    if (window.matchMedia('(display-mode: standalone)').matches || 
+                        window.navigator.standalone === true) {
+                        // Для PWA используем более агрессивную перезагрузку
+                        window.location.href = window.location.href;
+                    } else {
+                        window.location.reload();
+                    }
                 }, 300);
             }, 500);
             
@@ -32479,6 +32509,16 @@ document.addEventListener("DOMContentLoaded", async () => {
                         } else if (event.data && event.data.type === 'VERSION_INFO_RESPONSE') {
                             // Сохраняем информацию о версии
                             window.appVersionInfo = event.data.data;
+                        } else if (event.data && event.data.type === 'FORCE_PWA_RELOAD') {
+                            // Принудительное обновление PWA
+                            console.log('🔄 Force PWA reload requested, version:', event.data.version);
+                            if (window.matchMedia('(display-mode: standalone)').matches || 
+                                window.navigator.standalone === true) {
+                                // Для PWA используем более агрессивную перезагрузку
+                                window.location.href = window.location.href;
+                            } else {
+                                window.location.reload();
+                            }
                         }
                     });
                     
@@ -32490,6 +32530,23 @@ document.addEventListener("DOMContentLoaded", async () => {
                             console.error('Failed to get version info on load:', error);
                         }
                     }, 1000);
+                    
+                    // Функция для принудительного обновления PWA
+                    window.forcePWAUpdate = async () => {
+                        try {
+                            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                                console.log('🔄 Forcing PWA update...');
+                                navigator.serviceWorker.controller.postMessage({ type: 'FORCE_PWA_UPDATE' });
+                                return true;
+                            } else {
+                                console.warn('⚠️ Service Worker not available for PWA update');
+                                return false;
+                            }
+                        } catch (error) {
+                            console.error('❌ Failed to force PWA update:', error);
+                            return false;
+                        }
+                    };
                     
                     // Добавляем функции управления кэшем
                     window.clearAppCache = async () => {
