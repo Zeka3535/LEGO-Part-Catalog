@@ -1,6 +1,6 @@
-const CACHE_NAME = 'lego-catalog-cache-v64';
+const CACHE_NAME = 'lego-catalog-cache-v63';
 const VERSION_INFO = {
-    version: 'v64',
+    version: 'v63',
     buildDate: '08.10.2025',
     buildTimestamp: new Date('2025-10-08').getTime()
 };
@@ -16,11 +16,7 @@ const PRECACHE_ASSETS = [
     './favicon.ico',
     './android-chrome-192x192.png',
     './android-chrome-512x512.png',
-    './ogimage.png',
-    './icons/ai-search.svg',
-    './icons/scanner.svg',
-    './icons/catalog.svg',
-    './icons/collection.svg'
+    './ogimage.png'
 ];
 
 // CSV-файлы не добавляем в precache: кэшируем по первому запросу (SWR)
