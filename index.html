@@ -265,59 +265,6 @@
         }
     }
     
-    /* Стили для десктопных браузеров */
-    @media (min-width: 769px) and (not (display-mode: standalone)) {
-        /* Основной контейнер в десктопном браузере */
-        .lg\:ml-80.flex.flex-col.h-screen {
-            height: 100vh;
-            min-height: 100vh;
-        }
-        
-        /* Основной контент в десктопном браузере */
-        #main-content {
-            padding-bottom: 1rem;
-            margin-bottom: 0;
-        }
-    }
-    
-    /* Стили для мобильных браузеров (не PWA) */
-    @media (max-width: 768px) and (not (display-mode: standalone)) {
-        /* Основной контейнер в браузере */
-        .lg\:ml-80.flex.flex-col.h-screen {
-            min-height: 100vh;
-            height: auto; /* Позволяем контенту определять высоту */
-        }
-        
-        /* Основной контент в браузере */
-        #main-content {
-            padding-bottom: 2rem; /* Больше отступ для удобства прокрутки */
-            margin-bottom: 0;
-            min-height: auto; /* Убираем принудительную минимальную высоту */
-        }
-        
-        /* Заголовок в браузере */
-        #header-container {
-            padding-top: 1rem;
-        }
-        
-        /* Боковая панель в браузере */
-        #sidebar-container {
-            padding-top: 1rem;
-            padding-bottom: 1rem;
-        }
-        
-        /* Обеспечиваем правильную прокрутку в браузере */
-        body {
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-        
-        /* Убираем принудительные высоты для контента */
-        .content-section {
-            min-height: auto !important;
-        }
-    }
-    
     /* Полноэкранный режим с учетом выреза камеры */
     @media (display-mode: fullscreen) {
         .app-header {
