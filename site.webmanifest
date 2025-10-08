@@ -9,7 +9,7 @@
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "browser"],
-  "orientation": "any",
+  "orientation": "portrait",
   "background_color": "#1f2937",
   "theme_color": "#1f2937",
   "categories": ["productivity", "education", "utilities"],
