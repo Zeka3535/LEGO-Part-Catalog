@@ -13,6 +13,66 @@
   "background_color": "#1f2937",
   "theme_color": "#1f2937",
   "categories": ["productivity", "education", "utilities"],
+  "shortcuts": [
+    {
+      "name": "AI Поиск",
+      "short_name": "AI Поиск",
+      "description": "Найти деталь по фотографии с помощью ИИ",
+      "url": "/?action=ai-search",
+      "icons": [
+        {
+          "src": "icons/ai-search.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Сканер кодов",
+      "short_name": "Сканер",
+      "description": "Сканировать DataMatrix коды минифигурок",
+      "url": "/?action=scanner",
+      "icons": [
+        {
+          "src": "icons/scanner.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Каталог деталей",
+      "short_name": "Каталог",
+      "description": "Просмотр каталога деталей LEGO",
+      "url": "/?action=catalog",
+      "icons": [
+        {
+          "src": "icons/catalog.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Моя коллекция",
+      "short_name": "Коллекция",
+      "description": "Просмотр личной коллекции LEGO",
+      "url": "/?action=collection",
+      "icons": [
+        {
+          "src": "icons/collection.svg",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+legocatalog",
+      "url": "/?action=%s"
+    }
+  ],
   "icons": [
     {
       "src": "android-chrome-192x192.png",
