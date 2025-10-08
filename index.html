@@ -24,7 +24,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v65';
+    const CACHE_NAME = 'lego-catalog-cache-v66';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -238,44 +238,83 @@
         padding-right: 16px;
     }
     
-    /* Дополнительные стили для мобильных устройств */
-    @media (max-width: 768px) {
-        /* Основной контейнер приложения */
+    /* Стили только для PWA приложений */
+    @media (display-mode: standalone) {
+        /* Основной контейнер приложения в PWA */
         .lg\:ml-80.flex.flex-col.h-screen {
-            height: 100vh !important;
-            min-height: 100vh !important;
+            height: 100dvh !important;
+            min-height: 100dvh !important;
             padding-bottom: env(safe-area-inset-bottom, 0px);
         }
         
-        /* Основной контент с учетом безопасных зон */
+        /* Основной контент с учетом безопасных зон в PWA */
         #main-content {
             padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
             margin-bottom: 0;
-            min-height: calc(100vh - 80px); /* Учитываем высоту заголовка */
         }
         
-        /* Заголовок с учетом выреза камеры */
+        /* Заголовок с учетом выреза камеры в PWA */
         #header-container {
             padding-top: max(env(safe-area-inset-top, 0px), 1rem);
         }
         
-        /* Боковая панель на мобильных */
+        /* Боковая панель на мобильных в PWA */
         #sidebar-container {
             padding-top: max(env(safe-area-inset-top, 0px), 1rem);
             padding-bottom: max(env(safe-area-inset-bottom, 0px), 1rem);
         }
     }
     
-    /* Специальные стили для очень маленьких экранов */
-    @media (max-width: 480px) {
+    /* Стили для десктопных браузеров */
+    @media (min-width: 769px) and (not (display-mode: standalone)) {
+        /* Основной контейнер в десктопном браузере */
         .lg\:ml-80.flex.flex-col.h-screen {
-            height: 100vh !important;
-            min-height: 100vh !important;
+            height: 100vh;
+            min-height: 100vh;
         }
         
+        /* Основной контент в десктопном браузере */
         #main-content {
-            padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.5rem);
-            min-height: calc(100vh - 70px); /* Меньше отступ для маленьких экранов */
+            padding-bottom: 1rem;
+            margin-bottom: 0;
+        }
+    }
+    
+    /* Стили для мобильных браузеров (не PWA) */
+    @media (max-width: 768px) and (not (display-mode: standalone)) {
+        /* Основной контейнер в браузере */
+        .lg\:ml-80.flex.flex-col.h-screen {
+            min-height: 100vh;
+            height: auto; /* Позволяем контенту определять высоту */
+        }
+        
+        /* Основной контент в браузере */
+        #main-content {
+            padding-bottom: 2rem; /* Больше отступ для удобства прокрутки */
+            margin-bottom: 0;
+            min-height: auto; /* Убираем принудительную минимальную высоту */
+        }
+        
+        /* Заголовок в браузере */
+        #header-container {
+            padding-top: 1rem;
+        }
+        
+        /* Боковая панель в браузере */
+        #sidebar-container {
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+        }
+        
+        /* Обеспечиваем правильную прокрутку в браузере */
+        body {
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+        
+        /* Убираем принудительные высоты для контента */
+        .content-section {
+            min-height: auto !important;
         }
     }
     
