@@ -18431,10 +18431,10 @@ function getMinifigCount() {
         let touchStartY = 0;
         let touchStartTime = 0;
         let isSwipeInProgress = false;
-        let swipeThreshold = 40; // Минимальное расстояние для срабатывания жеста
+        let swipeThreshold = 50; // Минимальное расстояние для срабатывания жеста
         let maxVerticalDistance = 120; // Максимальное вертикальное отклонение
-        let maxSwipeTime = 600; // Максимальное время жеста в миллисекундах
-        let leftEdgeZone = 50; // Зона от левого края экрана для начала жеста
+        let maxSwipeTime = 1000; // Максимальное время жеста в миллисекундах
+        let leftEdgeZone = 5; // Зона от левого края экрана для начала жеста
         let lastSwipeTime = 0; // Время последнего жеста для предотвращения спама
         let minSwipeInterval = 300; // Минимальный интервал между жестами
         
