@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v65';
+    const CACHE_NAME = 'lego-catalog-cache-v66';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -18205,6 +18205,11 @@ function initSetImageGallery(setNum) {
 }
 
 
+        
+
+        
+
+
 function sortColorIds(e, t) {
     const o = ["0", "15", "4", "1", "14", "2", "71", "72", "88", "19", "5", "34"],
         l = Object.keys(S.coll[t] || {});
@@ -18378,8 +18383,6 @@ function getMinifigCount() {
     // Функция для настройки управления боковой панелью
     function setupSidebarManagement() {
         const e = window.innerWidth < 1024;
-        console.log('🔄 setupSidebarManagement called, S.sidebarOpen:', S.sidebarOpen, 'isMobile:', e);
-        
         // На больших экранах (>=1024px) боковая панель всегда открыта
         if (window.innerWidth >= 1024) {
             S.sidebarOpen = true;
@@ -18389,168 +18392,11 @@ function getMinifigCount() {
             document.body.classList.add('sidebar-open-large');
         } else {
             // На малых экранах логика остается прежней
-            if (S.sidebarOpen) {
-                sidebarEl.classList.remove("-translate-x-full");
-                backdropEl.classList.remove("hidden");
-                document.body.style.overflow = "hidden";
-                sidebarEl.setAttribute('role','dialog');
-                sidebarEl.setAttribute('aria-modal','true');
-                console.log('🔄 Sidebar opened on mobile');
-            } else {
-                sidebarEl.classList.add("-translate-x-full");
-                backdropEl.classList.add("hidden");
-                document.body.style.overflow = "";
-                sidebarEl.removeAttribute('role');
-                sidebarEl.removeAttribute('aria-modal');
-                console.log('🔄 Sidebar closed on mobile');
-            }
+            e ? S.sidebarOpen ? (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.remove("hidden"), document.body.style.overflow = "hidden", sidebarEl.setAttribute('role','dialog'), sidebarEl.setAttribute('aria-modal','true')) : (sidebarEl.classList.add("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "", sidebarEl.removeAttribute('role'), sidebarEl.removeAttribute('aria-modal')) : (sidebarEl.classList.remove("-translate-x-full"), backdropEl.classList.add("hidden"), document.body.style.overflow = "")
             
             // Убираем класс sidebar-open-large для малых экранов
             document.body.classList.remove('sidebar-open-large');
         }
-        
-        // Настраиваем обработчики жестов свайпа для малых экранов
-        setupSwipeGestures();
-    }
-    
-    // Функция для настройки жестов свайпа от левого края экрана
-    function setupSwipeGestures() {
-        // Только для малых экранов
-        if (window.innerWidth >= 1024) return;
-        
-        // Предотвращаем множественную инициализацию
-        if (window.swipeGesturesInitialized) return;
-        window.swipeGesturesInitialized = true;
-        
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchStartTime = 0;
-        let isSwipeInProgress = false;
-        let swipeThreshold = 25; // Минимальное расстояние для срабатывания жеста
-        let maxVerticalDistance = 120; // Максимальное вертикальное отклонение
-        let maxSwipeTime = 500; // Максимальное время жеста в миллисекундах
-        let leftEdgeZone = 10; // Зона от левого края экрана для начала жеста
-        let lastSwipeTime = 0; // Время последнего жеста для предотвращения спама
-        let minSwipeInterval = 100; // Минимальный интервал между жестами
-        
-        // Обработчик начала касания
-        document.addEventListener('touchstart', (e) => {
-            if (e.touches.length !== 1) return; // Только одиночное касание
-            
-            const touch = e.touches[0];
-            const target = e.target;
-            
-            // Проверяем, что касание не началось на интерактивных элементах
-            if (target.closest('button, input, select, textarea, a, [role="button"], [tabindex]')) {
-                return;
-            }
-            
-            // Проверяем, что касание не началось на модальных окнах или других перекрывающих элементах
-            if (target.closest('.modal, .modal-container, .modal-backdrop, .fixed, .absolute')) {
-                return;
-            }
-            
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
-            touchStartTime = Date.now();
-            isSwipeInProgress = false;
-            
-            // Проверяем, началось ли касание в зоне левого края экрана
-            if (touchStartX <= leftEdgeZone) {
-                isSwipeInProgress = true;
-                // Предотвращаем прокрутку страницы во время жеста
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        // Обработчик движения касания
-        document.addEventListener('touchmove', (e) => {
-            if (!isSwipeInProgress || e.touches.length !== 1) return;
-            
-            const touch = e.touches[0];
-            const deltaX = touch.clientX - touchStartX;
-            const deltaY = Math.abs(touch.clientY - touchStartY);
-            
-            // Проверяем, что движение преимущественно горизонтальное
-            if (deltaY > maxVerticalDistance) {
-                isSwipeInProgress = false;
-                return;
-            }
-            
-            // Проверяем, что движение идет в правильном направлении (вправо)
-            if (deltaX < 0) {
-                isSwipeInProgress = false;
-                return;
-            }
-            
-            // Предотвращаем прокрутку страницы во время жеста
-            if (Math.abs(deltaX) > 10) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        // Обработчик окончания касания
-        document.addEventListener('touchend', (e) => {
-            if (!isSwipeInProgress || e.changedTouches.length !== 1) return;
-            
-            const touch = e.changedTouches[0];
-            const deltaX = touch.clientX - touchStartX;
-            const deltaY = Math.abs(touch.clientY - touchStartY);
-            const deltaTime = Date.now() - touchStartTime;
-            
-            // Проверяем условия для срабатывания жеста
-            if (deltaX > swipeThreshold && 
-                deltaY <= maxVerticalDistance && 
-                deltaTime <= maxSwipeTime) {
-                
-                // Проверяем интервал между жестами для предотвращения спама
-                const currentTime = Date.now();
-                if (currentTime - lastSwipeTime < minSwipeInterval) {
-                    isSwipeInProgress = false;
-                    return;
-                }
-                
-                // Жест свайпа вправо от левого края - открываем боковую панель
-                if (!S.sidebarOpen) {
-                    console.log('🔄 Swipe gesture detected, opening sidebar...');
-                    lastSwipeTime = currentTime;
-                    
-                    // Анимация кнопки sidebar-toggle при жесте свайпа
-                    const sidebarToggleBtn = document.getElementById('sidebar-toggle');
-                    if (sidebarToggleBtn) {
-                        sidebarToggleBtn.style.transform = 'scale(0.9) rotate(-2deg)';
-                        sidebarToggleBtn.style.transition = 'transform 0.15s ease';
-                        setTimeout(() => {
-                            sidebarToggleBtn.style.transform = 'scale(1) rotate(0deg)';
-                        }, 150);
-                    }
-                    
-                    S.sidebarOpen = true;
-                    console.log('🔄 S.sidebarOpen set to true, calling updateUI...');
-                    updateUI();
-                    
-                    // Скрываем указатель при открытии боковой панели
-                    hideSidebarHint();
-                }
-            }
-            
-            isSwipeInProgress = false;
-        }, { passive: false });
-        
-        // Обработчик отмены касания
-        document.addEventListener('touchcancel', () => {
-            isSwipeInProgress = false;
-        }, { passive: true });
-        
-        // Обработчик изменения размера окна для переинициализации жестов
-        window.addEventListener('resize', () => {
-            // Сбрасываем флаг инициализации при изменении размера окна
-            window.swipeGesturesInitialized = false;
-            // Переинициализируем жесты если мы на малом экране
-            if (window.innerWidth < 1024) {
-                setupSwipeGestures();
-            }
-        });
     }
 
 function renderSidebar() {
@@ -23773,9 +23619,6 @@ function updateUI() {
     }
     
     renderSidebar(), renderHeader(), renderMainContent();
-    
-    // Настраиваем управление боковой панелью после рендеринга
-    setupSidebarManagement();
     
     // Рендерим модальное окно списка желаний
     const wishlistModalEl = document.getElementById('wishlist-modal-container');
@@ -32154,9 +31997,13 @@ document.addEventListener("DOMContentLoaded", async () => {
             if (window.stopLoadingTipRotation) {
                 window.stopLoadingTipRotation();
             }
+            // Показываем предупреждение о закрытии
             event.preventDefault();
-            event.returnValue = '';
-        } catch {}
+            event.returnValue = 'Вы уверены, что хотите покинуть страницу?';
+            return event.returnValue;
+        } catch (error) {
+            console.warn('Ошибка в обработчике beforeunload:', error);
+        }
     });
 
 
