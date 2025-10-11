@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v69';
+    const CACHE_NAME = 'lego-catalog-cache-v70';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -1427,9 +1427,6 @@
     }
     
   
-    .sidebar-hint-close {
-        animation: buttonAppear 0.4s ease-out 0.2s both;
-    }
     
     @keyframes buttonAppear {
         0% {
@@ -1510,7 +1507,7 @@
     
     .sidebar-hint {
         position: fixed;
-        top: 50%;
+        top: 30%;
         left: 50%;
         transform: translate(-50%, -50%);
         background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
@@ -1524,9 +1521,14 @@
         max-width: 320px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(59, 130, 246, 0.1);
         animation: hintFadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        pointer-events: auto;
+        pointer-events: none;
         border: 1px solid rgba(59, 130, 246, 0.2);
         backdrop-filter: blur(10px);
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        touch-action: manipulation;
     }
     
     .sidebar-hint::before {
@@ -1545,7 +1547,7 @@
         content: '';
         position: absolute;
         top: -10px;
-        left: 50%;
+        left: 20%;
         transform: translateX(-50%);
         width: 0;
         height: 0;
@@ -1555,27 +1557,43 @@
         filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.3));
     }
     
+    .sidebar-hint-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    
     .sidebar-hint-icon {
-        display: inline-block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         width: 48px;
         height: 48px;
         background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
         border-radius: 18px;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         font-size: 24px;
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         animation: iconPulse 2s ease-in-out infinite;
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: none;
+        flex-shrink: 0;
+    }
+    
+    .sidebar-hint-text-content {
+        flex: 1;
+        text-align: left;
     }
     
     .sidebar-hint-title {
         font-size: 16px;
         font-weight: 600;
         color: #f3f4f6;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: none;
     }
     
     .sidebar-hint-text {
@@ -1583,38 +1601,11 @@
         font-size: 13px;
         line-height: 1.4;
         text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        user-select: none;
+        -webkit-user-select: none;
+        pointer-events: none;
     }
     
-    .sidebar-hint-close {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        width: 24px;
-        height: 24px;
-        background: #6b7280;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        font-size: 14px;
-        font-weight: bold;
-        line-height: 1;
-    }
-    
-    .sidebar-hint-close:hover {
-        background: #4b5563;
-        transform: scale(1.1) rotate(2deg);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
-    }
-    
-    .sidebar-hint-close:active {
-        transform: scale(0.95) rotate(0deg);
-    }
     
     @keyframes hintFadeIn {
         from { 
@@ -1638,37 +1629,42 @@
         }
     }
     
-    .sidebar-hint-close {
-        position: absolute;
-        top: -12px;
-        right: -12px;
-        width: 28px;
-        height: 28px;
-        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        pointer-events: auto;
-        font-size: 18px;
-        font-weight: bold;
-        color: white;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4), 0 0 0 2px rgba(255, 255, 255, 0.1);
-        transition: all 0.2s ease;
-        border: 2px solid rgba(255, 255, 255, 0.2);
+    
+    
+    /* Адаптивное позиционирование треугольника для разных размеров экрана */
+    @media (max-width: 480px) {
+        .sidebar-hint::after {
+            left: 15%;
+        }
+        
+        .sidebar-hint-content {
+            gap: 12px;
+        }
+        
+        .sidebar-hint-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+        }
+        
+        .sidebar-hint-title {
+            font-size: 14px;
+        }
+        
+        .sidebar-hint-text {
+            font-size: 12px;
+        }
     }
     
-    .sidebar-hint-close:hover {
-        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-        transform: scale(1.1);
-        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.2);
+    @media (min-width: 481px) and (max-width: 768px) {
+        .sidebar-hint::after {
+            left: 18%;
+        }
+        
+        .sidebar-hint-content {
+            gap: 14px;
+        }
     }
-    
-    .sidebar-hint-close:active {
-        transform: scale(0.95);
-    }
-    
     
     @media (min-width: 1024px) {
         .sidebar-hint {
@@ -5652,7 +5648,7 @@ button[disabled]:hover {
     window.addEventListener('click', addNoHover, { passive: true });
 })();
 
-const DEBUG = false;
+const DEBUG = true;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -35486,7 +35482,7 @@ function hideSidebarHint(force = false) {
 // Функция для анимации появления кнопок
 function animateButtonsAppearance() {
     // Добавляем анимацию появления для всех кнопок
-    const buttons = document.querySelectorAll('.sidebar-toggle-btn, .modal-close-btn, .sidebar-hint-close');
+    const buttons = document.querySelectorAll('.sidebar-toggle-btn, .modal-close-btn');
     
     buttons.forEach((button, index) => {
         // Сначала скрываем кнопки
@@ -35512,22 +35508,26 @@ function animateCloseButtonClick(button) {
     }
 }
 
-    // Обработчик для кнопки закрытия указателя и клика по странице
+    // Обработчик для скрытия подсказки при клике на элементы навигации
     document.addEventListener('click', (e) => {
-        if (e.target.id === 'sidebar-hint-close') {
-            // Анимация кнопки при клике
-            const hintCloseBtn = e.target;
-            if (hintCloseBtn) {
-                hintCloseBtn.style.transform = 'scale(0.9) rotate(2deg)';
-                setTimeout(() => {
-                    hintCloseBtn.style.transform = 'scale(1) rotate(0deg)';
-                }, 150);
-            }
-            // Снимаем режим вступительной подсказки и скрываем
-            sidebarHintIntroActive = false;
+        // Скрываем подсказку при клике на кнопку открытия бокового меню
+        if (e.target.closest('#sidebar-toggle') || e.target.closest('.sidebar-toggle-btn')) {
             hideSidebarHint(true);
-        } else if (!e.target.closest('#sidebar-hint') && !e.target.closest('.modal-content') && !e.target.closest('[id$="-modal-container"]')) {
-            // Скрываем указатель при клике в любом месте страницы (кроме самого указателя и модальных окон)
+        }
+        // Скрываем подсказку при клике на кнопки поиска
+        else if (e.target.closest('#search-button') || e.target.closest('#ai-search-button') || e.target.closest('#search-input') || e.target.closest('#clear-search')) {
+            hideSidebarHint(true);
+        }
+        // Скрываем подсказку при клике на кнопки фильтров
+        else if (e.target.closest('#filter-button')) {
+            hideSidebarHint(true);
+        }
+        // Скрываем подсказку при клике на кнопки настроек (если есть)
+        else if (e.target.closest('#settings-button') || e.target.closest('[data-action="settings"]')) {
+            hideSidebarHint(true);
+        }
+        // Скрываем подсказку при клике в любом месте страницы (кроме модальных окон)
+        else if (!e.target.closest('.modal-content') && !e.target.closest('[id$="-modal-container"]')) {
             hideSidebarHint(false);
         }
     });
@@ -39040,10 +39040,13 @@ function animateCloseButtonClick(button) {
   
   
   <div id="sidebar-hint" class="sidebar-hint hidden">
-      <button class="sidebar-hint-close" id="sidebar-hint-close" title="Закрыть подсказку">×</button>
-      <div class="sidebar-hint-icon">📱</div>
-      <div class="sidebar-hint-title">Навигация</div>
-      <div class="sidebar-hint-text">Используйте кнопку меню для открытия боковой панели с каталогом и категориями</div>
+      <div class="sidebar-hint-content">
+          <div class="sidebar-hint-icon">📱</div>
+          <div class="sidebar-hint-text-content">
+              <div class="sidebar-hint-title">Навигация</div>
+              <div class="sidebar-hint-text">Используйте кнопку меню для открытия боковой панели с каталогом и категориями</div>
+          </div>
+      </div>
   </div>
 
   <script>
