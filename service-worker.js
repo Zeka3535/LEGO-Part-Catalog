@@ -1,6 +1,6 @@
-const CACHE_NAME = 'lego-catalog-cache-v66';
+const CACHE_NAME = 'lego-catalog-cache-v68';
 const VERSION_INFO = {
-    version: 'v66',
+    version: 'v68',
     buildDate: '10.10.2025',
     buildTimestamp: new Date('2025-10-10').getTime()
 };
@@ -150,15 +150,57 @@ self.addEventListener('fetch', event => {
         return;
     }
     
-    // Используем Navigation Preload для навигационных запросов
+    // Используем Navigation Preload для навигационных запросов (только если доступен)
     if (event.request.mode === 'navigate') {
         event.respondWith(
-            event.preloadResponse.then(response => {
-                if (response) {
-                    return response;
+            (async () => {
+                try {
+                    // Сначала пытаемся использовать preload response
+                    if (event.preloadResponse) {
+                        const preloadResponse = await event.preloadResponse;
+                        if (preloadResponse) {
+                            return preloadResponse;
+                        }
+                    }
+                    
+                    // Если preload недоступен, пытаемся загрузить из кеша
+                    const cachedResponse = await caches.match(event.request);
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    
+                    // В последнюю очередь пытаемся загрузить из сети
+                    return await fetch(event.request);
+                } catch (error) {
+                    // Если все попытки не удались, возвращаем кешированную версию или fallback
+                    const cachedResponse = await caches.match(event.request);
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    
+                    // Fallback для офлайн режима
+                    return new Response(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <title>LEGO Catalog - Офлайн</title>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        </head>
+                        <body>
+                            <h1>Приложение работает в офлайн режиме</h1>
+                            <p>Данные загружаются из кеша...</p>
+                            <script>
+                                // Перезагружаем страницу через короткое время
+                                setTimeout(() => window.location.reload(), 1000);
+                            </script>
+                        </body>
+                        </html>
+                    `, {
+                        headers: { 'Content-Type': 'text/html' }
+                    });
                 }
-                return fetch(event.request);
-            })
+            })()
         );
         return;
     }
@@ -187,8 +229,8 @@ self.addEventListener('fetch', event => {
         // API requests: network first with fallback to cache
         event.respondWith(networkFirst(event.request));
     } else if ((url.pathname.includes('/Data/') || url.pathname.includes('/dist/Downloads/') || url.pathname.includes('/Downloads/')) && url.pathname.endsWith('.csv')) {
-        // CSV data files: stale-while-revalidate for better performance
-        event.respondWith(staleWhileRevalidate(event.request));
+        // CSV data files: cache-first for maximum performance after initial load
+        event.respondWith(cacheFirst(event.request));
     } else if (url.pathname.includes('/Minifig_png/')) {
         // Minifig images: cache first with aggressive caching and high priority
         event.respondWith(cacheFirst(event.request));
