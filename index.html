@@ -4415,6 +4415,347 @@ body.tab-switching button[data-view] {
     }
 }
 
+/* Анимации для облачного хранилища */
+@keyframes connectPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes successCheck {
+    0% {
+        opacity: 0;
+        transform: scale(0.3) rotate(-45deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1) rotate(0deg);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes bounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0,0,0);
+    }
+    40%, 43% {
+        transform: translate3d(0, -8px, 0);
+    }
+    70% {
+        transform: translate3d(0, -4px, 0);
+    }
+    90% {
+        transform: translate3d(0, -2px, 0);
+    }
+}
+
+/* Стили для индикаторов статуса */
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    position: relative;
+}
+
+.status-indicator-connected {
+    background-color: #10b981;
+    animation: connectPulse 2s infinite;
+}
+
+.status-indicator-connecting {
+    background-color: #f59e0b;
+    animation: spin 1s linear infinite;
+}
+
+.status-indicator-error {
+    background-color: #ef4444;
+    animation: bounce 0.6s ease-in-out;
+}
+
+.status-indicator-disconnected {
+    background-color: #6b7280;
+}
+
+/* Стили для прогресс-бара подключения */
+.connection-progress-bar {
+    width: 100%;
+    height: 4px;
+    background-color: #374151;
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.connection-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #06b6d4, #3b82f6);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.connection-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: slideIn 1.5s infinite;
+}
+
+/* Стили для индикатора шагов */
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px 0;
+}
+
+.step-indicator.flex-col {
+    flex-direction: column;
+    align-items: center;
+}
+
+.step-indicator.flex-col .step-item {
+    margin-bottom: 16px;
+}
+
+.step-indicator.flex-col .step-arrow {
+    display: none;
+}
+
+/* Улучшенные стили для шагов */
+.step-item .step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 16px;
+    margin-right: 0;
+    margin-bottom: 8px;
+    animation: slideIn 0.5s ease-out;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.3);
+}
+
+.step-item .step-number.completed {
+    background: linear-gradient(135deg, #10b981, #059669);
+    animation: successCheck 0.6s ease-out;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.step-item .step-number.current {
+    animation: connectPulse 1.5s infinite;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.5);
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 640px) {
+    .step-item .step-number {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+}
+
+.step-item {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #06b6d4, #3b82f6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    margin-right: 8px;
+    animation: slideIn 0.5s ease-out;
+}
+
+.step-number.completed {
+    background: linear-gradient(135deg, #10b981, #059669);
+    animation: successCheck 0.6s ease-out;
+}
+
+.step-number.current {
+    animation: connectPulse 1.5s infinite;
+}
+
+.step-arrow {
+    width: 20px;
+    height: 2px;
+    background: #6b7280;
+    margin: 0 8px;
+    position: relative;
+}
+
+.step-arrow::after {
+    content: '';
+    position: absolute;
+    right: -4px;
+    top: -3px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid #6b7280;
+    border-top: 4px solid transparent;
+    border-bottom: 4px solid transparent;
+}
+
+/* Стили для всплывающих подсказок */
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #1f2937;
+    color: #f9fafb;
+    text-align: center;
+    border-radius: 8px;
+    padding: 8px 12px;
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #1f2937 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Отключаем тултипы на малых устройствах */
+@media (max-width: 768px) {
+    .tooltip .tooltiptext {
+        display: none !important;
+    }
+    
+    .tooltip:hover .tooltiptext {
+        display: none !important;
+    }
+}
+
+/* Стили для анимированных кнопок */
+.btn-animated {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-animated::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-animated:hover::before {
+    left: 100%;
+}
+
+/* Стили для валидации email */
+.email-input-valid {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+}
+
+.email-input-invalid {
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+}
+
+.email-validation-message {
+    font-size: 12px;
+    margin-top: 4px;
+    padding: 0 4px;
+    animation: slideIn 0.3s ease-out;
+}
+
+.email-validation-valid {
+    color: #10b981;
+}
+
+.email-validation-invalid {
+    color: #ef4444;
+}
+
 
 .backup-change .part-card,
 .backup-change .set-card,
@@ -5648,7 +5989,7 @@ button[disabled]:hover {
     window.addEventListener('click', addNoHover, { passive: true });
 })();
 
-const DEBUG = true;
+const DEBUG = false;
 if (!DEBUG) {
     console.log = () => {};
     console.debug = () => {};
@@ -9195,6 +9536,77 @@ function getCollectionCounts() {
     };
 }
 
+// Функция для отображения прогресса подключения
+function showConnectionProgress(stage, percent = 0) {
+    const container = document.getElementById('cloud-backup-widget-container');
+    if (!container) return;
+    
+    const stages = {
+        'validating': { text: 'Проверка адреса...', icon: '🔍', percent: 25 },
+        'connecting': { text: 'Подключение к серверу...', icon: '🌐', percent: 50 },
+        'authorizing': { text: 'Авторизация...', icon: '🔐', percent: 75 },
+        'ready': { text: 'Готово!', icon: '✅', percent: 100 }
+    };
+    
+    const currentStage = stages[stage] || stages['validating'];
+    const progressPercent = percent || currentStage.percent;
+    
+    container.innerHTML = `
+        <div class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-[18px] border border-gray-600/40 p-6 sm:p-8 shadow-2xl backdrop-blur-sm">
+            <div class="text-center text-gray-200">
+                <div class="mb-6 text-4xl">${currentStage.icon}</div>
+                <h4 class="text-xl sm:text-2xl font-bold mb-3 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">${currentStage.text}</h4>
+                
+                <div class="connection-progress-bar">
+                    <div class="connection-progress-fill" style="width: ${progressPercent}%"></div>
+                </div>
+                
+                <p class="text-sm text-gray-400 mt-4">${progressPercent}% завершено</p>
+            </div>
+        </div>
+    `;
+}
+
+// Функция валидации email в реальном времени
+function validateEmailFormat(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+// Функция для показа всплывающих подсказок
+function showConnectionTooltip(element, message) {
+    if (!element || !message) return;
+    
+    // Удаляем существующую подсказку
+    const existingTooltip = element.querySelector('.tooltiptext');
+    if (existingTooltip) {
+        existingTooltip.remove();
+    }
+    
+    // Добавляем класс tooltip к элементу
+    element.classList.add('tooltip');
+    
+    // Создаем подсказку
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltiptext';
+    tooltip.textContent = message;
+    element.appendChild(tooltip);
+}
+
+// Функция анимации смены статуса
+function animateStatusChange(from, to) {
+    const statusElement = document.getElementById('cloud-backup-status');
+    if (!statusElement) return;
+    
+    // Добавляем класс анимации
+    statusElement.style.animation = 'fadeInOut 0.5s ease-in-out';
+    
+    // Убираем анимацию через 0.5 секунды
+    setTimeout(() => {
+        statusElement.style.animation = '';
+    }, 500);
+}
+
 function updateCloudStorageStatus(message, type = 'info') {
     const statusElement = document.getElementById('cloud-backup-status');
     if (!statusElement) return;
@@ -9202,6 +9614,21 @@ function updateCloudStorageStatus(message, type = 'info') {
     // Очищаем предыдущий таймер, если он есть
     if (window.cloudStatusTimer) {
         clearTimeout(window.cloudStatusTimer);
+    }
+    
+    // Определяем класс индикатора статуса
+    let statusClass = 'status-indicator-disconnected';
+    let statusIcon = '';
+    
+    if (type === 'success' || message.includes('Подключено') || message.includes('Готово')) {
+        statusClass = 'status-indicator-connected';
+        statusIcon = '';
+    } else if (type === 'info' && (message.includes('Подключение') || message.includes('Переподключение'))) {
+        statusClass = 'status-indicator-connecting';
+        statusIcon = '';
+    } else if (type === 'error' || message.includes('Ошибка') || message.includes('Отключено')) {
+        statusClass = 'status-indicator-error';
+        statusIcon = '';
     }
     
     // Адаптивные классы для малых устройств
@@ -9242,7 +9669,7 @@ function updateCloudStorageStatus(message, type = 'info') {
     }
     
     statusElement.className = statusClasses;
-    statusElement.textContent = statusText;
+    statusElement.innerHTML = `<span class="${statusClass}"></span>${statusIcon} ${statusText}`;
     
     // Автоматически скрываем сообщение через 3 секунды и показываем логин пользователя
     window.cloudStatusTimer = setTimeout(() => {
@@ -9253,20 +9680,20 @@ function updateCloudStorageStatus(message, type = 'info') {
         if (savedState && savedAccount) {
             try {
                 const state = JSON.parse(savedState);
-                if (state.connected) {
-                    // Показываем логин пользователя
-                    statusElement.textContent = `Подключено: ${savedAccount}`;
+                if (state.connected && savedAccount && savedAccount !== 'Аккаунт' && savedAccount.trim() !== '') {
+                    // Показываем логин пользователя только если есть реальный аккаунт
+                    statusElement.innerHTML = `<span class="status-indicator-connected"></span>Подключено: ${savedAccount}`;
                     statusElement.className = 'text-xs sm:text-sm text-gray-400 break-words leading-tight';
                 } else {
-                    statusElement.textContent = 'Не подключено';
+                    statusElement.innerHTML = '<span class="status-indicator-disconnected"></span>Не подключено';
                     statusElement.className = 'text-xs sm:text-sm text-gray-400 break-words leading-tight';
                 }
             } catch (e) {
-                statusElement.textContent = 'Не подключено';
+                statusElement.innerHTML = '<span class="status-indicator-disconnected"></span>Не подключено';
                 statusElement.className = 'text-xs sm:text-sm text-gray-400 break-words leading-tight';
             }
         } else {
-            statusElement.textContent = 'Не подключено';
+            statusElement.innerHTML = '<span class="status-indicator-disconnected"></span>Не подключено';
             statusElement.className = 'text-xs sm:text-sm text-gray-400 break-words leading-tight';
         }
     }, 3000);
@@ -9282,15 +9709,38 @@ function updateCloudStorageStatus(message, type = 'info') {
     }
 }
 
+// Функция для очистки некорректных данных аккаунта
+function cleanInvalidAccountData() {
+    const savedAccount = loadUserAccount();
+    const savedState = loadRemoteStorageState();
+    
+    // Если аккаунт некорректный, очищаем данные
+    if (savedAccount === 'Аккаунт' || !savedAccount || savedAccount.trim() === '') {
+        console.log('🧹 Cleaning invalid account data');
+        localStorage.removeItem(REMOTESTORAGE_KEYS.USER_ACCOUNT);
+        localStorage.removeItem(REMOTESTORAGE_KEYS.CONNECTION_STATE);
+        return false;
+    }
+    return true;
+}
+
 // Функция для определения состояния подключения к облачному хранилищу
 function getCloudStorageConnectionState() {
+    // Сначала очищаем некорректные данные
+    cleanInvalidAccountData();
+    
     const savedState = loadRemoteStorageState();
     const savedAccount = loadUserAccount();
     
+    // Если аккаунт некорректный, сбрасываем состояние подключения
+    if (!savedAccount || savedAccount === 'Аккаунт' || savedAccount.trim() === '') {
+        cloudStorageConnected = false;
+    }
+    
     // Определяем все возможные состояния
-    const hasSavedAccount = !!(savedAccount && savedAccount.trim() !== '');
+    const hasSavedAccount = !!(savedAccount && savedAccount.trim() !== '' && savedAccount !== 'Аккаунт');
     const hasSavedConnection = !!(savedState && savedState.connected);
-    const isCurrentlyConnected = cloudStorageConnected;
+    const isCurrentlyConnected = cloudStorageConnected && hasSavedAccount;
     const isCurrentlyReconnecting = isReconnecting;
     
     // Логика определения состояния
@@ -9314,6 +9764,7 @@ function getCloudStorageConnectionState() {
         showReconnectButton = true;
     } else {
         // Сценарий 1: Новый пользователь или нет сохраненного аккаунта
+        // Всегда показываем форму ввода для не подключенных пользователей
         showConnectButton = true;
     }
     
@@ -9352,11 +9803,16 @@ function updateCloudStorageStatusDisplay() {
         const connectionState = getCloudStorageConnectionState();
         const cacheInfo = getCacheInfo();
         
-        statusElement.textContent = connectionState.isConnected ? 
-            `Подключено: ${connectionState.account || cacheInfo.account || 'Аккаунт'}` : 
+        // Проверяем реальное состояние подключения
+        const hasRealConnection = connectionState.isConnected && 
+                                 (connectionState.account || cacheInfo.account) && 
+                                 (connectionState.account !== 'Аккаунт' && cacheInfo.account !== 'Аккаунт');
+        
+        statusElement.innerHTML = hasRealConnection ? 
+            `<span class="status-indicator-connected"></span>Подключено: ${connectionState.account || cacheInfo.account}` : 
             connectionState.needsReconnection ? 
-                `Требуется переподключение: ${connectionState.account}` : 
-                'Не подключено';
+                `<span class="status-indicator-connecting"></span>Требуется переподключение: ${connectionState.account}` : 
+                '<span class="status-indicator-disconnected"></span>Не подключено';
     }
 }
 
@@ -9380,6 +9836,19 @@ function renderCloudBackupContent() {
                 </p>
             </div>
 
+            ${!connectionState.isConnected ? `
+                <!-- Показываем форму подключения для всех не подключенных пользователей -->
+                <div class="max-w-2xl mx-auto mb-6 sm:mb-8">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-full flex items-center justify-center text-2xl sm:text-3xl shadow-lg mx-auto mb-4">
+                            ☁️
+                        </div>
+                        <h3 class="text-xl sm:text-2xl font-bold text-gray-200 mb-2">Подключение к облачному хранилищу</h3>
+                        <p class="text-gray-400 text-sm sm:text-base">Войдите в свой аккаунт для синхронизации данных</p>
+                    </div>
+                </div>
+            ` : ''}
+
             
             <div class="max-w-4xl mx-auto space-y-6">
                 
@@ -9390,7 +9859,9 @@ function renderCloudBackupContent() {
                                 <span class="text-cyan-400">${I_Cloud('w-5 h-5 sm:w-6 sm:h-6')}</span>
                             </div>
                             <div class="min-w-0 flex-1">
-                                <h3 class="text-sm sm:text-base font-bold text-gray-200 mb-1">Статус подключения</h3>
+                                <div class="flex items-center mb-1">
+                                    <h3 class="text-sm sm:text-base font-bold text-gray-200">Статус подключения</h3>
+                                </div>
                                 <p id="cloud-backup-status" class="text-xs sm:text-sm text-gray-400 break-words leading-tight">
                                     ${connectionState.isConnected ? 
                                         `Подключено: ${connectionState.account || cacheInfo.account || 'Аккаунт'}` : 
@@ -9402,53 +9873,112 @@ function renderCloudBackupContent() {
                             </div>
                         </div>
                         ${connectionState.showLogoutButton ? `
-                            <button id="logout-cloud-storage" class="flex items-center px-2 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-[18px] transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25 transform hover:scale-105 flex-shrink-0 ml-2">
+                            <button id="logout-cloud-storage" class="tooltip flex items-center px-2 py-1.5 sm:px-4 sm:py-2.5 text-xs sm:text-sm font-semibold rounded-[18px] transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25 transform hover:scale-105 flex-shrink-0 ml-2">
                                 <span class="mr-1 sm:mr-2">${I_Logout('w-4 h-4')}</span>
                                 <span class="hidden sm:inline">Выйти</span>
+                                <div class="tooltiptext">Отключиться от облачного хранилища и выйти из аккаунта</div>
                             </button>
                         ` : ''}
                     </div>
                     
                     
                     <div id="reconnect-container" class="hidden mt-3 sm:mt-4">
-                        <button id="reconnect-cloud-storage" class="w-full flex items-center justify-center px-2 py-1.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold rounded-[18px] transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25">
+                        <button id="reconnect-cloud-storage" class="tooltip w-full flex items-center justify-center px-2 py-1.5 sm:px-4 sm:py-3 text-xs sm:text-sm font-semibold rounded-[18px] transition-all duration-200 bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white shadow-lg hover:shadow-orange-500/25">
                             <span class="mr-1 sm:mr-2">${I_Link('w-4 h-4')}</span>
                             <span class="hidden sm:inline">Переподключиться</span>
+                            <div class="tooltiptext">Восстановить соединение с облачным хранилищем после сбоя</div>
                         </button>
                     </div>
                 </div>
 
                 
-                <div class="${connectionState.showMainActions ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2' : 'flex justify-center'} gap-3 sm:gap-4">
-                    ${connectionState.showConnectButton ? `
-                        <button id="connect-cloud-storage" class="group flex items-center justify-center px-6 py-4 sm:px-8 sm:py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-[18px] transition-all duration-200 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105">
-                            <span class="mr-2 sm:mr-3">${I_Link('w-4 h-4 sm:w-5 sm:h-5')}</span>
-                            <span class="text-sm sm:text-base font-semibold">Подключить хранилище</span>
-                        </button>
-                    ` : ''}
-                    
-                    ${connectionState.showReconnectButton ? `
-                        <button id="connect-cloud-storage" class="group flex items-center justify-center px-6 py-4 sm:px-8 sm:py-5 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white rounded-[18px] transition-all duration-200 shadow-lg hover:shadow-blue-500/25 transform hover:scale-105">
-                            <span class="mr-2 sm:mr-3">${I_Link('w-4 h-4 sm:w-5 sm:h-5')}</span>
-                            <span class="text-sm sm:text-base font-semibold">Переподключить хранилище</span>
-                        </button>
-                    ` : ''}
-                    
-                    ${connectionState.showMainActions ? `
-                        <button id="backup-to-cloud" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-[18px] transition-all duration-200 shadow-lg bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white hover:shadow-green-500/25 transform hover:scale-105">
-                            <span class="mr-2 sm:mr-3">${I_CloudUpload('w-4 h-4 sm:w-5 sm:h-5')}</span>
-                            <span class="text-sm sm:text-base font-semibold">Сохранить в облако</span>
-                        </button>
+                ${connectionState.showMainActions ? `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-3 sm:gap-4">
+                        <div class="space-y-2">
+                            <button id="backup-to-cloud" class="tooltip btn-animated group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-[18px] transition-all duration-200 shadow-lg bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-400 text-white hover:shadow-green-500/25 transform hover:scale-105 w-full">
+                                <span class="mr-2 sm:mr-3">${I_CloudUpload('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                                <span class="text-sm sm:text-base font-semibold">Сохранить в облако</span>
+                                <div class="tooltiptext">Создать резервную копию вашей коллекции в облачном хранилище</div>
+                            </button>
+                        </div>
                         
-                        <button id="restore-from-cloud" class="group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-[18px] transition-all duration-200 shadow-lg bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white hover:shadow-purple-500/25 transform hover:scale-105">
-                            <span class="mr-2 sm:mr-3">${I_CloudDownload('w-4 h-4 sm:w-5 sm:h-5')}</span>
-                            <span class="text-sm sm:text-base font-semibold">Загрузить из облака</span>
-                        </button>
-                    ` : ''}
-                </div>
+                        <div class="space-y-2">
+                            <button id="restore-from-cloud" class="tooltip btn-animated group flex items-center justify-center px-4 py-3 sm:px-5 sm:py-3.5 rounded-[18px] transition-all duration-200 shadow-lg bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white hover:shadow-purple-500/25 transform hover:scale-105 w-full">
+                                <span class="mr-2 sm:mr-3">${I_CloudDownload('w-4 h-4 sm:w-5 sm:h-5')}</span>
+                                <span class="text-sm sm:text-base font-semibold">Загрузить из облака</span>
+                                <div class="tooltiptext">Восстановить коллекцию из облачного хранилища</div>
+                            </button>
+                        </div>
+                    </div>
+                ` : ''}
 
                 
-                <div id="cloud-backup-widget-container" class="hidden"></div>
+                <div id="cloud-backup-widget-container" class="${!connectionState.isConnected ? '' : 'hidden'}">
+                    ${!connectionState.isConnected ? `
+                        <!-- Автоматически показываем форму подключения для не подключенных пользователей -->
+                        <div class="max-w-2xl mx-auto">
+                            <div class="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-[18px] border border-gray-600/40 p-6 sm:p-8 shadow-2xl backdrop-blur-sm">
+                                <div class="text-center text-gray-200 mb-8">
+                                    <div class="mb-6 text-cyan-400">
+                                        ${I_Cloud('w-16 h-16 sm:w-20 sm:h-20')}
+                                    </div>
+                                    <h4 class="text-xl sm:text-2xl font-bold mb-3 bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">Подключение к облачному хранилищу</h4>
+                                    <p class="text-sm sm:text-base text-gray-400 max-w-md mx-auto">
+                                        Введите ваш email адрес с 5apps.com для подключения к облачному хранилищу
+                                    </p>
+                                </div>
+                                
+                                <div class="space-y-6">
+                                    
+                                    <div class="p-4 bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-600/40 rounded-[18px] shadow-lg">
+                                        <div class="flex items-center justify-center">
+                                            <span class="text-green-400 mr-3">${I_Info('w-5 h-5')}</span>
+                                            <span class="text-sm font-medium text-green-300">Рекомендуется использовать 5apps.com</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-4">
+                                        <div class="relative">
+                                            <input 
+                                                type="email" 
+                                                id="user-address" 
+                                                placeholder="user@5apps.com" 
+                                                class="w-full px-6 py-4 bg-gray-700/80 text-white rounded-[18px] border border-gray-600/50 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-center text-lg font-medium shadow-lg backdrop-blur-sm transition-all duration-200"
+                                                autocomplete="email"
+                                            >
+                                            <div id="email-validation-message" class="email-validation-message hidden"></div>
+                                        </div>
+                                        
+                                        <div class="text-center">
+                                            <p class="text-xs text-gray-500 mb-2">Примеры правильного формата:</p>
+                                            <div class="flex justify-center space-x-4 text-xs text-gray-400">
+                                                <span>user@5apps.com</span>
+                                                <span>name@example.com</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <button 
+                                            id="connect-address" 
+                                            class="w-full px-6 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-[18px] transition-all duration-200 shadow-lg hover:shadow-cyan-500/25 transform hover:scale-105 text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                                            disabled
+                                        >
+                                            Подключить
+                                        </button>
+                                        
+                                        <div class="text-center">
+                                            <p class="text-sm text-gray-400 mb-2">Еще нет аккаунта?</p>
+                                            <a href="https://5apps.com" target="_blank" class="inline-flex items-center text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
+                                                <span class="mr-2">${I_Link('w-4 h-4')}</span>
+                                                Зарегистрироваться на 5apps.com
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
                 
                 
                 ${connectionState.showVersionsBlock ? `
@@ -9463,9 +9993,10 @@ function renderCloudBackupContent() {
                                     <p class="text-xs sm:text-sm text-gray-400">Управление сохраненными версиями</p>
                                 </div>
                             </div>
-                            <button id="refresh-backups" class="flex items-center justify-center px-3 py-2.5 sm:px-4 text-sm font-semibold rounded-[18px] transition-all duration-200 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white shadow-lg hover:shadow-cyan-500/25 transform hover:scale-105">
+                            <button id="refresh-backups" class="tooltip flex items-center justify-center px-3 py-2.5 sm:px-4 text-sm font-semibold rounded-[18px] transition-all duration-200 bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white shadow-lg hover:shadow-cyan-500/25 transform hover:scale-105">
                                 <span class="flex items-center justify-center mr-0 sm:mr-2">${I_Refresh('w-4 h-4')}</span>
                                 <span class="hidden sm:inline">Обновить</span>
+                                <div class="tooltiptext">Обновить список доступных резервных копий из облачного хранилища</div>
                             </button>
                         </div>
                         
@@ -9481,62 +10012,65 @@ function renderCloudBackupContent() {
                 ` : ''}
                 
                 
-                <div class="flex justify-center">
-                    <button id="toggle-instruction" class="group flex items-center px-6 py-3 bg-gradient-to-r from-gray-700/60 to-gray-800/60 rounded-[18px] border border-gray-600/50 hover:border-gray-500/50 transition-all duration-200">
-                        <span class="mr-3 text-cyan-400">${I_Info('w-5 h-5')}</span>
-                        <span class="text-sm font-semibold text-gray-200 mr-2">Инструкция по подключению</span>
-                        <span class="text-xs text-cyan-400 group-hover:text-cyan-300 transition-colors">
-                            Показать подробности
-                        </span>
-                    </button>
-                </div>
-                
-                
-                <div id="instruction-content" class="hidden bg-gray-800/50 rounded-[18px] border border-gray-700/50 p-4 sm:p-6">
-                    <div class="space-y-4 text-sm text-gray-400">
-                        <div class="space-y-3">
-                            <p class="font-medium text-gray-300 text-base">1. Регистрация на 5apps.com:</p>
-                            <ul class="ml-4 space-y-2 list-disc">
-                                <li>Перейдите на <a href="https://5apps.com" target="_blank" class="text-cyan-400 hover:text-cyan-300 underline">5apps.com</a></li>
-                                <li>Нажмите "Sign up" и создайте аккаунт</li>
-                                <li>Подтвердите email адрес</li>
-                                <li>Войдите в аккаунт</li>
-                            </ul>
+                    ${!connectionState.isConnected ? `
+                        <div class="flex justify-center">
+                            <button id="toggle-instruction" class="tooltip group flex items-center px-6 py-3 bg-gradient-to-r from-gray-700/60 to-gray-800/60 rounded-[18px] border border-gray-600/50 hover:border-gray-500/50 transition-all duration-200">
+                                <span class="mr-3 text-cyan-400">${I_Info('w-5 h-5')}</span>
+                                <span class="text-sm font-semibold text-gray-200 mr-2">Инструкция по подключению</span>
+                                <span class="text-xs text-cyan-400 group-hover:text-cyan-300 transition-colors">
+                                    Показать подробности
+                                </span>
+                                <div class="tooltiptext">Подробная пошаговая инструкция по настройке облачного хранилища</div>
+                            </button>
                         </div>
-                        <div class="space-y-3">
-                            <p class="font-medium text-gray-300 text-base">2. Подключение к сайту:</p>
-                            <ul class="ml-4 space-y-2 list-disc">
-                                <li>Нажмите "Подключить хранилище" в разделе выше</li>
-                                <li>Введите ваш email с 5apps.com (например: user@5apps.com)</li>
-                                <li>Нажмите кнопку "Подключить"</li>
-                                <li>Разрешите доступ в открывшемся окне</li>
-                            </ul>
-                        </div>
-                        <div class="space-y-3">
-                            <p class="font-medium text-gray-300 text-base">3. Автоматическое подключение:</p>
-                            <ul class="ml-4 space-y-2 list-disc">
-                                <li>После первого подключения система запомнит ваш аккаунт</li>
-                                <li>При открытии настроек подключение происходит автоматически</li>
-                                <li>Информация о резервных копиях обновляется в реальном времени</li>
-                            </ul>
-                        </div>
-                        <div class="space-y-3">
-                            <p class="font-medium text-gray-300 text-base">4. Управление резервными копиями:</p>
-                            <ul class="ml-4 space-y-2 list-disc">
-                                <li><strong>В настройках:</strong> Быстрый доступ к загрузке и сохранению</li>
-                                <li><strong>В облачном хранилище:</strong> Полный список всех версий</li>
-                                <li><strong>Ручная синхронизация:</strong> Сохранение и загрузка по требованию</li>
-                                <li><strong>Безопасность:</strong> Все данные шифруются и хранятся надежно</li>
-                            </ul>
-                        </div>
-                        <div class="pt-4 border-t border-gray-700">
-                            <div class="flex items-center">
-                                <span class="text-green-400 mr-2">${I_CheckCircle('w-4 h-4')}</span>
-                                <p class="text-gray-300"><strong>Преимущества:</strong> Доступ с любого устройства, ручное резервное копирование, история версий</p>
+                        
+                        
+                        <div id="instruction-content" class="hidden bg-gray-800/50 rounded-[18px] border border-gray-700/50 p-4 sm:p-6">
+                            <div class="space-y-4 text-sm text-gray-400">
+                                <div class="space-y-3">
+                                    <p class="font-medium text-gray-300 text-base">1. Регистрация на 5apps.com:</p>
+                                    <ul class="ml-4 space-y-2 list-disc">
+                                        <li>Перейдите на <a href="https://5apps.com" target="_blank" class="text-cyan-400 hover:text-cyan-300 underline">5apps.com</a></li>
+                                        <li>Нажмите "Sign up" и создайте аккаунт</li>
+                                        <li>Подтвердите email адрес</li>
+                                        <li>Войдите в аккаунт</li>
+                                    </ul>
+                                </div>
+                                <div class="space-y-3">
+                                    <p class="font-medium text-gray-300 text-base">2. Подключение к сайту:</p>
+                                    <ul class="ml-4 space-y-2 list-disc">
+                                        <li>Нажмите "Подключить хранилище" в разделе выше</li>
+                                        <li>Введите ваш email с 5apps.com (например: user@5apps.com)</li>
+                                        <li>Нажмите кнопку "Подключить"</li>
+                                        <li>Разрешите доступ в открывшемся окне</li>
+                                    </ul>
+                                </div>
+                                <div class="space-y-3">
+                                    <p class="font-medium text-gray-300 text-base">3. Автоматическое подключение:</p>
+                                    <ul class="ml-4 space-y-2 list-disc">
+                                        <li>После первого подключения система запомнит ваш аккаунт</li>
+                                        <li>При открытии настроек подключение происходит автоматически</li>
+                                        <li>Информация о резервных копиях обновляется в реальном времени</li>
+                                    </ul>
+                                </div>
+                                <div class="space-y-3">
+                                    <p class="font-medium text-gray-300 text-base">4. Управление резервными копиями:</p>
+                                    <ul class="ml-4 space-y-2 list-disc">
+                                        <li><strong>В настройках:</strong> Быстрый доступ к загрузке и сохранению</li>
+                                        <li><strong>В облачном хранилище:</strong> Полный список всех версий</li>
+                                        <li><strong>Ручная синхронизация:</strong> Сохранение и загрузка по требованию</li>
+                                        <li><strong>Безопасность:</strong> Все данные шифруются и хранятся надежно</li>
+                                    </ul>
+                                </div>
+                                <div class="pt-4 border-t border-gray-700">
+                                    <div class="flex items-center">
+                                        <span class="text-green-400 mr-2">${I_CheckCircle('w-4 h-4')}</span>
+                                        <p class="text-gray-300"><strong>Преимущества:</strong> Доступ с любого устройства, ручное резервное копирование, история версий</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    ` : ''}
             </div>
         </div>
     `;
@@ -10624,18 +11158,40 @@ function initializeRemoteStorageWidget() {
                     </div>
                     
                     <div class="space-y-4">
-                        <input 
-                            type="text" 
-                            id="user-address" 
-                            placeholder="user@5apps.com" 
-                            class="w-full px-6 py-4 bg-gray-700/80 text-white rounded-[18px] border border-gray-600/50 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-center text-lg font-medium shadow-lg backdrop-blur-sm transition-all duration-200"
-                        >
+                        <div class="relative">
+                            <input 
+                                type="email" 
+                                id="user-address" 
+                                placeholder="user@5apps.com" 
+                                class="w-full px-6 py-4 bg-gray-700/80 text-white rounded-[18px] border border-gray-600/50 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 text-center text-lg font-medium shadow-lg backdrop-blur-sm transition-all duration-200"
+                                autocomplete="email"
+                            >
+                            <div id="email-validation-message" class="email-validation-message hidden"></div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <p class="text-xs text-gray-500 mb-2">Примеры правильного формата:</p>
+                            <div class="flex justify-center space-x-4 text-xs text-gray-400">
+                                <span>user@5apps.com</span>
+                                <span>name@example.com</span>
+                            </div>
+                        </div>
+                        
                         <button 
                             id="connect-address" 
-                            class="w-full px-6 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-[18px] transition-all duration-200 shadow-lg hover:shadow-cyan-500/25 transform hover:scale-105 text-lg"
+                            class="w-full px-6 py-4 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold rounded-[18px] transition-all duration-200 shadow-lg hover:shadow-cyan-500/25 transform hover:scale-105 text-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                            disabled
                         >
                             Подключить
                         </button>
+                        
+                        <div class="text-center">
+                            <p class="text-sm text-gray-400 mb-2">Еще нет аккаунта?</p>
+                            <a href="https://5apps.com" target="_blank" class="inline-flex items-center text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors">
+                                <span class="mr-2">${I_Link('w-4 h-4')}</span>
+                                Зарегистрироваться на 5apps.com
+                            </a>
+                        </div>
                     </div>
                     
                 </div>
@@ -10645,18 +11201,88 @@ function initializeRemoteStorageWidget() {
         // Добавляем обработчики для кнопок
         const connectBtn = document.getElementById('connect-address');
         const addressInput = document.getElementById('user-address');
+        const validationMessage = document.getElementById('email-validation-message');
+        
+        // Валидация email в реальном времени
+        addressInput.addEventListener('input', () => {
+            const email = addressInput.value.trim();
+            const isValid = validateEmailFormat(email);
+            const isEmpty = email.length === 0;
+            
+            // Обновляем стили поля ввода
+            addressInput.classList.remove('email-input-valid', 'email-input-invalid');
+            if (!isEmpty) {
+                addressInput.classList.add(isValid ? 'email-input-valid' : 'email-input-invalid');
+            }
+            
+            // Обновляем сообщение валидации
+            if (isEmpty) {
+                validationMessage.classList.add('hidden');
+                validationMessage.textContent = '';
+            } else if (isValid) {
+                validationMessage.classList.remove('hidden');
+                validationMessage.textContent = '✓ Email адрес корректен';
+                validationMessage.className = 'email-validation-message email-validation-valid';
+            } else {
+                validationMessage.classList.remove('hidden');
+                validationMessage.textContent = '✗ Введите корректный email адрес';
+                validationMessage.className = 'email-validation-message email-validation-invalid';
+            }
+            
+            // Включаем/отключаем кнопку подключения - строгая проверка
+            connectBtn.disabled = isEmpty || !isValid;
+        });
         
         // Обработчик для кнопки подключения
         connectBtn.addEventListener('click', async () => {
             const address = addressInput.value.trim();
-            if (address) {
-                connectToRemoteStorage(address);
-            } else {
-                await showCustomAlert('Пожалуйста, введите адрес', {
+            
+            // Строгая проверка на пустой ввод
+            if (!address || address.length === 0) {
+                await showCustomAlert('Пожалуйста, введите email адрес для подключения к облачному хранилищу', {
+                    title: 'Требуется email',
+                    type: 'error'
+                });
+                addressInput.focus();
+                return;
+            }
+            
+            // Проверка формата email
+            if (!validateEmailFormat(address)) {
+                await showCustomAlert('Введите корректный email адрес. Пример: user@5apps.com', {
+                    title: 'Неверный формат email',
+                    type: 'error'
+                });
+                addressInput.focus();
+                return;
+            }
+            
+            // Дополнительная проверка на 5apps.com
+            if (!address.includes('@5apps.com') && !address.includes('@example.com')) {
+                const proceed = await showCustomConfirm(
+                    'Рекомендуется использовать 5apps.com для надежной работы. Продолжить с этим адресом?',
+                    {
+                        title: 'Предупреждение',
+                        type: 'warning',
+                        confirmText: 'Продолжить',
+                        cancelText: 'Отмена'
+                    }
+                );
+                if (!proceed) return;
+            }
+            
+            // Дополнительная проверка на пустые пробелы
+            if (address !== address.trim()) {
+                await showCustomAlert('Email адрес не должен содержать пробелы в начале или конце', {
                     title: 'Ошибка ввода',
                     type: 'error'
                 });
+                addressInput.value = address.trim();
+                addressInput.focus();
+                return;
             }
+            
+            connectToRemoteStorage(address);
         });
         
         
@@ -10670,6 +11296,9 @@ function initializeRemoteStorageWidget() {
         
         cloudStorageClient.on('connected', () => {
             cloudStorageConnected = true;
+            
+            // Показываем финальный этап подключения
+            showConnectionProgress('ready', 100);
             updateCloudStorageStatus('Подключено', 'success');
             
             // Сохраняем состояние подключения
@@ -10680,6 +11309,15 @@ function initializeRemoteStorageWidget() {
             }
             updateCacheInfo();
             updateCloudBackupInfo();
+            
+            // Скрываем виджет подключения через 2 секунды
+            setTimeout(() => {
+                const container = document.getElementById('cloud-backup-widget-container');
+                if (container) {
+                    container.classList.add('hidden');
+                }
+                updateCloudStorageUI();
+            }, 2000);
         });
         
         cloudStorageClient.on('disconnected', () => {
@@ -10697,14 +11335,32 @@ function initializeRemoteStorageWidget() {
             console.error('❌ RemoteStorage error:', error);
             cloudStorageConnected = false;
             
-            // Обрабатываем разные типы ошибок
+            // Обрабатываем разные типы ошибок с понятными сообщениями
+            let errorMessage = '';
+            let errorTitle = 'Ошибка подключения';
+            let errorAction = 'Попробовать снова';
+            
             if (error.name === 'DiscoveryError') {
-                updateCloudStorageStatus('Ошибка обнаружения сервера', 'error');
+                errorMessage = 'Не удалось найти сервер облачного хранилища. Проверьте правильность email адреса и подключение к интернету.';
+                errorTitle = 'Ошибка обнаружения сервера';
             } else if (error.name === 'UnauthorizedError') {
-                updateCloudStorageStatus('Ошибка авторизации', 'error');
+                errorMessage = 'Ошибка авторизации. Убедитесь, что вы ввели правильный email адрес и что аккаунт существует на 5apps.com.';
+                errorTitle = 'Ошибка авторизации';
+            } else if (error.name === 'NetworkError') {
+                errorMessage = 'Ошибка сети. Проверьте подключение к интернету и попробуйте снова.';
+                errorTitle = 'Ошибка сети';
+            } else if (error.message.includes('timeout')) {
+                errorMessage = 'Превышено время ожидания. Сервер не отвечает. Попробуйте снова через несколько минут.';
+                errorTitle = 'Таймаут подключения';
             } else {
-                updateCloudStorageStatus('Ошибка: ' + error.message, 'error');
+                errorMessage = `Произошла неожиданная ошибка: ${error.message}. Попробуйте перезагрузить страницу.`;
+                errorTitle = 'Неожиданная ошибка';
             }
+            
+            updateCloudStorageStatus(errorTitle, 'error');
+            
+            // Показываем красивое модальное окно с ошибкой
+            showConnectionError(errorTitle, errorMessage, errorAction);
         });
         
     } catch (error) {
@@ -10716,12 +11372,94 @@ function initializeRemoteStorageWidget() {
 function connectToRemoteStorage(address) {
     try {
         console.log('🔧 Connecting to RemoteStorage with address:', address);
-        updateCloudStorageStatus('Подключение...', 'info');
         
-        cloudStorageClient.connect(address);
+        // Этап 1: Проверка адреса
+        showConnectionProgress('validating', 25);
+        updateCloudStorageStatus('Проверка адреса...', 'info');
+        
+        setTimeout(() => {
+            // Этап 2: Подключение к серверу
+            showConnectionProgress('connecting', 50);
+            updateCloudStorageStatus('Подключение к серверу...', 'info');
+            
+            setTimeout(() => {
+                // Этап 3: Авторизация
+                showConnectionProgress('authorizing', 75);
+                updateCloudStorageStatus('Авторизация...', 'info');
+                
+                try {
+                    cloudStorageClient.connect(address);
+                } catch (error) {
+                    console.error('❌ Failed to connect:', error);
+                    updateCloudStorageStatus('Ошибка подключения', 'error');
+                }
+            }, 1000);
+        }, 500);
+        
     } catch (error) {
         console.error('❌ Failed to connect:', error);
         updateCloudStorageStatus('Ошибка подключения', 'error');
+    }
+}
+
+// Функция для показа ошибок подключения
+function showConnectionError(title, message, actionText) {
+    const container = document.getElementById('cloud-backup-widget-container');
+    if (container) {
+        container.innerHTML = `
+            <div class="bg-gradient-to-br from-red-900/30 to-orange-900/30 rounded-[18px] border border-red-600/40 p-6 sm:p-8 shadow-2xl backdrop-blur-sm">
+                <div class="text-center text-gray-200">
+                    <div class="mb-6 text-6xl">⚠️</div>
+                    <h4 class="text-xl sm:text-2xl font-bold mb-3 text-red-400">${title}</h4>
+                    <p class="text-sm sm:text-base text-gray-300 mb-6 max-w-md mx-auto">
+                        ${message}
+                    </p>
+                    
+                    <div class="space-y-3">
+                        <button id="retry-connection" class="w-full px-6 py-3 bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-red-400 text-white font-semibold rounded-[18px] transition-all duration-200 shadow-lg hover:shadow-red-500/25 transform hover:scale-105">
+                            ${actionText}
+                        </button>
+                        
+                        <button id="show-instructions" class="w-full px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-500 hover:from-gray-500 hover:to-gray-400 text-white font-semibold rounded-[18px] transition-all duration-200">
+                            Показать инструкцию
+                        </button>
+                    </div>
+                    
+                    <div class="mt-6 p-4 bg-gray-800/50 rounded-[12px]">
+                        <p class="text-xs text-gray-400 mb-2">Альтернативные способы:</p>
+                        <div class="flex justify-center space-x-4 text-xs">
+                            <span class="text-cyan-400">• Экспорт CSV</span>
+                            <span class="text-cyan-400">• Локальное сохранение</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Добавляем обработчики
+        const retryBtn = document.getElementById('retry-connection');
+        const instructionsBtn = document.getElementById('show-instructions');
+        
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => {
+                // Скрываем ошибку и показываем форму подключения
+                container.classList.add('hidden');
+                setTimeout(() => {
+                    initializeRemoteStorageWidget();
+                }, 300);
+            });
+        }
+        
+        if (instructionsBtn) {
+            instructionsBtn.addEventListener('click', () => {
+                // Показываем инструкцию
+                const instructionContent = document.getElementById('instruction-content');
+                if (instructionContent) {
+                    instructionContent.classList.remove('hidden');
+                    instructionContent.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        }
     }
 }
 
@@ -11147,10 +11885,24 @@ async function logoutFromCloudStorage() {
 // Функция проверки сохраненного состояния подключения
 async function checkSavedCloudStorageState() {
     try {
+        // Сначала очищаем некорректные данные
+        if (!cleanInvalidAccountData()) {
+            console.log('📝 Invalid account data cleaned, no connection possible');
+            cloudStorageConnected = false; // Явно устанавливаем false
+            return false;
+        }
+        
         const savedState = loadRemoteStorageState();
         const savedAccount = loadUserAccount();
         
-        if (savedState && savedState.connected && savedAccount) {
+        // Строгая проверка на реальный аккаунт
+        if (!savedAccount || savedAccount === 'Аккаунт' || savedAccount.trim() === '') {
+            console.log('📝 No valid account found, cannot connect');
+            cloudStorageConnected = false; // Явно устанавливаем false
+            return false;
+        }
+        
+        if (savedState && savedState.connected && savedAccount && savedAccount !== 'Аккаунт' && savedAccount.trim() !== '') {
             
             // Обновляем состояние без переподключения
             cloudStorageConnected = true;
@@ -11177,6 +11929,7 @@ async function checkSavedCloudStorageState() {
             // Проверяем актуальность резервной копии
             debouncedCheckBackupFreshness(500);
             
+            console.log('✅ Автоматически подключились к облачному хранилищу');
             return true;
         } else {
             console.log('📝 No saved cloud storage credentials found');
@@ -11442,7 +12195,7 @@ async function loadBackupsList(forceRefresh = false) {
         if (isLoadingIndicator) {
             backupsList.innerHTML = `
                 <div class="text-center py-8">
-                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-500/20 rounded-full mb-4 animate-pulse">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-500/20 rounded-full mb-4">
                         <span class="text-blue-400">${I_Clock('w-8 h-8')}</span>
                     </div>
                     <p class="text-gray-400 text-sm font-medium">Загрузка списка версий...</p>
@@ -20562,6 +21315,90 @@ function renderMainContent() {
             // Логика для облачного резервного копирования
             e = renderCloudBackupContent();
             
+            // Инициализируем обработчики формы подключения, если пользователь не подключен
+            setTimeout(() => {
+                const connectBtn = document.getElementById('connect-address');
+                const addressInput = document.getElementById('user-address');
+                const validationMessage = document.getElementById('email-validation-message');
+                
+                if (connectBtn && addressInput && validationMessage && !cloudStorageConnected) {
+                    // Валидация email в реальном времени
+                    addressInput.addEventListener('input', () => {
+                        const email = addressInput.value.trim();
+                        const isValid = validateEmailFormat(email);
+                        const isEmpty = email.length === 0;
+                        
+                        addressInput.classList.remove('email-input-valid', 'email-input-invalid');
+                        if (!isEmpty) {
+                            addressInput.classList.add(isValid ? 'email-input-valid' : 'email-input-invalid');
+                        }
+                        
+                        if (isEmpty) {
+                            validationMessage.classList.add('hidden');
+                            validationMessage.textContent = '';
+                        } else if (isValid) {
+                            validationMessage.classList.remove('hidden');
+                            validationMessage.textContent = '✓ Email адрес корректен';
+                            validationMessage.className = 'email-validation-message email-validation-valid';
+                        } else {
+                            validationMessage.classList.remove('hidden');
+                            validationMessage.textContent = '✗ Введите корректный email адрес';
+                            validationMessage.className = 'email-validation-message email-validation-invalid';
+                        }
+                        
+                        connectBtn.disabled = isEmpty || !isValid;
+                    });
+                    
+                    // Обработчик для кнопки подключения
+                    connectBtn.addEventListener('click', async () => {
+                        const address = addressInput.value.trim();
+                        
+                        if (!address || address.length === 0) {
+                            await showCustomAlert('Пожалуйста, введите email адрес для подключения к облачному хранилищу', {
+                                title: 'Требуется email',
+                                type: 'error'
+                            });
+                            addressInput.focus();
+                            return;
+                        }
+                        
+                        if (!validateEmailFormat(address)) {
+                            await showCustomAlert('Введите корректный email адрес. Пример: user@5apps.com', {
+                                title: 'Неверный формат email',
+                                type: 'error'
+                            });
+                            addressInput.focus();
+                            return;
+                        }
+                        
+                        if (!address.includes('@5apps.com') && !address.includes('@example.com')) {
+                            const proceed = await showCustomConfirm(
+                                'Рекомендуется использовать 5apps.com для надежной работы. Продолжить с этим адресом?',
+                                {
+                                    title: 'Предупреждение',
+                                    type: 'warning',
+                                    confirmText: 'Продолжить',
+                                    cancelText: 'Отмена'
+                                }
+                            );
+                            if (!proceed) return;
+                        }
+                        
+                        if (address !== address.trim()) {
+                            await showCustomAlert('Email адрес не должен содержать пробелы в начале или конце', {
+                                title: 'Ошибка ввода',
+                                type: 'error'
+                            });
+                            addressInput.value = address.trim();
+                            addressInput.focus();
+                            return;
+                        }
+                        
+                        connectToRemoteStorage(address);
+                    });
+                }
+            }, 100);
+            
             // Проверяем сохраненное состояние, если пользователь еще не подключен
             if (!cloudStorageConnected && window.remoteStorageAvailable) {
                 setTimeout(() => {
@@ -29284,16 +30121,20 @@ document.addEventListener("click", async e => {
             console.log('☁️ Cloud backup tab opened, checking saved state');
             setTimeout(() => {
                 if (window.remoteStorageAvailable) {
-                    checkSavedCloudStorageState();
-                    // Принудительно обновляем UI при переходе на вкладку
-                    updateCloudStorageUI();
-                    // Автоматически загружаем список версий при открытии вкладки
-                    debouncedLoadBackupsList(true, 500); // Принудительное обновление при открытии вкладки
-                    
-                    // Запускаем периодическое обновление, если подключены к облачному хранилищу
-                    if (cloudStorageConnected && cloudStorageClient) {
-                        startPeriodicVersionsRefresh();
-                    }
+                    checkSavedCloudStorageState().then((connected) => {
+                        if (!connected) {
+                            // Если не подключены, автоматически показываем форму подключения
+                            console.log('🔧 Auto-showing connection form for disconnected users');
+                            initializeRemoteStorageWidget();
+                        } else {
+                            // Если подключены, обновляем UI и загружаем данные
+                            updateCloudStorageUI();
+                            debouncedLoadBackupsList(true, 500);
+                            if (cloudStorageConnected && cloudStorageClient) {
+                                startPeriodicVersionsRefresh();
+                            }
+                        }
+                    });
                 } else {
                     console.log('⚠️ RemoteStorage not available');
                 }
@@ -29306,58 +30147,7 @@ document.addEventListener("click", async e => {
     }
     
     // Обработчики для облачного резервного копирования
-    if (t.closest('#connect-cloud-storage')) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        // Проверяем состояние подключения
-        const connectionState = getCloudStorageConnectionState();
-        
-        if (connectionState.showReconnectButton) {
-            // Если есть сохраненный аккаунт, но нет активного подключения - переподключаемся
-            console.log('🔧 Found saved account, attempting reconnection:', connectionState.account);
-            isReconnecting = true; // Устанавливаем флаг переподключения
-            
-            // Инициализируем клиент RemoteStorage
-            if (!cloudStorageClient) {
-                cloudStorageClient = new RemoteStorage({
-                    logging: false,
-                    cache: false,
-                    // Отключаем автоматическое перенаправление для предотвращения циклических перезагрузок
-                    redirectUri: window.location.origin + window.location.pathname
-                });
-                cloudStorageClient.access.claim('lego-catalog', 'rw');
-                setupRemoteStorageEventHandlers();
-            }
-            
-            // Пытаемся подключиться к сохраненному аккаунту
-            try {
-                cloudStorageClient.connect(connectionState.account);
-                updateCloudStorageStatus('Переподключение...', 'info');
-            } catch (error) {
-                console.error('❌ Reconnection failed:', error);
-                isReconnecting = false; // Сбрасываем флаг при ошибке
-                updateCloudStorageStatus('Ошибка переподключения', 'error');
-            }
-        } else if (connectionState.showConnectButton) {
-            // Если это новый пользователь - показываем виджет для ввода email
-            console.log('🔧 New user, showing connection widget...');
-            setTimeout(() => {
-                if (window.remoteStorageAvailable) {
-                    console.log('🔧 Initializing RemoteStorage widget...');
-                    initializeRemoteStorageWidget();
-                } else {
-                    console.error('❌ RemoteStorage not available');
-                    updateCloudStorageStatus('RemoteStorage недоступен', 'error');
-                }
-            }, 100);
-        } else if (connectionState.isConnected) {
-            // Если уже подключен, просто обновляем UI
-            console.log('🔧 Already connected, updating UI');
-            updateCloudStorageUI();
-        }
-        return;
-    }
+    // Убрали обработчик кнопки подключения - теперь форма показывается автоматически
     
     
     if (t.closest('#backup-to-cloud')) {
