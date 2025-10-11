@@ -23175,7 +23175,7 @@ function renderFilterModal() {
                      <div class="bg-gray-900/50 rounded-[18px] p-3">
                         <button data-action="modal-set-color" data-color-id="null" class="w-full mb-3 py-2 text-sm rounded-[18px] transition-colors duration-150 ${0===tempFilters.filters.colorIds.length?"bg-blue-600 text-white font-semibold shadow-lg hover:shadow-blue-500/25":"bg-gray-600 hover:bg-gray-500 text-gray-200 shadow-lg hover:shadow-gray-500/25"}">Все цвета</button>
                         <div class="max-h-60 overflow-y-auto no-scrollbar pr-1">
-                            <div class="grid gap-2" style="grid-template-columns: repeat(auto-fill,minmax(180px,1fr));">
+                            <div class="grid grid-cols-2 gap-2">
                                 ${Object.keys(COLOR_MAP).sort((a,b)=>COLOR_MAP[a].name.localeCompare(COLOR_MAP[b].name,'en')).map(id=>{const c=COLOR_MAP[id];const sel=tempFilters.filters.colorIds.includes(id);return `
                                     <button data-action="modal-set-color" data-color-id="${id}" class="flex items-center gap-3 p-2 rounded-[18px] border ${sel?"border-blue-500 bg-blue-900/30":"border-gray-700 hover:border-gray-500"}">
                                         <span class="w-6 h-6 rounded-full border ${c.isTransparent?"checkerboard border-gray-500":"border-gray-500"} flex-shrink-0" style="background-color:${c.hex}; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border-radius: 50% !important;" onmouseover="this.style.boxShadow='0 4px 6px -1px ${c.hex}40, 0 2px 4px -1px ${c.hex}30'" onmouseout="this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'"></span>
