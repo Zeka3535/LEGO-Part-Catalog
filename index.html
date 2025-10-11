@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v68';
+    const CACHE_NAME = 'lego-catalog-cache-v69';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -5530,14 +5530,6 @@ button[disabled]:hover {
           
           <h2 class="text-2xl font-bold text-gray-200 mb-2">Загрузка каталога</h2>
           <p id="loading-status" class="text-gray-400 mb-4">Подготовка к загрузке...</p>
-          <div id="offline-indicator" class="hidden mb-4 px-4 py-2 bg-yellow-600/20 border border-yellow-500/30 rounded-lg">
-            <div class="flex items-center justify-center text-yellow-300 text-sm">
-              <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-              </svg>
-              <span>Офлайн режим - используем кешированные данные</span>
-            </div>
-          </div>
           <div class="loading-progress-container">
             <div class="w-64 bg-gray-700 rounded-full h-2 mb-4 mx-auto">
               <div id="loading-progress" class="bg-blue-500 h-2 rounded-full" style="width: 0%"></div>
@@ -31767,18 +31759,7 @@ async function initializeApp() {
         }, 5000);
         
         // Всегда сначала загружаем данные из CSV файлов (быстро, офлайн)
-        try {
-            await loadDataFromCSV();
-        } catch (csvError) {
-            console.error('Ошибка загрузки CSV данных:', csvError);
-            // В офлайн режиме пытаемся продолжить с тем, что есть
-            if (navigator.onLine === false) {
-                console.log('📱 Работаем в офлайн режиме, используем кешированные данные');
-                updateLoadingStatus("Офлайн режим", 100, "Используем кешированные данные");
-            } else {
-                throw csvError;
-            }
-        }
+        await loadDataFromCSV();
         
         // Останавливаем мониторинг после завершения загрузки
         clearInterval(progressMonitor);
@@ -31808,14 +31789,7 @@ async function initializeApp() {
         
     } catch (e) {
         console.error("Data loading failed:", e);
-        
-        // В офлайн режиме пытаемся продолжить с тем, что есть
-        if (navigator.onLine === false) {
-            console.log('📱 Офлайн режим: пытаемся продолжить с кешированными данными');
-            S.err = 'Работаем в офлайн режиме. Некоторые функции могут быть ограничены.';
-        } else {
-            S.err = S.err || `Не удалось загрузить данные каталога: ${e.message}`;
-        }
+        S.err = S.err || `Не удалось загрузить данные каталога: ${e.message}`;
     } finally {
         S.sidebarLoading = false;
         updateUI();
@@ -32534,13 +32508,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Теперь файлы загружаются по очереди, начиная с самых важных для работы приложения
 async function loadDataFromCSV() {
     try {
-        // Проверяем, не загружены ли данные уже
-        if (window._csvDataLoaded && Object.keys(COLOR_MAP).length > 0 && Object.keys(PART_MAP).length > 0) {
-            console.log('📦 CSV данные уже загружены, пропускаем повторную загрузку');
-            updateLoadingStatus("Данные уже загружены", 100, "Используем кешированные данные");
-            return;
-        }
-        
         // Устанавливаем глобальное время начала загрузки
         window._csvLoadStartTime = Date.now();
         
@@ -32717,10 +32684,6 @@ async function loadDataFromCSV() {
             S.err = `${S.err}\nТакже не удалось загрузить данные из API: ${apiError.message}`;
             updateLoadingStatus("Критическая ошибка", 0, "Не удалось загрузить данные ни из CSV, ни из API");
         }
-        
-        // Устанавливаем флаг успешной загрузки данных
-        window._csvDataLoaded = true;
-        console.log('✅ CSV данные успешно загружены и помечены как загруженные');
     }
 }
 
@@ -33012,8 +32975,7 @@ async function loadMinifigsFromCSV() {
 // Функция для загрузки таблицы соответствий кодов минифигурок
 async function loadFigTable() {
     try {
-        // Для figtable.txt используем версию без timestamp для лучшего кеширования
-        const figTableText = await fetchTextWithProgress('./figtable.txt', 'Загрузка таблицы минифигурок...', 'figtable.txt');
+        const figTableText = await fetchTextWithProgress('./figtable.txt?v=' + Date.now(), 'Загрузка таблицы минифигурок...', 'figtable.txt');
         const lines = figTableText.split('\n');
         
         // Создаем глобальную карту соответствий код -> ID минифигурки
@@ -33745,44 +33707,7 @@ function formatMb(bytes) {
 }
 async function fetchTextWithProgress(url, statusText, label) {
     try {
-        // Сначала проверяем кеш для CSV файлов
-        if (url.includes('.csv') && 'caches' in window) {
-            try {
-                const cache = await caches.open('lego-catalog-cache-v68');
-                const cachedResponse = await cache.match(url);
-                if (cachedResponse) {
-                    console.log(`📦 Загружаем ${label} из кеша`);
-                    const text = await cachedResponse.text();
-                    
-                    // Обновляем прогресс для кешированного файла
-                    if (!window.CSV_MB_PROGRESS) window.CSV_MB_PROGRESS = { totalBytes: 0, totalExpected: 0 };
-                    if (!window.CSV_PROGRESS_PLAN) initCsvProgressPlan();
-                    if (!window.CSV_PROGRESS_STATE) window.CSV_PROGRESS_STATE = { completed: new Set() };
-                    
-                    const approxBytes = text.length;
-                    window.CSV_MB_PROGRESS.totalBytes += approxBytes;
-                    const progressPercent = calcPlannedProgress(label, 1);
-                    const totalExpected = window.CSV_MB_PROGRESS.totalExpected || 0;
-                    const totalLoaded = window.CSV_MB_PROGRESS.totalBytes;
-                    const remaining = totalExpected > 0 ? Math.max(0, totalExpected - totalLoaded) : 0;
-                    const details = `${statusText} (из кеша)\nЗагружено: ${formatMb(totalLoaded)} MB • Всего: ${formatMb(totalExpected)} MB • Осталось: ${formatMb(remaining)} MB`;
-                    updateLoadingStatus(statusText, progressPercent, details);
-                    window.CSV_PROGRESS_STATE.completed.add(label);
-                    
-                    return text;
-                }
-            } catch (cacheError) {
-                console.log(`⚠️ Ошибка доступа к кешу для ${label}, загружаем из сети`);
-            }
-        }
-        
         const resp = await fetch(url);
-        
-        // Проверяем, что ответ успешный
-        if (!resp.ok) {
-            throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
-        }
-        
         // Если поток недоступен, используем обычное чтение
         const reader = resp && resp.body && resp.body.getReader ? resp.body.getReader() : null;
         const contentLengthHeader = resp && resp.headers ? resp.headers.get('content-length') : null;
@@ -34217,21 +34142,11 @@ function updateLoadingStatus(status, progress = null, details = null) {
     const progressElement = document.getElementById('loading-progress');
     const detailsElement = document.getElementById('loading-details');
     const loadingTipElement = document.getElementById('loading-tip');
-    const offlineIndicator = document.getElementById('offline-indicator');
     
     // Используем requestAnimationFrame для минимизации перерисовки
     requestAnimationFrame(() => {
         if (statusElement && statusElement.textContent !== status) {
             statusElement.textContent = status;
-        }
-        
-        // Показываем индикатор офлайн режима
-        if (offlineIndicator) {
-            if (status && (status.includes('офлайн') || status.includes('Офлайн') || status.includes('кеш'))) {
-                offlineIndicator.classList.remove('hidden');
-            } else {
-                offlineIndicator.classList.add('hidden');
-            }
         }
         
         if (progressElement && progress !== null) {
