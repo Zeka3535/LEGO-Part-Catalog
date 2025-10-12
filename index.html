@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v70';
+    const CACHE_NAME = 'lego-catalog-cache-v71';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -182,8 +182,7 @@
         }
     }
     
-    
-    
+        
     .content-section {
         content-visibility: auto;
         contain-intrinsic-size: 0 500px;
@@ -245,13 +244,8 @@
         
         border-radius: 18px;
     }
-    
-    
-    
-    
-    
-    
-    
+       
+        
     .no-scrollbar::-webkit-scrollbar {
         display: none;
     }
@@ -447,8 +441,6 @@
         }
     }
     
-
-    
     
     .parts-grid {
         display: grid;
@@ -604,8 +596,6 @@
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
 }
-
-
 
 
 @media (max-width: 768px) {
@@ -981,8 +971,6 @@
         z-index: 1;
     }
 }
-
-
 
 
 @media (min-width: 475px) {
@@ -1426,7 +1414,6 @@
         animation: none !important;
     }
     
-  
     
     @keyframes buttonAppear {
         0% {
@@ -1501,9 +1488,7 @@
             transform: scale(0.9) translateY(-10px); 
         }
     }
-    
-    
-    
+     
     
     .sidebar-hint {
         position: fixed;
@@ -1628,8 +1613,7 @@
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
     }
-    
-    
+       
     
     /* Адаптивное позиционирование треугольника для разных размеров экрана */
     @media (max-width: 480px) {
@@ -1919,13 +1903,11 @@
     }
     
     
-    
     .minifig-parts-container {
         overflow: hidden;
         background-color: transparent;
     }
-    
-    
+     
     
     .minifig-parts-container.expanded {
         background-color: rgba(55, 65, 81, 0.4); 
@@ -2018,8 +2000,7 @@
         padding: 0.75rem !important;
         overflow: visible !important;
     }
-    
-    
+      
     
     #technologies-panel.collapse-panel > div {
         transition: opacity 0.2s ease, transform 0.2s ease;
@@ -2174,7 +2155,6 @@
     }
     
     
-    
     #about-panel.collapse-panel p,
     #about-panel.collapse-panel ul,
     #about-panel.collapse-panel li {
@@ -2327,7 +2307,6 @@
         backface-visibility: hidden;
         -webkit-backface-visibility: hidden;
     }
-    
     
     
     button[data-view] {
@@ -2562,9 +2541,7 @@
         align-self: center;
     }
     
-    
-    
-    
+        
     .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
         box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3), 0 2px 4px rgba(37, 99, 235, 0.2) !important;
         transition: all 0.2s ease !important;
@@ -2637,9 +2614,6 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2) !important;
         transform: scale(1.1) !important;
     }
-    
-    
-    
     
     
     .part-card[data-folder="true"] .bg-blue-600.text-white.text-xs.font-bold.rounded-full {
@@ -3675,7 +3649,6 @@
         pointer-events: auto !important;
     }
     
-
     
     .modal-content-enter {
         animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
@@ -3827,12 +3800,7 @@
             width: 4px;
         }
     }
-    
-    
-    
-    
-    
-    
+     
     
     .part-card.animate-in,
     .set-card.animate-in,
@@ -4039,10 +4007,7 @@ body.tab-switching button[data-view] {
 .part-card img,
 .set-card img,
 .minifig-card img {
-    
-    
-    
-    
+       
     opacity: 1 !important;
 }
 
@@ -4220,8 +4185,6 @@ body.tab-switching button[data-view] {
 }
 
 
-
-
 .subview-change .part-card,
 .subview-change .set-card,
 .subview-change .minifig-card {
@@ -4231,21 +4194,15 @@ body.tab-switching button[data-view] {
 }
 
 
-
-
 .category-change .part-card,
 .theme-change .set-card {
     animation: categoryChange 0.05s ease-out forwards;
 }
 
 
-
-
 .color-change .part-card {
     animation: colorChange 0.05s ease-out forwards;
 }
-
-
 
 
 .year-change .set-card,
@@ -4254,14 +4211,10 @@ body.tab-switching button[data-view] {
 }
 
 
-
-
 .popularity-change .part-card,
 .popularity-change .set-card {
     animation: popularityChange 0.05s ease-out forwards;
 }
-
-
 
 
 .quantity-change .part-card,
@@ -4269,8 +4222,6 @@ body.tab-switching button[data-view] {
 .quantity-change .minifig-card {
     animation: quantityChange 0.05s ease-out forwards;
 }
-
-
 
 
 .search-change .part-card,
@@ -4282,15 +4233,11 @@ body.tab-switching button[data-view] {
 }
 
 
-
-
 .favorite-change .part-card,
 .favorite-change .set-card,
 .favorite-change .minifig-card {
     animation: favoriteChange 0.05s ease-out forwards;
 }
-
-
 
 
 .settings-change .part-card,
@@ -4317,8 +4264,6 @@ body.tab-switching button[data-view] {
     animation: languageChange 0.2s ease-out forwards;
 }
 
-
-
     
 .theme-switch .part-card,
 .theme-switch .set-card,
@@ -4344,14 +4289,11 @@ body.tab-switching button[data-view] {
 }
 
 
-
-
 .font-size-change .part-card,
 .font-size-change .set-card,
 .font-size-change .minifig-card {
     animation: fontSizeChange 0.2s ease-out forwards;
 }
-
 
 
 .grid-change .part-card,
@@ -4361,15 +4303,11 @@ body.tab-switching button[data-view] {
 }
 
 
-
-
 .order-change .part-card,
 .order-change .set-card,
 .order-change .minifig-card {
     animation: orderChange 0.2s ease-out forwards;
 }
-
-
 
 
 .pagination-change .part-card,
@@ -4379,7 +4317,6 @@ body.tab-switching button[data-view] {
 }
 
 
-
 .export-change .part-card,
 .export-change .set-card,
 .export-change .minifig-card {
@@ -4387,15 +4324,11 @@ body.tab-switching button[data-view] {
 }
 
 
-
-
 .import-change .part-card,
 .import-change .set-card,
 .import-change .minifig-card {
     animation: importChange 0.2s ease-out forwards;
 }
-
-
 
 
 .sync-change .part-card,
@@ -4930,8 +4863,6 @@ body.tab-switching button[data-view] {
 }
 
 
-
-
 #variation-select-button {
     max-width: 100% !important;
     width: 100% !important;
@@ -5144,9 +5075,6 @@ button[disabled]:hover {
     }
     
     
-    
-    
-    
     #loading-status {
         min-height: 1.5rem; 
         display: flex;
@@ -5192,8 +5120,6 @@ button[disabled]:hover {
     }
     
     
-    
-    
     #loading-container.hidden {
         opacity: 0;
         pointer-events: none;
@@ -5203,11 +5129,6 @@ button[disabled]:hover {
         opacity: 1;
         
     }
-    
-    
-    
-    
-    
     
     
     .tip-container {
@@ -5618,8 +5539,6 @@ button[disabled]:hover {
     }
     
     
-    
-    
     .group:hover {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 
                     0 4px 6px -2px rgba(0, 0, 0, 0.05),
@@ -5995,10 +5914,6 @@ if (!DEBUG) {
     console.debug = () => {};
     console.warn = () => {};
 }
-
-// Проверяем, что скрипт выполняется
-
-
 
 // Глобальные функции для поиска деталей
 window.searchPartInCatalog = function(partNumber, category = '', partName = '') {
@@ -8431,51 +8346,11 @@ let currentApiKeyIndex = 0;
 const PROXY_CONFIG = {
     currentProxyIndex: 0,
     proxies: [
-        // Основные CORS прокси серверы (обновлено 2024)
+        // Рабочие прокси-серверы (проверено 12.10.2025)
         'https://api.allorigins.win/raw?url=',
         'https://corsproxy.io/?',
-        'https://api.codetabs.com/v1/proxy?quest=',
-        'https://cors.bridged.cc/',
-        'https://yacdn.org/proxy/',
-        'https://thingproxy.freeboard.io/fetch/',
         'https://api.allorigins.win/get?url=',
-        
-        // Дополнительные прокси серверы
-        'https://corsproxy.org/?',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://api.codetabs.com/v1/proxy?quest=',
-        'https://cors.eu.org/',
-        'https://cors-anywhere.herokuapp.com/',
-        'https://api.allorigins.win/get?url=',
-        
-        // Новые прокси серверы
-        'https://corsproxy.io/?',
-        'https://api.allorigins.win/raw?url=',
-        'https://cors.bridged.cc/',
-        'https://yacdn.org/proxy/',
-        'https://thingproxy.freeboard.io/fetch/',
-        'https://api.codetabs.com/v1/proxy?quest=',
-        
-        // Резервные прокси
-        'https://cors.eu.org/',
-        'https://corsproxy.org/?',
-        'https://api.allorigins.win/get?url=',
-        'https://corsproxy.io/?',
-        'https://api.codetabs.com/v1/proxy?quest=',
-        'https://cors.bridged.cc/',
-        'https://yacdn.org/proxy/',
-        'https://thingproxy.freeboard.io/fetch/',
-        
-        // Дополнительные резервные прокси
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?',
-        'https://api.codetabs.com/v1/proxy?quest=',
-        'https://cors.bridged.cc/',
-        'https://yacdn.org/proxy/',
-        'https://thingproxy.freeboard.io/fetch/',
-        'https://api.allorigins.win/get?url=',
-        'https://cors.eu.org/',
-        'https://corsproxy.org/?'
+        'https://cors.eu.org/'
     ],
     maxRetries: 3,
     retryDelay: 1000,

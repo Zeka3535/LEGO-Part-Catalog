@@ -1,8 +1,8 @@
-const CACHE_NAME = 'lego-catalog-cache-v70';
+const CACHE_NAME = 'lego-catalog-cache-v71';
 const VERSION_INFO = {
-    version: 'v70',
-    buildDate: '11.10.2025',
-    buildTimestamp: new Date('2025-10-11').getTime()
+    version: 'v71',
+    buildDate: '12.10.2025',
+    buildTimestamp: new Date('2025-10-12').getTime()
 };
 
 // Keep precache minimal to avoid install failures due to missing files
@@ -259,14 +259,6 @@ self.addEventListener('fetch', event => {
     }
 });
 
-// Handle background sync for offline actions
-// Removed background sync handler (unused)
-
-// Handle push notifications (if needed in the future)
-// Removed push handler (unused)
-
-// Handle notification clicks
-// Removed notification click handler (unused)
 
 // Handle messages from main thread
 self.addEventListener('message', event => {
