@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v71';
+    const CACHE_NAME = 'lego-catalog-cache-v72';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -1205,7 +1205,7 @@
         
         .sidebar-toggle-btn {
             margin-left: -0.5rem !important; 
-            margin-right: 1rem !important;
+            margin-right: 0 !important;
         }
         
         
@@ -5778,7 +5778,7 @@ button[disabled]:hover {
   <aside id="sidebar-container" role="complementary" aria-label="Боковая панель навигации" class="w-80 bg-gray-800 p-4 flex flex-col h-full border-r border-gray-700 fixed inset-y-0 left-0 z-40 lg:translate-x-0 -translate-x-full content-section"></aside>
   <div id="sidebar-backdrop" class="fixed inset-0 bg-black bg-opacity-60 z-30 hidden lg:hidden"></div>
   <div class="lg:ml-80 flex flex-col h-screen">
-    <header id="header-container" class="bg-gray-800 sticky top-0 z-20 p-4 border-b border-gray-700"></header>
+    <header id="header-container" class="bg-gray-800 sticky top-0 z-20 p-2 border-b border-gray-700"></header>
     <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar content-section">
       
       <div id="loading-container" class="flex flex-col items-center justify-center h-full p-8">
@@ -19454,8 +19454,8 @@ function renderSidebar() {
         } catch {}
     }
     sidebarEl.innerHTML = `
-        <div class="flex items-center justify-between mb-4 flex-shrink-0">
-          <h1 class="text-xl font-bold text-white">Меню</h1>
+        <div class="flex items-center justify-between mb-2 flex-shrink-0">
+          <h1 class="text-lg font-bold text-white">Меню</h1>
           <button id="sidebar-close" class="modal-close-btn lg:hidden" title="Закрыть боковую панель">
                           ${I_X("w-4 h-4")}
           </button>
@@ -19866,7 +19866,7 @@ function renderHeader() {
         </div>
     ` : '';
     headerEl.innerHTML = `
-            <div class="flex justify-between items-center gap-4">
+            <div class="flex justify-between items-center gap-2">
                 <div class="flex items-center">
                     <button id="sidebar-toggle" class="sidebar-toggle-btn lg:hidden" title="Открыть/закрыть боковую панель навигации">
                         ${I_Menu("w-4 h-4")}
@@ -19877,7 +19877,7 @@ function renderHeader() {
                               `<span class=\"text-sm font-normal text-blue-400 ml-2\">• Связанные наборы</span>` : ''}
                       </h1>
                 </div>
-                <div class="flex items-center space-x-2 w-full max-w-sm">
+                <div class="flex items-center space-x-1 w-full max-w-sm">
                     <div class="relative flex-grow">
                         <input id="search-input" type="search" placeholder="${t}" value="${S.q}" class="w-full bg-gray-700 border border-gray-600 rounded-[18px] pl-4 pr-12 text-white placeholder-gray-400 focus:outline-none focus:ring-0" title="Поиск ${searchContext}" autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="off"/>
                         <button id="clear-search" class="absolute inset-y-0 right-0 flex items-center justify-center w-10 text-gray-400 hover:text-white ${S.q?"":"hidden"}" title="Очистить поисковый запрос">${I_X("w-5 h-5")}</button>
@@ -19888,13 +19888,13 @@ function renderHeader() {
                             
                         </div>
                     </div>
-                     <button id="search-button" class="px-3 bg-blue-600 text-white rounded-[18px] hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0 hidden" aria-label="Поиск" title="Выполнить поиск ${searchContext}">
+                     <button id="search-button" class="px-2 bg-blue-600 text-white rounded-[18px] hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0 hidden" aria-label="Поиск" title="Выполнить поиск ${searchContext}">
                         ${I_Search("w-5 h-5")}
                     </button>
-                    <button id="ai-search-button" class="px-3 bg-blue-600 text-white rounded-[18px] hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0" aria-label="AI поиск" title="AI поиск по фотографии" onclick="openAISearch()">
+                    <button id="ai-search-button" class="px-2 bg-blue-600 text-white rounded-[18px] hover:bg-blue-700 transition-colors duration-150 shadow-lg hover:shadow-blue-500/25 flex-shrink-0" aria-label="AI поиск" title="AI поиск по фотографии" onclick="openAISearch()">
                         ${I_Camera("w-5 h-5")}
                     </button>
-                    <button id="filter-button" class="px-3 bg-gray-600 text-white rounded-[18px] hover:bg-gray-500 transition-colors duration-150 shadow-lg hover:shadow-gray-500/25 flex-shrink-0" aria-label="Фильтры" title="Открыть панель фильтров и сортировки">
+                    <button id="filter-button" class="px-2 bg-gray-600 text-white rounded-[18px] hover:bg-gray-500 transition-colors duration-150 shadow-lg hover:shadow-gray-500/25 flex-shrink-0" aria-label="Фильтры" title="Открыть панель фильтров и сортировки">
                         ${I_Filter("w-5 h-5")}
                     </button>
 

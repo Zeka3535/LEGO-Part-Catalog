@@ -1,8 +1,8 @@
-const CACHE_NAME = 'lego-catalog-cache-v71';
+const CACHE_NAME = 'lego-catalog-cache-v72';
 const VERSION_INFO = {
-    version: 'v71',
-    buildDate: '12.10.2025',
-    buildTimestamp: new Date('2025-10-12').getTime()
+    version: 'v72',
+    buildDate: '13.10.2025',
+    buildTimestamp: new Date('2025-10-13').getTime()
 };
 
 // Keep precache minimal to avoid install failures due to missing files
