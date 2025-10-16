@@ -45,19 +45,5 @@
   "screenshots": [
     { "src": "ogimage.png", "type": "image/png", "sizes": "1200x630", "form_factor": "wide" }
   ],
-  "widgets": [
-    {
-      "name": "LEGO Catalog - Сводка коллекции",
-      "short_name": "LEGO Catalog",
-      "description": "Быстрый доступ к сводке вашей коллекции LEGO",
-      "tag": "lego-stats",
-      "template": "widgets/samsung-widget.html",
-      "ms_ac_template": "widgets/samsung-widget.html",
-      "data": "widgets/stats-widget-data.json",
-      "type": "application/json",
-      "auth": false,
-      "update": 86400
-    }
-  ],
   "prefer_related_applications": false
 }
