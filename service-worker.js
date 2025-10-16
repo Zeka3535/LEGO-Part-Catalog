@@ -1,8 +1,8 @@
-const CACHE_NAME = 'lego-catalog-cache-v73';
+const CACHE_NAME = 'lego-catalog-cache-v89';
 const VERSION_INFO = {
-    version: 'v73',
-    buildDate: '15.10.2025',
-    buildTimestamp: new Date('2025-10-15').getTime()
+    version: 'v89',
+    buildDate: '16.10.2025',
+    buildTimestamp: new Date('2025-10-16').getTime()
 };
 
 // Keep precache minimal to avoid install failures due to missing files
@@ -16,7 +16,11 @@ const PRECACHE_ASSETS = [
     './favicon.ico',
     './android-chrome-192x192.png',
     './android-chrome-512x512.png',
-    './ogimage.png'
+    './ogimage.png',
+    './widgets/stats-widget.html',
+    './widgets/stats-widget-data.json',
+    './widgets/widget-handler.js',
+    './widgets/update-stats.html'
 ];
 
 // CSV-файлы не добавляем в precache: кэшируем по первому запросу (SWR)
@@ -143,6 +147,79 @@ function staleWhileRevalidate(request) {
     });
 }
 
+// Handle widget requests
+async function handleWidgetRequest(request) {
+    const url = new URL(request.url);
+    
+    // Handle widget data updates - перенаправляем на HTML файлы
+    if (url.pathname === '/widgets/update-stats' && request.method === 'POST') {
+        return fetch('./widgets/update-stats.html');
+    }
+    
+    if (url.pathname === '/widgets/update-collection' && request.method === 'POST') {
+        return fetch('./widgets/update-collection.html');
+    }
+    
+    // Handle widget data files
+    if (url.pathname.endsWith('.json')) {
+        return cacheFirst(request);
+    }
+    
+    // Handle widget HTML files
+    if (url.pathname.endsWith('.html')) {
+        return cacheFirst(request);
+    }
+    
+    // Default to network first for other widget files
+    return networkFirst(request);
+}
+
+// Handle stats widget update
+async function handleStatsUpdate() {
+    try {
+        // Здесь можно добавить логику обновления статистики
+        // Пока возвращаем успешный ответ
+        return new Response(JSON.stringify({
+            success: true,
+            message: 'Статистика обновлена'
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        return new Response(JSON.stringify({
+            success: false,
+            error: error.message
+        }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}
+
+// Handle collection widget update
+async function handleCollectionUpdate() {
+    try {
+        // Здесь можно добавить логику обновления коллекции
+        // Пока возвращаем успешный ответ
+        return new Response(JSON.stringify({
+            success: true,
+            message: 'Коллекция обновлена'
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        return new Response(JSON.stringify({
+            success: false,
+            error: error.message
+        }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}
+
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
     const urlString = event.request.url;
@@ -253,6 +330,9 @@ self.addEventListener('fetch', event => {
     } else if (url.hostname === 'cdn.rebrickable.com') {
         // External images: cache first with network fallback
         event.respondWith(cacheFirst(event.request));
+    } else if (url.pathname.startsWith('/widgets/')) {
+        // Widget files: handle specially
+        event.respondWith(handleWidgetRequest(event.request));
     } else {
         // Default: network first
         event.respondWith(networkFirst(event.request));
