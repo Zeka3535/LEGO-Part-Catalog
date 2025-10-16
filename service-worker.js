@@ -1,6 +1,6 @@
-const CACHE_NAME = 'lego-catalog-cache-v89';
+const CACHE_NAME = 'lego-catalog-cache-v90';
 const VERSION_INFO = {
-    version: 'v89',
+    version: 'v90',
     buildDate: '16.10.2025',
     buildTimestamp: new Date('2025-10-16').getTime()
 };
@@ -18,6 +18,7 @@ const PRECACHE_ASSETS = [
     './android-chrome-512x512.png',
     './ogimage.png',
     './widgets/stats-widget.html',
+    './widgets/samsung-widget.html',
     './widgets/stats-widget-data.json',
     './widgets/widget-handler.js',
     './widgets/update-stats.html'

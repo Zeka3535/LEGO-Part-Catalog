@@ -51,92 +51,12 @@
       "short_name": "LEGO Catalog",
       "description": "Быстрый доступ к сводке вашей коллекции LEGO",
       "tag": "lego-stats",
-      "template": "widgets/stats-widget.html",
-      "ms_ac_template": "widgets/stats-widget.html",
+      "template": "widgets/samsung-widget.html",
+      "ms_ac_template": "widgets/samsung-widget.html",
       "data": "widgets/stats-widget-data.json",
       "type": "application/json",
       "auth": false,
-      "update": 86400,
-      "screenshots": [
-        {
-          "src": "widgets/screenshot-small.png",
-          "sizes": "2x2",
-          "label": "Маленький виджет (2x2)"
-        },
-        {
-          "src": "widgets/screenshot-medium.png", 
-          "sizes": "4x2",
-          "label": "Средний виджет (4x2)"
-        },
-        {
-          "src": "widgets/screenshot-large.png",
-          "sizes": "4x4", 
-          "label": "Большой виджет (4x4)"
-        }
-      ],
-      "sizing": {
-        "min": "2x2",
-        "max": "4x4",
-        "default": "4x2"
-      },
-      "themes": [
-        {
-          "name": "Стандартный стиль",
-          "id": "default",
-          "colors": {
-            "background": "#1f2937",
-            "surface": "#374151",
-            "text": "#f9fafb",
-            "accent": "#3b82f6",
-            "border": "#4b5563",
-            "hover": "#6b7280"
-          }
-        },
-        {
-          "name": "Темная тема",
-          "id": "dark",
-          "colors": {
-            "background": "#1f2937",
-            "surface": "#374151",
-            "text": "#f9fafb",
-            "accent": "#3b82f6",
-            "border": "#4b5563",
-            "hover": "#6b7280"
-          }
-        },
-        {
-          "name": "Светлая тема", 
-          "id": "light",
-          "colors": {
-            "background": "#f9fafb",
-            "surface": "#ffffff",
-            "text": "#1f2937",
-            "accent": "#3b82f6",
-            "border": "#e5e7eb",
-            "hover": "#f3f4f6"
-          }
-        }
-      ],
-      "settings": [
-        {
-          "name": "Прозрачность",
-          "type": "range",
-          "min": 0.1,
-          "max": 1.0,
-          "default": 1.0,
-          "step": 0.1
-        },
-        {
-          "name": "Компактный режим",
-          "type": "boolean",
-          "default": false
-        },
-        {
-          "name": "Показывать темы",
-          "type": "boolean", 
-          "default": true
-        }
-      ]
+      "update": 86400
     }
   ],
   "prefer_related_applications": false
