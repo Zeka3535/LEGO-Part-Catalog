@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGO Catalog Widget</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1f2937;
+            color: #f9fafb;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .widget-container {
+            background: #374151;
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid #4b5563;
+        }
+        
+        .widget-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .widget-icon {
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            border-radius: 4px;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .widget-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #d1d5db;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        
+        .stat-item {
+            background: #4b5563;
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #6b7280;
+        }
+        
+        .stat-number {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f9fafb;
+            margin-bottom: 2px;
+        }
+        
+        .stat-label {
+            font-size: 10px;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #9ca3af;
+            padding: 20px;
+        }
+        
+        .error {
+            text-align: center;
+            color: #ef4444;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-container">
+        <div class="widget-header">
+            <div class="widget-icon">📊</div>
+            <div class="widget-title">LEGO Catalog</div>
+        </div>
+        
+        <div id="stats-content">
+            <div class="loading">Загрузка...</div>
+        </div>
+    </div>
+
+    <script>
+        let widgetData = null;
+        
+        // Загружаем данные виджета
+        async function loadWidgetData() {
+            try {
+                // Читаем данные из localStorage
+                const partsCollection = getLocalStorageData('legoCollection') || {};
+                const setsCollection = getLocalStorageData('legoSetCollection') || {};
+                const minifigsCollection = getLocalStorageData('legoMinifigCollection') || {};
+                const favoriteThemes = getLocalStorageData('favoriteThemeIds') || [];
+                
+                // Подсчитываем количество элементов
+                const totalParts = Object.values(partsCollection).reduce((sum, part) => {
+                    return sum + Object.values(part).reduce((partSum, qty) => partSum + qty, 0);
+                }, 0);
+                
+                const totalSets = Object.values(setsCollection).reduce((sum, set) => sum + (set.qty || 0), 0);
+                const totalMinifigs = Object.values(minifigsCollection).reduce((sum, minifig) => sum + (minifig.qty || 0), 0);
+                
+                const uniqueParts = Object.values(partsCollection).reduce((sum, part) => {
+                    return sum + Object.keys(part).length;
+                }, 0);
+                
+                const uniqueSets = Object.keys(setsCollection).length;
+                const uniqueMinifigs = Object.keys(minifigsCollection).length;
+                const totalThemes = Array.isArray(favoriteThemes) ? favoriteThemes.length : 0;
+                
+                widgetData = {
+                    totalSets: totalSets,
+                    totalParts: totalParts,
+                    totalMinifigs: totalMinifigs,
+                    uniqueSets: uniqueSets,
+                    uniqueParts: uniqueParts,
+                    uniqueMinifigs: uniqueMinifigs,
+                    totalThemes: totalThemes,
+                    lastUpdated: new Date().toISOString(),
+                    version: "1.0.0"
+                };
+                
+                renderStats();
+            } catch (error) {
+                console.error('Ошибка загрузки данных виджета:', error);
+                showError('Ошибка загрузки данных');
+            }
+        }
+        
+        // Функция для чтения данных из localStorage
+        function getLocalStorageData(key) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : null;
+            } catch (error) {
+                console.error(`Ошибка чтения ${key} из localStorage:`, error);
+                return null;
+            }
+        }
+        
+        // Отображаем статистику
+        function renderStats() {
+            if (!widgetData) {
+                showError('Нет данных для отображения');
+                return;
+            }
+            
+            const statsContent = document.getElementById('stats-content');
+            
+            statsContent.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">${widgetData.uniqueParts || 0}</div>
+                        <div class="stat-label">Детали</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">${widgetData.uniqueSets || 0}</div>
+                        <div class="stat-label">Наборы</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">${widgetData.uniqueMinifigs || 0}</div>
+                        <div class="stat-label">Минифигурки</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">${widgetData.totalThemes || 0}</div>
+                        <div class="stat-label">Темы</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Показываем ошибку
+        function showError(message) {
+            const statsContent = document.getElementById('stats-content');
+            statsContent.innerHTML = `<div class="error">${message}</div>`;
+        }
+        
+        // Загружаем данные при загрузке страницы
+        document.addEventListener('DOMContentLoaded', loadWidgetData);
+    </script>
+</body>
+</html>
