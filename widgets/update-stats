@@ -1,0 +1,49 @@
+#!/usr/bin/env node
+// API endpoint для обновления статистики виджета
+// Этот файл будет обрабатываться service worker'ом
+
+const fs = require('fs');
+const path = require('path');
+
+// Путь к файлу данных статистики
+const statsDataPath = path.join(__dirname, 'stats-widget-data.json');
+
+// Функция для обновления статистики
+async function updateStats() {
+    try {
+        // Здесь можно добавить логику для получения актуальных данных
+        // из основного приложения или базы данных
+        
+        const currentData = JSON.parse(fs.readFileSync(statsDataPath, 'utf8'));
+        
+        // Обновляем время последнего обновления
+        const updatedData = {
+            ...currentData,
+            lastUpdated: new Date().toISOString()
+        };
+        
+        // Сохраняем обновленные данные
+        fs.writeFileSync(statsDataPath, JSON.stringify(updatedData, null, 2));
+        
+        return {
+            success: true,
+            data: updatedData
+        };
+        
+    } catch (error) {
+        console.error('Ошибка обновления статистики:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+}
+
+// Если файл запущен напрямую
+if (require.main === module) {
+    updateStats().then(result => {
+        console.log(JSON.stringify(result));
+    });
+}
+
+module.exports = { updateStats };
