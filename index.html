@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v75';
+    const CACHE_NAME = 'lego-catalog-cache-v84';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -13790,7 +13790,7 @@ let S = {
 };
 let tempFilters = {
     filters: { colorIds: [], inCollectionOnly: false },
-    setFilters: { minYear: "", maxYear: "", minParts: "", maxParts: "" },
+    setFilters: { minYear: "", maxYear: "", minParts: "", maxParts: "", hideZeroParts: true },
     sortBy: 'popularity'
 };
 
@@ -16801,19 +16801,69 @@ async function fetchSets() {
             }
         }
         
+        // Фильтр для скрытия наборов с 0 или неизвестным количеством деталей
+        if (S.setFilters.hideZeroParts) {
+            results = results.filter(set => set.num_parts && set.num_parts > 0);
+        }
+        
         // Применяем сортировку
         if (S.sortBy === "alpha_asc") {
             results.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'en'));
         } else if (S.sortBy === "alpha_desc") {
             results.sort((a, b) => (b.name || '').localeCompare(a.name || '', 'en'));
         } else if (S.sortBy === "year_asc") {
-            results.sort((a, b) => (a.year || 0) - (b.year || 0));
+            results.sort((a, b) => {
+                const yearA = parseInt(a.year) || 0;
+                const yearB = parseInt(b.year) || 0;
+                // Наборы с неизвестным годом (0) идут в конец
+                if (yearA === 0 && yearB === 0) return 0;
+                if (yearA === 0) return 1;
+                if (yearB === 0) return -1;
+                return yearA - yearB; // Старые первыми
+            });
         } else if (S.sortBy === "year_desc") {
-            results.sort((a, b) => (b.year || 0) - (a.year || 0));
+            results.sort((a, b) => {
+                const yearA = parseInt(a.year) || 0;
+                const yearB = parseInt(b.year) || 0;
+                // Наборы с неизвестным годом (0) идут в конец
+                if (yearA === 0 && yearB === 0) return 0;
+                if (yearA === 0) return 1;
+                if (yearB === 0) return -1;
+                return yearB - yearA; // Новые первыми
+            });
         } else if (S.sortBy === "parts_asc") {
-            results.sort((a, b) => (a.num_parts || 0) - (b.num_parts || 0));
+            results.sort((a, b) => {
+                // Сначала обрабатываем наборы с 0 деталей (они идут в конец)
+                if (a.num_parts === 0 && b.num_parts === 0) return 0;
+                if (a.num_parts === 0) return 1;
+                if (b.num_parts === 0) return -1;
+                // Затем сортируем по возрастанию количества деталей
+                return a.num_parts - b.num_parts;
+            });
         } else if (S.sortBy === "parts_desc") {
-            results.sort((a, b) => (b.num_parts || 0) - (a.num_parts || 0));
+            results.sort((a, b) => {
+                // Сначала обрабатываем наборы с 0 деталей (они идут в конец)
+                if (a.num_parts === 0 && b.num_parts === 0) return 0;
+                if (a.num_parts === 0) return 1;
+                if (b.num_parts === 0) return -1;
+                // Затем сортируем по убыванию количества деталей
+                return b.num_parts - a.num_parts;
+            });
+        }
+        
+        // Применяем сортировку по умолчанию только если пользователь не выбрал другую сортировку
+        if (!S.q && !S.sortBy) {
+            // Сортируем по году (новые первыми) по умолчанию при первой загрузке каталога
+            results.sort((a, b) => {
+                const yearA = parseInt(a.year) || 0;
+                const yearB = parseInt(b.year) || 0;
+                // Наборы с неизвестным годом (0) идут в конец
+                if (yearA === 0 && yearB === 0) return 0;
+                if (yearA === 0) return 1;
+                if (yearB === 0) return -1;
+                return yearB - yearA; // Новые первыми
+            });
+            console.log('📅 Applied default sorting by year (newest first)');
         }
         
         if (S.q) {
@@ -16880,9 +16930,23 @@ async function fetchMinifigs() {
         } else if (S.sortBy === "name_desc") {
             results.sort((a, b) => (b.name || '').localeCompare(a.name || '', 'en'));
         } else if (S.sortBy === "num_parts_desc") {
-            results.sort((a, b) => (b.num_parts || 0) - (a.num_parts || 0));
+            results.sort((a, b) => {
+                // Сначала обрабатываем минифигурки с 0 деталей (они идут в конец)
+                if (a.num_parts === 0 && b.num_parts === 0) return 0;
+                if (a.num_parts === 0) return 1;
+                if (b.num_parts === 0) return -1;
+                // Затем сортируем по убыванию количества деталей
+                return b.num_parts - a.num_parts;
+            });
         } else if (S.sortBy === "num_parts_asc") {
-            results.sort((a, b) => (a.num_parts || 0) - (b.num_parts || 0));
+            results.sort((a, b) => {
+                // Сначала обрабатываем минифигурки с 0 деталей (они идут в конец)
+                if (a.num_parts === 0 && b.num_parts === 0) return 0;
+                if (a.num_parts === 0) return 1;
+                if (b.num_parts === 0) return -1;
+                // Затем сортируем по возрастанию количества деталей
+                return a.num_parts - b.num_parts;
+            });
         }
         
         console.log('Minifigs loaded:', results.length, 'results');
@@ -20670,24 +20734,25 @@ function renderMainContent() {
                 }
             }
             
-            // Автоматически сортируем все наборы по году (новые первыми) после инициализации
-            if (S.setRes && Array.isArray(S.setRes)) {
-                S.setRes.sort((a, b) => {
-                    const yearA = parseInt(a.year) || 0;
-                    const yearB = parseInt(b.year) || 0;
-                    return yearB - yearA; // Новые первыми
-                });
-            }
+            // Убираем принудительную сортировку наборов после инициализации - пользователь сам выбирает сортировку
+            // if (S.setRes && Array.isArray(S.setRes)) {
+            //     S.setRes.sort((a, b) => {
+            //         const yearA = parseInt(a.year) || 0;
+            //         const yearB = parseInt(b.year) || 0;
+            //         return yearB - yearA; // Новые первыми
+            //     });
+            // }
             
-            if (S.searchSetRes && Array.isArray(S.searchSetRes)) {
-                console.log('📅 Sorting search results by year (newest first)');
-                S.searchSetRes.sort((a, b) => {
-                    const yearA = parseInt(a.year) || 0;
-                    const yearB = parseInt(b.year) || 0;
-                    return yearB - yearA; // Новые первыми
-                });
-                console.log('✅ Search results sorted by year, newest first');
-            }
+            // Убираем принудительную сортировку - пользователь сам выбирает сортировку
+            // if (S.searchSetRes && Array.isArray(S.searchSetRes)) {
+            //     console.log('📅 Sorting search results by year (newest first)');
+            //     S.searchSetRes.sort((a, b) => {
+            //         const yearA = parseInt(a.year) || 0;
+            //         const yearB = parseInt(b.year) || 0;
+            //         return yearB - yearA; // Новые первыми
+            //     });
+            //     console.log('✅ Search results sorted by year, newest first');
+            // }
             
             // Проверяем, есть ли выбранная минифигурка для показа связанных наборов
             if (S.selFigNum && S.showRelatedSets && !S.q) {
@@ -20760,26 +20825,27 @@ function renderMainContent() {
                 }
             }
             
-            // Автоматически сортируем все минифигурки по году (новые первыми) после инициализации
-            if (S.minifigRes && Array.isArray(S.minifigRes)) {
-                console.log('📅 Sorting minifigs by year (newest first)');
-                S.minifigRes.sort((a, b) => {
-                    const yearA = parseInt(a.year) || 0;
-                    const yearB = parseInt(b.year) || 0;
-                    return yearB - yearA; // Новые первыми
-                });
-                console.log('✅ Minifigs sorted by year, newest first');
-            }
+            // Убираем принудительную сортировку минифигурок - пользователь сам выбирает сортировку
+            // if (S.minifigRes && Array.isArray(S.minifigRes)) {
+            //     console.log('📅 Sorting minifigs by year (newest first)');
+            //     S.minifigRes.sort((a, b) => {
+            //         const yearA = parseInt(a.year) || 0;
+            //         const yearB = parseInt(b.year) || 0;
+            //         return yearB - yearA; // Новые первыми
+            //     });
+            //     console.log('✅ Minifigs sorted by year, newest first');
+            // }
             
-            if (S.searchMinifigRes && Array.isArray(S.searchMinifigRes)) {
-                console.log('📅 Sorting minifig search results by year (newest first)');
-                S.searchMinifigRes.sort((a, b) => {
-                    const yearA = parseInt(a.year) || 0;
-                    const yearB = parseInt(b.year) || 0;
-                    return yearB - yearA; // Новые первыми
-                });
-                console.log('✅ Minifig search results sorted by year, newest first');
-            }
+            // Убираем принудительную сортировку результатов поиска минифигурок - пользователь сам выбирает сортировку
+            // if (S.searchMinifigRes && Array.isArray(S.searchMinifigRes)) {
+            //     console.log('📅 Sorting minifig search results by year (newest first)');
+            //     S.searchMinifigRes.sort((a, b) => {
+            //         const yearA = parseInt(a.year) || 0;
+            //         const yearB = parseInt(b.year) || 0;
+            //         return yearB - yearA; // Новые первыми
+            //     });
+            //     console.log('✅ Minifig search results sorted by year, newest first');
+            // }
             
             t = S.q ? S.searchMinifigRes : S.minifigRes;
             o = e => renderMinifigCard(e, S.gridStale);
@@ -21044,16 +21110,46 @@ function renderMainContent() {
                     t.sort((e, t) => t.name.localeCompare(e.name, 'en'));
                     break;
                 case "year_asc":
-                    t.sort((e, t) => e.year - t.year);
+                    t.sort((e, t) => {
+                        const yearA = parseInt(e.year) || 0;
+                        const yearB = parseInt(t.year) || 0;
+                        // Наборы с неизвестным годом (0) идут в конец
+                        if (yearA === 0 && yearB === 0) return 0;
+                        if (yearA === 0) return 1;
+                        if (yearB === 0) return -1;
+                        return yearA - yearB; // Старые первыми
+                    });
                     break;
                 case "year_desc":
-                    t.sort((e, t) => t.year - e.year);
+                    t.sort((e, t) => {
+                        const yearA = parseInt(e.year) || 0;
+                        const yearB = parseInt(t.year) || 0;
+                        // Наборы с неизвестным годом (0) идут в конец
+                        if (yearA === 0 && yearB === 0) return 0;
+                        if (yearA === 0) return 1;
+                        if (yearB === 0) return -1;
+                        return yearB - yearA; // Новые первыми
+                    });
                     break;
                 case "parts_asc":
-                    t.sort((e, t) => e.num_parts - t.num_parts);
+                    t.sort((e, t) => {
+                        // Сначала обрабатываем наборы с 0 деталей (они идут в конец)
+                        if (e.num_parts === 0 && t.num_parts === 0) return 0;
+                        if (e.num_parts === 0) return 1;
+                        if (t.num_parts === 0) return -1;
+                        // Затем сортируем по возрастанию количества деталей
+                        return e.num_parts - t.num_parts;
+                    });
                     break;
                 case "parts_desc":
-                    t.sort((e, t) => t.num_parts - e.num_parts)
+                    t.sort((e, t) => {
+                        // Сначала обрабатываем наборы с 0 деталей (они идут в конец)
+                        if (e.num_parts === 0 && t.num_parts === 0) return 0;
+                        if (e.num_parts === 0) return 1;
+                        if (t.num_parts === 0) return -1;
+                        // Затем сортируем по убыванию количества деталей
+                        return t.num_parts - e.num_parts;
+                    });
             }
             o = (e, t, o) => renderSetCard(e, t, o);
             n = "sets-minifigs-grid";
@@ -21077,10 +21173,24 @@ function renderMainContent() {
                     t.sort((e, t) => t.name.localeCompare(e.name, 'en'));
                     break;
                 case "num_parts_desc":
-                    t.sort((e, t) => t.num_parts - e.num_parts);
+                    t.sort((e, t) => {
+                        // Сначала обрабатываем минифигурки с 0 деталей (они идут в конец)
+                        if (e.num_parts === 0 && t.num_parts === 0) return 0;
+                        if (e.num_parts === 0) return 1;
+                        if (t.num_parts === 0) return -1;
+                        // Затем сортируем по убыванию количества деталей
+                        return t.num_parts - e.num_parts;
+                    });
                     break;
                 case "num_parts_asc":
-                    t.sort((e, t) => e.num_parts - e.num_parts)
+                    t.sort((e, t) => {
+                        // Сначала обрабатываем минифигурки с 0 деталей (они идут в конец)
+                        if (e.num_parts === 0 && t.num_parts === 0) return 0;
+                        if (e.num_parts === 0) return 1;
+                        if (t.num_parts === 0) return -1;
+                        // Затем сортируем по возрастанию количества деталей
+                        return e.num_parts - t.num_parts;
+                    })
             }
             o = (e, t, o) => renderMinifigCard(e, t, o);
             n = "sets-minifigs-grid";
@@ -22942,6 +23052,12 @@ function renderFilterModal() {
                                 <input type="number" id="max-parts" value="${tempFilters.setFilters.maxParts || ''}" data-filter-key="maxParts" class="w-full bg-gray-700 border border-gray-600 rounded-[18px] py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Например: 1000" oninput="updateFilterValue(this, 'maxParts')" onchange="updateFilterValue(this, 'maxParts')">
                             </div>
                         </div>
+                        <div class="pt-2 border-t border-gray-600">
+                            <label class="p-2 cursor-pointer">
+                                <input type="checkbox" ${tempFilters.setFilters.hideZeroParts ? "checked" : ""} data-action="modal-toggle-zero-parts">
+                                <span class="text-white">Скрыть наборы с 0 деталей</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
             `
@@ -23668,6 +23784,12 @@ function updateFilterModalUI() {
         if (maxYearInput) maxYearInput.value = tempFilters.setFilters.maxYear || "";
         if (minPartsInput) minPartsInput.value = tempFilters.setFilters.minParts || "";
         if (maxPartsInput) maxPartsInput.value = tempFilters.setFilters.maxParts || "";
+        
+        // Обновляем фильтр скрытия наборов с 0 деталей
+        const hideZeroPartsInput = filterModalEl.querySelector('input[data-action="modal-toggle-zero-parts"]');
+        if (hideZeroPartsInput) {
+            hideZeroPartsInput.checked = tempFilters.setFilters.hideZeroParts || false;
+        }
         
         // Обновляем сортировку
         filterModalEl.querySelectorAll('input[name="sort"]').forEach(input => {
@@ -29803,11 +29925,11 @@ document.addEventListener("click", async e => {
                 behavior: 'instant'
             });
         }
-        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, S.searchGroups = null, S.catGroups = null, S.setRes = null, S.searchSetRes = null, S.minifigRes = null, S.searchMinifigRes = null, S.showUniversalSearch = false, S.universalSearchResults = null, S.universalSearchTerm = "", S.originalSearchContext = null, window.searchStateReset = true, console.log('🔄 After reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups, 'S.showUniversalSearch:', S.showUniversalSearch, 'window.searchStateReset:', window.searchStateReset), void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? fetchMinifigs() : (updateUI(), setTimeout(() => {
+        return S.view = e, S.q = "", S.err = null, S.gridStale = !0, S.selCatId = null, S.selCollCatId = null, S.selThemeId = null, S.selCollThemeId = null, S.selFigNum = newSelFigNum, S.searchGroups = null, S.catGroups = null, S.setRes = null, S.searchSetRes = null, S.minifigRes = null, S.searchMinifigRes = null, S.showUniversalSearch = false, S.universalSearchResults = null, S.universalSearchTerm = "", S.originalSearchContext = null, window.searchStateReset = true, console.log('🔄 After reset - S.q:', S.q, 'S.searchGroups:', S.searchGroups, 'S.catGroups:', S.catGroups, 'S.showUniversalSearch:', S.showUniversalSearch, 'window.searchStateReset:', window.searchStateReset), void("catalog" === S.view && "minifigs" === S.subView && !S.minifigRes ? (S.sortBy = "name_asc", fetchMinifigs()) : ("catalog" === S.view && "sets" === S.subView ? (S.selThemeId = null, S.setRes = null, S.searchSetRes = null, S.sortBy = "year_desc", fetchSets()) : (updateUI(), setTimeout(() => {
             setupScrollListener();
             // НЕ перезапускаем ротацию подсказок - это создает бесконечный цикл!
             console.log('⚠️ Skipping tip rotation restart to prevent infinite loop');
-        }, 50)))
+        }, 50))))
     }
     const n = t.closest("[data-sub-view]");
     if (n?.dataset.subView) {
@@ -29831,10 +29953,22 @@ document.addEventListener("click", async e => {
             updateLoadingStatus("Переключение на минифигурки...", 60, "Загрузка данных минифигурок");
             // Сбрасываем случайное изображение минифигурки при переключении на вкладку минифигурок
             resetRandomMinifigImage();
+            // Устанавливаем алфавитную сортировку A-Z при переходе на вкладку минифигурок в каталоге
+            if (S.view === 'catalog') {
+                S.sortBy = "name_asc";
+            }
         } else if (e === 'sets') {
             updateLoadingStatus("Переключение на наборы...", 60, "Загрузка данных наборов");
+            // Устанавливаем сортировку по году (новые первыми) при переходе на вкладку наборов в каталоге
+            if (S.view === 'catalog') {
+                S.sortBy = "year_desc";
+            }
         } else if (e === 'parts') {
             updateLoadingStatus("Переключение на детали...", 60, "Загрузка данных деталей");
+            // Устанавливаем сортировку по популярности при переходе на вкладку деталей в каталоге
+            if (S.view === 'catalog') {
+                S.sortBy = "popularity";
+            }
         }
         
         // Отключаем анимации при переключении подвкладок для улучшения производительности
@@ -29893,7 +30027,7 @@ document.addEventListener("click", async e => {
         S.toDisplay = S.increment;
         S.gridStale = !0;
         S.filters = { colorIds: [], inCollectionOnly: !1 };
-        S.setFilters = { minYear: "", maxYear: "", minParts: "", maxParts: "" };
+        S.setFilters = { minYear: "", maxYear: "", minParts: "", maxParts: "", hideZeroParts: true };
         S.selCatId = null;
         S.selCollCatId = null;
         S.selThemeId = null;
@@ -29910,11 +30044,11 @@ document.addEventListener("click", async e => {
         S.originalSearchContext = null;
         
         if ("sets" === e) {
-            S.sortBy = "year_desc";
+            S.sortBy = S.sortBy || "year_desc";
         } else if ("minifigs" === e) {
-            S.sortBy = "name_asc";
+            S.sortBy = S.sortBy || "name_asc";
         } else {
-            S.sortBy = "popularity";
+            S.sortBy = S.sortBy || "popularity";
         }
         
         if ("catalog" === S.view && "minifigs" === e && !S.minifigRes) {
@@ -30186,11 +30320,12 @@ document.addEventListener("click", async e => {
             // Сбрасываем случайное изображение минифигурки при навигации по темам
             resetRandomMinifigImage();
             
-            S.selThemeId = e, S.selFigNum = null, S.showRelatedSets = false, S.q = "", S.sortBy = "year_desc", S.setFilters = {
+            S.selThemeId = e, S.selFigNum = null, S.showRelatedSets = false, S.q = "", S.sortBy = S.sortBy || "year_desc", S.setFilters = {
                 minYear: "",
                 maxYear: "",
                 minParts: "",
-                maxParts: ""
+                maxParts: "",
+                hideZeroParts: true
             };
             fetchSets()
         }
@@ -30672,7 +30807,7 @@ document.addEventListener("click", async e => {
         S.filterOpen = !0;
         // Убеждаемся, что фильтры правильно инициализированы
         if (!S.filters) S.filters = { colorIds: [], inCollectionOnly: false };
-        if (!S.setFilters) S.setFilters = { minYear: "", maxYear: "", minParts: "", maxParts: "" };
+        if (!S.setFilters) S.setFilters = { minYear: "", maxYear: "", minParts: "", maxParts: "", hideZeroParts: true };
         if (!S.sortBy) S.sortBy = 'popularity';
         
         // Скрываем указатель при открытии фильтров
@@ -30737,6 +30872,14 @@ document.addEventListener("click", async e => {
                     updateFilterModalUI();
                     return;
                 }
+                case 'modal-toggle-zero-parts': {
+                    const input = actionEl.tagName === 'INPUT' ? actionEl : actionEl.querySelector('input');
+                    if (input && tempFilters.setFilters) {
+                        tempFilters.setFilters.hideZeroParts = !!input.checked;
+                    }
+                    updateFilterModalUI();
+                    return;
+                }
                 case 'modal-set-color': {
                     const colorId = actionEl.dataset.colorId;
                     if (colorId === 'null') {
@@ -30756,7 +30899,7 @@ document.addEventListener("click", async e => {
                 }
                 case 'modal-reset-filters': {
                     if (S.subView === 'sets') {
-                        tempFilters.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '' };
+                        tempFilters.setFilters = { minYear: '', maxYear: '', minParts: '', maxParts: '', hideZeroParts: true };
                         tempFilters.sortBy = S.q ? 'relevance' : 'year_desc';
                     } else if (S.subView === 'minifigs') {
                         tempFilters.sortBy = S.q ? 'relevance' : 'name_asc';
@@ -30807,7 +30950,13 @@ document.addEventListener("click", async e => {
             S.filters.inCollectionOnly = !1;
         }
         if ("sortBy" === e) {
-            S.sortBy = S.q ? "relevance" : "popularity";
+            if ("sets" === S.subView) {
+                S.sortBy = S.q ? "relevance" : "year_desc";
+            } else if ("minifigs" === S.subView) {
+                S.sortBy = S.q ? "relevance" : "name_asc";
+            } else {
+                S.sortBy = S.q ? "relevance" : "popularity";
+            }
         }
         
         // Сбрасываем случайное изображение минифигурки при удалении фильтра
@@ -30821,7 +30970,8 @@ document.addEventListener("click", async e => {
                 minYear: "",
                 maxYear: "",
                 minParts: "",
-                maxParts: ""
+                maxParts: "",
+                hideZeroParts: true
             };
             S.sortBy = S.q ? "relevance" : "year_desc";
         } else if ("minifigs" === S.subView) {
@@ -33301,28 +33451,28 @@ async function loadDataFromCSV() {
             
             // Глобальная сортировка данных из API
             
-            // Сортируем все наборы по году (новые первыми)
-            if (Object.keys(SET_MAP).length > 0) {
-                const allSets = Object.values(SET_MAP);
-                allSets.sort((a, b) => {
-                    const yearA = parseInt(a.year) || 0;
-                    const yearB = parseInt(b.year) || 0;
-                    return yearB - yearA; // Новые первыми
-                });
-                console.log('✅ All API sets sorted by year, newest first');
-            }
+            // Убираем принудительную сортировку наборов при загрузке - пользователь сам выбирает сортировку
+            // if (Object.keys(SET_MAP).length > 0) {
+            //     const allSets = Object.values(SET_MAP);
+            //     allSets.sort((a, b) => {
+            //         const yearA = parseInt(a.year) || 0;
+            //         const yearB = parseInt(b.year) || 0;
+            //         return yearB - yearA; // Новые первыми
+            //     });
+            //     console.log('✅ All API sets sorted by year, newest first');
+            // }
             
-            // Сортируем все минифигурки по году (новые первыми)
-            if (Object.keys(MINIFIG_MAP).length > 0) {
-                console.log('👤 Sorting all API minifigs by year (newest first)...');
-                const allMinifigs = Object.values(MINIFIG_MAP);
-                allMinifigs.sort((a, b) => {
-                    const yearA = parseInt(a.year) || 0;
-                    const yearB = parseInt(b.year) || 0;
-                    return yearB - yearA; // Новые первыми
-                });
-                console.log('✅ All API minifigs sorted by year, newest first');
-            }
+            // Убираем принудительную сортировку минифигурок при загрузке - пользователь сам выбирает сортировку
+            // if (Object.keys(MINIFIG_MAP).length > 0) {
+            //     console.log('👤 Sorting all API minifigs by year (newest first)...');
+            //     const allMinifigs = Object.values(MINIFIG_MAP);
+            //     allMinifigs.sort((a, b) => {
+            //         const yearA = parseInt(a.year) || 0;
+            //         const yearB = parseInt(b.year) || 0;
+            //         return yearB - yearA; // Новые первыми
+            //     });
+            //     console.log('✅ All API minifigs sorted by year, newest first');
+            // }
             
             // Сортируем все детали по популярности (часто используемые первыми)
             if (Object.keys(PART_MAP).length > 0) {
