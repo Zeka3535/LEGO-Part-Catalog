@@ -5931,7 +5931,7 @@ window.searchPartInCatalog = function(partNumber, category = '', partName = '') 
 }
 
 // Функция для открытия AI поиска
-window.openAISearch = function() {
+window.openAISearch = async function() {
     
     // Переключаемся на представление инструментов и AI поиск
     S.view = 'tools';
@@ -5942,6 +5942,15 @@ window.openAISearch = function() {
     
     // Обновляем UI
     updateUI();
+    
+    // Проверяем разрешения камеры перед показом модального окна
+    console.log('Проверка разрешений камеры для AI поиска...');
+    const hasPermission = await checkAndRequestCameraPermission();
+    
+    if (!hasPermission) {
+        console.log('Разрешение на камеру не получено, AI поиск не будет доступен');
+        return;
+    }
     
     // Закрываем боковую панель на мобильных устройствах
     if (window.innerWidth < 1024) {
@@ -37063,6 +37072,49 @@ function animateCloseButtonClick(button) {
             });
         }
         
+        // Универсальная функция для проверки и запроса разрешений камеры
+        async function checkAndRequestCameraPermission() {
+            try {
+                // Проверяем поддержку API
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('getUserMedia не поддерживается. Требуется HTTPS соединение на мобильных устройствах.');
+                }
+                
+                // Проверяем, находимся ли мы на HTTPS
+                if (isMobile && location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                    throw new Error('Для работы с камерой на мобильных устройствах требуется HTTPS соединение.');
+                }
+                
+                // Запрашиваем разрешение с базовыми настройками
+                const constraints = { video: true };
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                if (stream) {
+                    // Останавливаем поток, так как мы только проверяем разрешение
+                    stream.getTracks().forEach(track => track.stop());
+                    console.log('Разрешение на камеру получено');
+                    return true;
+                }
+                
+                return false;
+            } catch (error) {
+                console.error('Ошибка получения разрешения на камеру:', error);
+                
+                // Показываем пользователю понятное сообщение об ошибке
+                if (error.name === 'NotAllowedError') {
+                    alert('Доступ к камере запрещен. Пожалуйста, разрешите использование камеры в настройках браузера и обновите страницу.');
+                } else if (error.name === 'NotFoundError') {
+                    alert('Камера не найдена. Убедитесь, что камера подключена и не используется другим приложением.');
+                } else if (error.name === 'NotSupportedError') {
+                    alert('Ваш браузер не поддерживает работу с камерой. Попробуйте использовать современный браузер.');
+                } else {
+                    alert(`Ошибка доступа к камере: ${error.message}`);
+                }
+                
+                return false;
+            }
+        }
+        
         // Обновление интерфейса для мобильных устройств
         function updateMobileInterface() {
             // Показываем подсказки для мобильных устройств
@@ -37242,6 +37294,15 @@ function animateCloseButtonClick(button) {
         // Инициализация сканера при загрузке страницы
         async function initScanner() {
             if (S.view === 'tools' && S.toolSubView === 'scanner') {
+                // Проверяем разрешения камеры перед инициализацией
+                console.log('Проверка разрешений камеры...');
+                const hasPermission = await checkAndRequestCameraPermission();
+                
+                if (!hasPermission) {
+                    console.log('Разрешение на камеру не получено, сканер не будет инициализирован');
+                    return;
+                }
+                
                 // Загружаем библиотеку ZXing перед инициализацией
                 console.log('Загрузка библиотеки ZXing...');
                 await window.loadZXing();
@@ -37258,6 +37319,15 @@ function animateCloseButtonClick(button) {
         async function initScannerOnViewChange() {
             if (S.view === 'tools' && S.toolSubView === 'scanner') {
                 console.log('Инициализация сканера...');
+                
+                // Проверяем разрешения камеры перед инициализацией
+                console.log('Проверка разрешений камеры...');
+                const hasPermission = await checkAndRequestCameraPermission();
+                
+                if (!hasPermission) {
+                    console.log('Разрешение на камеру не получено, сканер не будет инициализирован');
+                    return;
+                }
                 
                 // Загружаем библиотеку ZXing перед инициализацией
                 console.log('Загрузка библиотеки ZXing...');
@@ -37285,6 +37355,15 @@ function animateCloseButtonClick(button) {
         async function initPhotoSearchOnViewChange() {
             if (S.view === 'tools' && S.toolSubView === 'photo-search') {
                 console.log('Инициализация поиска по фото...');
+                
+                // Проверяем разрешения камеры перед инициализацией
+                console.log('Проверка разрешений камеры...');
+                const hasPermission = await checkAndRequestCameraPermission();
+                
+                if (!hasPermission) {
+                    console.log('Разрешение на камеру не получено, поиск по фото не будет инициализирован');
+                    return;
+                }
                 
                 // Загружаем библиотеку TensorFlow.js перед инициализацией
                 console.log('Загрузка библиотеки TensorFlow.js...');
