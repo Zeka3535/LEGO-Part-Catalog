@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v84';
+    const CACHE_NAME = 'lego-catalog-cache-v85';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -5944,11 +5944,9 @@ window.openAISearch = async function() {
     updateUI();
     
     // Проверяем разрешения камеры перед показом модального окна
-    console.log('Проверка разрешений камеры для AI поиска...');
     const hasPermission = await checkAndRequestCameraPermission();
     
     if (!hasPermission) {
-        console.log('Разрешение на камеру не получено, AI поиск не будет доступен');
         return;
     }
     
@@ -26274,6 +26272,10 @@ function openImageViewer(imageUrl, gallery = null, initialIndex = 0) {
         viewerEl._closeTimer = null;
     }
 
+    // Сбрасываем глобальные переменные перед установкой новых значений
+    imageGallery = [];
+    currentImageIndex = 0;
+    
     // Устанавливаем галерею изображений
     imageGallery = gallery || [imageUrl];
     currentImageIndex = Math.max(0, Math.min(initialIndex, imageGallery.length - 1));
@@ -29530,15 +29532,26 @@ document.addEventListener("click", async e => {
         let gallery = null;
         let initialIndex = 0;
         
+        // Определяем контекст модального окна по родительскому элементу
+        const modalContent = o.closest('.modal-content');
+        const setModalContent = o.closest('#set-modal-content');
+        const minifigModalContent = o.closest('#minifig-modal-content');
+        const partModalContent = o.closest('#modal-content');
+        
         // Проверяем, находимся ли мы в модальном окне набора
-        if (S.selSetNum && S.setModal?.gallery?.length > 1) {
+        if (setModalContent && S.selSetNum && S.setModal?.gallery?.length > 1) {
             gallery = S.setModal.gallery;
             initialIndex = S.setModal.galleryIndex || 0;
         }
         // Проверяем, находимся ли мы в модальном окне минифигурки
-        else if (S.selFigNum && S.minifigModal?.gallery?.length > 1) {
+        else if (minifigModalContent && S.selFigNum && S.minifigModal?.gallery?.length > 1) {
             gallery = S.minifigModal.gallery;
             initialIndex = S.minifigModal.galleryIndex || 0;
+        }
+        // Проверяем, находимся ли мы в модальном окне детали
+        else if (partModalContent && S.selPartId && S.partModal?.gallery?.length > 1) {
+            gallery = S.partModal.gallery;
+            initialIndex = S.partModal.galleryIndex || 0;
         }
         
         return openImageViewer(o.dataset.imageUrl, gallery, initialIndex);
@@ -37072,45 +37085,21 @@ function animateCloseButtonClick(button) {
             });
         }
         
-        // Универсальная функция для проверки и запроса разрешений камеры
+        // Универсальная функция для запроса разрешений камеры
         async function checkAndRequestCameraPermission() {
             try {
-                // Проверяем поддержку API
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('getUserMedia не поддерживается. Требуется HTTPS соединение на мобильных устройствах.');
-                }
-                
-                // Проверяем, находимся ли мы на HTTPS
-                if (isMobile && location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                    throw new Error('Для работы с камерой на мобильных устройствах требуется HTTPS соединение.');
-                }
-                
-                // Запрашиваем разрешение с базовыми настройками
-                const constraints = { video: true };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                // Просто запрашиваем разрешение
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 
                 if (stream) {
                     // Останавливаем поток, так как мы только проверяем разрешение
                     stream.getTracks().forEach(track => track.stop());
-                    console.log('Разрешение на камеру получено');
                     return true;
                 }
                 
                 return false;
             } catch (error) {
-                console.error('Ошибка получения разрешения на камеру:', error);
-                
-                // Показываем пользователю понятное сообщение об ошибке
-                if (error.name === 'NotAllowedError') {
-                    alert('Доступ к камере запрещен. Пожалуйста, разрешите использование камеры в настройках браузера и обновите страницу.');
-                } else if (error.name === 'NotFoundError') {
-                    alert('Камера не найдена. Убедитесь, что камера подключена и не используется другим приложением.');
-                } else if (error.name === 'NotSupportedError') {
-                    alert('Ваш браузер не поддерживает работу с камерой. Попробуйте использовать современный браузер.');
-                } else {
-                    alert(`Ошибка доступа к камере: ${error.message}`);
-                }
-                
+                // Тихо возвращаем false без показа сообщений
                 return false;
             }
         }
@@ -37295,18 +37284,14 @@ function animateCloseButtonClick(button) {
         async function initScanner() {
             if (S.view === 'tools' && S.toolSubView === 'scanner') {
                 // Проверяем разрешения камеры перед инициализацией
-                console.log('Проверка разрешений камеры...');
                 const hasPermission = await checkAndRequestCameraPermission();
                 
                 if (!hasPermission) {
-                    console.log('Разрешение на камеру не получено, сканер не будет инициализирован');
                     return;
                 }
                 
                 // Загружаем библиотеку ZXing перед инициализацией
-                console.log('Загрузка библиотеки ZXing...');
                 await window.loadZXing();
-                console.log('Библиотека ZXing загружена');
                 
                 detectMobile();
                 // setupCameraSelect вызывается в initScannerOnViewChange
@@ -37318,35 +37303,23 @@ function animateCloseButtonClick(button) {
         // Инициализация сканера при смене представления
         async function initScannerOnViewChange() {
             if (S.view === 'tools' && S.toolSubView === 'scanner') {
-                console.log('Инициализация сканера...');
-                
                 // Проверяем разрешения камеры перед инициализацией
-                console.log('Проверка разрешений камеры...');
                 const hasPermission = await checkAndRequestCameraPermission();
                 
                 if (!hasPermission) {
-                    console.log('Разрешение на камеру не получено, сканер не будет инициализирован');
                     return;
                 }
                 
                 // Загружаем библиотеку ZXing перед инициализацией
-                console.log('Загрузка библиотеки ZXing...');
                 await window.loadZXing();
-                console.log('Библиотека ZXing загружена');
                 
                 // Небольшая задержка для рендеринга DOM
                 setTimeout(() => {
-                    console.log('Настройка камеры...');
                     setupCameraSelect();
-                    console.log('Настройка обработчиков событий...');
                     setupScannerEventListeners();
-                    console.log('Обновление статистики...');
                     updateScanStats();
-                    console.log('Запуск мониторинга камеры...');
                     startCameraMonitoring();
-                    console.log('Скрытие блока результатов при инициализации...');
                     updateScanResultsVisibility();
-                    console.log('Сканер инициализирован (камера НЕ запущена автоматически)');
                 }, 100);
             }
         }
@@ -37354,30 +37327,20 @@ function animateCloseButtonClick(button) {
         // Инициализация поиска по фото при смене представления
         async function initPhotoSearchOnViewChange() {
             if (S.view === 'tools' && S.toolSubView === 'photo-search') {
-                console.log('Инициализация поиска по фото...');
-                
                 // Проверяем разрешения камеры перед инициализацией
-                console.log('Проверка разрешений камеры...');
                 const hasPermission = await checkAndRequestCameraPermission();
                 
                 if (!hasPermission) {
-                    console.log('Разрешение на камеру не получено, поиск по фото не будет инициализирован');
                     return;
                 }
                 
                 // Загружаем библиотеку TensorFlow.js перед инициализацией
-                console.log('Загрузка библиотеки TensorFlow.js...');
                 await window.loadTensorFlow();
-                console.log('Библиотека TensorFlow.js загружена');
                 
                 // Небольшая задержка для рендеринга DOM
                 setTimeout(() => {
-                    console.log('Настройка камеры для поиска по фото...');
                     setupPhotoSearchCamera();
-                    console.log('Настройка обработчиков событий для поиска по фото...');
                     setupPhotoSearchEventListeners();
-                    console.log('Загрузка настроек API...');
-                    console.log('Поиск по фото инициализирован (камера НЕ запущена автоматически)');
                 }, 100);
             }
         }
@@ -37996,8 +37959,6 @@ function animateCloseButtonClick(button) {
         
         // Остановка камеры
         function stopCamera() {
-            console.log('Остановка камеры...');
-            
             const video = document.getElementById('scanner-video');
             const placeholder = document.getElementById('scanner-placeholder');
             const overlay = document.getElementById('scanner-overlay');
@@ -38011,11 +37972,7 @@ function animateCloseButtonClick(button) {
             
             // Остановить поток
             if (currentStream) {
-                console.log('Остановка видеопотока...');
-                currentStream.getTracks().forEach(track => {
-                    track.stop();
-                    console.log('Трек остановлен:', track.kind);
-                });
+                currentStream.getTracks().forEach(track => track.stop());
                 currentStream = null;
                 
                 // Проверяем состояния неактивности после остановки камеры
@@ -38026,22 +37983,20 @@ function animateCloseButtonClick(button) {
             
             // Остановить сканер
             if (scanner) {
-                console.log('Остановка сканера...');
                 try {
                     scanner.reset();
                 } catch (e) {
-                    console.warn('Ошибка при сбросе сканера:', e);
+                    // Тихо игнорируем ошибки
                 }
                 scanner = null;
             }
             
             // Остановить мобильный сканер
             if (mobileScanner) {
-                console.log('Остановка мобильного сканера...');
                 try {
                     mobileScanner.reset();
                 } catch (e) {
-                    console.warn('Ошибка при сбросе мобильного сканера:', e);
+                    // Тихо игнорируем ошибки
                 }
                 mobileScanner = null;
             }
@@ -38052,24 +38007,17 @@ function animateCloseButtonClick(button) {
                 mobileScanInterval = null;
             }
             
-            // Для мобильных устройств принудительно останавливаем сканирование
-            if (isMobile) {
-                console.log('Мобильное сканирование остановлено');
-            }
-            
             // Очистить srcObject видео
             if (video) {
                 video.srcObject = null;
-                video.load(); // Сбросить видео элемент
+                video.load();
             }
             
             // Скрыть видео и показать плейсхолдер
             if (video) video.classList.add('hidden');
             if (placeholder) placeholder.classList.remove('hidden');
             if (overlay) {
-                // Скрыть оверлей при остановке камеры
                 overlay.classList.add('hidden');
-                // Скрыть индикатор сканирования
                 const scanStatus = document.getElementById('scan-status');
                 if (scanStatus) scanStatus.classList.add('hidden');
             }
@@ -38085,7 +38033,6 @@ function animateCloseButtonClick(button) {
             if (forceBtn) forceBtn.disabled = true;
             if (toggleBtn) toggleBtn.disabled = true;
             
-            console.log('Камера остановлена');
             isCameraStarting = false;
         }
         
