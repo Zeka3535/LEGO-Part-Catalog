@@ -22849,7 +22849,7 @@ function renderColorSelector() {
                                     <span class="w-8 h-8 rounded-full border-2 transition-all duration-150 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-lg ${o.isTransparent?"checkerboard":""} ${t===e?"border-blue-500":"border-gray-600 hover:border-gray-400"}" style="background-color: ${o.hex}; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);" onmouseover="this.style.boxShadow='0 10px 15px -3px ${o.hex}40, 0 4px 6px -2px ${o.hex}30'" onmouseout="this.style.boxShadow='0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'">
                                         ${l?`<div class="w-2 h-2 bg-white rounded-full ${o.isTransparent || o.hex === '#FFFFFF' || o.hex === '#fff' ? 'border border-black' : ''}"></div>`:""}
                                     </span>
-                                    <span class="text-sm text-gray-200 truncate">${o.name}</span>
+                                    <span class="text-sm text-gray-200 truncate" title="${o.name}">${o.name.length > 14 ? o.name.substring(0, 14) + '...' : o.name}</span>
                                 </button>
                             `}).join("")}
                         </div>
@@ -30059,7 +30059,7 @@ document.addEventListener("click", async e => {
         S.originalSearchContext = null;
         
         if ("sets" === e) {
-            S.sortBy = S.sortBy || "year_desc";
+            S.sortBy = "year_desc";
         } else if ("minifigs" === e) {
             S.sortBy = S.sortBy || "name_asc";
         } else {
@@ -30068,6 +30068,9 @@ document.addEventListener("click", async e => {
         
         if ("catalog" === S.view && "minifigs" === e && !S.minifigRes) {
             fetchMinifigs();
+            
+        } else if ("catalog" === S.view && "sets" === e) {
+            fetchSets();
             
         } else if ("minifigs" === e && S.view === "collection" && Object.keys(S.minifigColl).length > 0) {
             fetchMissingCollectionMinifigDetails().then(() => { 
