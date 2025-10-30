@@ -5,7 +5,7 @@
     ],
     "target": {
       "namespace": "android_app",
-      "package_name": "io.github.zeka3535.lego_part_catalog",
+      "package_name": "io.github.zeka3535.twa",
       "sha256_cert_fingerprints": [
         "E7:72:98:E2:91:B5:40:A7:3D:00:3E:87:2A:E0:0F:F5:21:B9:D9:64:57:99:2D:6D:33:E4:AE:9F:66:9C:90:C4"
       ]
