@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v93';
+    const CACHE_NAME = 'lego-catalog-cache-v97';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -8808,10 +8808,15 @@ let COLOR_MAP = {},
     SET_MAP = {},
     MINIFIG_MAP = {},
     THEME_MAP = {},
-    flatCategories = [];
+    flatCategories = [],
+    ELEMENTS_MAP = {}; // Маппинг part_num_color_id -> element_id
 
 // Кэш для URL изображений цветов, чтобы избежать повторных вызовов API
 const COLOR_IMAGE_CACHE = new Map();
+// Кэш для element_id по ключу partNum_colorId
+const ELEMENT_ID_CACHE = new Map();
+// Очередь запросов для получения element_id через API
+const ELEMENT_ID_FETCHING = new Set();
 // Fetch de-duplication and waiters for set images
 const SET_IMAGE_FETCHING = new Set();
 const SET_IMAGE_PENDING = new Map(); // set_num -> Promise<string|undefined>
@@ -13890,15 +13895,32 @@ function loadState() {
     }
 }
 
+// Дебаунсинг для saveState
+let saveStateTimeout = null;
+const SAVE_STATE_DELAY = 1000; // Сохраняем не чаще раза в секунду
+
 function saveState() {
-    localStorage.setItem('legoCollection', JSON.stringify(S.coll));
-    localStorage.setItem('legoSetCollection', JSON.stringify(S.setColl));
-    localStorage.setItem('legoMinifigCollection', JSON.stringify(S.minifigColl));
-    localStorage.setItem('favoriteCategoryIds', JSON.stringify(Array.from(S.favCatIds)));
-    localStorage.setItem('favoriteThemeIds', JSON.stringify(Array.from(S.favThemeIds)));
-    try { localStorage.setItem('sidebarCompact', String(!!S.sidebarCompact)); } catch {}
-    localStorage.setItem('wishlists', JSON.stringify(S.wishlists));
-    localStorage.setItem('currentWishlist', S.currentWishlist);
+    // Очищаем предыдущий таймер
+    if (saveStateTimeout) {
+        clearTimeout(saveStateTimeout);
+    }
+    
+    // Устанавливаем новый таймер
+    saveStateTimeout = setTimeout(() => {
+        try {
+            localStorage.setItem('legoCollection', JSON.stringify(S.coll));
+            localStorage.setItem('legoSetCollection', JSON.stringify(S.setColl));
+            localStorage.setItem('legoMinifigCollection', JSON.stringify(S.minifigColl));
+            localStorage.setItem('favoriteCategoryIds', JSON.stringify(Array.from(S.favCatIds)));
+            localStorage.setItem('favoriteThemeIds', JSON.stringify(Array.from(S.favThemeIds)));
+            try { localStorage.setItem('sidebarCompact', String(!!S.sidebarCompact)); } catch {}
+            localStorage.setItem('wishlists', JSON.stringify(S.wishlists));
+            localStorage.setItem('currentWishlist', S.currentWishlist);
+        } catch (error) {
+            console.error('Error saving state:', error);
+        }
+        saveStateTimeout = null;
+    }, SAVE_STATE_DELAY);
         
     // Все данные будут загружены заново из CSV файлов при каждом запуске
 }
@@ -14479,7 +14501,7 @@ function analyzeCollection() {
                         rarity,
                         rarityName: getRarityName(rarity),
                         rarityColor: getRarityColor(rarity),
-                        partImgUrl: part.part_img_url || part.set_img_url
+                        partImgUrl: part.part_img_url || part.set_img_url || getElementImageUrl(partNum, colorId)
                     });
                 }
                 
@@ -15154,10 +15176,12 @@ function renderAnalyticsContent(analytics) {
              title="Открыть деталь: ${part.partName} (${part.colorName})">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
                 <div class="w-8 h-8 sm:w-10 sm:h-10 xl:w-12 xl:h-12 rounded-[18px] flex-shrink-0 shadow-lg overflow-hidden bg-white">
-                    <img src="${part.partImgUrl || `https://cdn.rebrickable.com/media/parts/${part.partNum}/${part.colorId}.jpg`}" 
+                    <img src="${part.partImgUrl || getElementImageUrl(part.partNum, part.colorId) || `https://cdn.rebrickable.com/media/parts/${part.partNum}/${part.colorId}.jpg`}" 
                          alt="${part.partName}"
                          class="w-full h-full object-contain"
-                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                         data-part-num="${part.partNum}"
+                         data-color-id="${part.colorId}"
+                         onerror="handlePartImageError(this, '${part.partNum}', '${part.colorId}');">
                     <div class="w-full h-full flex items-center justify-center" style="background-color: ${part.rarityColor}; display: none;">
                         ${I_Brick("w-4 h-4 sm:w-5 sm:h-5 xl:w-6 xl:h-6 text-white")}
                     </div>
@@ -17059,6 +17083,15 @@ async function fetchPartColorSpecifics(e, t) {
             // Кэшируем результат
             COLOR_IMAGE_CACHE.set(cacheKey, a.part_img_url);
             S.partModal.imgUrl = a.part_img_url;
+            
+            // Извлекаем и сохраняем element_id из URL для будущего использования
+            const match = a.part_img_url.match(/\/elements\/(\d+)\.jpg/);
+            if (match && match[1]) {
+                const elementId = match[1];
+                const elementKey = `${e}_${t}`;
+                ELEMENT_ID_CACHE.set(elementKey, elementId);
+                ELEMENTS_MAP[elementKey] = elementId;
+            }
         } else {
             S.partModal.imgUrl = PART_MAP[e]?.rebrickable_img_url || null;
         }
@@ -17110,6 +17143,15 @@ async function fetchColorDetailsForPart(e) {
                     // Кэшируем отдельные URL изображений цветов
                     const cacheKey = `${e}-${colorData.color_id}`;
                     COLOR_IMAGE_CACHE.set(cacheKey, colorData.part_img_url);
+                    
+                    // Извлекаем и сохраняем element_id из URL для будущего использования
+                    const match = colorData.part_img_url.match(/\/elements\/(\d+)\.jpg/);
+                    if (match && match[1]) {
+                        const elementId = match[1];
+                        const elementKey = `${e}_${colorData.color_id}`;
+                        ELEMENT_ID_CACHE.set(elementKey, elementId);
+                        ELEMENTS_MAP[elementKey] = elementId;
+                    }
                     // Счетчик изображений увеличиваем только при загрузке карточек, не в модалке
                 }
             });
@@ -17866,8 +17908,137 @@ function setupLongPressHandlers() {
 
 
 
+// Функция для получения element_id из маппинга или кэша
+function getElementId(partNum, colorId) {
+    if (!partNum || !colorId) return null;
+    
+    const key = `${partNum}_${colorId}`;
+    
+    // Сначала проверяем кэш API запросов
+    if (ELEMENT_ID_CACHE.has(key)) {
+        return ELEMENT_ID_CACHE.get(key);
+    }
+    
+    // Затем проверяем маппинг из CSV
+    if (ELEMENTS_MAP[key]) {
+        const elementId = ELEMENTS_MAP[key];
+        // Сохраняем в кэш для быстрого доступа
+        ELEMENT_ID_CACHE.set(key, elementId);
+        return elementId;
+    }
+    
+    return null;
+}
+
+// Асинхронная функция для получения element_id через API
+async function fetchElementIdFromAPI(partNum, colorId) {
+    if (!partNum || !colorId) return null;
+    
+    const key = `${partNum}_${colorId}`;
+    
+    // Проверяем кэш еще раз (на случай параллельных запросов)
+    if (ELEMENT_ID_CACHE.has(key)) {
+        return ELEMENT_ID_CACHE.get(key);
+    }
+    
+    // Проверяем, не выполняется ли уже запрос
+    if (ELEMENT_ID_FETCHING.has(key)) {
+        // Ждем завершения другого запроса
+        return new Promise((resolve) => {
+            const checkInterval = setInterval(() => {
+                if (ELEMENT_ID_CACHE.has(key)) {
+                    clearInterval(checkInterval);
+                    resolve(ELEMENT_ID_CACHE.get(key));
+                } else if (!ELEMENT_ID_FETCHING.has(key)) {
+                    clearInterval(checkInterval);
+                    resolve(null);
+                }
+            }, 100);
+        });
+    }
+    
+    ELEMENT_ID_FETCHING.add(key);
+    
+    try {
+        // Ограничение частоты запросов
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastApiRequestTime;
+        if (timeSinceLastRequest < API_REQUEST_DELAY) {
+            await new Promise(resolve => setTimeout(resolve, API_REQUEST_DELAY - timeSinceLastRequest));
+        }
+        
+        lastApiRequestTime = Date.now();
+        const url = `${REBRICKABLE_API_URL}/parts/${partNum}/colors/${colorId}/`;
+        const response = await fetchWithProxy(url, {
+            headers: {
+                Authorization: `key ${getApiKey()}`
+            }
+        });
+        
+        if (response.status === 429) {
+            return null;
+        }
+        
+        if (!response.ok) {
+            return null;
+        }
+        
+        const data = await response.json();
+        
+        // Извлекаем element_id из part_img_url
+        if (data.part_img_url) {
+            const match = data.part_img_url.match(/\/elements\/(\d+)\.jpg/);
+            if (match && match[1]) {
+                const elementId = match[1];
+                ELEMENT_ID_CACHE.set(key, elementId);
+                // Также сохраняем в маппинг для будущего использования
+                ELEMENTS_MAP[key] = elementId;
+                return elementId;
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        return null;
+    } finally {
+        ELEMENT_ID_FETCHING.delete(key);
+    }
+}
+
+// Функция для получения URL изображения детали с использованием element_id
+function getElementImageUrl(partNum, colorId) {
+    if (!partNum || !colorId) return null;
+    
+    const elementId = getElementId(partNum, colorId);
+    
+    if (elementId) {
+        return `https://cdn.rebrickable.com/media/parts/elements/${elementId}.jpg`;
+    }
+    
+    return null;
+}
+
+// Асинхронная функция для получения URL изображения с fallback через API
+window.getElementImageUrlAsync = async function(partNum, colorId) {
+    if (!partNum || !colorId) return null;
+    
+    // Сначала пытаемся получить из кэша/маппинга
+    let elementId = getElementId(partNum, colorId);
+    
+    // Если не нашли, запрашиваем через API
+    if (!elementId) {
+        elementId = await fetchElementIdFromAPI(partNum, colorId);
+    }
+    
+    if (elementId) {
+        return `https://cdn.rebrickable.com/media/parts/elements/${elementId}.jpg`;
+    }
+    
+    return null;
+}
+
 function getPartImageUrl(e) {
-    const t = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
+    const t = `data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20class%3D%22w-full%20h-full%20text-gray-500%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2218%22%20height%3D%2218%22%20rx%3D%222%22%20ry%3D%222%22%3E%3C%2Frect%3E%3Ccircle%20cx%3D%228.5%22%20cy%3D%228.5%22%20r%3D%221.5%22%3E%3C%2Fcircle%3E%3Cpolyline%20points%3D%2221%2015%2016%2010%205%2021%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E`;
     
     if (!e || typeof e !== 'string' || e.trim() === '') {
         return `src="${t}" loading="lazy" decoding="async"`;
@@ -17887,14 +18058,76 @@ function getPartImageUrl(e) {
     return `src="${trimmedUrl}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${t}';"`
 }
 
-// Специальные атрибуты изображения для детали с простой заглушкой при ошибке
-function getPartImageAttrs(partId, url) {
-    const fallback = `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
+// Обработчик ошибок загрузки изображения детали - запрашивает правильный URL через API
+window.handlePartImageError = async function(imgElement, partNum, colorId) {
+    // Проверяем параметры
+    if (!imgElement) {
+        return;
+    }
+    
+    // Если нет partNum или colorId, пытаемся получить из data-атрибутов
+    if (!partNum && imgElement.dataset.partNum) {
+        partNum = imgElement.dataset.partNum;
+    }
+    if (!colorId && imgElement.dataset.colorId) {
+        colorId = imgElement.dataset.colorId;
+    }
+    
+    if (!partNum || !colorId) {
+        // Если нет данных, показываем заглушку
+        imgElement.style.display = 'none';
+        const fallback = imgElement.nextElementSibling;
+        if (fallback && fallback.classList && fallback.classList.contains('flex')) {
+            fallback.style.display = 'flex';
+        }
+        return;
+    }
+    
+    // Проверяем, не обрабатывается ли уже это изображение
+    if (imgElement.dataset.loadingCorrectUrl === 'true') {
+        return;
+    }
+    
+    imgElement.dataset.loadingCorrectUrl = 'true';
+    
+    try {
+        // Пытаемся получить правильный URL через API
+        if (typeof window.getElementImageUrlAsync === 'function') {
+            const correctUrl = await window.getElementImageUrlAsync(partNum, colorId);
+            
+            if (correctUrl && correctUrl !== imgElement.src) {
+                // Обновляем изображение правильным URL
+                imgElement.src = correctUrl;
+                imgElement.dataset.loadingCorrectUrl = 'false';
+                return;
+            }
+        }
+    } catch (error) {
+        // Игнорируем ошибки, но не блокируем показ заглушки
+    }
+    
+    // Если не удалось получить правильный URL, показываем заглушку
+    imgElement.style.display = 'none';
+    const fallback = imgElement.nextElementSibling;
+    if (fallback) {
+        fallback.style.display = 'flex';
+    }
+    imgElement.dataset.loadingCorrectUrl = 'false';
+}
+
+// Специальные атрибуты изображения для детали с обработкой ошибок через API
+function getPartImageAttrs(partId, url, colorId = null) {
+    const fallback = `data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20class%3D%22w-full%20h-full%20text-gray-500%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2218%22%20height%3D%2218%22%20rx%3D%222%22%20ry%3D%222%22%3E%3C%2Frect%3E%3Ccircle%20cx%3D%228.5%22%20cy%3D%228.5%22%20r%3D%221.5%22%3E%3C%2Fcircle%3E%3Cpolyline%20points%3D%2221%2015%2016%2010%205%2021%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E`;
     const u = (url || '').trim();
     
     if (u && (u.startsWith('http') || u.startsWith('./') || u.startsWith('/'))) {
-        // Простая заглушка при ошибке загрузки
-        return `src="${u}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${fallback}';"`;
+        // Если есть colorId, добавляем обработчик ошибок с запросом к API
+        if (colorId) {
+            return `src="${u}" loading="lazy" decoding="async" data-part-num="${partId}" data-color-id="${colorId}" onerror="if(typeof window.handlePartImageError==='function'){window.handlePartImageError(this, '${partId}', '${colorId}');}else{this.onerror=null;this.style.display='none';const f=this.nextElementSibling;if(f)f.style.display='flex';}"`;
+        } else {
+            // Для изображений без цвета используем простую заглушку
+            return `src="${u}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${fallback}';"`;
+        }
     }
     return `src="${fallback}" loading="lazy" decoding="async"`;
 }
@@ -20130,12 +20363,15 @@ function renderPartCard(e, t, o, l, a = 0) {
     if (!d || typeof d !== 'string' || !d.startsWith('http')) {
         // Используем запасной вариант только если изображения вообще нет
         if (!e.part_img_url && !e.rebrickable_img_url) {
-            d = `https://cdn.rebrickable.com/media/parts/${e.id}.jpg`;
-            console.log(`Generated fallback URL for part ${e.id}: ${d}`);
+            // Используем старый формат URL - обработчик ошибок исправит через API если нужно
+            if (i && t && e.id && t.id) {
+                d = `https://cdn.rebrickable.com/media/parts/${e.id}/${t.id}.jpg`;
+            } else {
+                d = `https://cdn.rebrickable.com/media/parts/${e.id}.jpg`;
+            }
         } else {
             // Используем существующее изображение, даже если это не HTTP (может быть data: URL или относительный путь)
             d = e.part_img_url || e.rebrickable_img_url;
-            console.log(`Using existing non-HTTP URL for part ${e.id}: ${d}`);
         }
     }
     
@@ -20153,7 +20389,10 @@ function renderPartCard(e, t, o, l, a = 0) {
                 ${rarityIndicator}
                 <div class="w-full h-40 bg-gray-700 flex items-center justify-center p-2 rounded-t-lg card-image-container">
                     <div class="w-full h-full bg-white rounded-[18px] flex items-center justify-center overflow-hidden shadow-inner relative">
-                        <img ${getPartImageAttrs(e.id, d)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                        <img ${getPartImageAttrs(e.id, d, i && t ? t.id : null)} alt="${e.name}" class="w-full h-full object-contain pointer-events-none" loading="lazy" />
+                        <div class="w-full h-full flex items-center justify-center bg-gray-100" style="display: none;">
+                            ${I_Img("w-12 h-12 text-gray-400")}
+                        </div>
                         ${(S.view==="collection" && S.collectionMultiSelectEnabled)?`
                         <button data-action="toggle-select" data-item-type="part" data-item-id="${e.id}" data-color-id="${t?.id || ''}" class="absolute top-1.5 right-1.5 bg-gray-900/40 hover:bg-gray-900/60 text-white/80 hover:text-white rounded-full w-6 h-6 flex items-center justify-center z-10 shadow-md ${S.multiSelect.active && S.multiSelect.items.has(`parts:${e.id}:${t?.id || ''}`)?'opacity-100 text-white hover:text-white bg-gray-900/70':'opacity-100 md:opacity-0 md:group-hover:opacity-100'}">
                             ${S.multiSelect.active && S.multiSelect.items.has(`parts:${e.id}:${t?.id || ''}`) ? I_CheckCircle('w-4 h-4') : I_Circle('w-4 h-4')}
@@ -33972,6 +34211,10 @@ async function loadElementsFromCSV() {
                 const fields = parseCsvLine(line);
                 const [element_id, part_num, color_id] = fields;
                 if (element_id && part_num && color_id) {
+                    // Сохраняем маппинг part_num_color_id -> element_id для получения правильного URL изображения
+                    const key = `${part_num}_${color_id}`;
+                    ELEMENTS_MAP[key] = element_id;
+                    
                     // Сохраняем информацию об элементе для последующего использования
                     if (!PART_MAP[part_num]) {
                         PART_MAP[part_num] = { id: part_num, name: 'Unknown Part' };

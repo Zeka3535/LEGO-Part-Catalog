@@ -1,8 +1,8 @@
-const CACHE_NAME = 'lego-catalog-cache-v94';
+const CACHE_NAME = 'lego-catalog-cache-v97';
 const VERSION_INFO = {
-    version: 'v94',
-    buildDate: '23.11.2025',
-    buildTimestamp: new Date('2025-11-23').getTime()
+    version: 'v97',
+    buildDate: '04.12.2025',
+    buildTimestamp: new Date('2025-12-04').getTime()
 };
 
 // Keep precache minimal to avoid install failures due to missing files
@@ -76,6 +76,35 @@ self.addEventListener('activate', event => {
 });
 
 
+// Максимальный размер кэша для изображений (примерно 50MB)
+const MAX_IMAGE_CACHE_SIZE = 50 * 1024 * 1024;
+// Максимальное количество изображений в кэше
+const MAX_IMAGE_CACHE_COUNT = 500;
+
+// Функция для проверки и очистки кэша изображений
+async function maintainImageCache() {
+    try {
+        const cache = await caches.open(CACHE_NAME);
+        const keys = await cache.keys();
+        
+        // Фильтруем только изображения
+        const imageKeys = keys.filter(key => {
+            const url = key.url;
+            return url.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i) || 
+                   url.includes('/media/parts/') ||
+                   url.includes('/elements/');
+        });
+        
+        // Если превышен лимит, удаляем старые изображения
+        if (imageKeys.length > MAX_IMAGE_CACHE_COUNT) {
+            const toDelete = imageKeys.slice(0, imageKeys.length - MAX_IMAGE_CACHE_COUNT);
+            await Promise.all(toDelete.map(key => cache.delete(key)));
+        }
+    } catch (error) {
+        // Игнорируем ошибки очистки кэша
+    }
+}
+
 // Cache-first strategy for static assets
 function cacheFirst(request) {
     return caches.match(request).then(response => {
@@ -83,11 +112,15 @@ function cacheFirst(request) {
             return response;
         }
         return fetch(request).then(networkResponse => {
-            // Cache all responses including opaque (cross-origin images)
-            if (networkResponse.ok || networkResponse.type === 'opaque') {
+            // Кэшируем только успешные ответы, не кэшируем opaque responses для экономии места
+            if (networkResponse.ok && networkResponse.type !== 'opaque') {
                 const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME).then(cache => {
                     cache.put(request, responseToCache).catch(() => {});
+                    // Периодически очищаем кэш изображений
+                    if (Math.random() < 0.1) { // 10% вероятность очистки при каждом запросе
+                        maintainImageCache();
+                    }
                 });
             }
             return networkResponse;
@@ -251,8 +284,13 @@ self.addEventListener('fetch', event => {
         // Static assets: cache first
         event.respondWith(cacheFirst(event.request));
     } else if (url.hostname === 'cdn.rebrickable.com') {
-        // External images: cache first with network fallback
-        event.respondWith(cacheFirst(event.request));
+        // External images: cache first with network fallback, но не кэшируем photos (слишком много)
+        if (url.pathname.includes('/photos/')) {
+            // Для photos используем network-first, чтобы не забивать кэш
+            event.respondWith(networkFirst(event.request));
+        } else {
+            event.respondWith(cacheFirst(event.request));
+        }
     } else {
         // Default: network first
         event.respondWith(networkFirst(event.request));
