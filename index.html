@@ -25,7 +25,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     // Версия кэша - обновляйте при изменении логики кэширования
-    const CACHE_NAME = 'lego-catalog-cache-v97';
+    const CACHE_NAME = 'lego-catalog-cache-v98';
     
     // Динамическая загрузка библиотек
     window.remoteStorageAvailable = false;
@@ -14501,7 +14501,7 @@ function analyzeCollection() {
                         rarity,
                         rarityName: getRarityName(rarity),
                         rarityColor: getRarityColor(rarity),
-                        partImgUrl: part.part_img_url || part.set_img_url || getElementImageUrl(partNum, colorId)
+                        partImgUrl: part.part_img_url || part.set_img_url
                     });
                 }
                 
@@ -15176,7 +15176,7 @@ function renderAnalyticsContent(analytics) {
              title="Открыть деталь: ${part.partName} (${part.colorName})">
             <div class="flex items-center gap-2 sm:gap-3 xl:gap-4 min-w-0 flex-1">
                 <div class="w-8 h-8 sm:w-10 sm:h-10 xl:w-12 xl:h-12 rounded-[18px] flex-shrink-0 shadow-lg overflow-hidden bg-white">
-                    <img src="${part.partImgUrl || getElementImageUrl(part.partNum, part.colorId) || `https://cdn.rebrickable.com/media/parts/${part.partNum}/${part.colorId}.jpg`}" 
+                    <img src="${part.partImgUrl || `https://cdn.rebrickable.com/media/parts/${part.partNum}/${part.colorId}.jpg`}" 
                          alt="${part.partName}"
                          class="w-full h-full object-contain"
                          data-part-num="${part.partNum}"
@@ -36238,24 +36238,55 @@ function forceSaveState() {
 
 // Function to get color-specific image URL with automatic API fallback
 function getColorImageUrl(partNum, colorId, fallbackUrl = null) {
+    const defaultFallback = `data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20class%3D%22w-full%20h-full%20text-gray-500%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22currentColor%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%2218%22%20height%3D%2218%22%20rx%3D%222%22%20ry%3D%222%22%3E%3C%2Frect%3E%3Ccircle%20cx%3D%228.5%22%20cy%3D%228.5%22%20r%3D%221.5%22%3E%3C%2Fcircle%3E%3Cpolyline%20points%3D%2221%2015%2016%2010%205%2021%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E`;
+    
     const part = PART_MAP[partNum];
+    
+    // Если есть fallback URL (из part.part_img_url или rebrickable_img_url), используем его как базовый URL
+    let baseUrl = fallbackUrl;
+    if (!baseUrl && part) {
+        baseUrl = part.part_img_url || part.rebrickable_img_url || '';
+    }
+    
+    // Если нет colorImages, используем fallback или формируем URL по стандартному шаблону
     if (!part || !part.colorImages) {
-        // If no color images cached, trigger fetch
+        // Trigger fetch для загрузки colorImages
         fetchColorDetailsForPart(partNum).catch(console.error);
-        return fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
+        
+        // Если есть baseUrl, используем его, иначе формируем стандартный URL
+        if (baseUrl && baseUrl.startsWith('http')) {
+            const finalFallback = baseUrl;
+            return `src="${finalFallback}" loading="lazy" decoding="async" data-part-num="${partNum}" data-color-id="${colorId}" onerror="if(typeof window.handleColorImageLoadError==='function'){window.handleColorImageLoadError(this, '${partNum}', '${colorId}', '${finalFallback}');}else{this.onerror=null;this.src='${defaultFallback}';}"`;
+        } else if (partNum && colorId) {
+            // Формируем стандартный URL для запроса через API при ошибке
+            const standardUrl = `https://cdn.rebrickable.com/media/parts/${partNum}/${colorId}.jpg`;
+            return `src="${standardUrl}" loading="lazy" decoding="async" data-part-num="${partNum}" data-color-id="${colorId}" onerror="if(typeof window.handleColorImageLoadError==='function'){window.handleColorImageLoadError(this, '${partNum}', '${colorId}', '${standardUrl}');}else{this.onerror=null;this.src='${defaultFallback}';}"`;
+        } else {
+            return `src="${defaultFallback}" loading="lazy" decoding="async"`;
+        }
     }
     
     const colorImageUrl = part.colorImages[colorId];
     if (!colorImageUrl) {
-        // If specific color image not found, trigger fetch
+        // If specific color image not found, use fallback or standard URL
         fetchColorDetailsForPart(partNum).catch(console.error);
-        return fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`;
+        
+        if (baseUrl && baseUrl.startsWith('http')) {
+            const finalFallback = baseUrl;
+            return `src="${finalFallback}" loading="lazy" decoding="async" data-part-num="${partNum}" data-color-id="${colorId}" onerror="if(typeof window.handleColorImageLoadError==='function'){window.handleColorImageLoadError(this, '${partNum}', '${colorId}', '${finalFallback}');}else{this.onerror=null;this.src='${defaultFallback}';}"`;
+        } else if (partNum && colorId) {
+            const standardUrl = `https://cdn.rebrickable.com/media/parts/${partNum}/${colorId}.jpg`;
+            return `src="${standardUrl}" loading="lazy" decoding="async" data-part-num="${partNum}" data-color-id="${colorId}" onerror="if(typeof window.handleColorImageLoadError==='function'){window.handleColorImageLoadError(this, '${partNum}', '${colorId}', '${standardUrl}');}else{this.onerror=null;this.src='${defaultFallback}';}"`;
+        } else {
+            return `src="${defaultFallback}" loading="lazy" decoding="async"`;
+        }
     }
     
-    return `src="${colorImageUrl}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${fallbackUrl || `data:image/svg+xml,${encodeURIComponent(I_Img("w-full h-full text-gray-500"))}`}'; handleColorImageLoadError(this, '${partNum}', '${colorId}', '${colorImageUrl}');"`
+    // Use the color-specific image with error handler
+    return `src="${colorImageUrl}" loading="lazy" decoding="async" data-part-num="${partNum}" data-color-id="${colorId}" onerror="if(typeof window.handleColorImageLoadError==='function'){window.handleColorImageLoadError(this, '${partNum}', '${colorId}', '${colorImageUrl}');}else{this.onerror=null;this.src='${baseUrl || defaultFallback}';}"`;
 }
 // Function to handle color image load errors and fetch from API
-async function handleColorImageLoadError(imgElement, partNum, colorId, originalUrl) {
+window.handleColorImageLoadError = async function(imgElement, partNum, colorId, originalUrl) {
     try {
         const key = `${partNum}:${colorId}`;
         if (PART_COLOR_FAILED.has(key)) return; // уже проваливалось — не спамим
