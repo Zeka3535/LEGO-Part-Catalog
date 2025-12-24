@@ -11,6 +11,7 @@ rebrickable_downloader.spec
 .idea/
 .cursor/
 rebrickable_downloader/
+Minifig_png/fig-N/
 *.swp
 *.swo
 *~
