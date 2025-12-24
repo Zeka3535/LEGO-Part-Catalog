@@ -1,0 +1,25 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+metadata.json
+csv_to_json.py
+rebrickable_downloader.spec
+
+# Editor files
+.vscode/
+.idea/
+.cursor/
+rebrickable_downloader/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+
