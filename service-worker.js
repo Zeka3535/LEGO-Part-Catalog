@@ -1,8 +1,8 @@
-const CACHE_NAME = 'lego-catalog-cache-v100';
+const CACHE_NAME = 'lego-catalog-cache-v101';
 const VERSION_INFO = {
-    version: 'v100',
-    buildDate: '07.01.2026',
-    buildTimestamp: new Date('2026-01-07').getTime()
+    version: 'v101',
+    buildDate: '22.01.2026',
+    buildTimestamp: new Date('2026-01-22').getTime()
 };
 
 // Keep precache minimal to avoid install failures due to missing files
@@ -220,7 +220,7 @@ self.addEventListener('fetch', event => {
                             <head><title>LEGO Catalog - Оффлайн</title></head>
                             <body>
                                 <h1>LEGO Catalog</h1>
-                                <p>Приложение работает в оффлайн режиме. Пожалуйста, подключитесь к интернету для полной функциональности.</p>
+                                <p>Приложение работает в оффлайн режиме. Пожалуйста, подключитесь к интернету для полной функциональности</p>
                             </body>
                             </html>
                         `, {
@@ -236,7 +236,7 @@ self.addEventListener('fetch', event => {
                         <head><title>LEGO Catalog - Ошибка</title></head>
                         <body>
                             <h1>LEGO Catalog</h1>
-                            <p>Произошла ошибка при загрузке приложения.</p>
+                            <p>Произошла ошибка при загрузке приложения</p>
                         </body>
                         </html>
                     `, {

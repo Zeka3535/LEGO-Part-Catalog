@@ -862,3 +862,147 @@ i: "71050-11"
 n: "Werewolf Spider-Man",
 i: "71050-12"
 }
+6584394: {
+n: "Peacock Suit",
+i: "71051-1"
+}
+6584395: {
+n: "Cat Suit",
+i: "71051-2"
+}
+6584392: {
+n: "Goldfish Suit",
+i: "71051-3"
+}
+6584398: {
+n: "Monkey Suit",
+i: "71051-4"
+}
+6584390: {
+n: "Frog Suit",
+i: "71051-5"
+}
+6584396: {
+n: "Koala Suit",
+i: "71051-6"
+}
+6584391: {
+n: "Dalmation Suit",
+i: "71051-7"
+}
+6584389: {
+n: "Crocodile Suit",
+i: "71051-8"
+}
+6584397: {
+n: "Dolphin Suit",
+i: "71051-9"
+}
+6584393: {
+n: "Rabbit Suit",
+i: "71051-10"
+}
+6584388: {
+n: "Lion Suit",
+i: "71051-11"
+}
+6584387: {
+n: "Parrot Suit",
+i: "71051-12"
+}
+6584381: {
+n: "Peacock Suit",
+i: "71051-1"
+}
+6584382: {
+n: "Cat Suit",
+i: "71051-2"
+}
+6584379: {
+n: "Goldfish Suit",
+i: "71051-3"
+}
+6584385: {
+n: "Monkey Suit",
+i: "71051-4"
+}
+6584377: {
+n: "Frog Suit",
+i: "71051-5"
+}
+6584383: {
+n: "Koala Suit",
+i: "71051-6"
+}
+6584378: {
+n: "Dalmation Suit",
+i: "71051-7"
+}
+6584376: {
+n: "Crocodile Suit",
+i: "71051-8"
+}
+6584384: {
+n: "Dolphin Suit",
+i: "71051-9"
+}
+6584380: {
+n: "Rabbit Suit",
+i: "71051-10"
+}
+6584375: {
+n: "Lion Suit",
+i: "71051-11"
+}
+6584374: {
+n: "Parrot Suit",
+i: "71051-12"
+}
+6576503: {
+n: "Peacock Suit",
+i: "71051-1"
+}
+6576504: {
+n: "Cat Suit",
+i: "71051-2"
+}
+6576501: {
+n: "Goldfish Suit",
+i: "71051-3"
+}
+6576507: {
+n: "Monkey Suit",
+i: "71051-4"
+}
+6576499: {
+n: "Frog Suit",
+i: "71051-5"
+}
+6576505: {
+n: "Koala Suit",
+i: "71051-6"
+}
+6576500: {
+n: "Dalmation Suit",
+i: "71051-7"
+}
+6576498: {
+n: "Crocodile Suit",
+i: "71051-8"
+}
+6576506: {
+n: "Dolphin Suit",
+i: "71051-9"
+}
+6576502: {
+n: "Rabbit Suit",
+i: "71051-10"
+}
+6576497: {
+n: "Lion Suit",
+i: "71051-11"
+}
+6576496: {
+n: "Parrot Suit",
+i: "71051-12"
+}
